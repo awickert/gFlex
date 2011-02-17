@@ -72,6 +72,7 @@ def coeff_matrix_2d(D,D_subset,drho,dx4,dy4,dx2dy2,nu=0.25,g=9.8):
   """
   from numpy import array, prod
   from scipy.sparse import lil_matrix
+  from __future__ import division
   
   coeff = lil_matrix((prod(D_subset.shape),prod(D_subset.shape)))
   
