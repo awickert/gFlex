@@ -10,6 +10,8 @@ Originally called fvet = "Flexure: Variable Elastic Thickness"
 Planned expansion to analytical solutions required new name: "flexcalc"
 """
 
+from __future__ import division # No floor division here
+
 def importascii(f,d=' '):
   """
   imported_array_varname = importarray(filename,delimiter=' ') \\
@@ -70,9 +72,9 @@ def coeff_matrix_2d(D,D_subset,drho,dx4,dy4,dx2dy2,nu=0.25,g=9.8):
   good for probelms with time-variable loads or that require iteration (e.g., water loading, in \\
   which additional water causes subsidence, causes additional water detph, etc.).
   """
+
   from numpy import array, prod
   from scipy.sparse import lil_matrix
-  from __future__ import division
   
   coeff = lil_matrix((prod(D_subset.shape),prod(D_subset.shape)))
   
