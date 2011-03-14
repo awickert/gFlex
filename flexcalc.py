@@ -50,13 +50,13 @@ def varprep2d(dx,dy,Te,E=1E11,nu=0.25,rho_m=3300,rho_fill=0):
   output = dx4, dy4, dx2dy2, D, drho
   return output
 
-def subset(a):
+def subset_2d(a):
   """
-  b = subset(a) \\
+  b = subset_2d(a) \\
   \\
-  Takes only the interior elements of the matrix (skipping first and last two). \\
-  This should be used for the elastic thickness matrix, which should be imported \\
-  as two elements wider on each edge as the load matrix (because the 4th-order \\
+  Takes only the interior elements of the array (skipping first and last two). \\
+  This should be used for the elastic thickness array, which should be imported \\
+  as two elements wider on each edge as the load array (because the 4th-order \\
   finite difference requires this for a solution within the area of the load).
   """
   b = a[2:-2,2:-2]
@@ -143,11 +143,25 @@ def coeff_matrix_2d(D,D_subset,drho,dx4,dy4,dx2dy2,nu=0.25,g=9.8):
   
 def coeff_matrix_1D(D,nu,drho,g,dx4,dx2):
   """
-  Will create a 1D pentadiagonal matrix to solve this problem via a Thomas algorithm. \\
-  But obviously not created yet. \\
-  Plan on borrowing from Bob's code based on someone's thesis... \\
-  ... and giving them credit of course :)
-  """  
+  1D pentadiagonal matrix to solve 1D flexure with variable elastic thickness \\
+  via a Thomas algorithm. \\
+  """
+  
+  # Based on and translated in part from "flexvar.m", written in 2001 by Bob
+  # Anderson, which in turn is based on a code written by Laura Wallace
+  
+  from numpy import array, prod
+  from scipy.sparse import lil_matrix
+  
+  coeff = lil_matrix((prod(D_subset.shape),prod(D_subset.shape)))
+  
+  row = 0
+  
+  c = lil_matrix(D.shape) # Define it here as well for matrix size calc.
+  endlength = prod(c[2:-2,2:-2].shape) # Reshaped matrix size
+  
+  
+  
   
 def direct_fd_solve_2d(coeff,q0):
   """

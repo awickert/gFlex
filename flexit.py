@@ -3,6 +3,7 @@
 # 
 # Started by ADW on 7 NOV 2010
 # Added lots more options (rho, Te, nu) on 8-9 Nov.
+# Changed "subset" to "subset
 
 import flexcalc
 import optparse
@@ -79,7 +80,7 @@ if options.calc_coeff==True:
     # E = 1E11,rho_m = 3300,rho_fill=0,nu=0.25
     dx4, dy4, dx2dy2, D, drho = flexcalc.varprep2d(dx=dx,dy=dy,Te=Te,E=E,rho_m=rho_m,rho_fill=rho_fill,nu=0.25)
 
-    D_subset = flexcalc.subset(D)
+    D_subset = flexcalc.subset_2d(D)
 
     ##################################
     ## CALCULATE COEFFICIENT MATRIX ##
