@@ -5,7 +5,7 @@
 # Added lots more options (rho, Te, nu) on 8-9 Nov.
 # Changed "subset" to "subset
 
-import flexcalc
+from flexure import flexcalc
 import optparse
 
 
