@@ -86,7 +86,7 @@ class Isostasy(IRF):
   # Plot, if desired
   def plotting(self):
     plotChoice = self.config.get("output", "Plot")
-    if plotChoice == 'q0' or 'w' or 'both':
+    if plotChoice == 'q0' or plotChoice == 'w' or plotChoice == 'both':
       if debug: print 'Plotting...'
       if self.dimension==1:
         if plotChoice == 'q0':

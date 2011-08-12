@@ -34,14 +34,16 @@ ElasticThickness=Te_sample/2D/10km_const.txt ; space-delimited array of
 ;                                            ; solution
 
 [output]
-; Output 
-DeflectionOut=loadtmp.txt ; If this is blank, no output is printed.
-;                         ; Otherwise, a space-delimited ASCII file of 
-;                         ; outputs is with this file name (and path).
-Plot=both    ; q0 (loads), w (deflection), or both; any other entry here will 
-;         ; result in no plotting.
-;         ; Automatically plots a 1D line or 2D surface based on the choice 
-;         ; of "dimension" variable in [mode]
+DeflectionOut=            
+; DeflectionOut is for writing an output file. 
+;If this is blank, no output is printed.
+; Otherwise, a space-delimited ASCII file of 
+; outputs is with this file name (and path).
+Plot= 
+; Acceptable inputs are q0 (loads), w (deflection), or both; any other entry 
+; here will result in no plotting.
+; Automatically plots a 1D line or 2D surface based on the choice 
+; of "dimension" variable in [mode]
 
 [numerical]
 GridSpacing=20000
