@@ -79,7 +79,7 @@ class Isostasy(IRF):
         self.dx = float(value) # Never tried it with anything but an int, but
                                # should work
       # Loading grid
-      elif value_key == 'Loads'
+      elif value_key == 'Loads':
         self.q0 = value # Anything special needed to pass arrays?
     
     
