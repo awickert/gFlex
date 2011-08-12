@@ -31,18 +31,7 @@ class F2D(Flexure):
     #self.imshow(self.w) # debugging
 
   def finalize(self):
-    ### need work
     if debug: print 'F2D finalized'
-
-
-  # Getter
-    
-  def get_value (self, val_string):
-    if val_string=='Deflection':
-      return self.w
-
-
-
     
   ########################################
   ## FUNCTIONS FOR EACH SOLUTION METHOD ##

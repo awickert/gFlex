@@ -41,20 +41,58 @@ class Isostasy(IRF):
     self.rho_m = self.config.getfloat("parameter", "MantleDensity")
     self.rho_fill = self.config.getfloat("parameter", "InfillMaterialDensity")
     self.drho = self.rho_m - self.rho_fill # Move to Flexure class?
-    # From setter
 
     # Grid spacing
     # Unnecessary for PrattAiry, but good to keep along, I think, for use 
     # in model output and plotting.
     # From input file
     self.dx = self.config.getfloat("numerical", "GridSpacing")
-    # From setter
     
     
     # Loading grid
     q0path = self.config.get("input", "Loads")
     self.q0 = loadtxt(q0path)
-    # From setter
+
+
+    # UNIVERSAL SETTER: START WITH WHAT EVERYONE NEEDS
+    def set_value(self, value_key, value):
+      # Model type
+      if value_key == 'model':
+        self.model = str(value)
+      elif value_key =='dimension':
+        self.dimension = int(value)
+      # Parameters
+      elif value_key == 'GravAccel':
+        self.g = float(value)
+      elif value_key == 'MantleDensity':
+        self.rho_m = float(value)
+        # Update drho
+        if self.rho_fill:
+          drho = self.rho_m - self.rho_fill # Move to Flexure class?
+      elif value_key == 'InfillMaterialDensity':
+        self.rho_fill = float(value)
+        # Update drho
+        if self.rho_m:
+          drho = self.rho_m - self.rho_fill # Move to Flexure class?
+      # Grid spacing
+      elif value_key == 'GridSpacing':
+        self.dx = float(value) # Never tried it with anything but an int, but
+                               # should work
+      # Loading grid
+      elif value_key == 'Loads'
+        self.q0 = value # Anything special needed to pass arrays?
+    
+    
+    # UNIVERSAL GETTER
+    def get_value(self, val_string):
+      if val_string=='Deflection':
+        # This is the primary model output
+        return self.w
+      elif val_string=='CoeffMatrix':
+        # This is to hold onto the coefficient matrix in memory so it doesn't 
+        # need to be reloaded or recreated
+        return self.coeff
+
 
   # SAVING TO FILE AND PLOTTING STEPS
 
@@ -196,7 +234,6 @@ class Flexure(Isostasy):
     Tepath = self.config.get("input", "ElasticThickness")
     self.Te = loadtxt(Tepath)
 
-  ### need work
   def SPA(self):
     # Define the (scalar) elastic thickness
     self.Te = self.config.getfloat("parameter", "ElasticThickness")
@@ -204,7 +241,19 @@ class Flexure(Isostasy):
   ### need work
   def FFT(self):
     pass
-
-  
+    
+  # UNIVERSAL SETTER: LITHOSPHERIC ELASTIC PROPERTIES ADDED
+  def set_value(self, value_key, value):
+    # Inherit from higher-level setter
+    super(Flexure, self).set_value(value_key, value)
+    # Parameters
+    if value_key == 'YoungsModulus':
+      self.E  = value
+    elif value_key == 'PoissonsRatio':
+      self.nu = value
+    # Elastic thickness: array or scalar  
+    elif value_key == 'ElasticThickness':
+      self.Te = value # How to dynamically type for scalar or array?
+    
 class PrattAiry(Isostasy):
   pass
