@@ -147,17 +147,22 @@ class Isostasy(IRF):
   def linesubplots(self,figNum=1):
     from matplotlib.pyplot import plot, show, figure, subplot, xlabel, \
                                   ylabel, title
-    from numpy import arange
     
     figure(figNum)
 
     subplot(211)
     title('Loads and Lithospheric Deflections',fontsize=20)
-    plot(arange(0,self.dx*self.q0.shape[0],self.dx),self.q0/(self.rho_m*self.g))
+    if self.method == "SPA_NG":
+      plot(self.x,self.q0/(self.rho_m*self.g),'o')
+    else:
+      plot(self.x,self.q0/(self.rho_m*self.g))
     ylabel('Load thickness, mantle equivalent [m]')
 
     subplot(212)
-    plot(arange(0,self.dx*self.w.shape[0],self.dx),self.w)
+    if self.method == "SPA_NG":
+      plot(self.x,self.w,'o')
+    else:
+      plot(self.x,self.w)
     xlabel('Distance along profile [m]',fontsize=16)
     ylabel('Deflection [m]')
 
@@ -169,11 +174,10 @@ class Isostasy(IRF):
     Plot if you want to - for troubleshooting
     """
     from matplotlib.pyplot import plot, show, figure, xlabel, ylabel, title
-    from numpy import arange
     
     figure(figNum)
 
-    plot(arange(0,self.dx*data.shape[0],self.dx),data)
+    plot(self.x,data)
 
     xlabel(xtext,fontsize=16)
     ylabel(ytext,fontsize=16)
@@ -186,7 +190,6 @@ class Isostasy(IRF):
     Plot if you want to - for troubleshooting
     """
     from matplotlib.pyplot import imshow, show, figure, colorbar, title
-    from numpy import arange
     
     figure(figNum)
 
@@ -200,7 +203,6 @@ class Isostasy(IRF):
   def surfsubplots(self,figNum=1):
     from matplotlib.pyplot import imshow, show, figure, subplot, xlabel, \
                                   ylabel, title, colorbar
-    from numpy import arange
     
     figure(figNum)
 

@@ -109,17 +109,25 @@ class F1D(Flexure):
 
   def spatialDomainNoGrid(self):
   
-    from numpy import exp, sin, cos
+    from numpy import exp, sin, cos, zeros
     
     # Reassign q0 for consistency
     #self.q0_with_locs = self.q0 # nah, will recombine later
     self.x = self.q0[:,0]
     self.q0 = self.q0[:,1]
-
-    for i in self.x:
-      dist = abs(self.x-i)
+    
+    self.w = zeros(self.x.shape)
+    print self.w.shape
+    
+    i=0 # counter
+    for x0 in self.x:
+      dist = abs(self.x-x0)
       self.w -= self.q0[i] * self.coeff * self.dx * exp(-dist/self.alpha) * \
         (cos(dist/self.alpha) + sin(dist/self.alpha))
+      if i==10:
+        print dist
+        print self.q0
+      i+=1 # counter
 
   ## FINITE DIFFERENCE
   ######################
