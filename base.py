@@ -29,30 +29,28 @@ class IRF(object):
 # parameters, which is the responsibility of derived concrete classes.
 class Isostasy(IRF):
   def initialize(self, filename):
-    if filename:
-      # Open parser and get what kind of model
-      self.config = ConfigParser.ConfigParser()
-      self.config.read(filename)
-      self.model     = self.config.get("mode", "model")
-      self.dimension = self.config.getint("mode", "dimension")
-      
-      # Parameters
-      # From input file
-      self.g = self.config.getfloat("parameter", "GravAccel")
-      self.rho_m = self.config.getfloat("parameter", "MantleDensity")
-      self.rho_fill = self.config.getfloat("parameter", "InfillMaterialDensity")
+    # Open parser and get what kind of model
+    self.config = ConfigParser.ConfigParser()
+    self.config.read(filename)
+    self.model     = self.config.get("mode", "model")
+    self.dimension = self.config.getint("mode", "dimension")
+    
+    # Parameters
+    # From input file
+    self.g = self.config.getfloat("parameter", "GravAccel")
+    self.rho_m = self.config.getfloat("parameter", "MantleDensity")
+    self.rho_fill = self.config.getfloat("parameter", "InfillMaterialDensity")
 
-      # Grid spacing
-      # Unnecessary for PrattAiry, but good to keep along, I think, for use 
-      # in model output and plotting.
-      # No meaning for ungridded superimposed analytical solutions
-      # From input file
-      self.dx = self.config.getfloat("numerical", "GridSpacing")
-      
-      
-      # Loading grid
-      q0path = self.config.get("input", "Loads")
-      self.q0 = loadtxt(q0path)
+    # Grid spacing
+    # Unnecessary for PrattAiry, but good to keep along, I think, for use 
+    # in model output and plotting.
+    # No meaning for ungridded superimposed analytical solutions
+    # From input file
+    self.dx = self.config.getfloat("numerical", "GridSpacing")
+    
+    # Loading grid
+    q0path = self.config.get("input", "Loads")
+    self.q0 = loadtxt(q0path)
 
 
     # UNIVERSAL SETTER: START WITH WHAT EVERYONE NEEDS
@@ -234,32 +232,28 @@ class Flexure(Isostasy):
     
     # Parameters
     self.drho = self.rho_m - self.rho_fill
-    if filename:
-      self.E  = self.config.getfloat("parameter", "YoungsModulus")
-      self.nu = self.config.getfloat("parameter", "PoissonsRatio")
+    self.E  = self.config.getfloat("parameter", "YoungsModulus")
+    self.nu = self.config.getfloat("parameter", "PoissonsRatio")
     
   ### need to determine its interface, it is best to have a uniform interface
   ### no matter it is 1D or 2D; but if it can't be that way, we can set up a
   ### variable-length arguments, which is the way how Python overloads functions.
   def FD(self):
-    if filename:
     # Import Te grid for the finite difference solution
-      Tepath = self.config.get("input", "ElasticThickness")
-      self.Te = loadtxt(Tepath)
+    Tepath = self.config.get("input", "ElasticThickness")
+    self.Te = loadtxt(Tepath)
 
   ### need work
   def FFT(self):
     pass
 
   def SPA(self):
-    if filename:
-      # Define the (scalar) elastic thickness
-      self.Te = self.config.getfloat("parameter", "ElasticThickness")
+    # Define the (scalar) elastic thickness
+    self.Te = self.config.getfloat("parameter", "ElasticThickness")
 
   def SPA_NG(self):
-    if filename:
-      # Define the (scalar) elastic thickness
-      self.Te = self.config.getfloat("parameter", "ElasticThickness")
+    # Define the (scalar) elastic thickness
+    self.Te = self.config.getfloat("parameter", "ElasticThickness")
 
     
   # UNIVERSAL SETTER: LITHOSPHERIC ELASTIC PROPERTIES ADDED
