@@ -23,6 +23,9 @@ class F2D(Flexure):
       # Superposition of analytical solutions
       super(F2D, self).SPA()
       self.method_func = self.SPA   
+    else:
+      print 'Error: method must be "FD", "FFT", or "SPA"'
+      self.abort()
 
   def run(self):
     if debug: print 'F2D run'

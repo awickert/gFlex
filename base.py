@@ -205,7 +205,7 @@ class Isostasy(IRF):
 
     subplot(211)
     title('Load thickness, mantle equivalent [m]',fontsize=16)
-    imshow(self.q0)
+    imshow(self.q0/(self.rho_m*self.g))
     colorbar()
 
     subplot(212)
@@ -214,7 +214,14 @@ class Isostasy(IRF):
     colorbar()
 
     show()
-    
+
+  # CODE TO ABORT RUN AFTER ERROR
+  # mainly to avoid all of the gobbedygook after I print my error message
+  # that I've tailored to this code
+  def abort(self):
+    print("Aborting.")
+    raise SystemExit # Stop program from running after printing only
+                     # my error message
 
 # class Flexure inherits Isostay and it overrides the __init__ method. It also
 # define three different solution methods, which are implemented by its subclass.

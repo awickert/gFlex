@@ -3,7 +3,7 @@
 [mode]
 model=PrattAiry ; "flexure" or "PrattAiry"
 dimension=2 ; 1 or 2 dimensions
-method=FD ; Solution method: FD, FFT, GF
+method=FD ; Solution method: FD, FFT, SPA
 
 [parameter]
 YoungsModulus=1.0E11
@@ -18,8 +18,8 @@ Loads=q0_sample/2D/top_bottom_bars.txt
 ElasticThickness=Te_sample/2D/40km_const.txt
 
 [output]
-ElasticThicknessOut=path3
-LoadsOut=path4
+DeflectionOut=tmpout.txt
+Plot=both
 
 [numerical]
 GridSpacing=10000

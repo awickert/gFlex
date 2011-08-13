@@ -8,8 +8,11 @@ method=SPA ; Solution method: FD (Finite Difference), FFT (Fast Fourier
 ;          ; solutions). Both the FFT and SPA techniques rely on superposition 
 ;          ; of solutions, because they can be combined linearly, whether in 
 ;          ; the spectral or the spatial domain)
+;          ; Required only for flexural solutions
 
 [parameter]
+; Young's modulus, Poisson's ratio, and elastic thickness (whether input 
+; as a scalar or a grid) are required only for the flexural isostatic solutions
 YoungsModulus=1.0E11
 PoissonsRatio=0.25
 GravAccel=9.8
@@ -44,7 +47,7 @@ DeflectionOut=tmpout.txt
 ; other entry here will result in no plotting.
 ; Automatically plots a 1D line or 2D surface based on the choice 
 ; of "dimension" variable in [mode]
-Plot= both
+Plot=both
 
 [numerical]
 GridSpacing=20000

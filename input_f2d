@@ -3,7 +3,7 @@
 [mode]
 model=flexure ; "flexure" or "prattairy"
 dimension=2 ; 1 or 2 dimensions
-method=FD ; Solution method: FD, FFT, GF
+method=FD ; Solution method: FD, FFT, SPA
 
 [parameter]
 YoungsModulus=1.0E11
@@ -15,14 +15,14 @@ ElasticThickness=40000 ; Used for FFT and GF solutions
 
 [input]
 Loads=q0_sample/2D/top_bottom_bars.txt
-ElasticThickness=Te_sample/2D/40km_const.txt
+ElasticThickness=Te_sample/2D/range_8_42_km.txt
 
 [output]
-ElasticThicknessOut=path3
-LoadsOut=path4
+DeflectionOut=tmpout.txt
+Plot=both
 
 [numerical]
-GridSpacing=10000
+GridSpacing=40000
 ; Iterates until this is the difference between two subsequent iterations
 ; Set as 0 if you don't want to iterate
 convergence=1E-3

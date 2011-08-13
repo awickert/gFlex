@@ -22,7 +22,8 @@ class F1D(Flexure):
       super(F1D, self).SPA()
       self.method_func = self.SPA
     else:
-      print 'Method must be "FD", "FFT", or "SPA"'
+      print 'Error: method must be "FD", "FFT", or "SPA"'
+      self.abort()
 
   def run(self):
     if debug: print 'F1D run'
