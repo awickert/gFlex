@@ -20,8 +20,10 @@ class PrattAiry(Isostasy):
   ######################################
 
   def noflexure(self):
-    # q0 must be rho_load * g * h_load
-    # rho --> Pratt, h --> Airy
-    # Nothing to return: all calls to self
+    """
+    q0 must be rho_load * g * h_load
+    rho --> Pratt, h --> Airy
+    Nothing to return: all calls to self
+    """
     self.w = - self.q0 / (self.rho_m * self.g)
 
