@@ -1,11 +1,16 @@
 ; All units are SI
 
 [mode]
-model=flexure ; "flexure" or "prattairy"
+model=flexure ; "flexure" or "PrattAiry"
 dimension=2 ; 1 (line) or 2 (surface) dimensions
 method=SPA ; Solution method: FD (Finite Difference), FFT (Fast Fourier 
-;          ; Transform, not yet implemented), or SPA (Spatial domain analytical 
-;          ; solutions). Both the FFT and SPA techniques rely on superposition 
+;          ; Transform, not yet implemented), SPA (Spatial domain analytical 
+;          ; solutions), or SPA_NG (SPA, but do not require a uniform grid
+;          ; - NG = "no grid")
+;          ; For SPA_NG, 1D data must be provided and will be returned in 
+;          ; two columns: (x,q0) --> (x,w). 2D data are similar, except
+;          ; will be of the form (x,y,[q0/in or w/out])
+;          ; Both the FFT and SPA techniques rely on superposition 
 ;          ; of solutions, because they can be combined linearly, whether in 
 ;          ; the spectral or the spatial domain)
 ;          ; Required only for flexural solutions

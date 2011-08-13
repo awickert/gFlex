@@ -241,13 +241,18 @@ class Flexure(Isostasy):
     Tepath = self.config.get("input", "ElasticThickness")
     self.Te = loadtxt(Tepath)
 
+  ### need work
+  def FFT(self):
+    pass
+
   def SPA(self):
     # Define the (scalar) elastic thickness
     self.Te = self.config.getfloat("parameter", "ElasticThickness")
 
-  ### need work
-  def FFT(self):
-    pass
+  def SPA_NG(self):
+    # Define the (scalar) elastic thickness
+    self.Te = self.config.getfloat("parameter", "ElasticThickness")
+
     
   # UNIVERSAL SETTER: LITHOSPHERIC ELASTIC PROPERTIES ADDED
   def set_value(self, value_key, value):

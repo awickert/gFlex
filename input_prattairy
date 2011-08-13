@@ -3,7 +3,7 @@
 [mode]
 model=PrattAiry ; "flexure" or "PrattAiry"
 dimension=2 ; 1 or 2 dimensions
-method=FD ; Solution method: FD, FFT, SPA
+method=FD ; Solution method: FD, FFT, SPA, SPA_NG
 
 [parameter]
 YoungsModulus=1.0E11

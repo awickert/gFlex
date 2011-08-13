@@ -23,6 +23,11 @@ class F2D(Flexure):
       # Superposition of analytical solutions
       super(F2D, self).SPA()
       self.method_func = self.SPA   
+    elif self.method == "SPA_NG":
+      # Superposition of analytical solutions,
+      # nonuniform points
+      super(F2D, self).SPA_NG()
+      self.method_func = self.SPA_NG
     else:
       print 'Error: method must be "FD", "FFT", or "SPA"'
       self.abort()
