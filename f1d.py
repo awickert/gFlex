@@ -63,7 +63,7 @@ class F1D(Flexure):
     self.spatialDomainVars()
     self.spatialDomainGridded()
 
-  def SPA(self):
+  def SPA_NG(self):
     self.spatialDomainVars()
     self.spatialDomainNoGrid()
 
@@ -105,25 +105,22 @@ class F1D(Flexure):
     # No need to return: w already belongs to "self"
     
 
-
   # NO GRID
 
   def spatialDomainNoGrid(self):
   
-    from numpy import arange, zeros, exp, sin, cos
+    from numpy import exp, sin, cos
     
-    self.w = zeros(self.nx) # Deflection array
-    
-    for i in range(self.nx):
-      # Loop over locations that have loads, and sum
-      if self.q0[i]:
-        dist = abs(self.x[i]-self.x)
-        # -= b/c pos load leads to neg (downward) deflection
-        self.w -= self.q0[i] * self.coeff * self.dx * exp(-dist/self.alpha) * \
-          (cos(dist/self.alpha) + sin(dist/self.alpha))
-    # No need to return: w already belongs to "self"
-    
-  
+    # Reassign q0 for consistency
+    #self.q0_with_locs = self.q0 # nah, will recombine later
+    self.x = self.q0[:,0]
+    self.q0 = self.q0[:,1]
+
+    for i in self.x:
+      dist = abs(self.x-i)
+      self.w -= self.q0[i] * self.coeff * self.dx * exp(-dist/self.alpha) * \
+        (cos(dist/self.alpha) + sin(dist/self.alpha))
+
   ## FINITE DIFFERENCE
   ######################
   

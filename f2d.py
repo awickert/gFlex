@@ -34,7 +34,8 @@ class F2D(Flexure):
 
   def run(self):
     if debug: print 'F2D run'
-    self.makedy()
+    if self.method != "SPA_NG":
+      self.makedy()
     self.method_func ()
     #self.imshow(self.w) # debugging
 
@@ -53,9 +54,13 @@ class F2D(Flexure):
   def FFT(self):
     print "The fast fourier transform solution method is not yet implemented."
 
-    
   def SPA(self):
-    self.spatialDomain()
+    self.spatialDomainVars()
+    self.spatialDomainGridded()
+
+  def SPA_NG(self):
+    self.spatialDomainVars()
+    self.spatialDomainNoGrid()
 
   
   ######################################
@@ -79,15 +84,20 @@ class F2D(Flexure):
   ## SPATIAL DOMAIN SUPERPOSITION OF ANALYTICAL SOLUTIONS
   #########################################################
 
-  def spatialDomain(self):
-  
-    from numpy import arange, zeros, exp, sin, cos, pi, meshgrid, sqrt
-    from scipy.special import kei
-  
+  # SETUP
+
+  def spatialDomainVars(self):
     self.D = self.E*self.Te**3/(12*(1-self.nu**2)) # Flexural rigidity
     self.alpha = (self.D/(self.drho*self.g))**.25 # 2D flexural parameter
     self.coeff = self.alpha**2/(2*pi*self.D)
 
+  # GRIDDED
+
+  def spatialDomainGridded(self):
+  
+    from numpy import arange, zeros, exp, sin, cos, pi, meshgrid, sqrt
+    from scipy.special import kei
+  
     self.nx = self.q0.shape[1]
     self.x = arange(0,self.dx*self.nx,self.dx)
     
@@ -121,6 +131,27 @@ class F2D(Flexure):
           self.w += self.q0[j,i] * self.dx * self.dy \
              * biggrid[self.ny-j:2*self.ny-j,self.nx-i:2*self.nx-i]
       # No need to return: w already belongs to "self"
+
+  # NO GRID
+
+  def spatialDomainNoGrid(self):
+  
+    from numpy import exp, sin, cos, pi, sqrt
+    from scipy.special import kei
+  
+    # Reassign q0 for consistency
+    self.x = self.q0[:,0]
+    self.y = self.q0[:,1]
+    self.q0 = self.q0[:,2]
+    
+    for i in range(len(x)):
+      # Get the point
+      x0 = x[i]
+      y0 = y[i]
+      # Create array of distances from point of load
+      r = sqrt((self.x - x0)**2 + (self.y - y0)**2)
+      # Compute and sum deflection
+      self.w += self.q0[i] * self.coeff * kei(r/self.alpha)
 
 
   ## FINITE DIFFERENCE

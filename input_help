@@ -35,6 +35,8 @@ ElasticThickness=10000 ; Used for FFT and S solutions (see "method", above);
 
 [input]
 ; space-delimited array of loads (rho*g*h)
+; If the solution method (above) is selected as "SPA_NG", then this file
+; will actually be of the format (x,[y],q0) and the code will sort it out.
 Loads=q0_sample/2D/central_square_load.txt
 ;
 ; space-delimited array of elastic thicknesses; used for the finite difference 
