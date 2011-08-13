@@ -45,6 +45,7 @@ class Isostasy(IRF):
     # Grid spacing
     # Unnecessary for PrattAiry, but good to keep along, I think, for use 
     # in model output and plotting.
+    # No meaning for ungridded superimposed analytical solutions
     # From input file
     self.dx = self.config.getfloat("numerical", "GridSpacing")
     
@@ -256,8 +257,6 @@ class Flexure(Isostasy):
     
   # UNIVERSAL SETTER: LITHOSPHERIC ELASTIC PROPERTIES ADDED
   def set_value(self, value_key, value):
-    # Inherit from higher-level setter
-    super(Flexure, self).set_value(value_key, value)
     # Parameters
     if value_key == 'YoungsModulus':
       self.E  = value
@@ -266,6 +265,8 @@ class Flexure(Isostasy):
     # Elastic thickness: array or scalar  
     elif value_key == 'ElasticThickness':
       self.Te = value # How to dynamically type for scalar or array?
+    # Inherit from higher-level setter, if not one of these
+    super(Flexure, self).set_value(value_key, value)
     
 class PrattAiry(Isostasy):
   pass

@@ -58,10 +58,14 @@ class F1D(Flexure):
 
   def FFT(self):
     print "The fast fourier transform solution method is not yet implemented."
-
     
   def SPA(self):
-    self.spatialDomain()
+    self.spatialDomainVars()
+    self.spatialDomainGridded()
+
+  def SPA(self):
+    self.spatialDomainVars()
+    self.spatialDomainNoGrid()
 
   
   ######################################
@@ -72,16 +76,41 @@ class F1D(Flexure):
   ## SPATIAL DOMAIN SUPERPOSITION OF ANALYTICAL SOLUTIONS
   #########################################################
 
-  def spatialDomain(self):
-  
-    from numpy import arange, zeros, exp, sin, cos
-  
+  # SETUP
+
+  def spatialDomainVars(self):
     self.D = self.E*self.Te**3/(12*(1-self.nu**2)) # Flexural rigidity
     self.alpha = (4*self.D/(self.drho*self.g))**.25 # 1D flexural parameter
     self.coeff = self.alpha**3/(8*self.D)
 
+
+  # GRIDDED
+
+  def spatialDomainGridded(self):
+  
+    from numpy import arange, zeros, exp, sin, cos
+
     self.nx = self.q0.shape[0]
     self.x = arange(0,self.dx*self.nx,self.dx)
+    
+    self.w = zeros(self.nx) # Deflection array
+    
+    for i in range(self.nx):
+      # Loop over locations that have loads, and sum
+      if self.q0[i]:
+        dist = abs(self.x[i]-self.x)
+        # -= b/c pos load leads to neg (downward) deflection
+        self.w -= self.q0[i] * self.coeff * self.dx * exp(-dist/self.alpha) * \
+          (cos(dist/self.alpha) + sin(dist/self.alpha))
+    # No need to return: w already belongs to "self"
+    
+
+
+  # NO GRID
+
+  def spatialDomainNoGrid(self):
+  
+    from numpy import arange, zeros, exp, sin, cos
     
     self.w = zeros(self.nx) # Deflection array
     
