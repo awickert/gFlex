@@ -87,6 +87,7 @@ class F2D(Flexure):
   # SETUP
 
   def spatialDomainVars(self):
+    from numpy import pi
     self.D = self.E*self.Te**3/(12*(1-self.nu**2)) # Flexural rigidity
     self.alpha = (self.D/(self.drho*self.g))**.25 # 2D flexural parameter
     self.coeff = self.alpha**2/(2*pi*self.D)
