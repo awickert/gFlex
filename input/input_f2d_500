@@ -14,8 +14,8 @@ InfillMaterialDensity=0
 ElasticThickness=40000 ; Used for FFT, SPA, and SPA_NG solutions
 
 [input]
-Loads=q0_sample/2D/lr_bar_100m_500cell.txt
-ElasticThickness=Te_sample/2D/sinusoid_10km_30km_500cell.txt
+Loads=../q0_sample/2D/lr_bar_100m_500cell.txt
+ElasticThickness=../Te_sample/2D/sinusoid_10km_30km_500cell.txt
 
 [output]
 DeflectionOut=tmpout.txt

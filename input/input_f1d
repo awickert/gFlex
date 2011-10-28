@@ -14,7 +14,7 @@ InfillMaterialDensity=0
 ElasticThickness=1000 ; Used for FFT, SPA, and SPA_NG solutions
 
 [input]
-Loads=q0_sample/1D/central_block.txt
+Loads=../q0_sample/1D/central_block.txt
 ElasticThickness=
 ; Te_sample/1D/10km_const.txt
 

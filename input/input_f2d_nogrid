@@ -14,7 +14,7 @@ InfillMaterialDensity=0
 ElasticThickness=2000 ; Used for FFT, SPA, and SPA_NG solutions
 
 [input]
-Loads=q0_sample/2D/CHILDxyload.out
+Loads=../q0_sample/2D/CHILDxyload.out
 ElasticThickness=
 
 [output]
