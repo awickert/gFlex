@@ -1,0 +1,28 @@
+; All units are SI
+
+[mode]
+model=flexure ; "flexure" or "PrattAiry"
+dimension=2 ; 1 or 2 dimensions
+method=FD ; Solution method: FD, FFT, SPA, SPA_NG
+
+[parameter]
+YoungsModulus=1.0E11
+PoissonsRatio=0.25
+GravAccel=9.8
+MantleDensity=3300
+InfillMaterialDensity=0
+ElasticThickness=400 ; Used for FFT, SPA, and SPA_NG solutions
+
+[input]
+Loads=q0_sample/2D/diag.txt
+ElasticThickness=Te_sample/2D/corner_range_15_31.txt
+
+[output]
+DeflectionOut=
+Plot=both
+
+[numerical]
+GridSpacing=25000
+; Iterates until this is the difference between two subsequent iterations
+; Set as 0 if you don't want to iterate
+convergence=1E-3
