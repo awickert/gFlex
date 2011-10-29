@@ -22,6 +22,8 @@ from f1d import *
 from f2d import *
 from prattairy import *
 
+# Not used right now; holding onto this if it is useful for the BMI/CMI
+# implementation
 def supercomputer_or_standalone():
   """
   Find if the program is running on Beach (and therefore we need to load the 

@@ -14,7 +14,7 @@ InfillMaterialDensity=0
 ElasticThickness=10000 ; Used for FFT, SPA, and SPA_NG solutions
 
 [input]
-Loads=../q0_sample/1D/irregular_grid_test1.txt
+Loads=q0_sample/1D/irregular_grid_test1.txt
 ElasticThickness=
 
 [output]

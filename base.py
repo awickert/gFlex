@@ -1,4 +1,4 @@
-import sys, ConfigParser
+import sys, ConfigParser, os
 from numpy import loadtxt, ones, array
 #import CSDMS_base
 
@@ -50,6 +50,7 @@ class Isostasy(IRF):
 #      else:
       self.config = ConfigParser.ConfigParser()
       self.config.read(filename)
+      self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
 
       # Parameters
       # From input file
@@ -65,7 +66,7 @@ class Isostasy(IRF):
       self.dx = self.config.getfloat("numerical", "GridSpacing")
       
       # Loading grid
-      q0path = self.config.get("input", "Loads")
+      q0path = self.inpath + self.config.get("input", "Loads")
       self.q0 = loadtxt(q0path)
 
       # Plotting selection
@@ -336,8 +337,8 @@ class Flexure(Isostasy):
     print "Finite Difference Solution Technique"
     if self.filename:
     # Import Te grid for the finite difference solution
-      Tepath = self.config.get("input", "ElasticThickness")
-      if len(Tepath) > 0:
+      Tepath = self.inpath + self.config.get("input", "ElasticThickness")
+      if len(Tepath) > len(self.inpath):
         try:
           self.Te = loadtxt(Tepath)
           print "Loading elastic thickness array from provided file"

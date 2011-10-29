@@ -14,8 +14,8 @@ InfillMaterialDensity=0
 ElasticThickness=400 ; Used for FFT, SPA, and SPA_NG solutions
 
 [input]
-Loads=../q0_sample/2D/diag.txt
-ElasticThickness=../Te_sample/2D/corner_range_15_31.txt
+Loads=q0_sample/2D/diag.txt
+ElasticThickness=Te_sample/2D/corner_range_15_31.txt
 
 [output]
 DeflectionOut=
