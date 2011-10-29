@@ -34,7 +34,11 @@ class Isostasy(IRF):
     if self.filename:
       # Open parser and get what kind of model
       self.config = ConfigParser.ConfigParser()
-      self.config.read(filename)
+      try:
+        self.config.read(filename)
+      except:
+        "No input file at specified path, or input file configured incorrectly"
+        sys.exit()
       self.model     = self.config.get("mode", "model")
       self.dimension = self.config.getint("mode", "dimension")
 
@@ -66,8 +70,26 @@ class Isostasy(IRF):
       self.dx = self.config.getfloat("numerical", "GridSpacing")
       
       # Loading grid
-      q0path = self.inpath + self.config.get("input", "Loads")
-      self.q0 = loadtxt(q0path)
+      q0path = self.config.get("input", "Loads")
+      try:
+        # First see if it is a full path or directly links from the current
+        # working directory
+        self.q0 = loadtxt(q0path)
+      except:
+        try:
+          # Then see if it is relative to the location of the input file
+          self.q0 = loadtxt(self.inpath + q0path)
+        except:
+          print "Cannot find q0 file"
+          print "Exiting."
+          sys.exit()
+        
+      # Check consistency of dimensions
+      if self.q0.ndim != self.dimension:
+        print "Number of dimensions in loads file is inconsistent with"
+        print "number of dimensions in solution technique."
+        print "Exiting."
+        sys.exit()
 
       # Plotting selection
       self.plotChoice = self.config.get("output","Plot")
@@ -261,8 +283,7 @@ class Isostasy(IRF):
       if (self.Te != (self.Te).mean()).any():
         title(titletext,fontsize=20)       
       else:
-        # No "/1000" needed for FD implementation Te; already in km
-        title(titletext + ', $T_e$ = ' + str((self.Te).mean()) + " km",fontsize=20)
+        title(titletext + ', $T_e$ = ' + str((self.Te / 1000).mean()) + " km",fontsize=20)
     else:
       title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km",fontsize=20)
       
@@ -310,8 +331,8 @@ class Isostasy(IRF):
   # that I've tailored to this code
   def abort(self):
     print("Aborting.")
-    raise SystemExit # Stop program from running after printing only
-                     # my error message
+    sys.exit() # Stop program from running after printing only
+               # my error message (calls "raise systemExit")
 
 # class Flexure inherits Isostay and it overrides the __init__ method. It also
 # define three different solution methods, which are implemented by its subclass.
@@ -336,22 +357,72 @@ class Flexure(Isostasy):
   def FD(self):
     print "Finite Difference Solution Technique"
     if self.filename:
-    # Import Te grid for the finite difference solution
-      Tepath = self.inpath + self.config.get("input", "ElasticThickness")
-      if len(Tepath) > len(self.inpath):
+      # Try to import Te grid or scalar for the finite difference solution
+      Tepath = self.config.get("input", "ElasticThickness")
+      
+      # No grid?
+      if len(Tepath) == 0:
+        if debug: print "Trying to use the scalar elastic thickness"
+        # Is there are scalar file?
         try:
+          # No Te grid path defined, so going for scalar Te
+          TeScalar = self.config.getfloat("parameter", "ElasticThickness")
+          q0shape = array(self.q0.shape)
+          for i in range(len(q0shape)):
+            q0shape[i] += 2 # padding for numerical solution
+          self.Te = TeScalar*ones(q0shape)
+          print "Using constant elastic thickness at provided value"
+        except:
+          # No Te input provided - scalar or array path
+          print "Requested Te file cannot be found, and no scalar elastic"
+          print "thickness is provided in input file"
+          print "You should add one or the other to the input file."
+          print "Exiting."
+          sys.exit()
+      else:
+        # In this case, Tepath has been defined as something by the input file
+        try:
+          # First see if it is a full path or directly links from the current
+          # working directory
           self.Te = loadtxt(Tepath)
           print "Loading elastic thickness array from provided file"
         except:
-          print "Cannot find an ASCII elastic thickness file at Tepath; aborting"
-          raise SystemExit #sys.exit() (sys not imported, I think...)
-      else:
-        q0shape = array(self.q0.shape)
-        for i in range(len(q0shape)):
-          q0shape[i] += 2 # padding for numerical solution
-        self.Te = ones(q0shape)
-        print "Using constant elastic thickness at provided value"
-        
+          try:
+            # Then see if it is relative to the location of the input file
+            self.Te = loadtxt(self.inpath + Tepath)
+          except:
+            # At this point, a Tepath has been provided, but has failed.
+            # No unambiguous way to find what input is desired
+            # 2 options: (1) Te scalar exists, (2) nothing exists
+            # Either way, need to exit
+            try:
+              TeScalar = self.config.getfloat("parameter", "ElasticThickness")
+              print "Requested Te file cannot be found, but a scalar elastic"
+              print "thickness is provided in input file."
+              print "Ambiguous as to whether a Te grid or a scalar Te value was"
+              print "desired."
+              print "(Typo in path to input Te grid?)"
+            except:
+              # No Te input provided - scalar or array path
+              print "Requested Te file is provided but cannot be located."
+              print "No scalar elastic thickness is provided in input file"
+              print "(Typo in path to input Te grid?)"
+            print "Exiting."
+            sys.exit()
+        # At this point, Te from a grid has been successfully loaded.
+        # See if there is an ambiguity with a scalar Te also defined
+        try:
+          TeScalar = self.config.getfloat("parameter", "ElasticThickness")
+        except:
+          TeScalar = None
+        if TeScalar:
+          # If this works, need to exit - ambiguous
+          print "Both an elastic thickness array and a scalar elastic thickness"
+          print "have been loaded - ambiguity; cannot continue"
+          print "Exiting"
+          sys.exit()
+        # Otherwise, all set!
+                  
   ### need work
   def FFT(self):
     pass
