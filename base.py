@@ -36,11 +36,13 @@ class Isostasy(IRF):
       self.config = ConfigParser.ConfigParser()
       try:
         self.config.read(filename)
+        # Need to have these guys inside "try" to make sure it is set up OK
+        # (at least for them)
+        self.model     = self.config.get("mode", "model")
+        self.dimension = self.config.getint("mode", "dimension")
       except:
-        "No input file at specified path, or input file configured incorrectly"
+        print "No input file at specified path, or input file configured incorrectly"
         sys.exit()
-      self.model     = self.config.get("mode", "model")
-      self.dimension = self.config.getint("mode", "dimension")
 
   def initialize(self, filename=None):
     self.filename = filename # Redundant with whichModel()?
@@ -420,6 +422,7 @@ class Flexure(Isostasy):
           print "Both an elastic thickness array and a scalar elastic thickness"
           print "have been loaded - ambiguity; cannot continue"
           print "Exiting"
+          print TeScalar
           sys.exit()
         # Otherwise, all set!
                   

@@ -59,8 +59,6 @@ def main():
       return
     elif sys.argv[1] == '--getset':
       print "No input file: running entirely with getters and setters."
-    else:
-      displayUsage()
   elif len(sys.argv) == 1:
     infile = None
     print "No input file: running entirely with getters and setters."

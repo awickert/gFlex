@@ -11,7 +11,8 @@ PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
 InfillMaterialDensity=0
-ElasticThickness=10000 ; Used for FFT, SPA, and SPA_NG solutions
+ElasticThickness=
+; Used for FFT, SPA, and SPA_NG solutions
 
 [input]
 Loads=q0_sample/1D/lr_blocks_100m_500cell.txt
