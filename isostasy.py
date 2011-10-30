@@ -15,7 +15,7 @@ and numerically (for either variable or constant flexural rigidity); the former
 uses Green's functions and the latter uses a direct sparse matrix solution.
 """
 
-
+from socket import gethostname
 import sys
 from base import *
 from f1d import *
@@ -29,8 +29,7 @@ def supercomputer_or_standalone():
   Find if the program is running on Beach (and therefore we need to load the 
   CSDMS utility modules)
   """
-  from socket import gethostname
-  if gethostname()==beach:
+  if gethostname()=='beach':
     import os.system
     if debug: print "Running on Beach; loading CSDMS utilities"
     os.system("module load internal")
@@ -43,21 +42,38 @@ def supercomputer_or_standalone():
 def displayUsage():
   print 'Usage: (1) python isostasy.py path_to_input_file'
   print '       (2) ./isostasy.py path_to_input_file'
+  print 'Other arguments: (3) --help or -h: this menu'
+  print '                 (4) --getset: force to run with only getters and setters'
+  print 'If no arguments are provided:'
+  print '     If on Beach, will run with getters and setters'
+  print '     Otherwise, this menu will appear'
 
 def main():
   infile = 1 # start by assuming that there is an input file
+
+  print ""
 
   if len(sys.argv) > 1:
     if sys.argv[1] == '--help' or sys.argv[1] == '-h':
       displayUsage()
       return
+    elif sys.argv[1] == '--getset':
+      print "No input file: running entirely with getters and setters."
+    else:
+      displayUsage()
   elif len(sys.argv) == 1:
     infile = None
-    if debug:
-      print "No input file: running entirely with getters and setters."
-      print 'Comment out the "return # TEMPORARY" immediately after this'
-      print 'in "isostasy.py" to start working on the get/set routine.'
-    #return # TEMPORARY
+    print "No input file: running entirely with getters and setters."
+    print ""
+    if gethostname()=='beach':
+      print "Welcome to Beach!"
+      print ""
+    else:
+      print "You are not running on Beach; are you sure you want to do this?"
+      print 'Add "--getset" as an argument (python isostasy.py --getset)'
+      print 'when you run isostasy to confirm that you did not just forget'
+      print 'to set an input file'
+      sys.exit()      
   
   if debug: print 'Command line: ',sys.argv
   
