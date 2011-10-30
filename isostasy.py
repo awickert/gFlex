@@ -73,6 +73,10 @@ def main():
       print 'Add "--getset" as an argument (python isostasy.py --getset)'
       print 'when you run isostasy to confirm that you did not just forget'
       print 'to set an input file'
+      print ""
+      print "Command line usage help:"
+      displayUsage()
+      print ""
       sys.exit()      
   
   if debug: print 'Command line: ',sys.argv
