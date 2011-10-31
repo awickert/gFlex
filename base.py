@@ -188,7 +188,6 @@ class Isostasy(IRF):
     # Loading grid
     elif value_key == 'Loads':
       self.q0 = value
-################    elif value_key = 'CoeffArray':
     # Dimensions
     elif value_key == "x":
       self.x = value
@@ -464,8 +463,14 @@ class Flexure(Isostasy):
             sys.exit()
         print "Any coefficient matrix provided in input file has been ignored,"
         print "as a pre-provided coefficient matrix array is available"
-        
-      # Only if you aren't loading a pre-made coefficient matrix
+
+        # Check consistency of size
+        if prod(self.coeff.shape) != long(prod(array(self.q0.shape,dtype=int64)+2)**2):
+          print "Inconsistent size of q0 array and coefficient mattrix"
+          print "Exiting."
+          sys.exit()
+
+      # Only get Te if you aren't loading a pre-made coefficient matrix
       if coeffPath == None:
         # No grid?
         if Tepath == None:
@@ -556,6 +561,8 @@ class Flexure(Isostasy):
     elif value_key == 'ElasticThickness':
       self.Te = value # How to dynamically type for scalar or array?
                       # Python is smart enough to handle it.
+    elif value_key = 'CoeffArray':
+      self.coeff = CoeffArray
     elif value_key == 'method':
       self.method = value
       print "method set"

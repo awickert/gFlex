@@ -45,14 +45,18 @@ class F1D(Flexure):
   def FD(self):
     if self.plotChoice:
       self.gridded_x()
-    dx4, D = self.elasprep(self.dx,self.Te,self.E,self.nu)
-    self.coeff = self.coeff_matrix(D,self.drho,dx4,self.nu,self.g)
+    # Only generate coefficient matrix if it is not already provided
+    try:
+      self.coeff
+    except:
+      dx4, D = self.elasprep(self.dx,self.Te,self.E,self.nu)
+      self.coeff = self.coeff_matrix(D,self.drho,dx4,self.nu,self.g)
     self.w = self.direct_fd_solve(self.coeff,self.q0)
 
   def FFT(self):
     if self.plotChoice:
       self.gridded_x()
-    print "The fast fourier transform solution method is not yet implemented."
+    print "The fast Fourier transform solution method is not yet implemented."
     sys.exit()
     
   def SPA(self):
