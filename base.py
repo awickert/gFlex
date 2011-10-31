@@ -1,5 +1,5 @@
 import sys, ConfigParser, os
-from numpy import loadtxt, ones, array
+from numpy import loadtxt, load, ones, array
 #import CSDMS_base
 
 debug = True
@@ -131,11 +131,21 @@ class Isostasy(IRF):
     try:
       # First see if it is a full path or directly links from the current
       # working directory
-      self.q0 = loadtxt(q0path)
+      try:
+        self.q0 = load(q0path)
+        if debug: print "Loading q0 from numpy binary"
+      except:
+        self.q0 = loadtxt(q0path)
+        if debug: print "Loading q0 ASCII"
     except:
       try:
         # Then see if it is relative to the location of the input file
-        self.q0 = loadtxt(self.inpath + q0path)
+        try:
+          self.q0 = load(self.inpath + q0path)
+          if debug: print "Loading q0 from numpy binary"
+        except:
+          self.q0 = loadtxt(self.inpath + q0path)
+          if debug: print "Loading q0 ASCII"
       except:
         print "Cannot find q0 file"
         print "q0path = " + q0path
