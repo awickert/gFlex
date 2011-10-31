@@ -170,21 +170,18 @@ class Isostasy(IRF):
       self.g = value
     elif value_key == 'MantleDensity':
       self.rho_m = value
-      print self.rho_m
     elif value_key == 'InfillMaterialDensity':
       self.rho_fill = value
-      print self.rho_fill
     # Grid spacing
     elif value_key == 'GridSpacing':
       self.dx = value
     # Loading grid
     elif value_key == 'Loads':
-      self.q0 = value # had [np.]float64(value) before
+      self.q0 = value
+################    elif value_key = 'CoeffArray':
     # Dimensions
     elif value_key == "x":
-      print "about to set x"
       self.x = value
-      print "x set"
     elif value_key == "y":
       self.y = value
     # Output
@@ -194,7 +191,6 @@ class Isostasy(IRF):
     elif value_key == 'Plot':
       # 'q0', 'w', 'both', or (1D) 'combo'
       self.plotChoice = value
-      
   
   # UNIVERSAL GETTER
   def get_value(self, val_string):
@@ -216,24 +212,36 @@ class Isostasy(IRF):
     self.outputDeflections()
     self.plotting()
 
-  # Save to file, if desired
+  # Save output deflections to file, if desired
   def outputDeflections(self):
     """
-    Outputs a space-delimited ASCII grid of deflections if an output 
-    directory is defined in the input file
+    Outputs a grid of deflections if an output directory is defined in the 
+    input file
+    
+    If the filename given in the input file ends in ".npy", then a binary 
+    numpy grid will be exported.
+    
+    Otherwise, an ASCII grid will be exported.
     """
     try:
       # If wOutFile exists, has already been set by a setter
       self.wOutFile
-      print "Output filename provided by setter"
+      if debug:
+        print "Output filename provided by setter"
+        print "Not saving file with this code; that should be handled by the driver"
+        
     # Otherwise, it needs to be set by an input file
     except:
       try:
         self.wOutFile = self.configGet("string", "output", "DeflectionOut",optional=True)
         # If this exists and is a string, write output to a file
-        from numpy import savetxt
-        # Shouldn't need more than mm precision, at very most
-        savetxt(self.wOutFile,self.w,fmt='%.3f')
+        if self.WoutFile[-4:] == '.npy':
+          from numpy import save
+          save(self.wOutFile,self.w)
+        else:
+          from numpy import savetxt
+          # Shouldn't need more than mm precision, at very most
+          savetxt(self.wOutFile,self.w,fmt='%.3f')
         if debug: print 'Saving deflections --> ' + self.wOutFile
       except:
         # if there is no parsable output string, do not generate output;
@@ -427,68 +435,90 @@ class Flexure(Isostasy):
       # Try to import Te grid or scalar for the finite difference solution
       Tepath = self.configGet("string", "input", "ElasticThickness",optional=True)
       
-      # No grid?
-      if Tepath == None:
-        if debug: print "Trying to use the scalar elastic thickness"
-        # Is there are scalar file?
+      # See if there is a pre-made coefficient matrix to import
+      coeffPath = self.configGet("string", "input", "CoeffMatrix",optional=True)
+      # If there is, import it.
+      if coeffPath:
         try:
-          # No Te grid path defined, so going for scalar Te
-          TeScalar = self.config.getfloat("parameter", "ElasticThickness")
-          q0shape = array(self.q0.shape)
-          for i in range(len(q0shape)):
-            q0shape[i] += 2 # padding for numerical solution
-          self.Te = TeScalar*ones(q0shape)
-          print "Using constant elastic thickness at provided value"
-        except:
-          # No Te input provided - scalar or array path
-          print "Requested Te file cannot be found, and no scalar elastic"
-          print "thickness is provided in input file"
-          print "You should add one or the other to the input file."
-          print "Exiting."
-          sys.exit()
-      else:
-        # In this case, Tepath has been defined as something by the input file
-        try:
-          # First see if it is a full path or directly links from the current
-          # working directory
-          self.Te = loadtxt(Tepath)
-          print "Loading elastic thickness array from provided file"
+          from numpy import load
+          self.coeff = load(coeffPath)
+          if debug: print "Loading coefficient array as numpy array binary"
         except:
           try:
-            # Then see if it is relative to the location of the input file
-            self.Te = loadtxt(self.inpath + Tepath)
+            from numpy import loadtxt
+            self.coeff = load(coeffPath)
+            if debug: print "Loading coefficient array as ASCII grid"
           except:
-            # At this point, a Tepath has been provided, but has failed.
-            # No unambiguous way to find what input is desired
-            # 2 options: (1) Te scalar exists, (2) nothing exists
-            # Either way, need to exit
-            try:
-              TeScalar = self.config.getfloat("parameter", "ElasticThickness")
-              print "Requested Te file cannot be found, but a scalar elastic"
-              print "thickness is provided in input file."
-              print "Ambiguous as to whether a Te grid or a scalar Te value was"
-              print "desired."
-              print "(Typo in path to input Te grid?)"
-            except:
-              # No Te input provided - scalar or array path
-              print "Requested Te file is provided but cannot be located."
-              print "No scalar elastic thickness is provided in input file"
-              print "(Typo in path to input Te grid?)"
+            print "Could not load coefficient array; check filename provided"
             print "Exiting."
             sys.exit()
-        # At this point, Te from a grid has been successfully loaded.
-        # See if there is an ambiguity with a scalar Te also defined
-        try:
-          TeScalar = self.config.getfloat("parameter", "ElasticThickness")
-        except:
-          TeScalar = None
-        if TeScalar:
-          # If this works, need to exit - ambiguous
-          print "Both an elastic thickness array and a scalar elastic thickness"
-          print "have been loaded - ambiguity; cannot continue"
-          print "Exiting."
-          sys.exit()
-        # Otherwise, all set!
+        print "Any coefficient matrix provided in input file has been ignored,"
+        print "as a pre-provided coefficient matrix array is available"
+        
+      # Only if you aren't loading a pre-made coefficient matrix
+      if coeffPath == None:
+        # No grid?
+        if Tepath == None:
+          if debug: print "Trying to use the scalar elastic thickness"
+          # Is there are scalar file?
+          try:
+            # No Te grid path defined, so going for scalar Te
+            TeScalar = self.config.getfloat("parameter", "ElasticThickness")
+            q0shape = array(self.q0.shape)
+            for i in range(len(q0shape)):
+              q0shape[i] += 2 # padding for numerical solution
+            self.Te = TeScalar*ones(q0shape)
+            print "Using constant elastic thickness at provided value"
+          except:
+            # No Te input provided - scalar or array path
+            print "Requested Te file cannot be found, and no scalar elastic"
+            print "thickness is provided in input file"
+            print "You should add one or the other to the input file."
+            print "Exiting."
+            sys.exit()
+        else:
+          # In this case, Tepath has been defined as something by the input file
+          try:
+            # First see if it is a full path or directly links from the current
+            # working directory
+            self.Te = loadtxt(Tepath)
+            print "Loading elastic thickness array from provided file"
+          except:
+            try:
+              # Then see if it is relative to the location of the input file
+              self.Te = loadtxt(self.inpath + Tepath)
+            except:
+              # At this point, a Tepath has been provided, but has failed.
+              # No unambiguous way to find what input is desired
+              # 2 options: (1) Te scalar exists, (2) nothing exists
+              # Either way, need to exit
+              try:
+                TeScalar = self.config.getfloat("parameter", "ElasticThickness")
+                print "Requested Te file cannot be found, but a scalar elastic"
+                print "thickness is provided in input file."
+                print "Ambiguous as to whether a Te grid or a scalar Te value was"
+                print "desired."
+                print "(Typo in path to input Te grid?)"
+              except:
+                # No Te input provided - scalar or array path
+                print "Requested Te file is provided but cannot be located."
+                print "No scalar elastic thickness is provided in input file"
+                print "(Typo in path to input Te grid?)"
+              print "Exiting."
+              sys.exit()
+          # At this point, Te from a grid has been successfully loaded.
+          # See if there is an ambiguity with a scalar Te also defined
+          try:
+            TeScalar = self.config.getfloat("parameter", "ElasticThickness")
+          except:
+            TeScalar = None
+          if TeScalar:
+            # If this works, need to exit - ambiguous
+            print "Both an elastic thickness array and a scalar elastic thickness"
+            print "have been loaded - ambiguity; cannot continue"
+            print "Exiting."
+            sys.exit()
+          # Otherwise, all set!
                   
   ### need work
   def FFT(self):

@@ -20,9 +20,11 @@ ElasticThickness=1000
 [input]
 Loads=q0_sample/1D/central_block.txt
 ElasticThickness=
+CoeffMatrix=
 
 [output]
 DeflectionOut=tmpout.txt
+CoeffOut=
 Plot=
 
 [numerical]
