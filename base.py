@@ -13,6 +13,9 @@ class IRF(object):
     pass
   
   def run_step(self, i):
+    # Maybe meant to run one step?
+    # Right now, does nothing.
+    # I should make something that does an iterative solution... hmm...
     pass
   
   def finalize(self):
@@ -29,72 +32,131 @@ class IRF(object):
 # by reading three parameters from input file, but it does not set up other
 # parameters, which is the responsibility of derived concrete classes.
 class Isostasy(IRF):
+
+  def configGet(self,vartype,category,name,optional=False,specialReturnMessage=None):
+    """
+    Wraps a try / except and a check for self.filename around ConfigParser
+    as it talks to the input file.
+    Also, checks for existence of input file so this won't execute (and fail) 
+    when no input file is provided (e.g., running in coupled mode with CSDMS 
+    entirely with getters and setters)
+
+    vartype can be 'float', 'str' or 'string' (str and string are the same),
+    or 'int' or 'integer' (also the same).
+    
+    "Optional" determines whether or not the program will exit if the variable 
+    fails to load. Set it to "True" if you don't want it to exit. In this case,
+    the variable will be set to "None". Otherwise, it defaults to "False".
+    
+    "specialReturnMessage" is something that you would like to add at the end 
+    of a failure to execute message. By default it does not print.
+    """
+    
+    try:
+      if optional:
+        # Must be first, so we don't exit program if optional flag is raised
+        var = None
+        print 'No value entered for optional parameter "' + name + '" in category "' + category + '" in input file.'
+        print 'No action related to this optional parameter will be taken.'
+      elif vartype == 'float':
+        var = self.config.getfloat(category,name)
+      elif vartype == 'string' or vartype == 'str':
+        var = self.config.get(category,name)
+        if var == "":
+          print "Input strings cannot be empty."
+          sys.exit()
+      elif vartype == 'integer' or vartype == 'int':
+        var = self.config.getint(category,name)
+      else:
+        print "Please enter 'float' or 'string' (or 'str') for vartype"
+        sys.exit() # Won't exit, but will lead to exception
+      return var
+    except:
+      print 'Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from input file.'
+      if specialReturnMessage:
+        print specialReturnMessage
+      print "Exiting."
+      sys.exit()
+
   def whichModel(self, filename=None):
     self.filename = filename
     if self.filename:
-      # Open parser and get what kind of model
-      self.config = ConfigParser.ConfigParser()
       try:
-        self.config.read(filename)
-        # Need to have these guys inside "try" to make sure it is set up OK
-        # (at least for them)
-        self.model     = self.config.get("mode", "model")
-        self.dimension = self.config.getint("mode", "dimension")
+        # only let this function imoprt things once
+        self.whichModel_AlreadyRun
       except:
-        print "No input file at specified path, or input file configured incorrectly"
-        sys.exit()
+        # Open parser and get what kind of model
+        self.config = ConfigParser.ConfigParser()
+        try:
+          self.config.read(filename)
+          self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
+          # Need to have these guys inside "try" to make sure it is set up OK
+          # (at least for them)
+          self.model     = self.configGet("string", "mode", "model")
+          self.dimension = self.configGet("integer", "mode", "dimension")
+          print "Successfully loaded input file and obtained model mode"
+          self.whichModel_AlreadyRun = True
+        except:
+          print "No input file at specified path, or input file configured incorrectly"
+          sys.exit()
 
   def initialize(self, filename=None):
-    self.filename = filename # Redundant with whichModel()?
-    self.plotChoice = None # Default for no plotting
-    self.wOutFile = None # Default with no output
-    if self.filename:
-      # Open parser if needed (whichModel() should have run already, so
-      # shouldn't be needed.)
-#      if self.config:
-#        pass
-#      else:
-      self.config = ConfigParser.ConfigParser()
-      self.config.read(filename)
-      self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
+  
+    print "" # Blank line at start of run
 
-      # Parameters
-      # From input file
-      self.g = self.config.getfloat("parameter", "GravAccel")
-      self.rho_m = self.config.getfloat("parameter", "MantleDensity")
-      self.rho_fill = self.config.getfloat("parameter", "InfillMaterialDensity")
+    if debug: print "Starting to initialize..."
 
-      # Grid spacing
-      # Unnecessary for PrattAiry, but good to keep along, I think, for use 
-      # in model output and plotting.
-      # No meaning for ungridded superimposed analytical solutions
-      # From input file
-      self.dx = self.config.getfloat("numerical", "GridSpacing")
-      
-      # Loading grid
-      q0path = self.config.get("input", "Loads")
+    self.whichModel(filename) # Use standard routine to pull out values
+                         # If no filename provided, will not initialize input 
+                         # file. If input file provided this should have 
+                         # already run and raised that flag.
+                         # So really, this should never be executed.
+
+    # Parameters
+    # From input file
+    self.g = self.configGet('float', "parameter", "GravAccel")
+    self.rho_m = self.configGet('float', "parameter", "MantleDensity")
+    self.rho_fill = self.configGet('float', "parameter", "InfillMaterialDensity")
+
+    # Grid spacing
+    # Unnecessary for PrattAiry, but good to keep along, I think, for use 
+    # in model output and plotting.
+    # No meaning for ungridded superimposed analytical solutions
+    # From input file
+    self.dx = self.configGet("float", "numerical", "GridSpacing")
+    
+    # Loading grid
+    q0path = self.configGet('string', "input", "Loads")
+
+    try:
+      # First see if it is a full path or directly links from the current
+      # working directory
+      self.q0 = loadtxt(q0path)
+    except:
       try:
-        # First see if it is a full path or directly links from the current
-        # working directory
-        self.q0 = loadtxt(q0path)
+        # Then see if it is relative to the location of the input file
+        self.q0 = loadtxt(self.inpath + q0path)
       except:
-        try:
-          # Then see if it is relative to the location of the input file
-          self.q0 = loadtxt(self.inpath + q0path)
-        except:
-          print "Cannot find q0 file"
-          print "Exiting."
-          sys.exit()
-        
-      # Check consistency of dimensions
-      if self.q0.ndim != self.dimension:
-        print "Number of dimensions in loads file is inconsistent with"
-        print "number of dimensions in solution technique."
+        print "Cannot find q0 file"
+        print "q0path = " + q0path
+        print "Looked relative to model python files."
+        print "Also looked relative to input file path, " + self.inpath
         print "Exiting."
         sys.exit()
+      
+    # Check consistency of dimensions
+    if self.q0.ndim != self.dimension:
+      print "Number of dimensions in loads file is inconsistent with"
+      print "number of dimensions in solution technique."
+      print "Exiting."
+      sys.exit()
 
-      # Plotting selection
-      self.plotChoice = self.config.get("output","Plot")
+    # Plotting selection
+    self.plotChoice = self.configGet("string","output","Plot",optional=True)
+
+  # Finalize: just print a line to stdout
+  def finalize(self):
+    print ""
 
   # UNIVERSAL SETTER: VALUES THAT EVERYONE NEEDS
   def set_value(self, value_key, value):
@@ -161,24 +223,27 @@ class Isostasy(IRF):
     directory is defined in the input file
     """
     try:
-      if self.wOutFile:
-        print "Output filename provided by setter"
-      else:  
-        self.wOutFile = self.config.get("output", "DeflectionOut")
+      # If wOutFile exists, has already been set by a setter
+      self.wOutFile
+      print "Output filename provided by setter"
+    # Otherwise, it needs to be set by an input file
+    except:
+      try:
+        self.wOutFile = self.configGet("string", "output", "DeflectionOut",optional=True)
         # If this exists and is a string, write output to a file
         from numpy import savetxt
         # Shouldn't need more than mm precision, at very most
         savetxt(self.wOutFile,self.w,fmt='%.3f')
         if debug: print 'Saving deflections --> ' + self.wOutFile
-    except:
-      # if there is no parsable output string, do not generate output;
-      # this allows the user to leave the line blank and produce no output
-      print 'Not writing any deflection output to file'
+      except:
+        # if there is no parsable output string, do not generate output;
+        # this allows the user to leave the line blank and produce no output
+        print 'Not writing any deflection output to file'
 
   # Plot, if desired
   def plotting(self):
-    print self.plotChoice
     if self.plotChoice:
+      print "Plotting " + self.plotChoice
       if debug: print 'Plotting...'
       if self.dimension==1:
         if self.plotChoice == 'q0':
@@ -204,7 +269,9 @@ class Isostasy(IRF):
         print "q0, w, both, combo"
     else:
       try:
+        # Double check that we didn't forget to include plotting selection
         self.plotChoice = self.config.get("output", "Plot")
+        self.plotting()
       except:
         self.plotChoice = None
         print "No plotting today"
@@ -340,18 +407,17 @@ class Isostasy(IRF):
 # define three different solution methods, which are implemented by its subclass.
 class Flexure(Isostasy):
   def initialize(self, filename=None):
-    super(Flexure, self).whichModel(filename)
     super(Flexure, self).initialize(filename)
 
     # Solution method
     if self.filename:
-      self.method = self.config.get("mode", "method")
+      self.method = self.configGet("string", "mode", "method")
     
     # Parameters
     self.drho = self.rho_m - self.rho_fill
     if self.filename:
-      self.E  = self.config.getfloat("parameter", "YoungsModulus")
-      self.nu = self.config.getfloat("parameter", "PoissonsRatio")
+      self.E  = self.configGet("float", "parameter", "YoungsModulus")
+      self.nu = self.configGet("float", "parameter", "PoissonsRatio")
     
   ### need to determine its interface, it is best to have a uniform interface
   ### no matter it is 1D or 2D; but if it can't be that way, we can set up a

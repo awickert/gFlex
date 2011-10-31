@@ -36,7 +36,7 @@ class F1D(Flexure):
   def finalize(self):
     ### need work
     if debug: print 'F1D finalized'
-        
+    super(F1D, self).finalize()   
     
   ########################################
   ## FUNCTIONS FOR EACH SOLUTION METHOD ##
@@ -48,14 +48,12 @@ class F1D(Flexure):
     dx4, D = self.elasprep(self.dx,self.Te,self.E,self.nu)
     self.coeff = self.coeff_matrix(D,self.drho,dx4,self.nu,self.g)
     self.w = self.direct_fd_solve(self.coeff,self.q0)
-    print D.max()
-    print self.nu
-    print self.drho
 
   def FFT(self):
     if self.plotChoice:
       self.gridded_x()
     print "The fast fourier transform solution method is not yet implemented."
+    sys.exit()
     
   def SPA(self):
     self.gridded_x()
@@ -178,8 +176,6 @@ class F1D(Flexure):
     
     from numpy import vstack, array
     from scipy.sparse import dia_matrix
-
-    print dx4
 
     # Diagonals, from left to right  
     l2 = D[:-2] / dx4

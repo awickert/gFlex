@@ -39,6 +39,7 @@ class F2D(Flexure):
 
   def finalize(self):
     if debug: print 'F2D finalized'
+    super(F2D, self).finalize()
     
   ########################################
   ## FUNCTIONS FOR EACH SOLUTION METHOD ##

@@ -40,6 +40,8 @@ def supercomputer_or_standalone():
     from CSDMS_base import CSDMS_component as cc
 
 def displayUsage():
+  print ""
+  print "Command line usage help:"
   print 'Usage: (1) python isostasy.py path_to_input_file'
   print '       (2) ./isostasy.py path_to_input_file'
   print 'Other arguments: (3) --help or -h: this menu'
@@ -49,18 +51,20 @@ def displayUsage():
   print '     Otherwise, this menu will appear'
 
 def main():
-  infile = 1 # start by assuming that there is an input file
+  # Instantiate
+  obj = Isostasy()
 
-  print ""
-
-  if len(sys.argv) > 1:
+  if len(sys.argv) == 2:
     if sys.argv[1] == '--help' or sys.argv[1] == '-h':
       displayUsage()
       return
     elif sys.argv[1] == '--getset':
       print "No input file: running entirely with getters and setters."
+    else:
+      # Looks like it wants to be an input file!
+      filename = sys.argv[1] # it works for usage (1) and (2)
+      obj.whichModel(filename)
   elif len(sys.argv) == 1:
-    infile = None
     print "No input file: running entirely with getters and setters."
     print ""
     if gethostname()=='beach':
@@ -71,20 +75,16 @@ def main():
       print 'Add "--getset" as an argument (python isostasy.py --getset)'
       print 'when you run isostasy to confirm that you did not just forget'
       print 'to set an input file'
-      print ""
-      print "Command line usage help:"
       displayUsage()
       print ""
-      sys.exit()      
+      sys.exit()
+  else:
+    print "Too many input parameters provided; exiting."
+    displayUsage()
+    sys.exit()
   
   if debug: print 'Command line: ',sys.argv
-  
-  if infile:
-    filename = sys.argv[1] # it works for usage (1) and (2)
-  else:
-    filename = None
-  obj = Isostasy()
-  obj.whichModel(filename)
+
   ## SET MODEL TYPE AND DIMENSIONS HERE ##
   ########################################
   if obj.model == 'flexure':
