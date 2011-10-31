@@ -254,7 +254,6 @@ class Isostasy(IRF):
         elif self.plotChoice == 'both':
           self.linesubplots()
         elif self.plotChoice == 'combo':
-          #titletext=self.config.get(
           self.plotTogether()
       elif self.dimension==2:
         if self.plotChoice == 'q0':
@@ -426,10 +425,10 @@ class Flexure(Isostasy):
     print "Finite Difference Solution Technique"
     if self.filename:
       # Try to import Te grid or scalar for the finite difference solution
-      Tepath = self.config.get("input", "ElasticThickness")
+      Tepath = self.configGet("string", "input", "ElasticThickness",optional=True)
       
       # No grid?
-      if len(Tepath) == 0:
+      if Tepath == None:
         if debug: print "Trying to use the scalar elastic thickness"
         # Is there are scalar file?
         try:
@@ -487,8 +486,7 @@ class Flexure(Isostasy):
           # If this works, need to exit - ambiguous
           print "Both an elastic thickness array and a scalar elastic thickness"
           print "have been loaded - ambiguity; cannot continue"
-          print "Exiting"
-          print TeScalar
+          print "Exiting."
           sys.exit()
         # Otherwise, all set!
                   
@@ -499,12 +497,12 @@ class Flexure(Isostasy):
   def SPA(self):
     if self.filename:
       # Define the (scalar) elastic thickness
-      self.Te = self.config.getfloat("parameter", "ElasticThickness")
+      self.Te = self.configGet("float", "parameter", "ElasticThickness")
 
   def SPA_NG(self):
     if self.filename:
       # Define the (scalar) elastic thickness
-      self.Te = self.config.getfloat("parameter", "ElasticThickness")
+      self.Te = self.configGet("float", "parameter", "ElasticThickness")
 
     
   # UNIVERSAL SETTER: LITHOSPHERIC ELASTIC PROPERTIES AND SOLUTION METHOD
