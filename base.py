@@ -1,5 +1,7 @@
 import sys, ConfigParser, os
 from numpy import loadtxt, load, ones, array
+import numpy as np # Finally broke down and did it
+import types # For flow control
 #import CSDMS_base
 
 debug = True
@@ -188,6 +190,16 @@ class Isostasy(IRF):
     # Loading grid
     elif value_key == 'Loads':
       self.q0 = value
+      # Te setting
+      try:
+        # If self.q0 == None, then we know we have tried to make Te first and  
+        # need a grid for some reason
+        # "Try" b/c self.q0 might be undefined
+        if self.q0 == None:
+          readyElasticThickness() # Elastic thicnkess may need to be modified
+      except:
+        pass # If this doesn't succeed, everything should be fine.
+             # And if it does, program will try to make everything work
     # Dimensions
     elif value_key == "x":
       self.x = value
@@ -422,6 +434,34 @@ class Isostasy(IRF):
 # class Flexure inherits Isostay and it overrides the __init__ method. It also
 # define three different solution methods, which are implemented by its subclass.
 class Flexure(Isostasy):
+  def coeffArraySizeCheck(self):
+    """
+    Make sure that q0 and coefficient array are the right size compared to 
+    each other; otherwise, exit.
+    """
+    if prod(self.coeff.shape) != long(prod(array(self.q0.shape,dtype=int64)+2)**2):
+      print "Inconsistent size of q0 array and coefficient mattrix"
+      print "Exiting."
+      sys.exit()
+      
+  def TeArraySizeCheck(self):
+    """
+    Checks that Te and q0 array sizes are compatible
+    """
+    # Only if they are both defined
+    if self.Te and self.q0:
+      # Doesn't touch non-arrays or 1D arrays
+      if type(self.Te) is np.ndarray:
+        if prod(self.Te.shape) > 1:
+          # +2 for fringes in Te required for finite difference solution
+          if prod(self.Te.shape) != long(prod(np.array(self.q0.shape,dtype=int64)+2)):
+            print "Inconsistent Te and q0 array shapes."
+            print "Exiting."
+            sys.exit()
+      else:
+        if debug: print "Te and q0 array sizes pass consistency check"
+
+
   def initialize(self, filename=None):
     super(Flexure, self).initialize(filename)
 
@@ -465,10 +505,7 @@ class Flexure(Isostasy):
         print "as a pre-provided coefficient matrix array is available"
 
         # Check consistency of size
-        if prod(self.coeff.shape) != long(prod(array(self.q0.shape,dtype=int64)+2)**2):
-          print "Inconsistent size of q0 array and coefficient mattrix"
-          print "Exiting."
-          sys.exit()
+        coeffArraySizeCheck()
 
       # Only get Te if you aren't loading a pre-made coefficient matrix
       if coeffPath == None:
@@ -551,18 +588,27 @@ class Flexure(Isostasy):
 
     
   # UNIVERSAL SETTER: LITHOSPHERIC ELASTIC PROPERTIES AND SOLUTION METHOD
+  # FOR FLEXURAL ISOSTASY
   def set_value(self, value_key, value):
     # Parameters
     if value_key == 'YoungsModulus':
       self.E  = value
     elif value_key == 'PoissonsRatio':
       self.nu = value
-    # Elastic thickness: array or scalar  
     elif value_key == 'ElasticThickness':
       self.Te = value # How to dynamically type for scalar or array?
                       # Python is smart enough to handle it.
-    elif value_key = 'CoeffArray':
+      self.readyElasticThickness() # But need a program to handle converting 
+                                   # scalars and arrays, as well as potentially 
+                                   # needing to load a Te file
+    elif value_key == 'CoeffArray':
+      # This coefficient array is what is used with the UMFPACK direct solver
       self.coeff = CoeffArray
+      self.readyCoeff() # See if this is a sparse or something that needs to be loaded
+      coeffArraySizeCheck() # Make sure that array size is all right
+      # if so, let everyone know
+      print "LOADING COEFFICIENT ARRAY"
+      print "Elastic thickness maps will not be used for the solution."
     elif value_key == 'method':
       self.method = value
       print "method set"
@@ -570,6 +616,107 @@ class Flexure(Isostasy):
     # Currently not inheriting from the whichModel() setter, as I
     # figure that has to be done right away or not at all
     super(Flexure, self).set_value(value_key, value)
+    
+  def readyCoeff(self):
+    from scipy import sparse
+    if sparse.issparse(self.coeff):
+      pass # Good type
+    # Otherwise, try to load from file
+    elif type(self.coeff) is types.StringType:
+      pass
+      print "Loading sparse coefficient arrays is not yet implemented."
+      print "This must be done soon."
+      print "Exiting."
+      sys.exit()
+    else:
+      try:
+        self.coeff = sparse.dia_matrix(self.coeff)
+      except:
+        "Failed to make a sparse array or load a sparse matrix from the input."
+    
+  def readyElasticThickness(self):
+    """
+    Is run at the right time to either import elastic thickness values from 
+    an array, format them as a grid, or keep them as a scalar
+    """
+    # Need method to know whether you need a scalar or grid
+    try:
+      self.method
+    except:
+      self.method = None
+      
+    # If method is defined as something real
+    if self.method:
+      if self.method is 'FD':
+        if type(self.coeff) is np.ndarray:
+          if prod(array.shape) == 1:
+            # 0D array only works for a constant Te value
+            self.coeff = self.coeff[0]
+          else:
+            # Make sure array is proper size
+            try:
+              # requires self.q0 to be defined
+              self.q0
+            except:
+              self.q0 = None
+            # Only do this check if self.q0 is defined, so you can get its 
+            # error check message
+            if self.q0:
+              # Checks that coeff array is of a workable size
+              TeArraySizeCheck(self)
+        elif np.isscalar(self.Te):
+          try:
+            self.q0 # need a grid size to be defined
+          except:
+            # Just exit and try again if this is not defined yet
+            # But warn just in case
+            self.q0 = None
+            print "Attempting to define a scalar Te for a finite difference solution"
+            print "Before the size of the domain (via q0) is defined."
+            print "Unless q0 is defined before Te is first needed, program will crash."
+          # If self.q0 is defined, convert the scalar to an array
+          if self.q0:
+            q0s = np.array(q0.shape)
+            TeShapeTup = (())
+            for i in len(q0s): # work for the number of dimensions you have
+              # Make shape tuple
+              TeShapeTup += q0s[i]+2
+            # And apply it to self.Te to make it be a grid
+            self.Te = self.Te * np.ones(TeShapeTup)
+        # Otherwise, check if it is a string to a file path
+        elif type(self.Te) is types.StringType:
+          if self.Te[-4:] == '.npy':
+            # Load binary array
+            self.Te = np.load(self.Te)
+          else:
+            # Otherwise, assume ASCII with nothing special
+            self.Te = np.genfromtxt(self.Te)
+        else:
+          print "Can't recognize the input Te type as being able to be imported"
+          print "into code or read as a filename."
+          print "Exiting."
+          sys.exit()
+      else:
+        # Any other method requires a scalar Te
+        if type(self.coeff) is np.ndarray:
+          print "Converting numpy array to scalar elastic thickness for your solution method."
+          # Check if array is really a scalar
+          if prod(array.shape) == 1:
+            self.coeff = self.coeff[0]
+          # Or if array is uniform
+          elif (a == a.mean()).all():
+            self.coeff = a.mean() # Should find out how to take the mean only once
+          else:
+            print "Cannot figure out how to make your elastic thickness into a scalar."
+            print "Exiting."
+            sys.exit()
+          print "Te format conversion complete."
+        elif np.isscalar(self.Te):
+          # All good here
+          pass
+    else:
+      pass # Will just try again next time, when self.method becomes defined (hopefully)
+
     
 class PrattAiry(Isostasy):
   pass

@@ -55,7 +55,7 @@ class F2D(Flexure):
     self.w = self.direct_fd_solve(self.coeff,self.q0)
     
   def FFT(self):
-    print "The fast fourier transform solution method is not yet implemented."
+    print "The fast Fourier transform solution method is not yet implemented."
     sys.exit()
 
   def SPA(self):
