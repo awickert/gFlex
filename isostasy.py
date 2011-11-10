@@ -59,15 +59,18 @@ def main():
       displayUsage()
       return
     elif sys.argv[1] == '--getset':
+      print ""
       print "No input file: running entirely with getters and setters."
     else:
       # Looks like it wants to be an input file!
       filename = sys.argv[1] # it works for usage (1) and (2)
       obj.whichModel(filename)
   elif len(sys.argv) == 1:
+    print ""
     print "No input file: running entirely with getters and setters."
     print ""
     if gethostname()=='beach':
+      print ""
       print "Welcome to Beach!"
       print ""
     else:

@@ -55,12 +55,7 @@ class Isostasy(IRF):
     """
     
     try:
-      if optional:
-        # Must be first, so we don't exit program if optional flag is raised
-        var = None
-        print 'No value entered for optional parameter "' + name + '" in category "' + category + '" in input file.'
-        print 'No action related to this optional parameter will be taken.'
-      elif vartype == 'float':
+      if vartype == 'float':
         var = self.config.getfloat(category,name)
       elif vartype == 'string' or vartype == 'str':
         var = self.config.get(category,name)
@@ -70,15 +65,21 @@ class Isostasy(IRF):
       elif vartype == 'integer' or vartype == 'int':
         var = self.config.getint(category,name)
       else:
-        print "Please enter 'float' or 'string' (or 'str') for vartype"
+        print "Please enter 'float', 'string' (or 'str'), or 'integer' (or 'int') for vartype"
         sys.exit() # Won't exit, but will lead to exception
       return var
     except:
-      print 'Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from input file.'
-      if specialReturnMessage:
-        print specialReturnMessage
-      print "Exiting."
-      sys.exit()
+      if optional:
+        # Carry on if the variable is optional
+        var = None
+        print 'No value entered for optional parameter "' + name + '" in category "' + category + '" in input file.'
+        print 'No action related to this optional parameter will be taken.'
+      else:
+        print 'Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from input file.'
+        if specialReturnMessage:
+          print specialReturnMessage
+        print "Exiting."
+        sys.exit()
 
   def whichModel(self, filename=None):
     self.filename = filename
@@ -272,8 +273,7 @@ class Isostasy(IRF):
   # Plot, if desired
   def plotting(self):
     if self.plotChoice:
-      print "Plotting " + self.plotChoice
-      if debug: print 'Plotting...'
+      if debug: print "Starting to plot " + self.plotChoice
       if self.dimension==1:
         if self.plotChoice == 'q0':
           self.lineplot(self.q0/(self.rho_m*self.g),
@@ -284,6 +284,10 @@ class Isostasy(IRF):
           self.linesubplots()
         elif self.plotChoice == 'combo':
           self.plotTogether()
+        else:
+          print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
+          print "Possible input strings are: q0, w, both, and (for 1D) combo"
+          print "Unable to produce plot."
       elif self.dimension==2:
         if self.plotChoice == 'q0':
           self.surfplot(self.q0/(self.rho_m*self.g),
@@ -292,17 +296,10 @@ class Isostasy(IRF):
           self.surfplot(self.w,'Deflection [m]')
         elif self.plotChoice == 'both':
           self.surfsubplots()
-      else:
-        print "Incorrect plotChoice input provided; proper input strings are:"
-        print "q0, w, both, combo"
-    else:
-      try:
-        # Double check that we didn't forget to include plotting selection
-        self.plotChoice = self.config.get("output", "Plot")
-        self.plotting()
-      except:
-        self.plotChoice = None
-        print "No plotting today"
+        else:
+          print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
+          print "Possible input strings are: q0, w, both, and (for 1D) combo"
+          print "Unable to produce plot."
 
   def linesubplots(self,figNum=1):
     from matplotlib.pyplot import plot, show, figure, subplot, xlabel, \

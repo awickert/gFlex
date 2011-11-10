@@ -25,7 +25,7 @@ CoeffMatrix=
 [output]
 DeflectionOut=tmpout.txt
 CoeffOut=
-Plot=
+Plot=bothasdf
 
 [numerical]
 GridSpacing=20000
