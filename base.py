@@ -1,6 +1,5 @@
 import sys, ConfigParser, os
-from numpy import loadtxt, load, ones, array
-import numpy as np # Finally broke down and did it
+import numpy as np
 import types # For flow control
 #import CSDMS_base
 
@@ -60,7 +59,7 @@ class Isostasy(IRF):
       elif vartype == 'string' or vartype == 'str':
         var = self.config.get(category,name)
         if var == "":
-          print "Input strings cannot be empty."
+          print "Input strings cannot be empty unless they are optional."
           sys.exit()
       elif vartype == 'integer' or vartype == 'int':
         var = self.config.getint(category,name)
@@ -138,7 +137,7 @@ class Isostasy(IRF):
         self.q0 = load(q0path)
         if debug: print "Loading q0 from numpy binary"
       except:
-        self.q0 = loadtxt(q0path)
+        self.q0 = np.loadtxt(q0path)
         if debug: print "Loading q0 ASCII"
     except:
       try:
@@ -147,7 +146,7 @@ class Isostasy(IRF):
           self.q0 = load(self.inpath + q0path)
           if debug: print "Loading q0 from numpy binary"
         except:
-          self.q0 = loadtxt(self.inpath + q0path)
+          self.q0 = np.loadtxt(self.inpath + q0path)
           if debug: print "Loading q0 ASCII"
       except:
         print "Cannot find q0 file"
@@ -436,7 +435,7 @@ class Flexure(Isostasy):
     Make sure that q0 and coefficient array are the right size compared to 
     each other; otherwise, exit.
     """
-    if prod(self.coeff.shape) != long(prod(array(self.q0.shape,dtype=int64)+2)**2):
+    if prod(self.coeff.shape) != long(prod(np.array(self.q0.shape,dtype=int64)+2)**2):
       print "Inconsistent size of q0 array and coefficient mattrix"
       print "Exiting."
       sys.exit()
@@ -480,19 +479,16 @@ class Flexure(Isostasy):
     if self.filename:
       # Try to import Te grid or scalar for the finite difference solution
       Tepath = self.configGet("string", "input", "ElasticThickness",optional=True)
-      
       # See if there is a pre-made coefficient matrix to import
       coeffPath = self.configGet("string", "input", "CoeffMatrix",optional=True)
       # If there is, import it.
       if coeffPath:
         try:
-          from numpy import load
-          self.coeff = load(coeffPath)
+          self.coeff = np.load(coeffPath)
           if debug: print "Loading coefficient array as numpy array binary"
         except:
           try:
-            from numpy import loadtxt
-            self.coeff = load(coeffPath)
+            self.coeff = np.loadtxt(coeffPath)
             if debug: print "Loading coefficient array as ASCII grid"
           except:
             print "Could not load coefficient array; check filename provided"
@@ -513,10 +509,10 @@ class Flexure(Isostasy):
           try:
             # No Te grid path defined, so going for scalar Te
             TeScalar = self.config.getfloat("parameter", "ElasticThickness")
-            q0shape = array(self.q0.shape)
+            q0shape = np.array(self.q0.shape)
             for i in range(len(q0shape)):
               q0shape[i] += 2 # padding for numerical solution
-            self.Te = TeScalar*ones(q0shape)
+            self.Te = TeScalar*np.ones(q0shape)
             print "Using constant elastic thickness at provided value"
           except:
             # No Te input provided - scalar or array path
@@ -530,12 +526,12 @@ class Flexure(Isostasy):
           try:
             # First see if it is a full path or directly links from the current
             # working directory
-            self.Te = loadtxt(Tepath)
+            self.Te = np.loadtxt(Tepath)
             print "Loading elastic thickness array from provided file"
           except:
             try:
               # Then see if it is relative to the location of the input file
-              self.Te = loadtxt(self.inpath + Tepath)
+              self.Te = np.loadtxt(self.inpath + Tepath)
             except:
               # At this point, a Tepath has been provided, but has failed.
               # No unambiguous way to find what input is desired
