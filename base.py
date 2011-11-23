@@ -104,8 +104,7 @@ class Isostasy(IRF):
 
   def initialize(self, filename=None):
   
-    print "" # Blank line at start of run
-
+    if debug: print "" # Blank line at start of run
     if debug: print "Starting to initialize..."
 
     self.whichModel(filename) # Use standard routine to pull out values
