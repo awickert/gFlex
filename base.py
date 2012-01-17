@@ -342,7 +342,7 @@ class Isostasy(IRF):
 
   def plotTogether(self,figNum=1,titletext='Loads and Lithospheric Deflections'):
     from matplotlib.pyplot import plot, show, figure, xlabel, \
-                                  ylabel, title, axis, ylim
+                                  ylabel, title, axis, ylim, legend
     
     fig = figure(figNum,figsize=(10,6))
     ax = fig.add_subplot(1,1,1)
@@ -351,25 +351,26 @@ class Isostasy(IRF):
 
     # Plot undeflected load
     if self.method == "SPA_NG":
-      ax.plot(xkm,self.q0/(self.rho_m*self.g),'go',linewidth=2)
+      ax.plot(xkm,self.q0/(self.rho_m*self.g),'go',linewidth=2,label="Load thickness [m mantle equivalent]")
     else:
-      ax.plot(xkm,self.q0/(self.rho_m*self.g),'g--',linewidth=2)
+      ax.plot(xkm,self.q0/(self.rho_m*self.g),'g--',linewidth=2,label="Load thickness [m mantle equivalent]")
     
     # Plot deflected load
     if self.method == "SPA_NG":
-      ax.plot(xkm,self.q0/(self.rho_m*self.g) + self.w,'go-',linewidth=2)
+      ax.plot(xkm,self.q0/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load thickness [m mantle equivalent]")
     else:
-      ax.plot(xkm,self.q0/(self.rho_m*self.g) + self.w,'g',linewidth=2)
+      ax.plot(xkm,self.q0/(self.rho_m*self.g) + self.w,'g',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
 
     # Plot deflection
     if self.method == "SPA_NG":
-      ax.plot(xkm,self.w,'ko-',linewidth=2)
+      ax.plot(xkm,self.w,'ko-',linewidth=2,label="Deflection [m mantle equivalent]")
     else:
-      ax.plot(xkm,self.w,'k',linewidth=2)
+      ax.plot(xkm,self.w,'k',linewidth=2,label="Deflection [m mantle equivalent]")
     
-    # Set y min to equal y max (and therefore show isostasy better)
-    ymax = axis()[-1]
-    ylim((-ymax,ymax))
+    # Set y min to equal to the absolute value maximum of y max and y min
+    # (and therefore show isostasy better)
+    yabsmax = max(abs(np.array(ylim())))
+    ylim((-yabsmax,yabsmax))
 
     if self.method == "FD":
       if (self.Te != (self.Te).mean()).any():
@@ -379,8 +380,10 @@ class Isostasy(IRF):
     else:
       title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km",fontsize=20)
       
-    ylabel('Load thickness, mantle equivalent [m]',fontsize=16)
+    ylabel('Loads and flexural response [m]',fontsize=16)
     xlabel('Distance along profile [km]',fontsize=16)
+    
+    legend(loc=0,numpoints=1,fancybox=True)
     
     show()
 
