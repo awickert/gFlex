@@ -516,6 +516,7 @@ class Flexure(Isostasy):
               q0shape[i] += 2 # padding for numerical solution
             self.Te = TeScalar*np.ones(q0shape)
             print "Using constant elastic thickness at provided value"
+            #print " >>> dx = " + self.dx + " <<<" 
           except:
             # No Te input provided - scalar or array path
             print "Requested Te file cannot be found, and no scalar elastic"

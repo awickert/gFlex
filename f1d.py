@@ -188,11 +188,31 @@ class F1D(Flexure):
     r1 = -2 * (D[1:-1] + D[2:]) / dx4
     r2 = D[2:] / dx4
     
+    # Boundary conditions
+    self.D = D
+    # Nope: all the same thing in coeffs
+    # Set 0 
+    """
+    for i in 0,1:
+      l1[i] = l1[i]/2
+      c0[i] = ( (D[i+2] + D[i+1] + D[i]) / dx4 ) + drho*g
+      r1[i] = r1[i+2]/2
+    """
+    
     # Construct sparse array
     ncolsx = c0.shape[0]
     coeffs = vstack((l2,l1,c0,r1,r2))
     offsets = array([-2,-1,0,1,2])
     c = dia_matrix( (coeffs,offsets), shape = (ncolsx,ncolsx) )
+
+    """
+    Boundary conditions
+    self.q0bc = self.q0.copy()
+    self.q0bc[0] += l2[0]
+    self.q0bc[1] -= l1[0]
+    self.q0bc[-2] -= r1[0]
+    self.q0bc[-1] += r2[0]
+    """
 
     return c
     
@@ -209,7 +229,23 @@ class F1D(Flexure):
     from scipy.sparse.linalg import spsolve
     from scipy.sparse import csr_matrix
 
+    # Boundary conditions: prescribe
+    # Shoot! This whole time my code has had the implicit assumption that 
+    # there is no deflection at the boundaries!
+    # How do I write it such that I have an unknown amount of deflection 
+    # there?
+    # Will I have to iterate after all, with the slope of the near-boundary 
+    # points?
+    q0bc = q0.copy()
+    #q0bc[0] -=
+    #q0bc[0] -= q0bc[1]
+    #q0bc[-1] -= q0bc[-2]
+
+    #for i in 0,1,-2,-1:
+    #  q0[i] = q0[i] * self.D[i]
+
     coeff = csr_matrix(coeff) # Needed for solution
+    #q0sparse = csr_matrix(-self.q0bc)
     q0sparse = csr_matrix(-q0) # Negative so bending down with positive load,
                                # bending up with negative load (i.e. material
                                # removed)
