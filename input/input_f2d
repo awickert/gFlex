@@ -1,0 +1,48 @@
+; All units are SI
+
+[mode]
+model=flexure ; "flexure" or "PrattAiry"
+dimension=2 ; 1 or 2 dimensions
+method=FD ; Solution method: FD, FFT, SPA, SPA_NG
+
+[parameter]
+YoungsModulus=1.0E11
+PoissonsRatio=0.25
+GravAccel=9.8
+MantleDensity=3300
+InfillMaterialDensity=0
+; Scalar constant Te usable for any solution type
+ElasticThickness=
+; 20000
+
+[input]
+; Path to input load array
+Loads=q0_sample/2D/diag.txt
+; q0_sample/2D/global1degDEM.txt
+; Elastic thickness grid goes here; cannot coexist with a constant Te
+; defined above
+ElasticThickness=Te_sample/2D/40km_const.txt ; Te_sample/2D/corner_range_15_31.txt
+
+[output]
+; DeflectionOut is a file path for an ASCII grid of w
+DeflectionOut=
+; Plot choices are q0, w, both, or (for 1D) combo
+Plot=both
+
+[numerical]
+GridSpacing_x=17000 ; dx
+BoundaryCondition_West=Periodic
+BoundaryCondition_East=Periodic
+; Solver can be direct or iterative; currently only works in 2D
+; (Direct only in 1D, no matter what is written here)
+Solver=direct
+; Iterates until this is the difference between two subsequent iterations
+; Set as 0 if you don't want to iterate
+convergence=1E-3
+
+[numerical2D]
+; Those parameters shared between this and the 1D solution are in "[numerical]"
+GridSpacing_y=17000 ; dy
+BoundaryCondition_South=Mirror
+BoundaryCondition_North=NoOutsideLoads
+
