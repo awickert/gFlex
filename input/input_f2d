@@ -30,8 +30,8 @@ Plot=both
 
 [numerical]
 GridSpacing_x=17000 ; dx
-BoundaryCondition_West=Periodic
-BoundaryCondition_East=Periodic
+BoundaryCondition_West=Dirichlet
+BoundaryCondition_East=Mirror
 ; Solver can be direct or iterative; currently only works in 2D
 ; (Direct only in 1D, no matter what is written here)
 Solver=direct
@@ -41,7 +41,7 @@ convergence=1E-3
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
-GridSpacing_y=5000 ; dy
-BoundaryCondition_South=Mirror
-BoundaryCondition_North=NoOutsideLoads
+GridSpacing_y=7000 ; dy
+BoundaryCondition_South=Dirichlet
+BoundaryCondition_North=Mirror
 

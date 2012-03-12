@@ -721,7 +721,7 @@ class F2D(Flexure):
   
       # Get elastic thicknesses on margins for NoOutsideLoads b.c.
       if self.BC_W == 'NoOutsideLoads' or self.BC_E == 'NoOutsideLoads' \
-        or (self.BC_W == 'Mirror' and self.BC_E == 'Mirror'):
+        or self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
         TeW = self.Te[:,0]
         TeE = self.Te[:,-1]
       # Combo #1
@@ -787,10 +787,22 @@ class F2D(Flexure):
       # Combo and mirror-only cases already accounted for, so can just do a 
       # simple if
       elif self.BC_W == 'Mirror':
-        padTeW = np.fliplr(self.Te)[:,-self.maxFlexuralWavelength_ncells_x:]        
+        if self.Te.shape[1] < self.maxFlexuralWavelength_ncells_x:
+          extrapad_length = self.maxFlexuralWavelength_ncells_x - self.Te.shape[1]
+          extrapad_W = np.lib.stride_tricks.as_strided(TeW, \
+            (extrapad_length, TeW.size), (0, TeW.itemsize)).transpose()
+          padTeW = np.concatenate(( extrapad_W, np.fliplr(self.Te) ), axis=1)
+        else:
+          padTeW = np.fliplr(self.Te)[:,-self.maxFlexuralWavelength_ncells_x:]        
         self.Te = np.concatenate((padTeW,self.Te), axis=1)
       elif self.BC_E == 'Mirror':
-        padTeE = np.fliplr(self.Te)[:,:self.maxFlexuralWavelength_ncells_x]
+        if self.Te.shape[1] < self.maxFlexuralWavelength_ncells_x:
+          extrapad_length = self.maxFlexuralWavelength_ncells_x - self.Te.shape[1]
+          extrapad_W = np.lib.stride_tricks.as_strided(TeW, \
+            (extrapad_length, TeW.size), (0, TeW.itemsize)).transpose()
+          padTeE = np.concatenate(( np.fliplr(self.Te), extrapad_E ), axis=1)
+        else:
+          padTeE = np.fliplr(self.Te)[:,:self.maxFlexuralWavelength_ncells_x]
         self.Te = np.concatenate((self.Te,padTeE), axis=1)
 
       ####################
@@ -799,7 +811,7 @@ class F2D(Flexure):
       
       # Get elastic thicknesses on margins for NoOutsideLoads b.c.
       if self.BC_N == 'NoOutsideLoads' or self.BC_S == 'NoOutsideLoads' \
-        or (self.BC_N == 'Mirror' and self.BC_S == 'Mirror'):
+        or self.BC_N == 'Mirror' or self.BC_S == 'Mirror':
         TeN = self.Te[0,:]
         TeS = self.Te[-1,:]
       # Combo #1
@@ -861,10 +873,22 @@ class F2D(Flexure):
       # Combo and mirror-only cases already accounted for, so can just do a 
       # simple if
       elif self.BC_N == 'Mirror':
-        padTeN = np.flipud(self.Te)[-self.maxFlexuralWavelength_ncells_y:,:]        
+        if self.Te.shape[0] < self.maxFlexuralWavelength_ncells_y:
+          extrapad_length = self.maxFlexuralWavelength_ncells_y - self.Te.shape[0]
+          extrapad_N = np.lib.stride_tricks.as_strided(TeN, \
+            (extrapad_length, TeN.size), (0, TeN.itemsize))
+          padTeN = np.concatenate(( extrapad_N, np.fliplr(self.Te) ), axis=0)
+        else:
+          padTeN = np.flipud(self.Te)[-self.maxFlexuralWavelength_ncells_y:,:]        
         self.Te = np.concatenate((padTeN,self.Te), axis=0)
       elif self.BC_S == 'Mirror':
-        padTeS = np.flipud(self.Te)[:self.maxFlexuralWavelength_ncells_y,:]
+        if self.Te.shape[0] < self.maxFlexuralWavelength_ncells_y:
+          extrapad_length = self.maxFlexuralWavelength_ncells_y - self.Te.shape[0]
+          extrapad_S = np.lib.stride_tricks.as_strided(TeS, \
+            (extrapad_length, TeS.size), (0, TeS.itemsize))
+          padTeS = np.concatenate(( np.fliplr(self.Te), extrapad_S ), axis=0)
+        else:
+          padTeS = np.flipud(self.Te)[:self.maxFlexuralWavelength_ncells_y,:]
         self.Te = np.concatenate((self.Te,padTeS), axis=0)
       
       #####################
