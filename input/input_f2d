@@ -17,8 +17,7 @@ ElasticThickness=
 
 [input]
 ; Path to input load array
-Loads=q0_sample/2D/diag.txt
-; q0_sample/2D/global1degDEM.txt
+Loads=q0_sample/2D/diag.txt ; q0_sample/2D/global1degDEM.txt ; 
 ; Elastic thickness grid goes here; cannot coexist with a constant Te
 ; defined above
 ElasticThickness=Te_sample/2D/40km_const.txt ; Te_sample/2D/corner_range_15_31.txt

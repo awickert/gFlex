@@ -226,9 +226,11 @@ class Isostasy(IRF):
         # need a grid for some reason
         # "Try" b/c self.q0 might be undefined
         if self.q0 == None:
-          readyElasticThickness() # Elastic thicnkess may need to be modified
+          self.readyElasticThickness() # Elastic thicnkess may need to be modified
       except:
-        pass # If this doesn't succeed, everything should be fine.
+        self.readyElasticThickness() # Check this anyway, esp. array size 
+                                     # compatability check if Te defined first
+        #pass # If this doesn't succeed, everything should be fine.
              # And if it does, program will try to make everything work
     # Dimensions
     elif value_key == "x":
@@ -494,18 +496,13 @@ class Flexure(Isostasy):
     Checks that Te and q0 array sizes are compatible
     """
     # Only if they are both defined
-    if self.Te and self.q0:
+    if self.Te.any() and self.q0.any():
       # Doesn't touch non-arrays or 1D arrays
       if type(self.Te) is np.ndarray:
-        if prod(self.Te.shape) > 1:
-          # +2 for fringes in Te required for finite difference solution
-          if prod(self.Te.shape) != long(prod(np.array(self.q0.shape,dtype=int64)+2)):
-            print "Inconsistent Te and q0 array shapes."
-            print "Exiting."
-            sys.exit()
+        if (np.array(self.Te.shape) - 2 != np.array(self.q0.shape)).any():
+          sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
       else:
         if debug: print "Te and q0 array sizes pass consistency check"
-
 
   def initialize(self, filename=None):
     super(Flexure, self).initialize(filename)
@@ -548,7 +545,7 @@ class Flexure(Isostasy):
         print "Any coefficient matrix provided in input file has been ignored,"
         print "as a pre-provided coefficient matrix array is available"
 
-        # Check consistency of size
+        # Check consistency of size if coeff array was loaded
         coeffArraySizeCheck()
 
       # Only get Te if you aren't loading a pre-made coefficient matrix
@@ -610,7 +607,8 @@ class Flexure(Isostasy):
             print "Exiting."
             sys.exit()
           # Otherwise, all set!
-                  
+    self.readyElasticThickness()
+    
   ### need work
   def FFT(self):
     pass
@@ -644,9 +642,10 @@ class Flexure(Isostasy):
     elif value_key == 'ElasticThickness':
       self.Te = value # How to dynamically type for scalar or array?
                       # Python is smart enough to handle it.
-      self.readyElasticThickness() # But need a program to handle converting 
-                                   # scalars and arrays, as well as potentially 
-                                   # needing to load a Te file
+      if self.q0: # Check for this on both q0 and Te
+        self.readyElasticThickness() # But need a program to handle converting 
+                                     # scalars and arrays, as well as potentially 
+                                     # needing to load a Te file
     elif value_key == 'CoeffArray':
       # This coefficient array is what is used with the UMFPACK direct solver
       # or the iterative solver
@@ -694,26 +693,23 @@ class Flexure(Isostasy):
       self.method
     except:
       self.method = None
-      
+    
     # If method is defined as something real
     if self.method:
-      if self.method is 'FD':
-        if type(self.coeff_matrix) is np.ndarray:
-          if prod(array.shape) == 1:
+      if self.method == 'FD':
+        if type(self.Te) is np.ndarray:
+          if np.prod(self.Te.shape) == 1:
             # 0D array only works for a constant Te value
             self.coeff_matrix = self.coeff_matrix[0]
           else:
             # Make sure array is proper size
+            # Check requires self.q0 to be defined
             try:
-              # requires self.q0 to be defined
               self.q0
             except:
               self.q0 = None
-            # Only do this check if self.q0 is defined, so you can get its 
-            # error check message
-            if self.q0:
-              # Checks that coeff array is of a workable size
-              TeArraySizeCheck(self)
+            # Checks that coeff array is of a workable size
+            self.TeArraySizeCheck()
         # Is it a scalar?
         elif np.isscalar(self.Te):
           # Nothing to be done: I have written FD solution methods for scalar 
@@ -734,14 +730,14 @@ class Flexure(Isostasy):
           sys.exit()
       else:
         # Any other method requires a scalar Te
-        if type(self.coeff_matrix) is np.ndarray:
+        if type(self.Te) is np.ndarray:
           print "Converting numpy array to scalar elastic thickness for your solution method."
           # Check if array is really a scalar
-          if prod(array.shape) == 1:
-            self.coeff_matrix = self.coeff_matrix[0]
+          if np.prod(self.Te.shape) == 1:
+            self.Te = self.Te[0]
           # Or if array is uniform
-          elif (a == a.mean()).all():
-            self.coeff_matrix = a.mean() # Should find out how to take the mean only once
+          elif (self.Te == self.Te.mean()).all():
+            self.Te = self.Te.mean() # Should find out how to take the mean only once
           else:
             print "Cannot figure out how to make your elastic thickness into a scalar."
             print "Exiting."
