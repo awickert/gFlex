@@ -41,7 +41,7 @@ convergence=1E-3
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
-GridSpacing_y=17000 ; dy
+GridSpacing_y=5000 ; dy
 BoundaryCondition_South=Mirror
 BoundaryCondition_North=NoOutsideLoads
 

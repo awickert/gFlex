@@ -902,9 +902,9 @@ class F2D(Flexure):
     """
     for i in range(len(TeS)):
       if i:
-        padding_array = np.concatenate((padding_array, np.array([np.linspace(TeS[i],TeN[i],self.maxFlexuralWavelength_ncells_x)]) ), axis=0)
+        padding_array = np.concatenate((padding_array, np.array([np.linspace(TeS[i],TeN[i],self.maxFlexuralWavelength_ncells_y)]) ), axis=0)
       elif ~i:
-        padding_array = np.array([np.linspace(TeS[i],TeN[i],self.maxFlexuralWavelength_ncells_x)])
+        padding_array = np.array([np.linspace(TeS[i],TeN[i],self.maxFlexuralWavelength_ncells_y)])
        
     return padding_array.transpose()
     
