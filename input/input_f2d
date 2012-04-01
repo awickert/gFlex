@@ -12,15 +12,15 @@ GravAccel=9.8
 MantleDensity=3300
 InfillMaterialDensity=0
 ; Scalar constant Te usable for any solution type
-ElasticThickness=
-; 20000
+ElasticThickness=25000
 
 [input]
 ; Path to input load array
 Loads=q0_sample/2D/diag.txt ; q0_sample/2D/global1degDEM.txt ; 
 ; Elastic thickness grid goes here; cannot coexist with a constant Te
 ; defined above
-ElasticThickness=Te_sample/2D/40km_const.txt ; Te_sample/2D/corner_range_15_31.txt
+ElasticThickness=
+#Te_sample/2D/40km_const.txt ; Te_sample/2D/corner_range_15_31.txt
 
 [output]
 ; DeflectionOut is a file path for an ASCII grid of w
@@ -29,9 +29,9 @@ DeflectionOut=
 Plot=both
 
 [numerical]
-GridSpacing_x=17000 ; dx
-BoundaryCondition_West=Dirichlet
-BoundaryCondition_East=Mirror
+GridSpacing_x=40000 ; dx
+BoundaryCondition_West=Periodic
+BoundaryCondition_East=Periodic
 ; Solver can be direct or iterative; currently only works in 2D
 ; (Direct only in 1D, no matter what is written here)
 Solver=direct
@@ -41,7 +41,7 @@ convergence=1E-3
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
-GridSpacing_y=7000 ; dy
-BoundaryCondition_South=Dirichlet
+GridSpacing_y=10000 ; dy
+BoundaryCondition_South=Mirror
 BoundaryCondition_North=Mirror
 

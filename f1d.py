@@ -44,6 +44,10 @@ class F1D(Flexure):
   ########################################
   
   def FD(self):
+    #try:
+    #  self.plotChoice
+    #except:
+    #  self.plotChoice = None
     if self.plotChoice:
       self.gridded_x()
     # Only generate coefficient matrix if it is not already provided
@@ -248,6 +252,7 @@ class F1D(Flexure):
         self.c0 *= np.ones(self.q0.shape)
         self.r1 *= np.ones(self.q0.shape)
         self.r2 *= np.ones(self.q0.shape)
+      # LOOKS WRONG! CHECK DISCRETIZATION!
       elif type(self.Te) == np.ndarray:
         # Diagonals, from left to right  
         self.l2 = self.D[:-2] / self.dx4
@@ -485,7 +490,7 @@ class F1D(Flexure):
     if self.BC_E == 'Mirror':
       if len(self.q0_mirror) < self.maxFlexuralWavelength_ncells:
         self.q0_mirror_E = np.concatenate((self.q0_mirror,zeropad))
-      elif len(self.q0_mirror) > self.maxFlexuralWavelength_ncells:
+      elif len(self.q0_mirror) >= self.maxFlexuralWavelength_ncells:
         self.q0_mirror_E = self.q0_mirror[:self.maxFlexuralWavelength_ncells]
     if self.BC_W == 'Mirror':
       if len(self.q0_mirror) < self.maxFlexuralWavelength_ncells:
@@ -741,8 +746,8 @@ class F1D(Flexure):
     Sparse solver for one-dimensional flexure of an elastic plate
     """
     
-    print 'q0', self.q0.shape
-    print 'Te', self.Te.shape
+    #print 'q0', self.q0.shape
+    #print 'Te', self.Te.shape
     print 'maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells
     
     self.solver_start_time = time.time()
@@ -762,21 +767,23 @@ class F1D(Flexure):
     # If needed, revert q0 and Te to original dimensions
     self.back_to_original_q0_Te_w()
     
-    print self.w.shape
+    #print self.w.shape
+    
+    #print self.w
     
   def back_to_original_q0_Te_w(self):
     """
     Pull out the parts of q0, Te that we want for special boundary condition
     cases
     """
-    print self.w.shape
-    print self.BC_W
-    print self.BC_E
+    #print self.w.shape
+    #print self.BC_W
+    #print self.BC_E
     #from matplotlib.pyplot import plot,show,figure
     #figure(1),plot(self.q0), show()
     #figure(2),plot(self.w), show()
     #figure(5), plot(self.Te), show()
-    print self.maxFlexuralWavelength_ncells
+    #print self.maxFlexuralWavelength_ncells
     # Special case: clipping needed for the NoOutsideLoads boundary condition.
     # This clipping also works for most of the Mirror boundary conditions
     if self.BC_W == 'NoOutsideLoads' or self.BC_E == 'NoOutsideLoads' or \

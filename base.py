@@ -116,60 +116,74 @@ class Isostasy(IRF):
                          # already run and raised that flag.
                          # So really, this should never be executed.
     
-    # Set clocks to None so if they are called by the getter before the 
-    # calculation is performed, there won't be an error
-    self.coeff_creation_time = None
-    self.time_to_solve = None
-    
-    # Boundary conditions
-    # Setting this optional b/c it will default to Periodic or something
-    self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=True)
-    self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=True)
-    if self.dimension == 2:
-      self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=True)
-      self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=True)
+    if self.filename:
+      # Set clocks to None so if they are called by the getter before the 
+      # calculation is performed, there won't be an error
+      self.coeff_creation_time = None
+      self.time_to_solve = None
+      
+      # Boundary conditions
+      # Setting this optional b/c it will default to Periodic or something
+      self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=True)
+      self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=True)
+      if self.dimension == 2:
+        self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=True)
+        self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=True)
 
-    # Parameters
-    self.g = self.configGet('float', "parameter", "GravAccel")
-    self.rho_m = self.configGet('float', "parameter", "MantleDensity")
-    self.rho_fill = self.configGet('float', "parameter", "InfillMaterialDensity")
+      # Parameters
+      self.g = self.configGet('float', "parameter", "GravAccel")
+      self.rho_m = self.configGet('float', "parameter", "MantleDensity")
+      self.rho_fill = self.configGet('float', "parameter", "InfillMaterialDensity")
 
-    # Grid spacing
-    # Unnecessary for PrattAiry, but good to keep along, I think, for use 
-    # in model output and plotting.
-    # No meaning for ungridded superimposed analytical solutions
-    # From input file
-    self.dx = self.configGet("float", "numerical", "GridSpacing_x")
-    if self.dimension == 2:
-      self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
-    # Loading grid
-    q0path = self.configGet('string', "input", "Loads")
+      # Grid spacing
+      # Unnecessary for PrattAiry, but good to keep along, I think, for use 
+      # in model output and plotting.
+      # No meaning for ungridded superimposed analytical solutions
+      # From input file
+      self.dx = self.configGet("float", "numerical", "GridSpacing_x")
+      if self.dimension == 2:
+        self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
+      # Loading grid
+      q0path = self.configGet('string', "input", "Loads")
 
+    else:
+      self.inpath = os.getcwd()+'/input/' # often correct, but a hack
+
+    # Path from setter?
     try:
-      # First see if it is a full path or directly links from the current
-      # working directory
-      try:
-        self.q0 = load(q0path)
-        if debug: print "Loading q0 from numpy binary"
-      except:
-        self.q0 = np.loadtxt(q0path)
-        if debug: print "Loading q0 ASCII"
+      self.q0
+      if type(self.q0) == str:
+        q0path = self.q0
     except:
+      self.q0 = None
+
+    # If a q0 hasn't been set already
+    if type(self.q0) != np.ndarray:
       try:
-        # Then see if it is relative to the location of the input file
+        # First see if it is a full path or directly links from the current
+        # working directory
         try:
-          self.q0 = load(self.inpath + q0path)
+          self.q0 = load(q0path)
           if debug: print "Loading q0 from numpy binary"
         except:
-          self.q0 = np.loadtxt(self.inpath + q0path)
+          self.q0 = np.loadtxt(q0path)
           if debug: print "Loading q0 ASCII"
       except:
-        print "Cannot find q0 file"
-        print "q0path = " + q0path
-        print "Looked relative to model python files."
-        print "Also looked relative to input file path, " + self.inpath
-        print "Exiting."
-        sys.exit()
+        try:
+          # Then see if it is relative to the location of the input file
+          try:
+            self.q0 = load(self.inpath + q0path)
+            if debug: print "Loading q0 from numpy binary"
+          except:
+            self.q0 = np.loadtxt(self.inpath + q0path)
+            if debug: print "Loading q0 ASCII"
+        except:
+          print "Cannot find q0 file"
+          print "q0path = " + q0path
+          print "Looked relative to model python files."
+          print "Also looked relative to input file path, " + self.inpath
+          print "Exiting."
+          sys.exit()
       
     # Check consistency of dimensions
     if self.q0.ndim != self.dimension:
@@ -207,16 +221,20 @@ class Isostasy(IRF):
         print "No dy in 1D problems; doing nothing"
       else:
         self.dy = value
-
     # Boundary conditions
-    elif value_key == 'BoundaryCondition':
-      # "Dirichilet" (0-displacement at edges)
-      # "Stewart" (second and third derivatives are 0: Stewart and Watts (1997))
-      # "Periodic" - wraparound on edges
-      # These boundary conditions are always applied to both edges.
-      # Not implemented: "global": wraparound E-W with 180-degree offset 
-      # but on same side of the map pseudo-periodic b.c. to handle poles
-      self.BC = value
+    # "Dirichilet" (0-displacement at edges)
+    # "Stewart1" (second and third derivatives are 0: Stewart and Watts (1997))
+    # "Periodic" - wraparound on edges
+    # "Mirror" - reflects on edges
+    # "NoOutsideLoads" - padded on edges with q0 = 0
+    elif value_key == 'BoundaryCondition_East':
+      self.BC_E = value
+    elif value_key == 'BoundaryCondition_West':
+      self.BC_W = value
+    elif value_key == 'BoundaryCondition_North':
+      self.BC_N = value
+    elif value_key == 'BoundaryCondition_South':
+      self.BC_S = value
     # Loading grid
     elif value_key == 'Loads':
       self.q0 = value
@@ -226,7 +244,7 @@ class Isostasy(IRF):
         # need a grid for some reason
         # "Try" b/c self.q0 might be undefined
         if self.q0 == None:
-          self.readyElasticThickness() # Elastic thicnkess may need to be modified
+          self.readyElasticThickness() # Elastic thickness may need to be modified
       except:
         self.readyElasticThickness() # Check this anyway, esp. array size 
                                      # compatability check if Te defined first
@@ -261,6 +279,12 @@ class Isostasy(IRF):
     elif val_string=='SolverTime':
       # Amount of time taken by the solver (direct or iterative)
       return self.time_to_solve
+    if val_string=='Loads':
+      # This is the model input
+      return self.q0
+    if val_string=='ElasticThickness':
+      # This is the model input
+      return self.Te
 
 
   # SAVING TO FILE AND PLOTTING STEPS
@@ -310,6 +334,10 @@ class Isostasy(IRF):
 
   # Plot, if desired
   def plotting(self):
+    # try:
+    #   self.plotChoice
+    # except:
+    #   self.plotChoice = None
     if self.plotChoice:
       if debug: print "Starting to plot " + self.plotChoice
       if self.dimension==1:
@@ -495,14 +523,17 @@ class Flexure(Isostasy):
     """
     Checks that Te and q0 array sizes are compatible
     """
-    # Only if they are both defined
-    if self.Te.any() and self.q0.any():
-      # Doesn't touch non-arrays or 1D arrays
-      if type(self.Te) is np.ndarray:
-        if (np.array(self.Te.shape) - 2 != np.array(self.q0.shape)).any():
-          sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
-      else:
-        if debug: print "Te and q0 array sizes pass consistency check"
+    # Only if they are both defined and are arrays
+    # Both being arrays is a possible bug in this check routine that I have 
+    # intentionally introduced
+    if type(self.Te) == np.ndarray and type(self.q0) == np.ndarray:
+      if self.Te.any() and self.q0.any():
+        # Doesn't touch non-arrays or 1D arrays
+        if type(self.Te) is np.ndarray:
+          if (np.array(self.Te.shape) - 2 != np.array(self.q0.shape)).any():
+            sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
+        else:
+          if debug: print "Te and q0 array sizes pass consistency check"
 
   def initialize(self, filename=None):
     super(Flexure, self).initialize(filename)
@@ -523,13 +554,23 @@ class Flexure(Isostasy):
   def FD(self):
     print "Finite Difference Solution Technique"
     # Find the solver
-    self.solver = self.configGet("string", "numerical", "Solver")
+    try:
+      self.solver # See if it exists already
+    except:
+      self.solver = self.configGet("string", "numerical", "Solver")
     if self.filename:
       # Try to import Te grid or scalar for the finite difference solution
       Tepath = self.configGet("string", "input", "ElasticThickness",optional=True)
       # See if there is a pre-made coefficient matrix to import
       coeffPath = self.configGet("string", "input", "CoeffMatrix",optional=True)
       # If there is, import it.
+    # or if getter/setter
+    elif type(self.Te) == str: # Not super stable here either
+      # Try to import Te grid or scalar for the finite difference solution
+      Tepath = self.Te
+      # If there is, import it.
+    try:
+      coeffPath
       if coeffPath:
         try:
           self.coeff_matrix = np.load(coeffPath)
@@ -545,68 +586,81 @@ class Flexure(Isostasy):
         print "Any coefficient matrix provided in input file has been ignored,"
         print "as a pre-provided coefficient matrix array is available"
 
-        # Check consistency of size if coeff array was loaded
-        coeffArraySizeCheck()
+      # Check consistency of size if coeff array was loaded
+      coeffArraySizeCheck()
 
-      # Only get Te if you aren't loading a pre-made coefficient matrix
-      if coeffPath == None:
-        # No grid?
-        if Tepath == None:
+    except:
+      coeffPath = None
+      
+    try:
+      Tepath
+    except:
+      Tepath = None
+
+    # Only get Te if you aren't loading a pre-made coefficient matrix
+    if coeffPath == None:
+      # No grid?
+      if Tepath == None:
+        # Go through this only if using an input file
+        if self.filename:
           if debug: print "Trying to use the scalar elastic thickness"
           # Is there are scalar file?
           try:
             # No Te grid path defined, so going for scalar Te
             self.Te = self.config.getfloat("parameter", "ElasticThickness")
           except:
-            # No Te input provided - scalar or array path
-            print "Requested Te file cannot be found, and no scalar elastic"
-            print "thickness is provided in input file"
-            print "You should add one or the other to the input file."
-            print "Exiting."
-            sys.exit()
-        else:
-          # In this case, Tepath has been defined as something by the input file
-          try:
-            # First see if it is a full path or directly links from the current
-            # working directory
-            self.Te = np.loadtxt(Tepath)
-            print "Loading elastic thickness array from provided file"
-          except:
             try:
-              # Then see if it is relative to the location of the input file
-              self.Te = np.loadtxt(self.inpath + Tepath)
+              self.Te = float(self.Te)
             except:
-              # At this point, a Tepath has been provided, but has failed.
-              # No unambiguous way to find what input is desired
-              # 2 options: (1) Te scalar exists, (2) nothing exists
-              # Either way, need to exit
-              try:
-                TeScalar = self.config.getfloat("parameter", "ElasticThickness")
-                print "Requested Te file cannot be found, but a scalar elastic"
-                print "thickness is provided in input file."
-                print "Ambiguous as to whether a Te grid or a scalar Te value was"
-                print "desired."
-                print "(Typo in path to input Te grid?)"
-              except:
-                # No Te input provided - scalar or array path
-                print "Requested Te file is provided but cannot be located."
-                print "No scalar elastic thickness is provided in input file"
-                print "(Typo in path to input Te grid?)"
+              # No Te input provided - scalar or array path
+              print "Requested Te file cannot be found, and no scalar elastic"
+              print "thickness is provided in input file"
+              print "You should add one or the other to the input file."
               print "Exiting."
               sys.exit()
-          # At this point, Te from a grid has been successfully loaded.
-          # See if there is an ambiguity with a scalar Te also defined
+      else:
+        # In this case, Tepath has been defined as something by the input file
+        try:
+          # First see if it is a full path or directly links from the current
+          # working directory
+          self.Te = np.loadtxt(Tepath)
+          print "Loading elastic thickness array from provided file"
+        except:
           try:
-            TeScalar = self.config.getfloat("parameter", "ElasticThickness")
+            # Then see if it is relative to the location of the input file
+            self.Te = np.loadtxt(self.inpath + Tepath)
           except:
-            TeScalar = None
-          if TeScalar:
-            # If this works, need to exit - ambiguous
-            print "Both an elastic thickness array and a scalar elastic thickness"
-            print "have been loaded - ambiguity; cannot continue"
+            # At this point, a Tepath has been provided, but has failed.
+            # No unambiguous way to find what input is desired
+            # 2 options: (1) Te scalar exists, (2) nothing exists
+            # Either way, need to exit
+            try:
+              TeScalar = self.config.getfloat("parameter", "ElasticThickness")
+              print "Requested Te file cannot be found, but a scalar elastic"
+              print "thickness is provided in input file."
+              print "Ambiguous as to whether a Te grid or a scalar Te value was"
+              print "desired."
+              print "(Typo in path to input Te grid?)"
+            except:
+              # No Te input provided - scalar or array path
+              print "Requested Te file is provided but cannot be located."
+              print "No scalar elastic thickness is provided in input file"
+              print "(Typo in path to input Te grid?)"
             print "Exiting."
             sys.exit()
-          # Otherwise, all set!
+        # At this point, Te from a grid has been successfully loaded.
+        # See if there is an ambiguity with a scalar Te also defined
+        try:
+          TeScalar = self.config.getfloat("parameter", "ElasticThickness")
+        except:
+          TeScalar = None
+        if TeScalar:
+          # If this works, need to exit - ambiguous
+          print "Both an elastic thickness array and a scalar elastic thickness"
+          print "have been loaded - ambiguity; cannot continue"
+          print "Exiting."
+          sys.exit()
+    # Otherwise, all set!
     self.readyElasticThickness()
     
   ### need work
@@ -642,10 +696,11 @@ class Flexure(Isostasy):
     elif value_key == 'ElasticThickness':
       self.Te = value # How to dynamically type for scalar or array?
                       # Python is smart enough to handle it.
-      if self.q0: # Check for this on both q0 and Te
-        self.readyElasticThickness() # But need a program to handle converting 
-                                     # scalars and arrays, as well as potentially 
-                                     # needing to load a Te file
+      if type(self.q0) == np.ndarray:
+        if self.q0.any(): # Check for this on both q0 and Te
+          self.readyElasticThickness() # But need a program to handle converting 
+                                       # scalars and arrays, as well as potentially 
+                                       # needing to load a Te file
     elif value_key == 'CoeffArray':
       # This coefficient array is what is used with the UMFPACK direct solver
       # or the iterative solver

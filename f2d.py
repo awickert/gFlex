@@ -1206,12 +1206,22 @@ class F2D(Flexure):
       pass
     print 'self.q0', self.q0.shape
 
-    print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
+    #print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
     
     if self.solver == "iterative" or self.solver == "Iterative":
       from scipy.sparse.linalg import isolve
-      q0vector = q0.reshape(np.prod(q0.shape),1)
-      wvector = isolve.minres(self.coeff_matrix,q0vector)    
+      # Set x0 from direct solver
+      #coeff_matrix = sparse.csr_matrix(self.coeff_matrix)
+      #q0vector = self.q0.reshape(1,np.prod(self.q0.shape))
+      #q0vector = sparse.csr_matrix(q0vector)
+      # UMFpack is the default direct solver now in python, 
+      # but being explicit here
+      #wvector = spsolve(coeff_matrix,q0vector,use_umfpack=True)
+      # Now iterative
+      q0vector = self.q0.reshape(np.prod(self.q0.shape),1)
+      #woldvector = self.wold.reshape(np.prod(self.wold.shape),1)
+      #wvector = isolve.minres(self.coeff_matrix,q0vector)    # fast
+      wvector = isolve.lgmres(self.coeff_matrix,q0vector)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
       wvector = wvector[0] # Reach into tuple to get my array back
 
     else:
