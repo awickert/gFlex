@@ -62,8 +62,8 @@ obj.set_value('MantleDensity', 3300)
 # Set all boundary conditions to Mirror
 obj.set_value('BoundaryCondition_East', 'Mirror')
 obj.set_value('BoundaryCondition_West', 'Mirror')
-obj.set_value('BoundaryCondition_North', 'NoOutsideLoads')
-obj.set_value('BoundaryCondition_South', 'NoOutsideLoads')
+obj.set_value('BoundaryCondition_North', 'Mirror')
+obj.set_value('BoundaryCondition_South', 'Mirror')
 
 # Get grid spacing from GRASS
 obj.set_value('GridSpacing_x', grass.region()['ewres'])
@@ -104,7 +104,7 @@ Te = np.array(Te * 1000) # *1000 for km-->m
 #print Te.shape
 #print q0.shape
 
-#Te /= 2 # Fudge for stability to see how cell size vs. Te works
+#Te=5*Te**.5# /= 2 # Fudge for stability to see how cell size vs. Te works
 
 from matplotlib.pyplot import *
 #figure(1); imshow(q0, interpolation='nearest'); colorbar()
@@ -152,4 +152,4 @@ grass.run_command('g.region', rast=args.Te, flags='p')
 grass.run_command('r.resamp.interp', input=args.output, output=args.output + '_interp', method='lanczos', overwrite=True)
 grass.run_command('r.colors', map=args.output + '_interp', color='rainbow')#, flags='e')
 
-imshow(obj.w, interpolation='nearest'), show()
+#imshow(obj.w, interpolation='nearest'), show()

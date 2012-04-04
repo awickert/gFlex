@@ -30,7 +30,7 @@ DeflectionOut=
 Plot=both
 
 [numerical]
-GridSpacing_x=25000 ; dx
+GridSpacing_x=65000 ; dx
 BoundaryCondition_West=Periodic
 BoundaryCondition_East=Periodic
 ; Solver can be direct or iterative; currently only works in 2D
@@ -42,7 +42,7 @@ convergence=1E-3
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
-GridSpacing_y=25000 ; dy
+GridSpacing_y=65000 ; dy
 BoundaryCondition_South=Mirror
 BoundaryCondition_North=Mirror
 
