@@ -12,14 +12,15 @@ GravAccel=9.8
 MantleDensity=3300
 InfillMaterialDensity=0
 ; Scalar constant Te usable for any solution type
-ElasticThickness=25000
+ElasticThickness=
+; 25000
 
 [input]
 ; Path to input load array
 Loads=q0_sample/2D/diag.txt ; q0_sample/2D/global1degDEM.txt ; 
 ; Elastic thickness grid goes here; cannot coexist with a constant Te
 ; defined above
-ElasticThickness=
+ElasticThickness=Te_sample/2D/corner_range_15_31.txt
 #Te_sample/2D/40km_const.txt ; Te_sample/2D/corner_range_15_31.txt
 
 [output]
@@ -29,7 +30,7 @@ DeflectionOut=
 Plot=both
 
 [numerical]
-GridSpacing_x=40000 ; dx
+GridSpacing_x=25000 ; dx
 BoundaryCondition_West=Periodic
 BoundaryCondition_East=Periodic
 ; Solver can be direct or iterative; currently only works in 2D
@@ -41,7 +42,7 @@ convergence=1E-3
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
-GridSpacing_y=10000 ; dy
+GridSpacing_y=25000 ; dy
 BoundaryCondition_South=Mirror
 BoundaryCondition_North=Mirror
 

@@ -165,18 +165,6 @@ class F1D(Flexure):
     1D pentadiagonal matrix to solve 1D flexure with variable elastic 
     thickness via a Thomas algorithm (assuming that scipy uses a Thomas 
     algorithm).
-    
-    Uses the thin plate assumption, as do all of the methods here.
-    
-    Based on and translated in part from "flexvar.m", written in 2001 by Bob
-    Anderson, which in turn is based on a code written by Laura Wallace
-    
-    Changes here include increased vectorization of operations (for speed) 
-    and the use of sparse matrices (to reduce memory usage and unnecessary 
-    tracking of zeros)
-    
-    Another very major change is the incorporation of multiple boundary 
-    condition options
     """
     
     self.coeff_start_time = time.time()
@@ -234,34 +222,43 @@ class F1D(Flexure):
     print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
   
   def build_diagonals(self):
+    """
+    Builds the diagonals for the coefficient array
+    Pulled out because it has to be done at a different time if that array is 
+    padded
+    """
+    if np.isscalar(self.Te):
+      # Diagonals, from left to right, for all but the boundaries 
+      self.l2 = 1
+      self.l1 = -4
+      self.c0 = 6 + (self.dx4/self.D) * self.drho*self.g
+      self.r1 = -4
+      self.r2 = 1
+      # Make them into arrays
+      self.l2 *= np.ones(self.q0.shape)
+      self.l1 *= np.ones(self.q0.shape)
+      self.c0 *= np.ones(self.q0.shape)
+      self.r1 *= np.ones(self.q0.shape)
+      self.r2 *= np.ones(self.q0.shape)
+    elif type(self.Te) == np.ndarray:
       """
-      Builds the diagonals for the coefficient array
-      Pulled out because it has to be done at a different time if that array is 
-      padded
-      """
-      if np.isscalar(self.Te):
-        # Diagonals, from left to right, for all but the boundaries 
-        self.l2 = 1
-        self.l1 = -4
-        self.c0 = 6 + (self.dx4/self.D) * self.drho*self.g
-        self.r1 = -4
-        self.r2 = 1
-        # Make them into arrays
-        self.l2 *= np.ones(self.q0.shape)
-        self.l1 *= np.ones(self.q0.shape)
-        self.c0 *= np.ones(self.q0.shape)
-        self.r1 *= np.ones(self.q0.shape)
-        self.r2 *= np.ones(self.q0.shape)
       # LOOKS WRONG! CHECK DISCRETIZATION!
-      elif type(self.Te) == np.ndarray:
-        # Diagonals, from left to right  
-        self.l2 = self.D[:-2] / self.dx4
-        self.l1 = -2 * (self.D[1:-1] + self.D[:-2]) / self.dx4
-        self.c0 = ( (self.D[2:] + 4*self.D[1:-1] + self.D[:-2]) / self.dx4 ) + self.drho*self.g
-        self.r1 = -2 * (self.D[1:-1] + self.D[2:]) / self.dx4
-        self.r2 = self.D[2:] / self.dx4
-      # Number of columns; equals number of rows too - square coeff matrix
-      self.ncolsx = self.c0.shape[0]
+      # IS WRONG. CHANGING.
+      # BUT PRODUCES SAME SOLUTION WITH CONSTANT TE...
+      # Diagonals, from left to right  
+      self.l2 = self.D[:-2] / self.dx4
+      self.l1 = -2 * (self.D[1:-1] + self.D[:-2]) / self.dx4
+      self.c0 = ( (self.D[2:] + 4*self.D[1:-1] + self.D[:-2]) / self.dx4 ) + self.drho*self.g
+      self.r1 = -2 * (self.D[1:-1] + self.D[2:]) / self.dx4
+      self.r2 = self.D[2:] / self.dx4
+      """
+      self.l2 = (-self.D[2:] + self.D[1:-1] + self.D[:-2]) / self.dx4
+      self.l1 = (3*self.D[2:] - 6*self.D[1:-1] - self.D[:-2]) / self.dx4
+      self.c0 = (-2*self.D[2:] + 10*self.D[1:-1] -2*self.D[:-2]) / self.dx4 + self.drho*self.g
+      self.r1 = (-self.D[2:] - 6*self.D[1:-1] + 3*self.D[:-2]) / self.dx4
+      self.r2 = (self.D[2:] + self.D[1:-1] - self.D[:-2]) / self.dx4
+    # Number of columns; equals number of rows too - square coeff matrix
+    self.ncolsx = self.c0.shape[0]
 
   def scale_matrix_values(self):
     """
