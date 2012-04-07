@@ -6,34 +6,66 @@ import types # For flow control
 
 debug = True
 
-# IRF interface
-class IRF(object):
-  def initialize(self, file):
+# BMI Interface
+# edited by Andy
+class BMI (object):
+  # Replaced "file" with "filename", since "file" should be reserved for
+  # the Python object
+  def initialize (self, filename):
+      pass
+  def update (self):
+    self.run()
+  def finalize (self):
+    pass
+  def run_model (self):
+    self.run()
+  def run (self):
+    # Added by Andy: self.update() isn't so meaningful becasue this is a
+    # 1-time-step sort of model... unless I add some sort of mantle 
+    # response code
     pass
 
-  def run(self):
-    pass
-  
-  def run_step(self, i):
-    # Maybe meant to run one step?
-    # Right now, does nothing.
-    # I should make something that does an iterative solution... hmm...
-    pass
-  
-  def finalize(self):
-    pass
-  
-  def get(self, *value):
-    pass
+  # NONE OF THESE ARE IMPLEMENTED
+  def get_var_type (self, var):
+      pass
+  def get_var_units (self, var):
+      pass
+  def get_var_rank (self, var):
+      pass
+  def get_var_name (self, var):
+      pass
 
-  def set(self, *value):
-    pass
+  def get_value (self, long_var_name):
+      pass
+  # replaced "src" with "value" to match my code as it stands
+  def set_value (self, long_var_name, value):
+      pass
+
+  # NONE OF THESE ARE IMPLEMENTED
+  def get_component_name (self):
+      pass
+  def get_input_var_names (self):
+      pass
+  def get_output_var_names (self):
+      pass
+
+  # NONE OF THESE ARE IMPLEMENTED
+  def get_grid_dimen (self, long_var_name):
+      pass
+  def get_grid_res (self, long_var_name):
+      pass
+  def get_grid_corner (self, long_var_name):
+      pass
+
+  # NOT IMPLEMENTED
+  def is_raster_grid (self, long_var_name):
+      pass
 
 
 # class Isostasy inherits IRF interface, and it determines the simulation type
 # by reading three parameters from input file, but it does not set up other
 # parameters, which is the responsibility of derived concrete classes.
-class Isostasy(IRF):
+class Isostasy(BMI):
 
   def configGet(self,vartype,category,name,optional=False,specialReturnMessage=None):
     """
