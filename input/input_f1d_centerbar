@@ -22,7 +22,8 @@ DeflectionOut=tmpout.txt
 Plot=combo
 
 [numerical]
-GridSpacing=1000
+GridSpacing_x=5000
 ; Iterates until this is the difference between two subsequent iterations
 ; Set as 0 if you don't want to iterate
 convergence=1E-3
+Solver=FD

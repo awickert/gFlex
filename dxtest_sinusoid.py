@@ -11,6 +11,9 @@ from f1d import *
 from f2d import *
 from prattairy import *
 
+# Plotting
+from matplotlib.pyplot import *
+
 # Start up grids to store compensation and set dx
 compensation = []
 dx = np.linspace(10,20000,100)
@@ -44,8 +47,8 @@ obj.set_value('BoundaryCondition_West', 'Periodic')
 ncells = 51 # for q0, Te is 2 greater than this
 
 # Sinusoidal flexural wavelengths that allow periodic b.c.'s:
-amplitude = 5000 # 1/2 of total variation in Te
-minTe = 20000
+amplitude = 30000 # 1/2 of total variation in Te
+minTe = 5000
 xi_periodic = np.arange(0,ncells+2) * 2 * np.pi / (ncells+2)
 Te = amplitude * (np.cos(xi_periodic)) + amplitude + minTe
 
@@ -76,7 +79,7 @@ obj.filename = None
 Filename = None
 obj.initialize(Filename)
 
-
+counter=0
 for dxi in dx:
 
   # Vary the dx
@@ -94,13 +97,23 @@ for dxi in dx:
   h_q0_mantle_equiv = q0 / (obj.g * obj.rho_m)
   compensation.append(-1 * np.mean(w) / np.mean(h_q0_mantle_equiv))
 
+  # PLOT
+  #if counter % (len(dx)/20) == 0:
+  if counter == 17:
+    figure(1)
+    plot(h_q0_mantle_equiv,'k--')
+    plot(w, label=r'\lambda_{Te} = ' + str(ncells*dxi/(2*np.pi)/1000) + ' km')
+
+  counter+=1
+
+legend()
 # Finalize
 obj.finalize()
 
 cdiff = np.diff(compensation)
 dxmean = (dx[:-1] + dx[1:]) / 2
 
-from matplotlib.pyplot import *
+figure(2)
 plot(dx, compensation,'ko-')
 xlabel('dx')
 ylabel('compensation')

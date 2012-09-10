@@ -60,10 +60,10 @@ obj.set_value('GravAccel', 9.8)
 obj.set_value('MantleDensity', 3300)
 
 # Set all boundary conditions to Mirror
-obj.set_value('BoundaryCondition_East', 'Mirror')
-obj.set_value('BoundaryCondition_West', 'Mirror')
-obj.set_value('BoundaryCondition_North', 'Mirror')
-obj.set_value('BoundaryCondition_South', 'Mirror')
+obj.set_value('BoundaryCondition_East', 'NoOutsideLoads')
+obj.set_value('BoundaryCondition_West', 'NoOutsideLoads')
+obj.set_value('BoundaryCondition_North', 'NoOutsideLoads')
+obj.set_value('BoundaryCondition_South', 'NoOutsideLoads')
 
 # Get grid spacing from GRASS
 obj.set_value('GridSpacing_x', grass.region()['ewres'])
