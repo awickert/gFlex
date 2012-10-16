@@ -4,11 +4,6 @@
 Started 11 March 2012 as a GRASS interface for Flexure
 """
 
-# Too long text:
-# Te: Raster map of elastic thickness [km] - constant or subtle variability, or else the code will produce misleading results
-# l: Allows the code to be run with geographic (lat/lon) coordinates with the assumption that there are 111 km betwen lines of latitude and longitude (appropriate only for near the equator)
-# Interface to Andy Wickert's lithospheric flexure model (see http://csdms.colorado.edu/wiki/Model:Flexure)
-
 #%module
 #%  description: Lithospheric flexure
 #%end
@@ -27,7 +22,7 @@ Started 11 March 2012 as a GRASS interface for Flexure
 #%  key: te
 #%  type: string
 #%  gisprompt: old,cell,raster
-#%  description: Raster map of elastic thickness [km] - must be ~constant
+#%  description: Elastic thicnkess: constant value or raster map (~constant ) name [km]
 #%  required : yes
 #%end
 #%option
@@ -43,13 +38,6 @@ Started 11 March 2012 as a GRASS interface for Flexure
 #%  description: Density of material that fills flexural depressions [kg/m^3]
 #%  answer: 0
 #%  required : no
-#%end
-#%option
-#%  key: resolution
-#%  type: string
-#%  description: Resolution of flexural calculations [m]
-#%  answer: resolution of Te grid
-#%  required: no
 #%end
 #%option
 #%  key: n
@@ -113,23 +101,18 @@ def main():
   Te = options['te']
   output = options['output']
   rho_fill = float(options['rho_fill'])
-  resolution = options['resolution']
+  #resolution = options['resolution']
   bcn = options['n']
   bcs = options['s']
   bcw = options['w']
   bce = options['e']
   
-  # Now the real code
-
-  # Change grid resolution to solver resolution
-  grass.run_command('g.region', rast=Te) # Start out with some default resolution in case something gets messed up
-  grass.run_command('g.region', nsres=resolution, ewres=resolution)
-
-  grass.run_command('r.resamp.interp', input=q, output='q0resamp', method='bicubic', overwrite=True, quiet=True)
-  grass.run_command('r.resamp.interp', input=Te, output='Teresamp', method='bicubic', overwrite=True, quiet=True)
-
-  # Do this just in case we lose some area in the Te grid
-  grass.run_command('g.region', rast='Teresamp') # Start out with some default resolution in case something gets messed up
+  # Is Te raster or scalar?
+  TeIsRast = False
+  try:
+    Te = float(Te)
+  except:
+    TeIsRast = True
 
   # Automatically decide that we are doing 2D finite difference flexural isostasy
   # with a direct(?) solution method
@@ -150,7 +133,7 @@ def main():
   obj.set_value('GravAccel', 9.8)
   obj.set_value('MantleDensity', 3300)
 
-  # Set all boundary conditions to Mirror
+  # Set all boundary conditions
   obj.set_value('BoundaryCondition_East', bce)
   obj.set_value('BoundaryCondition_West', bcw)
   obj.set_value('BoundaryCondition_North', bcn)
@@ -173,16 +156,20 @@ def main():
   # Get raster grids from GRASS
   q0rast = garray.array()
   q0rast.read('q0resamp')
-  Terast = garray.array()
-  Terast.read('Teresamp')
+  if TeIsRast:
+    FlexureTe = garray.array() # FlexureTe is the one that is used by Flexure
+    FlexureTe.read('Teresamp')
 
   # Change these grids into basic numpy arrays for easier use with Flexure
   q0rast = np.array(q0rast)
-  Terast = np.array(Terast * 1000) # *1000 for km-->m
+  if TeIsRast:
+    FlexureTe = np.array(FlexureTe * 1000) # *1000 for km-->m
+  else:
+    FlexureTe = Te * 1000 # km --> m (scalar)
 
   # Values set by user
   obj.set_value('Loads', q0rast[1:-1,1:-1]) # Te needs to be 1 cell bigger on each edge
-  obj.set_value('ElasticThickness', Terast)# np.ones(Te.shape)*20000)#
+  obj.set_value('ElasticThickness', FlexureTe)# np.ones(Te.shape)*20000)#
   obj.set_value('InfillMaterialDensity', rho_fill) # defaults to 0
 
   # Calculated values
