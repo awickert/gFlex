@@ -1,0 +1,6 @@
+#! /bin/sh
+
+export GRASS_ADDON_BASE=$PWD:$GRASS_ADDON_BASE
+export GRASS_ADDON_PATH=$PWD:$GRASS_ADDON_PATH
+
+python r.flexure.py

@@ -2,6 +2,7 @@ from __future__ import division # No automatic floor division
 from base import *
 from scipy.sparse.linalg import spsolve
 from scipy import sparse
+from scipy.special import kei
 
 # class F2D inherits Flexure and overrides __init__ therefore setting up the same
 # three parameters as class Isostasy; and it then sets up more parameters specific
