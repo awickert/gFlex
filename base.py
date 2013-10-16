@@ -351,7 +351,7 @@ class Isostasy(BMI):
       try:
         self.wOutFile = self.configGet("string", "output", "DeflectionOut",optional=True)
         # If this exists and is a string, write output to a file
-        if self.WoutFile[-4:] == '.npy':
+        if self.wOutFile[-4:] == '.npy':
           from numpy import save
           save(self.wOutFile,self.w)
         else:
