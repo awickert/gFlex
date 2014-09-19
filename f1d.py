@@ -251,12 +251,24 @@ class F1D(Flexure):
       self.c0 = ( (self.D[2:] + 4*self.D[1:-1] + self.D[:-2]) / self.dx4 ) + self.drho*self.g
       self.r1 = -2 * (self.D[1:-1] + self.D[2:]) / self.dx4
       self.r2 = self.D[2:] / self.dx4
-      """
+      ALSO WRONG; keeping around for wall of shame as I learned how to properly discretize things:
       self.l2 = (-self.D[2:] + self.D[1:-1] + self.D[:-2]) / self.dx4
       self.l1 = (3*self.D[2:] - 6*self.D[1:-1] - self.D[:-2]) / self.dx4
       self.c0 = (-2*self.D[2:] + 10*self.D[1:-1] -2*self.D[:-2]) / self.dx4 + self.drho*self.g
       self.r1 = (-self.D[2:] - 6*self.D[1:-1] + 3*self.D[:-2]) / self.dx4
       self.r2 = (self.D[2:] + self.D[1:-1] - self.D[:-2]) / self.dx4
+      """
+      # l2 corresponds to top value in solution vector, so to the left (-) side
+      # Good reference for how to determine central difference (and other) coefficients is:
+      # Fornberg, 1998: Generation of Finite Difference Formulas on Arbitrarily Spaced Grids
+      Dm1 = self.D[:-2]
+      D0  = self.D[1:-1]
+      Dp1 = self.D[2:]
+      self.l2 = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
+      self.l1 = ( -6.*D0 + 2.*Dp1 ) / self.dx4
+      self.c0 = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
+      self.r1 = ( 2.*Dm1 - 6.*D0 ) / self.dx4
+      self.r2 = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
     # Number of columns; equals number of rows too - square coeff matrix
     self.ncolsx = self.c0.shape[0]
 
