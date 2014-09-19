@@ -16,7 +16,7 @@ ElasticThickness=
 
 [input]
 Loads=q0_sample/1D/central_block.txt ; q0_sample/1D/l_block.txt
-ElasticThickness=Te_sample/1D/1km_100km_ramp.txt ; Te_sample/1D/10km_const.txt ; 
+ElasticThickness=Te_sample/1D/8km_20km_ramp.txt ; Te_sample/1D/10km_const.txt ; 
 
 [output]
 DeflectionOut=tmpout.txt
