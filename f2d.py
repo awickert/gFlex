@@ -354,7 +354,7 @@ class F2D(Flexure):
       self.cj1i1 = (D10 + D01)/dx2dy2
       # x = 2, y = 0
       self.cj2i0 = D10/dx4
-      """
+      #"""
       """
       # OLD STENCIL -- think I made some mistakes in the discretization
       # (and maybe even in solving the equation!!!)
@@ -390,7 +390,7 @@ class F2D(Flexure):
       self.cj_1i1 = (2*D00 + 0.5*(-D10 + D_10 - D01 + D0_1) \
         - ((1-nu)/8) * (D11 - D1_1 - D_11 + D_1_1)) / dx2dy2
       self.cj_2i0 = (D00 - 0.5*(D01 - D0_1)) / dy4
-      #"""
+      """
     # Provide rows and columns in the 2D input to later functions
     self.ncolsx = self.cj0i0.shape[1]
     self.nrowsy = self.cj0i0.shape[0]
