@@ -292,7 +292,7 @@ class F2D(Flexure):
                    + (8.*D0 - 2.*nu*Dxx - 2.*nu*Dyy)/dx2dy2 \
                    + drho*g
       """
-      #"""
+      """
       # SIMPLER STENCIL: just del**2(D del**2(w)): only linear variations
       # in Te are allowed.
       # x = -2, y = 0
@@ -324,9 +324,9 @@ class F2D(Flexure):
                    + (6.*D0 - 2.*Dyy)/dy4 \
                    + (8.*D0 - 2.*Dxx - 2.*Dyy)/dx2dy2 \
                    + drho*g
-      #"""
       """
-      # STENCIL FROM GROVERS ET AL. 2009 -- first-order differences
+      #"""
+      # STENCIL FROM GOVERS ET AL. 2009 -- first-order differences
       # x is j and y is i b/c matrix row/column notation
       # x = -2, y = 0
       self.cj_2i0 = D_10/dx4
@@ -390,7 +390,7 @@ class F2D(Flexure):
       self.cj_1i1 = (2*D00 + 0.5*(-D10 + D_10 - D01 + D0_1) \
         - ((1-nu)/8) * (D11 - D1_1 - D_11 + D_1_1)) / dx2dy2
       self.cj_2i0 = (D00 - 0.5*(D01 - D0_1)) / dy4
-      """
+      #"""
     # Provide rows and columns in the 2D input to later functions
     self.ncolsx = self.cj0i0.shape[1]
     self.nrowsy = self.cj0i0.shape[0]
@@ -1139,6 +1139,45 @@ class F2D(Flexure):
     
   
   def build_diags(self):
+    # Assign boundary conditions
+    # Dirichlet force right now
+    self.cj_2i0[:2,:] = 0
+    self.cj_2i0[-2:,:] = 0
+
+    self.cj_1i_1[:1,:] = 0
+    self.cj_1i_1[-1:,:] = 0
+    self.cj_1i_1[:,:1] = 0
+    self.cj_1i_1[:,-1:] = 0
+    self.cj_1i0[:1,:] = 0
+    self.cj_1i0[-1:,:] = 0
+    self.cj_1i1[:1,:] = 0
+    self.cj_1i1[-1:,:] = 0
+    self.cj_1i1[:,:1] = 0
+    self.cj_1i1[:,-1:] = 0
+
+    self.cj0i_2[:,:2] = 0
+    self.cj0i_2[:,-2:] = 0
+    self.cj0i_1[:,:1] = 0
+    self.cj0i_1[:,-1:] = 0
+    self.cj0i1[:,:1] = 0
+    self.cj0i1[:,-1:] = 0
+    self.cj0i2[:,:2] = 0
+    self.cj0i2[:,-2:] = 0
+    
+    self.cj1i_1[:1,:] = 0
+    self.cj1i_1[-1:,:] = 0
+    self.cj1i_1[:,:1] = 0
+    self.cj1i_1[:,-1:] = 0
+    self.cj_1i0[:1,:] = 0
+    self.cj_1i0[-1:,:] = 0
+    self.cj1i1[:1,:] = 0
+    self.cj1i1[-1:,:] = 0
+    self.cj1i1[:,:1] = 0
+    self.cj1i1[:,-1:] = 0
+
+    self.cj2i0[:2,:] = 0
+    self.cj2i0[-2:,:] = 0
+
     # Reshape to put in solver
     vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
     vec_cj_1i_1 = np.reshape(self.cj_1i_1, -1, order='C')
