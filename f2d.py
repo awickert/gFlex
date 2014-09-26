@@ -253,6 +253,111 @@ class F2D(Flexure):
       D1_1 = D[:-2,2:]
       D_1_1 = D[:-2,:-2]
       print "VAR!"
+      # Derivatives of D -- not including /(dx^a dy^b)
+      D0  = D00
+      Dx  = (-D_10 + D10)/2.
+      Dy  = (-D0_1 - D01)/2.
+      Dxx = (D_10 - 2.*D00 + D10)
+      Dyy = (D0_1 - 2.*D00 + D01)
+      Dxy = (D_1_1 - D_11 - D1_1 + D11)/4.
+      """
+      # NEW STENCIL
+      # x = -2, y = 0
+      self.cj_2i0 = (D0 - Dx) / dx4
+      # x = 0, y = -2
+      self.cj0i_2 = (D0 - Dy) / dy4
+      # x = 0, y = 2
+      self.cj0i2 = (D0 + Dy) / dy4
+      # x = 2, y = 0
+      self.cj2i0 = (D0 + Dx) / dx4
+      # x = -1, y = -1
+      self.cj_1i_1 = (2.*D0 - Dx - Dy + Dxy*(1-nu)/2.) / dx2dy2
+      # x = -1, y = 1
+      self.cj1i_1 = (2.*D0 - Dx + Dy - Dxy*(1-nu)/2.) / dx2dy2
+      # x = 1, y = -1
+      self.cj_1i1 = (2.*D0 + Dx - Dy - Dxy*(1-nu)/2.) / dx2dy2
+      # x = 1, y = 1
+      self.cj1i1 = (2.*D0 + Dx + Dy + Dxy*(1-nu)/2.) / dx2dy2
+      # x = -1, y = 0
+      self.cj0i_1 = (-4.*D0 + 2.*Dx + Dxx)/dx4 + (-4.*D0 + 2.*Dx + nu*Dyy)/dx2dy2
+      # x = 0, y = -1
+      self.cj_1i0 = (-4.*D0 + 2.*Dy + Dyy)/dy4 + (-4.*D0 + 2.*Dy + nu*Dxx)/dx2dy2
+      # x = 0, y = 1
+      self.cj1i0 = (-4.*D0 - 2.*Dy + Dyy)/dy4 + (-4.*D0 - 2.*Dy + nu*Dxx)/dx2dy2
+      # x = 1, y = 0
+      self.cj0i1 = (-4.*D0 - 2.*Dx + Dxx)/dx4 + (-4.*D0 - 2.*Dx + nu*Dyy)/dx2dy2
+      # x = 0, y = 0
+      self.cj0i0 = (6.*D0 - 2.*Dxx)/dx4 \
+                   + (6.*D0 - 2.*Dyy)/dy4 \
+                   + (8.*D0 - 2.*nu*Dxx - 2.*nu*Dyy)/dx2dy2 \
+                   + drho*g
+      """
+      #"""
+      # SIMPLER STENCIL: just del**2(D del**2(w)): only linear variations
+      # in Te are allowed.
+      # x = -2, y = 0
+      self.cj_2i0 = D0 / dx4
+      # x = 0, y = -2
+      self.cj0i_2 = D0 / dy4
+      # x = 0, y = 2
+      self.cj0i2 = D0 / dy4
+      # x = 2, y = 0
+      self.cj2i0 = D0 / dx4
+      # x = -1, y = -1
+      self.cj_1i_1 = 2.*D0 / dx2dy2
+      # x = -1, y = 1
+      self.cj1i_1 = 2.*D0 / dx2dy2
+      # x = 1, y = -1
+      self.cj_1i1 = 2.*D0 / dx2dy2
+      # x = 1, y = 1
+      self.cj1i1 = 2.*D0 / dx2dy2
+      # x = -1, y = 0
+      self.cj0i_1 = (-4.*D0 + Dxx)/dx4 + (-4.*D0 + Dyy)/dx2dy2
+      # x = 0, y = -1
+      self.cj_1i0 = (-4.*D0 + Dyy)/dx4 + (-4.*D0 + Dxx)/dx2dy2
+      # x = 0, y = 1
+      self.cj1i0 = (-4.*D0 + Dyy)/dx4 + (-4.*D0 + Dxx)/dx2dy2
+      # x = 1, y = 0
+      self.cj0i1 = (-4.*D0 + Dxx)/dx4 + (-4.*D0 + Dyy)/dx2dy2
+      # x = 0, y = 0
+      self.cj0i0 = (6.*D0 - 2.*Dxx)/dx4 \
+                   + (6.*D0 - 2.*Dyy)/dy4 \
+                   + (8.*D0 - 2.*Dxx - 2.*Dyy)/dx2dy2 \
+                   + drho*g
+      #"""
+      """
+      # STENCIL FROM GROVERS ET AL. 2009 -- first-order differences
+      # x is j and y is i b/c matrix row/column notation
+      # x = -2, y = 0
+      self.cj_2i0 = D_10/dx4
+      # x = -1, y = -1
+      self.cj_1i_1 = (D_10 + D0_1)/dx2dy2
+      # x = -1, y = 0
+      self.cj_1i0 = -2. * ( (D0_1 + D00)/dx2dy2 + (D00 + D_10)/dx4 )
+      # x = -1, y = 1
+      self.cj_1i1 = (D_10 + D01)/dx2dy2
+      # x = 0, y = -2
+      self.cj0i_2 = D0_1/dy4
+      # x = 0, y = -1
+      self.cj0i_1 = -2. * ( (D0_1 + D00)/dx2dy2 + (D00 + D0_1)/dy4)
+      # x = 0, y = 0
+      self.cj0i0 = (D10 + 4.*D00 + D_10)/dx4 + (D01 + 4.*D00 + D0_1)/dy4 + (8.*D00/dx2dy2) + drho*g
+      # x = 0, y = 1
+      self.cj0i1 = -2. * ( (D01 + D00)/dy4 + (D00 + D01)/dx2dy2 )
+      # x = 0, y = 2
+      self.cj0i2 = D0_1/dy4
+      # x = 1, y = -1
+      self.cj1i_1 = (D10+D0_1)/dx2dy2
+      # x = 1, y = 0
+      self.cj1i0 = -2. * ( (D10 + D00)/dx4 + (D10 + D00)/dx2dy2 )
+      # x = 1, y = 1
+      self.cj1i1 = (D10 + D01)/dx2dy2
+      # x = 2, y = 0
+      self.cj2i0 = D10/dx4
+      """
+      """
+      # OLD STENCIL -- think I made some mistakes in the discretization
+      # (and maybe even in solving the equation!!!)
       self.cj2i0 = (D00 + 0.5*(D01 - D0_1))/dy4
       self.cj1i_1 = (2*D00 + 0.5*(D10 - D_10 + D01 - D0_1) \
         + ((1-nu)/8) * (D11 - D1_1 - D_11 + D_1_1)) / dx2dy2
@@ -285,7 +390,7 @@ class F2D(Flexure):
       self.cj_1i1 = (2*D00 + 0.5*(-D10 + D_10 - D01 + D0_1) \
         - ((1-nu)/8) * (D11 - D1_1 - D_11 + D_1_1)) / dx2dy2
       self.cj_2i0 = (D00 - 0.5*(D01 - D0_1)) / dy4
-
+      """
     # Provide rows and columns in the 2D input to later functions
     self.ncolsx = self.cj0i0.shape[1]
     self.nrowsy = self.cj0i0.shape[0]
@@ -370,9 +475,10 @@ class F2D(Flexure):
     ####################################################
     else:
       self.get_coeff_values()
-      for i in range(self.nrowsy):
-        self.build_coeff_matrix_nonzero_blocks_1row(i)
-        self.assemble_blocks_sparse_1row(i)
+      #for i in range(self.nrowsy):
+        #self.build_coeff_matrix_nonzero_blocks_1row(i)
+        #self.assemble_blocks_sparse_1row(i)
+      self.build_diags()
 
   def BCs_that_need_padding(self):
     """
@@ -1016,6 +1122,7 @@ class F2D(Flexure):
     # Check which of the (BC_EW, BC_NS have been defined; if they are not yet 
     # defined, keep default value of None so they eventually get abck to their 
     # their standard self.* values
+    """
     for i in range(self.nrowsy):
       if self.BC_E == 'NoOutsideLoads' or self.BC_W == 'NoOutsideLoads' \
         or self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
@@ -1027,7 +1134,47 @@ class F2D(Flexure):
         self.assemble_blocks_sparse_1row(i, BC_NS, BC_NS)
       else:
         self.assemble_blocks_sparse_1row(i)
+    """
+    self.build_diags()
+    
   
+  def build_diags(self):
+    # Reshape to put in solver
+    vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
+    vec_cj_1i_1 = np.reshape(self.cj_1i_1, -1, order='C')
+    vec_cj_1i0 = np.reshape(self.cj_1i0, -1, order='C')
+    vec_cj_1i1 = np.reshape(self.cj_1i1, -1, order='C')
+    vec_cj0i_2 = np.reshape(self.cj0i_2, -1, order='C')
+    vec_cj0i_1 = np.reshape(self.cj0i_1, -1, order='C')
+    vec_cj0i0 = np.reshape(self.cj0i0, -1, order='C')
+    vec_cj0i1 = np.reshape(self.cj0i1, -1, order='C')
+    vec_cj0i2 = np.reshape(self.cj0i2, -1, order='C')
+    vec_cj1i_1 = np.reshape(self.cj1i_1, -1, order='C')
+    vec_cj1i0 = np.reshape(self.cj1i0, -1, order='C')
+    vec_cj1i1 = np.reshape(self.cj1i1, -1, order='C')
+    vec_cj2i0 = np.reshape(self.cj2i0, -1, order='C')
+    
+    Up2 = vec_cj_2i0
+    Up1 = np.vstack(( vec_cj_1i_1, vec_cj_1i0, vec_cj_1i1 ))
+    Mid = np.vstack(( vec_cj0i_2, vec_cj0i_1, vec_cj0i0, vec_cj0i1, vec_cj0i2 ))
+    Dn1 = np.vstack(( vec_cj1i_1, vec_cj1i0, vec_cj1i1 ))
+    Dn2 = vec_cj2i0
+    
+    # Arrange in solver
+                        
+    diags = np.vstack(( Up2, \
+                        Up1, \
+                        Mid, \
+                        Dn1, \
+                        Dn2 ))
+                        
+    self.ny = self.nrowsy
+    self.nx = self.ncolsx
+                        
+    import scipy
+                        
+    self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx,  -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
+
   def build_coeff_matrix_nonzero_blocks_1row(self, i, BC_E=None, BC_W=None):
     """
     Generate the nonzero diagonal sparse blocks for the coefficient array
@@ -1224,7 +1371,7 @@ class F2D(Flexure):
       # but being explicit here
       #wvector = spsolve(coeff_matrix,q0vector,use_umfpack=True)
       # Now iterative
-      q0vector = self.q0.reshape(np.prod(self.q0.shape),1)
+      q0vector = self.q0.reshape(np.prod(self.q0.shape),1, order='F')
       #woldvector = self.wold.reshape(np.prod(self.wold.shape),1)
       #wvector = isolve.minres(self.coeff_matrix,q0vector)    # fast
       wvector = isolve.lgmres(self.coeff_matrix,q0vector)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
@@ -1237,12 +1384,12 @@ class F2D(Flexure):
         print "Solution type not understood:"
         print "Defaulting to direct solution with UMFpack"
       # Convert coefficient array format to csr for sparse solver
-      coeff_matrix = sparse.csr_matrix(self.coeff_matrix)
-      q0vector = self.q0.reshape(1,np.prod(self.q0.shape))
-      q0vector = sparse.csr_matrix(q0vector)
+      #coeff_matrix = sparse.csr_matrix(self.coeff_matrix)
+      q0vector = self.q0.reshape(-1)
+      #q0vector = sparse.csr_matrix(q0vector)
       # UMFpack is the default direct solver now in python, 
       # but being explicit here
-      wvector = spsolve(coeff_matrix,q0vector,use_umfpack=True)
+      wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
 
     # Reshape into grid
     self.w = -wvector.reshape(self.q0.shape)
