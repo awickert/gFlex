@@ -779,25 +779,6 @@ class F2D(Flexure):
       # periodic bc is applied
       self.q0pad = np.concatenate((zeropad,self.q0pad), axis=0)
 
-  def get_max_flexural_wavelength(self):
-    """
-    Returns the approximate maximum flexural wavelength
-    This is important when padding of the grid is required: in Flexure (this 
-    code), grids are padded out to one maximum flexural wavelength, but in any 
-    case, the flexural wavelength is a good characteristic distance for any 
-    truncation limit
-    """
-    if np.isscalar(self.D):
-      Dmax = self.D
-    else:
-      Dmax = self.D.max()
-    # This is an approximation if there is fill that evolves with iterations 
-    # (e.g., water), but should be good enough that this won't do much to it
-    alpha = (4*Dmax/(self.drho*self.g))**.25 # 2D flexural parameter
-    flexuralWavelength = 2*np.pi*alpha
-    
-    return flexuralWavelength
-  
   def pad_Te(self):
     """
     Pad elastic thickness to match padded q0 array.
