@@ -258,7 +258,6 @@ class Isostasy(BMI):
     # "Stewart1" (second and third derivatives are 0: Stewart and Watts (1997))
     # "Periodic" - wraparound on edges
     # "Mirror" - reflects on edges
-    # "NoOutsideLoads" - padded on edges with q0 = 0
     elif value_key == 'BoundaryCondition_East':
       self.BC_E = value
     elif value_key == 'BoundaryCondition_West':

@@ -417,10 +417,9 @@ class F2D(Flexure):
     # properly: and abort if they are not.
     
     # E-W CHECK
-    if (self.BC_W == 'Periodic' and self.BC_E != 'Periodic' \
-      or self.BC_W != 'Periodic' and self.BC_E == 'Periodic') \
-      and (self.BC_W != 'NoOutsideLoads' and self.BC_E != 'NoOutsideLoads' \
-      and self.BC_W != 'Mirror' and self.BC_E != 'Mirror'):
+    if ((self.BC_W == 'Periodic' and self.BC_E != 'Periodic') \
+      or (self.BC_W != 'Periodic' and self.BC_E == 'Periodic')) \
+      and (self.BC_W != 'Mirror' and self.BC_E != 'Mirror'):
       # If only one boundary is periodic and the other doesn't implicitly 
       # involve a periodic boundary, this is illegal!
       sys.exit("Having the boundary opposite a periodic boundary condition\n"+
@@ -429,10 +428,9 @@ class F2D(Flexure):
                "Please fix the input boundary conditions. Aborting.")
 
     # N-S CHECK
-    if (self.BC_N == 'Periodic' and self.BC_S != 'Periodic' \
-      or self.BC_N != 'Periodic' and self.BC_S == 'Periodic') \
-      and (self.BC_N != 'NoOutsideLoads' and self.BC_S != 'NoOutsideLoads' \
-      and self.BC_N != 'Mirror' and self.BC_S != 'Mirror'):
+    if ((self.BC_N == 'Periodic' and self.BC_S != 'Periodic') \
+      or (self.BC_N != 'Periodic' and self.BC_S == 'Periodic')) \
+      and (self.BC_N != 'Mirror' and self.BC_S != 'Mirror'):
       # If only one boundary is periodic and the other doesn't implicitly 
       # involve a periodic boundary, this is illegal!
       sys.exit("Having the boundary opposite a periodic boundary condition\n"+
@@ -440,14 +438,12 @@ class F2D(Flexure):
                "condition makes no physical sense.\n"+
                "Please fix the input boundary conditions. Aborting.")
 
-    ######################################################
-    # PADDING CAN BE REQUIRED: MIRROR AND NOOUTSIDELOADS #
-    ######################################################
+    ###################################
+    # PADDING CAN BE REQUIRED: MIRROR #
+    ###################################
 
     # Go to this step if any of the boundary conditions require padding
-    if self.BC_W == 'NoOutsideLoads' or self.BC_E == 'NoOutsideLoads' or \
-      self.BC_N == 'NoOutsideLoads' or self.BC_S == 'NoOutsideLoads' or \
-      self.BC_W == 'Mirror' or self.BC_E == 'Mirror' or \
+    if self.BC_W == 'Mirror' or self.BC_E == 'Mirror' or \
       self.BC_N == 'Mirror' or self.BC_S == 'Mirror':
       # Define an approximate maximum flexural wavelength to obtain
       # required distances to pad the array    
@@ -483,7 +479,7 @@ class F2D(Flexure):
 
   def BCs_that_need_padding(self):
     """
-    This function acts as a main interface for BC_Mirror and BC_NoOutsideLoads.
+    This function acts as a main interface for BC_Mirror
     
     It is needed because these functions pad the array, and if one pads it on 
     one side and the other pads it on the other, the final array isn't known 
@@ -503,17 +499,11 @@ class F2D(Flexure):
     # (if desired) then flip (or pad) the whole thing N-S
     
     # E-W
-    if self.BC_W == 'NoOutsideLoads' or self.BC_E == 'NoOutsideLoads':
-      print "NO OUTSIDE LOADS, E-W!"
-      self.BC_NoOutsideLoads_EW()
     if self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
       print "MIRROR, E-W!"
       self.BC_Mirror_EW()
 
     # N-S
-    if self.BC_N == 'NoOutsideLoads' or self.BC_S == 'NoOutsideLoads':
-      print "NO OUTSIDE LOADS, N-S!"
-      self.BC_NoOutsideLoads_NS()
     if self.BC_N == 'Mirror' or self.BC_S == 'Mirror':
       print "MIRROR, N-S!"
       self.BC_Mirror_NS()
@@ -685,123 +675,21 @@ class F2D(Flexure):
       self.q0pad = np.concatenate((self.q0pad,self.q0_mirror_NS_S), axis=0)
     elif self.BC_N == 'Mirror':
       self.q0pad = np.concatenate((self.q0_mirror_NS_N,self.q0pad), axis=0)
-    
-  def BC_NoOutsideLoads_EW(self):
-    """
-    Uses padding and (if needed) periodic boundary conditions to approximate 
-    zero loads outside of the study area. The maximum effect of a load on the 
-    boundary of the region is 0.2% of the effect it would have at its location. 
-    This is because we pad out to one flexural wavelength (so exp(-2*pi)).
-    Flexural wavelength is calculated for the maximum elastic thickness in the 
-    array.
-
-    Padding step creates an array, q0pad, that is padded to one side.
-    It then is given periodic boundary conditions both sides.
-    The padding extends for 1 flexural wavelength
-
-    BC_NoOutsideLoads_EW and BC_NoOutsideLoads_NS are almost identical, but are 
-    different enough that I've found it easier to separate them for the time 
-    being
-    """
-
-    # Before starting, make sure that other side isn't "periodic": in that 
-    # case, change it to NoOutsideLoads because the solution is the same and 
-    # changing it should improve flow control (right-side padding desired 
-    # in this case even if the right boundary was periodic)
-    if self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
-      print "Setting one periodic boundary in conjunction with one"
-      print "NoOutsideLoads boundary is the same as setting both sides"
-      print "to have no outside loads; this is because a periodic boundary"
-      print "condition is used to halve the distance that needs to be padded."
-      print "Therefore setting East and West boundary conditions both to"
-      print "NoOutsideLoads"
-      # One is already NoOutsideLoads, so change both to make sure that we 
-      # get both of them
-      self.BC_E = 'NoOutsideLoads'
-      self.BC_W = 'NoOutsideLoads'
-
-    # Create 1-flexural-wavelength-long array for padding
-    # Um, maybe it isn't long enough? *2, but just a hack-fix
-    # And this would have been displacing material before
-    zeropad = 2* np.zeros( (self.q0pad.shape[0], self.maxFlexuralWavelength_ncells_x) )
-          
-    # Pad q0 the array
-    if self.BC_E == 'NoOutsideLoads':
-      self.q0pad = np.concatenate((self.q0,zeropad), axis=1)
-    if self.BC_W == 'NoOutsideLoads':
-      self.q0pad = np.concatenate((zeropad,self.q0pad), axis=1)
   
-  def BC_NoOutsideLoads_NS(self):
-    """
-    Uses padding and (if needed) periodic boundary conditions to approximate 
-    zero loads outside of the study area. The maximum effect of a load on the 
-    boundary of the region is 0.2% of the effect it would have at its location. 
-    This is because we pad out to one flexural wavelength (so exp(-2*pi)).
-    Flexural wavelength is calculated for the maximum elastic thickness in the 
-    array.
-
-    Padding step creates an array, q0pad, that is padded to one side.
-    It then is given periodic boundary conditions both sides.
-    The padding extends for 1 flexural wavelength
-
-    BC_NoOutsideLoads_EW and BC_NoOutsideLoads_NS are almost identical, but are 
-    different enough that I've found it easier to separate them for the time 
-    being
-    """
-
-    # Before starting, make sure that other side isn't "periodic": in that 
-    # case, change it to NoOutsideLoads because the solution is the same and 
-    # changing it should improve flow control (right-side padding desired 
-    # in this case even if the right boundary was periodic)
-    if self.BC_S == 'Periodic' or self.BC_N == 'Periodic':
-      print "Setting one periodic boundary in conjunction with one"
-      print "NoOutsideLoads boundary is the same as setting both sides"
-      print "to have no outside loads; this is because a periodic boundary"
-      print "condition is used to halve the distance that needs to be padded."
-      print "Therefore setting North and South boundary conditions both to"
-      print "NoOutsideLoads"
-      # One is already NoOutsideLoads, so change both to make sure that we 
-      # get both of them
-      self.BC_S = 'NoOutsideLoads'
-      self.BC_N = 'NoOutsideLoads'
-
-    # Create 1-flexural-wavelength-long array for padding
-    zeropad = 2* np.zeros( (self.maxFlexuralWavelength_ncells_y, self.q0pad.shape[1]) )
-          
-    # Pad q0 the array
-    # Very important that this happens after EW function and that it operates 
-    # on self.q0pad: this is how it gets the right size to keep the matrix 
-    # an intact rectangle (instead of L-shaped)
-    if self.BC_S == 'NoOutsideLoads':
-      self.q0pad = np.concatenate((self.q0pad,zeropad), axis=0)
-    if self.BC_N == 'NoOutsideLoads':
-      self.q0pad = np.concatenate((zeropad,self.q0pad), axis=0)
-
   def pad_Te(self):
     """
     Pad elastic thickness to match padded q0 array.
-    This is needed for the NoOutsideLoads and Mirror boundary conditions
-    
-    This function will do nothing if elastic thickness is a scalar... because 
-    then it is not a grid that needs to be padded
-
-    If elastic thickness is not a scalar and the boundary condition is
-    NoOutsideLoads on both sides, just extend a linear gradient 
-    from the rightmost to the leftmost values across the extended region
-    to prevent discontinuities
-    
-    If the boundary condition is NoOutsideLoads on one side, it will pad the 
-    entire outside region to that side with the Te that is found on that 
-    edge of the array.
+    This is needed for the Mirror boundary condition
     
     Mirror boundary conditions mirror the elastic thickness array out to the 
-    desired distance
-    
+    desired distance.
+
+    This function will do nothing if elastic thickness is a scalar... because 
+    then it is not a grid that needs to be padded. It will also do nothing if 
+    the boundary conditions do not include a "Mirror".
+
     Use linspace to keep value constant on both sides of the padding seam
     And also update D based on the extended Te array
-
-    It will also do nothing if the boundary conditions are not NoOutsideLoads
-    or Mirror
     """
 
     if type(self.Te) == np.ndarray:
@@ -811,50 +699,12 @@ class F2D(Flexure):
       # EAST-WEST FIRST #
       ###################
   
-      # Get elastic thicknesses on margins for NoOutsideLoads b.c.
-      if self.BC_W == 'NoOutsideLoads' or self.BC_E == 'NoOutsideLoads' \
-        or self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
+      # Get elastic thicknesses on margins for Mirror b.c.
+      if self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
         TeW = self.Te[:,0]
         TeE = self.Te[:,-1]
-        TeE_array = np.zeros((self.Te.shape[0], self.maxFlexuralWavelength_ncells_x))
-        TeW_array = np.zeros((self.Te.shape[0], self.maxFlexuralWavelength_ncells_x))
-        # Clearly don't know how to slice everything this way, so...
-        for i in range(self.maxFlexuralWavelength_ncells_x):
-          TeE_array[:,i] = TeE
-          TeW_array[:,i] = TeW
-      # Combo #1
-      if self.BC_W == 'Mirror' and self.BC_E == 'NoOutsideLoads':
-        if self.Te.shape[1] < self.maxFlexuralWavelength_ncells_x:
-          extrapad_length = self.maxFlexuralWavelength_ncells_x - self.Te.shape[1]
-          extrapad_W = np.lib.stride_tricks.as_strided(TeW, \
-            (extrapad_length, TeW.size), (0, TeW.itemsize)).transpose()
-          padTeW = np.concatenate(( extrapad_W, np.fliplr(self.Te) ), axis=1)
-        else:
-          padTeW = np.fliplr(self.Te)[:,-self.maxFlexuralWavelength_ncells_x:]
-        padTeE = self.padding_array_Te_NOL_EW(TeW,TeE)
-        self.Te = np.concatenate((padTeW,self.Te,padTeE), axis=1)
-      # Combo #2
-      elif self.BC_W == 'NoOutsideLoads' and self.BC_E == 'Mirror':
-        padTeW = self.padding_array_Te_NOL_EW(TeW,TeE)
-        if self.Te.shape[1] < self.maxFlexuralWavelength_ncells_x:
-          extrapad_length = self.maxFlexuralWavelength_ncells_x - self.Te.shape[1]
-          extrapad_E = np.lib.stride_tricks.as_strided(TeE, \
-            (extrapad_length, TeE.size), (0, TeE.itemsize)).transpose()
-          padTeE = np.concatenate(( np.fliplr(self.Te), extrapad_E ), axis=1)
-        else:
-          padTeE = np.fliplr(self.Te)[:,:self.maxFlexuralWavelength_ncells_x]
-        self.Te = np.concatenate((padTeW,self.Te,padTeE), axis=1)
-      # Just NoOutsideLoads
-      # This is the wraparound: array extended to the East
-      elif self.BC_W == 'NoOutsideLoads' or self.BC_E == 'NoOutsideLoads':
-        if self.BC_E == 'NoOutsideLoads':
-          padTeE = self.padding_array_Te_NOL_EW(TeW,TeE)
-          self.Te = np.concatenate((self.Te,padTeE), axis=1)
-        if self.BC_W == 'NoOutsideLoads':
-          padTeW = self.padding_array_Te_NOL_EW(TeW,TeE)
-          self.Te = np.concatenate((padTeW,self.Te), axis=1)
-      # Just Mirror
-      elif self.BC_W == 'Mirror' and self.BC_E == 'Mirror':
+      # Mirror on both sides
+      if self.BC_W == 'Mirror' and self.BC_E == 'Mirror':
         # Case 1: padded on both sides 
         if self.Te.shape[1] < self.maxFlexuralWavelength_ncells_x:
           # Thought I would need extra padding because there are 2 extra cells 
@@ -880,8 +730,6 @@ class F2D(Flexure):
           # BEFORE!
           padTeE = np.fliplr(self.Te)[:,1:-1]
           self.Te = np.concatenate((self.Te,padTeE), axis=1)
-      # Combo and mirror-only cases already accounted for, so can just do a 
-      # simple if
       elif self.BC_W == 'Mirror':
         if self.Te.shape[1] < self.maxFlexuralWavelength_ncells_x:
           extrapad_length = self.maxFlexuralWavelength_ncells_x - self.Te.shape[1]
@@ -905,44 +753,11 @@ class F2D(Flexure):
       # THEN NORTH-SOUTH #
       ####################
       
-      # Get elastic thicknesses on margins for NoOutsideLoads b.c.
-      if self.BC_N == 'NoOutsideLoads' or self.BC_S == 'NoOutsideLoads' \
-        or self.BC_N == 'Mirror' or self.BC_S == 'Mirror':
+      # Get elastic thicknesses on margins for Mirror b.c.
+      if self.BC_N == 'Mirror' or self.BC_S == 'Mirror':
         TeN = self.Te[0,:]
         TeS = self.Te[-1,:]
-      # Combo #1
-      if self.BC_N == 'Mirror' and self.BC_S == 'NoOutsideLoads':
-        if self.Te.shape[0] < self.maxFlexuralWavelength_ncells_y:
-          extrapad_length = self.maxFlexuralWavelength_ncells_y - self.Te.shape[0]
-          extrapad_N = np.lib.stride_tricks.as_strided(TeN, \
-            (extrapad_length, TeN.size), (0, TeN.itemsize))
-          padTeN = np.concatenate(( extrapad_N, np.fliplr(self.Te) ), axis=0)
-        else:
-          padTeN = np.flipud(self.Te)[-self.maxFlexuralWavelength_ncells_y:,:]
-        padTeS = self.padding_array_Te_NOL_NS(TeN,TeS)
-        self.Te = np.concatenate((padTeN,self.Te,padTeS), axis=0)
-      # Combo #2
-      elif self.BC_N == 'NoOutsideLoads' and self.BC_S == 'Mirror':
-        padTeN = self.padding_array_Te_NOL_NS(TeN,TeS)
-        if self.Te.shape[0] < self.maxFlexuralWavelength_ncells_y:
-          extrapad_length = self.maxFlexuralWavelength_ncells_y - self.Te.shape[0]
-          extrapad_S = np.lib.stride_tricks.as_strided(TeS, \
-            (extrapad_length, TeS.size), (0, TeS.itemsize))
-          padTeS = np.concatenate(( np.fliplr(self.Te), extrapad_S ), axis=0)
-        else:
-          padTeS = np.flipud(self.Te)[:self.maxFlexuralWavelength_ncells_y,:]
-        self.Te = np.concatenate((padTeN,self.Te,padTeS), axis=0)
-      # Just NoOutsideLoads
-      # This is the wraparound: array extended to the East
-      elif self.BC_N == 'NoOutsideLoads' or self.BC_S == 'NoOutsideLoads':
-        if self.BC_S == 'NoOutsideLoads':
-          padTeS = self.padding_array_Te_NOL_NS(TeN,TeS)
-          self.Te = np.concatenate((self.Te,padTeS), axis=0)
-        if self.BC_N == 'NoOutsideLoads':
-          padTeN = self.padding_array_Te_NOL_NS(TeN,TeS)
-          self.Te = np.concatenate((padTeN,self.Te), axis=0)
-      # Just Mirror
-      elif self.BC_N == 'Mirror' and self.BC_S == 'Mirror':
+      if self.BC_N == 'Mirror' and self.BC_S == 'Mirror':
         # Case 1: padded on both sides 
         if self.Te.shape[0] < self.maxFlexuralWavelength_ncells_y:
           extrapad_length = self.maxFlexuralWavelength_ncells_y - self.Te.shape[0]
@@ -992,44 +807,10 @@ class F2D(Flexure):
       self.D = self.E*self.Te**3/(12*(1-self.nu**2)) # Flexural rigidity
       print "MOO!"
 
-  def padding_array_Te_NOL_EW(self,TeW,TeE,ncells=None):
-    """
-    Returns an array to pad elastic thickness for the NoOutsideLoads boundary
-    condition on the East and West sides
-    
-    By default, maxFlexuralWavelength_ncells_x = self.maxFlexuralWavelength_ncells_x
-    """
-    
-    # Default to class variable: not really necessary in current implementation
-    # Could have just set everything to go off of self.maxFlexuralWavelength_ncells_x
-    # As for N-S (below)
-    if ncells == None:
-      ncells = self.maxFlexuralWavelength_ncells_x
-    for i in range(len(TeE)):
-      if i:
-        padding_array = np.concatenate((padding_array, np.array([np.linspace(TeE[i],TeW[i],ncells)]) ), axis=0)
-      elif ~i:
-        padding_array = np.array([np.linspace(TeE[i],TeW[i],ncells)])
-        
-    return padding_array
-
-  def padding_array_Te_NOL_NS(self,TeN,TeS):
-    """
-    Returns an array to pad elastic thickness for the NoOutsideLoads boundary
-    condition on the North and South sides
-    """
-    for i in range(len(TeS)):
-      if i:
-        padding_array = np.concatenate((padding_array, np.array([np.linspace(TeS[i],TeN[i],self.maxFlexuralWavelength_ncells_y)]) ), axis=0)
-      elif ~i:
-        padding_array = np.array([np.linspace(TeS[i],TeN[i],self.maxFlexuralWavelength_ncells_y)])
-       
-    return padding_array.transpose()
-    
   def padded_edges_BCs(self):
     """
     Sets the boundary conditions outside of padded edges; this is important 
-    for the NoOutsideLoads and Mirror boundary conditions
+    for Mirror boundary conditions
 
     Also makes an archival copy of q0 for while q0 is temporarily replaced 
     by the padded version of it
@@ -1040,14 +821,13 @@ class F2D(Flexure):
     ###################
 
     # First check if there is an East-West component to consider
-    if self.BC_E == 'NoOutsideLoads' or self.BC_W == 'NoOutsideLoads' \
-      or self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
-      if self.BC_E == 'NoOutsideLoads' and self.BC_W == 'NoOutsideLoads':
-        BC_EW = 'Dirichlet'
-      elif self.BC_E == 'Mirror' and self.BC_W == 'Mirror':
+    if self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
+      if self.BC_E == 'Mirror' and self.BC_W == 'Mirror':
         if len(self.q0_mirror_EW) > self.maxFlexuralWavelength_ncells_x \
           or len(self.q0_mirror_EW) < 2*self.maxFlexuralWavelength_ncells_x:
           BC_EW = 'Periodic'
+        else:
+          BC_EW = 'Dirichlet'
       else:
         BC_EW = 'Dirichlet'
 
@@ -1056,14 +836,13 @@ class F2D(Flexure):
     ####################
     
     # First check if there is a North-South component to consider
-    if self.BC_S == 'NoOutsideLoads' or self.BC_N == 'NoOutsideLoads' \
-      or self.BC_S == 'Mirror' or self.BC_N == 'Mirror':
-      if self.BC_S == 'NoOutsideLoads' and self.BC_N == 'NoOutsideLoads':
-        BC_NS = 'Dirichlet'
-      elif self.BC_S == 'Mirror' and self.BC_N == 'Mirror':
+    if self.BC_S == 'Mirror' or self.BC_N == 'Mirror':
+      if self.BC_S == 'Mirror' and self.BC_N == 'Mirror':
         if len(self.q0_mirror_NS) > self.maxFlexuralWavelength_ncells_y \
           or len(self.q0_mirror_NS) < 2*self.maxFlexuralWavelength_ncells_y:
           BC_NS = 'Periodic'
+        else:
+          BC_NS = 'Dirichlet'
       else:
         BC_NS = 'Dirichlet'
 
@@ -1239,13 +1018,10 @@ class F2D(Flexure):
     cases
     """
 
-    # Special case: clipping needed for the NoOutsideLoads boundary condition.
-    # This clipping also works for most of the Mirror boundary conditions
+    # Special case: clipping needed for the Mirror boundary condition.
     
     # IS THIS SOMETHING I NEED TO WORRY ABOUT? LET'S SEE:
-    if self.BC_W == 'NoOutsideLoads' or self.BC_E == 'NoOutsideLoads' or \
-      self.BC_W == 'Mirror' or self.BC_E == 'Mirror' or \
-      self.BC_N == 'NoOutsideLoads' or self.BC_S == 'NoOutsideLoads' or \
+    if self.BC_W == 'Mirror' or self.BC_E == 'Mirror' or \
       self.BC_N == 'Mirror' or self.BC_S == 'Mirror':
       # Then return q0 and (if needed) Te to their original states
       self.q0 = self.q0_orig
@@ -1254,23 +1030,8 @@ class F2D(Flexure):
         self.Te = self.Te_orig
 
     # STARTING WITH EAST-WEST: THIS IS THE SAME AS FOR THE 1D CASE:
-    # Combo!
-    if self.BC_W == 'NoOutsideLoads' and self.BC_E == 'Mirror' or \
-      self.BC_W == 'Mirror' and self.BC_E == 'NoOutsideLoads':
-      # Mixed - padded on both sides
-      self.w = self.w[:,self.maxFlexuralWavelength_ncells_x:-self.maxFlexuralWavelength_ncells_x]
-    # Just NoOutsideLoads
-    elif self.BC_W == 'NoOutsideLoads' and self.BC_E == 'NoOutsideLoads':
-      self.w = self.w[:,self.maxFlexuralWavelength_ncells_x:-self.maxFlexuralWavelength_ncells_x]
-    elif self.BC_W == 'NoOutsideLoads' or self.BC_E == 'NoOutsideLoads':
-      if self.BC_E == 'NoOutsideLoads':
-        self.w = self.w[:,:self.q0_orig.shape[1]]
-      elif self.BC_W == 'NoOutsideLoads':
-        # "elif" because we need W with no E for this: otherwise 
-        # periodic bc is applied and blanks are on right as for above
-        self.w = self.w[:,-self.q0_orig.shape[1]:]
-    # Just Mirror
-    elif self.BC_E == 'Mirror' and self.BC_W == 'Mirror':
+    # Mirror
+    if self.BC_E == 'Mirror' and self.BC_W == 'Mirror':
       # Case 1: padded on both sides 
       if self.q0_mirror_EW.shape[1] < self.maxFlexuralWavelength_ncells_x \
         or self.q0_mirror_EW.shape[1] > 2*self.maxFlexuralWavelength_ncells_x:
@@ -1286,23 +1047,8 @@ class F2D(Flexure):
       self.w = self.w[:,:-self.maxFlexuralWavelength_ncells_x]
   
     # NOW FOR NORTH-SOUTH: NOT MUCH DIFFERENT FROM EAST-WEST IN PRINCIPLE:
-    # Combo!
-    if self.BC_N == 'NoOutsideLoads' and self.BC_S == 'Mirror' or \
-      self.BC_N == 'Mirror' and self.BC_S == 'NoOutsideLoads':
-      # Mixed - padded on both sides
-      self.w = self.w[self.maxFlexuralWavelength_ncells_y:-self.maxFlexuralWavelength_ncells_y,:]
-    # Just NoOutsideLoads
-    elif self.BC_N == 'NoOutsideLoads' and self.BC_S == 'NoOutsideLoads':
-      self.w = self.w[self.maxFlexuralWavelength_ncells_y:-self.maxFlexuralWavelength_ncells_y,:]
-    elif self.BC_N == 'NoOutsideLoads' or self.BC_S == 'NoOutsideLoads':
-      if self.BC_S == 'NoOutsideLoads':
-        self.w = self.w[:self.q0_orig.shape[0],:]
-      elif self.BC_N == 'NoOutsideLoads':
-        # "elif" because we need W with no E for this: otherwise 
-        # periodic bc is applied and blanks are on right as for above
-        self.w = self.w[-self.q0_orig.shape[0]:,:]
-    # Just Mirror
-    elif self.BC_S == 'Mirror' and self.BC_N == 'Mirror':
+    # Mirror
+    if self.BC_S == 'Mirror' and self.BC_N == 'Mirror':
       # Case 1: padded on both sides 
       if self.q0_mirror_NS.shape[0] < self.maxFlexuralWavelength_ncells_y \
         or self.q0_mirror_NS.shape[0] > 2*self.maxFlexuralWavelength_ncells_y:
