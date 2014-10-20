@@ -1,16 +1,13 @@
-try:
-  already_run
-except:
-  already_run = False
-
 import sys
-if already_run:
+
+try:
   reload(sys.modules['base'])
   reload(sys.modules['f1d'])
   reload(sys.modules['f2d'])
   reload(sys.modules['prattairy'])
-
-already_run = True
+  print "RELOADING"
+except:
+  pass # 1st time running
 
 from base import *
 from f1d import *
