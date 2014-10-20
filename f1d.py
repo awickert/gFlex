@@ -175,6 +175,10 @@ class F1D(Flexure):
       # This step is done post-padding if Mirror is the boundary condition
       self.build_diagonals()
 
+    ##############################
+    # SELECT BOUNDARY CONDITIONS #
+    ##############################
+    
     print "Boundary condition, West:", self.BC_W, type(self.BC_W)
     print "Boundary condition, East:", self.BC_E, type(self.BC_E)
 
@@ -213,10 +217,9 @@ class F1D(Flexure):
       # This should be redundant with something that tells the system to exit
       # before even reaching this routine if the boundary condition doesn't
       # work.
-      sys.exit("Selected boundary condition not recognized for the chosen\n\
-                model run type (1D or 2D, constant or variable $T_e$)")
+      sys.exit("Selected boundary condition not recognized for the chosen\n"\
+               +"model run type (1D or 2D, constant or variable $T_e$)")
                 
-
     self.coeff_matrix = dia_matrix( (self.coeffs,self.offsets), shape = (self.ncolsx,self.ncolsx) )
 
     self.coeff_creation_time = time.time() - self.coeff_start_time
@@ -230,11 +233,11 @@ class F1D(Flexure):
     """
     if np.isscalar(self.Te):
       # Diagonals, from left to right, for all but the boundaries 
-      self.l2 = 1
-      self.l1 = -4
-      self.c0 = 6 + (self.dx4/self.D) * self.drho*self.g
-      self.r1 = -4
-      self.r2 = 1
+      self.l2 = 1 * self.D/self.dx4
+      self.l1 = -4 * self.D/self.dx4
+      self.c0 = 6 + self.drho*self.g
+      self.r1 = -4 * self.D/self.dx4
+      self.r2 = 1 * self.D/self.dx4
       # Make them into arrays
       self.l2 *= np.ones(self.q0.shape)
       self.l1 *= np.ones(self.q0.shape)
@@ -273,23 +276,11 @@ class F1D(Flexure):
     # Number of columns; equals number of rows too - square coeff matrix
     self.ncolsx = self.c0.shape[0]
 
-  def scale_matrix_values(self):
-    """
-    Values in the solution matrix currently have a coefficient that is pulled 
-    outside of the matrix. Multiply this through the matrix here.
-    This is needed for the scalar Te case
-    """
-    # Multiply by the factors that I pulled outside of the matrix
-    for item in self.l2,self.l1,self.c0,self.r1,self.r2:
-      item *= self.D/self.dx4
-
   def BC_Periodic(self):
     """
     Periodic boundary conditions: wraparound to the other side
     """
     # Scale values if const Te; otherwise everything is the same
-    if np.isscalar(self.Te):
-      self.scale_matrix_values()
     self.coeffs = np.vstack((self.l1,self.l2,self.l2,self.l1,self.c0,self.r1,self.r2,self.r2,self.r1))
     self.offsets = np.array([1-self.ncolsx,2-self.ncolsx,-2,-1,0,1,2,self.ncolsx-2,self.ncolsx-1])
 
@@ -302,8 +293,6 @@ class F1D(Flexure):
     implicit time-stepping matrix solutions
     """
     # Scale values if const Te; otherwise everything is the same
-    if np.isscalar(self.Te):
-      self.scale_matrix_values()
     self.coeffs = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
     self.offsets = np.array([-2,-1,0,1,2])
 
@@ -324,14 +313,13 @@ class F1D(Flexure):
       for i in 1,-1:
         self.l2[i] = 0
         self.l1[i] = 0
-        self.c0[i] = 1
+        self.c0[i] = 1 * self.D/self.dx4
         self.r1[i] = 0
         self.r2[i] = 0
       for i in 2,-2:
         self.l2[i] = 0
         self.r2[i] = 0
-        self.c0[i] = 1
-      self.scale_matrix_values()
+        self.c0[i] = 1 * self.D/self.dx4
       # Construct sparse array
       self.coeffs = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
       self.offsets = np.array([-2,-1,0,1,2])
@@ -356,29 +344,28 @@ class F1D(Flexure):
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
       if self.BC_W == 'Stewart1' or override:
         i=0
-        self.c0[i] = 2 + (self.dx4/self.D)
+        self.c0[i] = 2 * self.D/self.dx4 + 1
         self.r1[i] = 0
         self.r2[i] = 0
         self.l1[i] = 0
         self.l2[i] = 0
         i=1
-        self.c0[i] = 8 +(self.dx4/self.D)
+        self.c0[i] = 8 * self.D/self.dx4 + 1
         self.r2[i] = 0
         self.l2[i] = 0
       # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
       if self.BC_E == 'Stewart1' or override:
         i=-1
-        self.c0[i] = 2 + (self.dx4/self.D)
+        self.c0[i] = 2 * self.D/self.dx4 + 1
         self.r1[i] = 0
         self.r2[i] = 0
         self.l1[i] = 0
         self.l2[i] = 0
         i=-2
-        self.c0[i] = 8 +(self.dx4/self.D)
+        self.c0[i] = 8 * self.D/self.dx4 + 1
         self.r2[i] = 0
         self.l2[i] = 0
 
-      self.scale_matrix_values()  
       # Construct sparse array
       self.coeffs = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
       self.offsets = np.array([-2,-1,0,1,2])
