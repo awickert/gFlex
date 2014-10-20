@@ -213,10 +213,13 @@ class F1D(Flexure):
       self.BC_Sandbox()
     elif self.BC_E == 'Stewart1' or self.BC_W == 'Stewart1':
       self.BC_Stewart1()
+    elif self.BC_E == 'Neumann' or self.BC_W == 'Neumann':
+      self.BC_Neumann()
     else:
       # This should be redundant with something that tells the system to exit
       # before even reaching this routine if the boundary condition doesn't
       # work.
+      print("Error: boundary conditions: (E)", self.BC_E, "and/or (W)", self.BC_W)
       sys.exit("Selected boundary condition not recognized for the chosen\n"\
                +"model run type (1D or 2D, constant or variable $T_e$)")
                 
@@ -235,7 +238,7 @@ class F1D(Flexure):
       # Diagonals, from left to right, for all but the boundaries 
       self.l2 = 1 * self.D/self.dx4
       self.l1 = -4 * self.D/self.dx4
-      self.c0 = 6 + self.drho*self.g
+      self.c0 = 6 * self.D/self.dx4 + self.drho*self.g
       self.r1 = -4 * self.D/self.dx4
       self.r2 = 1 * self.D/self.dx4
       # Make them into arrays
@@ -373,6 +376,43 @@ class F1D(Flexure):
       sys.exit("There are no plans to incorporate the Stewart and Watts\n\
                 (1997) no-moment no-shear (d2w/dx2 = d3w/dx3 = 0)\n\
                 boundary conditions for the variable elastic thickness case.")
+
+  def BC_Neumann(self, override=False):
+    """
+    Constant gradient boundary condition
+    """
+    # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
+    i=0
+    self.l2[i] = 0
+    self.l1[i] = 0
+    self.c0[i] = 0
+    self.r1[i] = 0
+    self.r2[i] = 0
+    i=1
+    #self.l2[i] = 0
+    #self.l1[i] = 0
+    #self.c0[i] = 0
+    #self.r1[i] = 0
+    #self.r2[i] = 0
+    # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
+    i=-2
+    #self.l2[i] = 0
+    #self.l1[i] = 0
+    #self.c0[i] = 0
+    #self.r1[i] = 0
+    #self.r2[i] = 0
+    i=-1
+    self.l2[i] = 0
+    self.l1[i] = 0
+    self.c0[i] = 0
+    self.r1[i] = 0
+    self.r2[i] = 0
+    
+    print "*****", self.dx
+
+    # Construct sparse array
+    self.coeffs = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
+    self.offsets = np.array([-2,-1,0,1,2])
 
   def BCs_that_need_padding(self):
     """
