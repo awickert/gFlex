@@ -1,6 +1,6 @@
 from __future__ import division # No automatic floor division
 from base import *
-from scipy.sparse import dia_matrix, csr_matrix
+from scipy.sparse import dia_matrix, csr_matrix, spdiags
 from scipy.sparse.linalg import spsolve
 
 class F1D(Flexure):
@@ -35,7 +35,6 @@ class F1D(Flexure):
     # self.plot() # in here temporarily
 
   def finalize(self):
-    ### need work
     if debug: print 'F1D finalized'
     super(F1D, self).finalize()   
     
@@ -96,7 +95,6 @@ class F1D(Flexure):
     self.D = self.E*self.Te**3/(12*(1-self.nu**2)) # Flexural rigidity
     self.alpha = (4*self.D/(self.drho*self.g))**.25 # 1D flexural parameter
     self.coeff = self.alpha**3/(8*self.D)
-
 
   # GRIDDED
 
@@ -223,7 +221,7 @@ class F1D(Flexure):
       sys.exit("Selected boundary condition not recognized for the chosen\n"\
                +"model run type (1D or 2D, constant or variable $T_e$)")
                 
-    self.coeff_matrix = dia_matrix( (self.coeffs,self.offsets), shape = (self.ncolsx,self.ncolsx) )
+    self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
 
     self.coeff_creation_time = time.time() - self.coeff_start_time
     print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
@@ -275,16 +273,24 @@ class F1D(Flexure):
       self.l1 = ( -6.*D0 + 2.*Dp1 ) / self.dx4
       self.c0 = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
       self.r1 = ( 2.*Dm1 - 6.*D0 ) / self.dx4
-      self.r2 = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
+      self.r2 = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx
     # Number of columns; equals number of rows too - square coeff matrix
     self.ncolsx = self.c0.shape[0]
+    
+    # Either way, the way that Scipy stacks is not the same way that I calculate
+    # the rows. It runs offsets down the column instead of across the row. So
+    # to simulate this, I need to re-zero everything. To do so, I use 
+    # numpy.roll. I should check out the other arrays to see that they work; 
+    # perhaps this was a more serious problem than I knew.
+    
+    # Actually doing this after applying b.c.'s
 
   def BC_Periodic(self):
     """
     Periodic boundary conditions: wraparound to the other side
     """
     # Scale values if const Te; otherwise everything is the same
-    self.coeffs = np.vstack((self.l1,self.l2,self.l2,self.l1,self.c0,self.r1,self.r2,self.r2,self.r1))
+    self.diags = np.vstack((self.l1,self.l2,self.l2,self.l1,self.c0,self.r1,self.r2,self.r2,self.r1))
     self.offsets = np.array([1-self.ncolsx,2-self.ncolsx,-2,-1,0,1,2,self.ncolsx-2,self.ncolsx-1])
 
   def BC_Dirichlet(self):
@@ -295,8 +301,37 @@ class F1D(Flexure):
     I have only seen bc motion on RHS with the explicit part of 
     implicit time-stepping matrix solutions
     """
+    i=0
+    self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+    self.l1[i] = np.nan # OFF GRID
+    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+    self.r1[i] = -8 * self.D/self.dx4
+    self.r2[i] = 2 * self.D/self.dx4
+    i=1
+    self.l2[i] = np.nan # OFF GRID
+    self.l1[i] = -4 * self.D/self.dx4
+    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+    self.r1[i] = -4 * self.D/self.dx4
+    self.r2[i] = 2 * self.D/self.dx4
+    i=-1
+    self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+    self.r1[i] = np.nan # OFF GRID
+    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+    self.l1[i] = -8 * self.D/self.dx4
+    self.l2[i] = 2 * self.D/self.dx4
+    i=-2
+    self.r2[i] = np.nan # OFF GRID
+    self.r1[i] = -4 * self.D/self.dx4
+    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+    self.l1[i] = -4 * self.D/self.dx4
+    self.l2[i] = 2 * self.D/self.dx4
+
+    self.l2 = np.roll(self.l2, -2)
+    self.l1 = np.roll(self.l1, -1)
+    self.r1 = np.roll(self.r1, 1)
+    self.r2 = np.roll(self.r2, 2)
     # Scale values if const Te; otherwise everything is the same
-    self.coeffs = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
+    self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
     self.offsets = np.array([-2,-1,0,1,2])
 
   def BC_Sandbox(self):
@@ -311,20 +346,43 @@ class F1D(Flexure):
           meant for actual computation, but rather for developing methods.\n\
           Works only for scalar Te."
     if np.isscalar(self.Te):
-      self.q0[0] = -20
-      self.q0[1] = -20
-      for i in 1,-1:
-        self.l2[i] = 0
-        self.l1[i] = 0
-        self.c0[i] = 1 * self.D/self.dx4
-        self.r1[i] = 0
-        self.r2[i] = 0
-      for i in 2,-2:
-        self.l2[i] = 0
-        self.r2[i] = 0
-        self.c0[i] = 1 * self.D/self.dx4
+      """
+      i=0
+      self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+      self.l1[i] = np.nan # OFF GRID
+      self.c0[i] = 10 * self.D/self.dx4 + self.drho*self.g
+      self.r1[i] = -8 * self.D/self.dx4
+      self.r2[i] = 2 * self.D/self.dx4
+      self.q0[i] = self.q0[i] / (2*self.dx**5)
+      i=1
+      self.l2[i] = np.nan # OFF GRID
+      self.l1[i] = -2 * self.D/self.dx4
+      self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+      self.r1[i] = -6 * self.D/self.dx4
+      self.r2[i] = 2 * self.D/self.dx4
+      self.q0[i] = self.q0[i] / (2*self.dx**3)
+      """
+      i=-1
+      self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+      self.r1[i] = np.nan # OFF GRID
+      self.c0[i] = 10 * self.D/self.dx4 + self.drho*self.g
+      self.l1[i] = -8 * self.D/self.dx4
+      self.l2[i] = 2 * self.D/self.dx4
+      self.q0[i] = self.q0[i] / (2*self.dx**5)
+      i=-2
+      self.r2[i] = np.nan # OFF GRID
+      self.r1[i] = -2 * self.D/self.dx4
+      self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+      self.l1[i] = -6 * self.D/self.dx4
+      self.l2[i] = 2 * self.D/self.dx4
+      self.q0[i] = self.q0[i] / (2*self.dx**3)
+
+      self.l2 = np.roll(self.l2, -2)
+      self.l1 = np.roll(self.l1, -1)
+      self.r1 = np.roll(self.r1, 1)
+      self.r2 = np.roll(self.r2, 2)
       # Construct sparse array
-      self.coeffs = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
+      self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
       self.offsets = np.array([-2,-1,0,1,2])
     else:
       sys.exit("Non-scalar Te; boundary conditions not valid... and these\n\
@@ -343,34 +401,97 @@ class F1D(Flexure):
     
     Leaves the other boundary as Dirichlet
     """
+    # 0 moment and 0 shear
     if np.isscalar(self.Te):
+    
+      #self.q0[:] = np.max(self.q0)
+    
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
       if self.BC_W == 'Stewart1' or override:
         i=0
-        self.c0[i] = 2 * self.D/self.dx4 + 1
-        self.r1[i] = 0
-        self.r2[i] = 0
-        self.l1[i] = 0
-        self.l2[i] = 0
+        #self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+        #self.l1[i] = np.nan # OFF GRID
+        #self.c0[i] = 5 * self.D/self.dx4 + self.drho*self.g
+        #self.r1[i] = -4 * self.D/self.dx4
+        #self.r2[i] = 1 * self.D/self.dx4
+        #self.q0[i] = self.q0[i] / (2*self.dx**5)
         i=1
-        self.c0[i] = 8 * self.D/self.dx4 + 1
-        self.r2[i] = 0
-        self.l2[i] = 0
+        #self.l2[i] = np.nan # OFF GRID
+        #self.l1[i] = -4 * self.D/self.dx4
+        #self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        #self.r1[i] = -4 * self.D/self.dx4
+        #self.r2[i] = 1 * self.D/self.dx4
+        #self.q0[i] = self.q0[i] / (2*self.dx**3)
+        """
+        i=0
+        self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+        self.l1[i] = np.nan # OFF GRID
+        self.c0[i] = 10 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = -8 * self.D/self.dx4
+        self.r2[i] = 2 * self.D/self.dx4
+        self.q0[i] = self.q0[i] / (2*self.dx**5)
+        i=1
+        self.l2[i] = np.nan # OFF GRID
+        self.l1[i] = -2 * self.D/self.dx4
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = -6 * self.D/self.dx4
+        self.r2[i] = 2 * self.D/self.dx4
+        self.q0[i] = self.q0[i] / (2*self.dx**3)
+        """
       # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
+
       if self.BC_E == 'Stewart1' or override:
         i=-1
-        self.c0[i] = 2 * self.D/self.dx4 + 1
-        self.r1[i] = 0
-        self.r2[i] = 0
-        self.l1[i] = 0
-        self.l2[i] = 0
+        self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+        self.r1[i] = np.nan # OFF GRID
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.l1[i] = -8 * self.D/self.dx4
+        self.l2[i] = 2 * self.D/self.dx4
         i=-2
-        self.c0[i] = 8 * self.D/self.dx4 + 1
-        self.r2[i] = 0
-        self.l2[i] = 0
+        self.r2[i] = np.nan # OFF GRID
+        self.r1[i] = -4 * self.D/self.dx4
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.l1[i] = -4 * self.D/self.dx4
+        self.l2[i] = 2 * self.D/self.dx4
+
+      # Special case for 0 offset, 0 moment, and 0 shear
+      # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
+      if self.BC_W == 'Stewart0':
+        self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+        self.l1[i] = np.nan # OFF GRID
+        self.c0[i] = 5 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = -4 * self.D/self.dx4
+        self.r2[i] = 1 * self.D/self.dx4
+        self.q0[i] = self.q0[i] / (2*self.dx**5)
+        i=1
+        self.l2[i] = np.nan # OFF GRID
+        self.l1[i] = -4 * self.D/self.dx4
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = -4 * self.D/self.dx4
+        self.r2[i] = 1 * self.D/self.dx4
+        self.q0[i] = self.q0[i] / (2*self.dx**3)
+      # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
+      if self.BC_E == 'Stewart0':
+        i=-2
+        self.l2[i] = 2 * self.D/self.dx4
+        self.l1[i] = -6 * self.D/self.dx4
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = -2 * self.D/self.dx4
+        self.r2[i] = np.nan # OFF GRID
+        i=-1
+        self.l2[i] = 2 * self.D/self.dx4
+        self.l1[i] = -8 * self.D/self.dx4
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = np.nan # OFF GRID
+        self.r2[i] = np.nan # OFF GRID
+
+      self.l2 = np.roll(self.l2, -2)
+      self.l1 = np.roll(self.l1, -1)
+      self.r1 = np.roll(self.r1, 1)
+      self.r2 = np.roll(self.r2, 2)
 
       # Construct sparse array
-      self.coeffs = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
+      self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
       self.offsets = np.array([-2,-1,0,1,2])
     else:
       sys.exit("There are no plans to incorporate the Stewart and Watts\n\
@@ -411,7 +532,7 @@ class F1D(Flexure):
     print "*****", self.dx
 
     # Construct sparse array
-    self.coeffs = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
+    self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
     self.offsets = np.array([-2,-1,0,1,2])
 
   def BCs_that_need_padding(self):
@@ -610,11 +731,6 @@ class F1D(Flexure):
     by the padded version of it
     """
 
-    # Need to hold on to q0 array to keep its size; self.q0 will be redefined 
-    # for the computation
-    self.q0_orig = self.q0.copy()
-    print 'q0_orig',len(self.q0_orig)
-    
     # Then copy over q0
     self.q0 = self.q0pad.copy()
         
@@ -667,14 +783,13 @@ class F1D(Flexure):
     
     self.solver_start_time = time.time()
     
-    coeff_matrix = csr_matrix(self.coeff_matrix) # Needed for solution
-    q0sparse = csr_matrix(-self.q0) # Negative so bending down with positive load,
+    self.q0sparse = csr_matrix(-self.q0) # Negative so bending down with positive load,
                                     # bending up with negative load (i.e. material
                                     # removed)
                                     # *self.dx
     # UMFpack is now the default, but setting true just to be sure in case
     # anything changes
-    self.w = spsolve(coeff_matrix,q0sparse,use_umfpack=True)
+    self.w = spsolve(self.coeff_matrix, self.q0sparse, use_umfpack=True)
     
     self.time_to_solve = time.time() - self.solver_start_time
     print 'Time to solve [s]:', self.time_to_solve
