@@ -155,12 +155,33 @@ class Isostasy(BMI):
       self.time_to_solve = None
       
       # Boundary conditions
-      # Setting this optional b/c it will default to Periodic or something
-      self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=True)
-      self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=True)
+      # Not optional: flexural solutions can be very sensitive to b.c.'s
+      self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=False)
+      self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=False)
+      self.bclist = [self.BC_E, self.BC_W]
       if self.dimension == 2:
-        self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=True)
-        self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=True)
+        self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=False)
+        self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=False)
+        self.bclist += [self.BC_N, self.BC_S]
+      # Check that boundary conditions are acceptable with code implementation
+      # Acceptable b.c.'s
+      bc1D = np.array(['Dirichlet', 'Periodic', 'Mirror'])
+      bc2D = np.array(['Dirichlet', 'Periodic', 'Mirror', 'Stewart1'])
+      for bc in self.bclist:
+        if self.dimension == 1:
+          if (bc == bc1D).any():
+            pass
+          else:
+            sys.exit("'"+bc+"'"+ " is not an acceptable 1D boundary condition and/or\n"\
+                     +"is not yet implement in the code. Exiting.")
+        elif self.dimension == 2:
+          if (bc == bc2D).any():
+            pass
+          else:
+            sys.exit("'"+bc+"'"+ " is not an acceptable 2D boundary condition and/or\n"\
+                     +"is not yet implement in the code. Exiting.")
+        else:
+          sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
 
       # Parameters
       self.g = self.configGet('float', "parameter", "GravAccel")
