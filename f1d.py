@@ -301,30 +301,38 @@ class F1D(Flexure):
     I have only seen bc motion on RHS with the explicit part of 
     implicit time-stepping matrix solutions
     """
-    i=0
-    self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-    self.l1[i] = np.nan # OFF GRID
-    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-    self.r1[i] = -8 * self.D/self.dx4
-    self.r2[i] = 2 * self.D/self.dx4
-    i=1
-    self.l2[i] = np.nan # OFF GRID
-    self.l1[i] = -4 * self.D/self.dx4
-    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-    self.r1[i] = -4 * self.D/self.dx4
-    self.r2[i] = 2 * self.D/self.dx4
-    i=-1
-    self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-    self.r1[i] = np.nan # OFF GRID
-    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-    self.l1[i] = -8 * self.D/self.dx4
-    self.l2[i] = 2 * self.D/self.dx4
-    i=-2
-    self.r2[i] = np.nan # OFF GRID
-    self.r1[i] = -4 * self.D/self.dx4
-    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-    self.l1[i] = -4 * self.D/self.dx4
-    self.l2[i] = 2 * self.D/self.dx4
+    if self.BC_W == 'Dirichlet0_Neumann0':
+      i=0
+      self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+      self.l1[i] = np.nan # OFF GRID
+      self.c0[i] = 0 * self.D/self.dx4 + self.drho*self.g
+      self.r1[i] = -8 * self.D/self.dx4
+      self.r2[i] = 2 * self.D/self.dx4
+      i=1
+      self.l2[i] = np.nan # OFF GRID
+      self.l1[i] = -4 * self.D/self.dx4
+      self.c0[i] = 0 * self.D/self.dx4 + self.drho*self.g
+      self.r1[i] = -4 * self.D/self.dx4
+      self.r2[i] = 2 * self.D/self.dx4
+    if self.BC_E == 'Dirichlet0_Neumann0':
+      i=-1
+      self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+      self.r1[i] = np.nan # OFF GRID
+      self.c0[i] = 0 * self.D/self.dx4 + self.drho*self.g
+      self.l1[i] = -8 * self.D/self.dx4
+      self.l2[i] = 2 * self.D/self.dx4
+      i=-2
+      self.r2[i] = np.nan # OFF GRID
+      self.r1[i] = -4 * self.D/self.dx4
+      self.c0[i] = 0 * self.D/self.dx4 + self.drho*self.g
+      self.l1[i] = -4 * self.D/self.dx4
+      self.l2[i] = 2 * self.D/self.dx4
+    # If I do nothing to equations, displacements outside region are forced
+    # to be 0, so pin solution to this
+    if self.BC_W == 'Dirichlet0':
+      pass
+    if self.BC_E == 'Dirichlet0':
+      pass
 
     self.l2 = np.roll(self.l2, -2)
     self.l1 = np.roll(self.l1, -1)
@@ -409,35 +417,19 @@ class F1D(Flexure):
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
       if self.BC_W == 'Stewart1' or override:
         i=0
-        #self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-        #self.l1[i] = np.nan # OFF GRID
-        #self.c0[i] = 5 * self.D/self.dx4 + self.drho*self.g
-        #self.r1[i] = -4 * self.D/self.dx4
-        #self.r2[i] = 1 * self.D/self.dx4
-        #self.q0[i] = self.q0[i] / (2*self.dx**5)
-        i=1
-        #self.l2[i] = np.nan # OFF GRID
-        #self.l1[i] = -4 * self.D/self.dx4
-        #self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        #self.r1[i] = -4 * self.D/self.dx4
-        #self.r2[i] = 1 * self.D/self.dx4
-        #self.q0[i] = self.q0[i] / (2*self.dx**3)
-        """
-        i=0
         self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
         self.l1[i] = np.nan # OFF GRID
-        self.c0[i] = 10 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -8 * self.D/self.dx4
-        self.r2[i] = 2 * self.D/self.dx4
+        self.c0[i] = 5 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = -4 * self.D/self.dx4
+        self.r2[i] = 1 * self.D/self.dx4
         self.q0[i] = self.q0[i] / (2*self.dx**5)
         i=1
         self.l2[i] = np.nan # OFF GRID
-        self.l1[i] = -2 * self.D/self.dx4
+        self.l1[i] = -4 * self.D/self.dx4
         self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -6 * self.D/self.dx4
-        self.r2[i] = 2 * self.D/self.dx4
+        self.r1[i] = -4 * self.D/self.dx4
+        self.r2[i] = 1 * self.D/self.dx4
         self.q0[i] = self.q0[i] / (2*self.dx**3)
-        """
       # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
 
       if self.BC_E == 'Stewart1' or override:
@@ -457,18 +449,19 @@ class F1D(Flexure):
       # Special case for 0 offset, 0 moment, and 0 shear
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
       if self.BC_W == 'Stewart0':
+        i=0
         self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
         self.l1[i] = np.nan # OFF GRID
-        self.c0[i] = 5 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -4 * self.D/self.dx4
-        self.r2[i] = 1 * self.D/self.dx4
+        self.c0[i] = 10 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = -8 * self.D/self.dx4
+        self.r2[i] = 2 * self.D/self.dx4
         self.q0[i] = self.q0[i] / (2*self.dx**5)
         i=1
         self.l2[i] = np.nan # OFF GRID
-        self.l1[i] = -4 * self.D/self.dx4
+        self.l1[i] = -2 * self.D/self.dx4
         self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -4 * self.D/self.dx4
-        self.r2[i] = 1 * self.D/self.dx4
+        self.r1[i] = -6 * self.D/self.dx4
+        self.r2[i] = 2 * self.D/self.dx4
         self.q0[i] = self.q0[i] / (2*self.dx**3)
       # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
       if self.BC_E == 'Stewart0':
@@ -501,35 +494,41 @@ class F1D(Flexure):
   def BC_Neumann(self, override=False):
     """
     Constant gradient boundary condition
+    Right now, constant gradient = 0, so Neumann0 would be good description
+    And because I reach farther to cells beyond these, it is also 0-curvature
     """
-    # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
     i=0
-    self.l2[i] = 0
-    self.l1[i] = 0
-    self.c0[i] = 0
-    self.r1[i] = 0
-    self.r2[i] = 0
+    self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+    self.l1[i] = np.nan # OFF GRID
+    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+    self.r1[i] = -8 * self.D/self.dx4
+    self.r2[i] = 2 * self.D/self.dx4
     i=1
-    #self.l2[i] = 0
-    #self.l1[i] = 0
-    #self.c0[i] = 0
-    #self.r1[i] = 0
-    #self.r2[i] = 0
-    # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
-    i=-2
-    #self.l2[i] = 0
-    #self.l1[i] = 0
-    #self.c0[i] = 0
-    #self.r1[i] = 0
-    #self.r2[i] = 0
+    self.l2[i] = np.nan # OFF GRID
+    self.l1[i] = -4 * self.D/self.dx4
+    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+    self.r1[i] = -4 * self.D/self.dx4
+    self.r2[i] = 2 * self.D/self.dx4
     i=-1
-    self.l2[i] = 0
-    self.l1[i] = 0
-    self.c0[i] = 0
-    self.r1[i] = 0
-    self.r2[i] = 0
+    self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+    self.r1[i] = np.nan # OFF GRID
+    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+    self.l1[i] = -8 * self.D/self.dx4
+    self.l2[i] = 2 * self.D/self.dx4
+    i=-2
+    self.r2[i] = np.nan # OFF GRID
+    self.r1[i] = -4 * self.D/self.dx4
+    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+    self.l1[i] = -4 * self.D/self.dx4
+    self.l2[i] = 2 * self.D/self.dx4
     
-    print "*****", self.dx
+    self.l2 = np.roll(self.l2, -2)
+    self.l1 = np.roll(self.l1, -1)
+    self.r1 = np.roll(self.r1, 1)
+    self.r2 = np.roll(self.r2, 2)
+    # Construct sparse array
+    self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
+    self.offsets = np.array([-2,-1,0,1,2])
 
     # Construct sparse array
     self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
