@@ -409,9 +409,9 @@ class F2D(Flexure):
     print "Boundary condition, North:", self.BC_N, type(self.BC_N)
     print "Boundary condition, South:", self.BC_S, type(self.BC_S)
     
-    ###########################
-    # PERIODIC VALIDITY CHECK #
-    ###########################
+    ################################
+    # PERIODIC B.C. VALIDITY CHECK #
+    ################################
 
     # First check to make sure that periodic boundary conditions are applied 
     # properly: and abort if they are not.
