@@ -252,11 +252,18 @@ class F1D(Flexure):
       Dm1 = self.D[:-2]
       D0  = self.D[1:-1]
       Dp1 = self.D[2:]
+      self.l2 = ( Dm1 + D0 - Dp1 ) / self.dx4
+      self.l1 = ( -1.*Dm1 + 2.*D0 + 3.*D1 ) / self.dx4
+      self.c0 = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
+      self.r1 = ( 3.*Dm1 + 2.*D0 - 1.*D1 ) / self.dx4
+      self.r2 = ( -Dm1 + D0 + Dp1 ) / self.dx4
+      """
       self.l2 = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
       self.l1 = ( -6.*D0 + 2.*Dp1 ) / self.dx4
       self.c0 = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
       self.r1 = ( 2.*Dm1 - 6.*D0 ) / self.dx4
       self.r2 = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
+      """
     # Number of columns; equals number of rows too - square coeff matrix
     self.ncolsx = self.c0.shape[0]
     
