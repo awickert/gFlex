@@ -315,6 +315,8 @@ class F1D(Flexure):
       self.r1[i] = -4 * self.D/self.dx4
       self.r2[i] = 2 * self.D/self.dx4
     if self.BC_E == 'Dirichlet0_Neumann0':
+      # Coeff's no longer sum to 0 because, so w no longer free to be whatever 
+      # it wants in absence of a local load, q
       i=-1
       self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
       self.r1[i] = np.nan # OFF GRID
@@ -417,19 +419,33 @@ class F1D(Flexure):
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
       if self.BC_W == 'Stewart1' or override:
         i=0
+        """
+        # This is for a Neumann b.c. combined with third deriv. = 0
         self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
         self.l1[i] = np.nan # OFF GRID
-        self.c0[i] = 5 * self.D/self.dx4 + self.drho*self.g
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g # this works but not sure how to get it.
+                                                            # OH, you can w/ 0-flux boundary
+                                                            # And 10 with 0-moment boundary
+                                                            # But that doesn't make sense with pics.
+                                                            # 0 moment should als be free deflec.
+        self.r1[i] = -8 * self.D/self.dx4
+        self.r2[i] = 2 * self.D/self.dx4
+        """
+        self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+        self.l1[i] = np.nan # OFF GRID
+        self.c0[i] = 2 * self.D/self.dx4 + self.drho*self.g # this works but not sure how to get it.
+                                                            # OH, you can w/ 0-flux boundary
+                                                            # And 10 with 0-moment boundary
+                                                            # But that doesn't make sense with pics.
+                                                            # 0 moment should als be free deflec.
         self.r1[i] = -4 * self.D/self.dx4
-        self.r2[i] = 1 * self.D/self.dx4
-        self.q0[i] = self.q0[i] / (2*self.dx**5)
+        self.r2[i] = 2 * self.D/self.dx4
         i=1
         self.l2[i] = np.nan # OFF GRID
-        self.l1[i] = -4 * self.D/self.dx4
+        self.l1[i] = -2 * self.D/self.dx4
         self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -4 * self.D/self.dx4
-        self.r2[i] = 1 * self.D/self.dx4
-        self.q0[i] = self.q0[i] / (2*self.dx**3)
+        self.r1[i] = -6 * self.D/self.dx4
+        self.r2[i] = 2 * self.D/self.dx4
       # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
 
       if self.BC_E == 'Stewart1' or override:
@@ -445,7 +461,14 @@ class F1D(Flexure):
         self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
         self.l1[i] = -4 * self.D/self.dx4
         self.l2[i] = 2 * self.D/self.dx4
-
+        """
+        self.r2[i] = np.nan # OFF GRID
+        self.r1[i] = -4 * self.D/self.dx4
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.l1[i] = -4 * self.D/self.dx4
+        self.l2[i] = 2 * self.D/self.dx4
+        """
+        
       # Special case for 0 offset, 0 moment, and 0 shear
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
       if self.BC_W == 'Stewart0':
