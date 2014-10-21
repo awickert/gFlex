@@ -165,8 +165,8 @@ class Isostasy(BMI):
         self.bclist += [self.BC_N, self.BC_S]
       # Check that boundary conditions are acceptable with code implementation
       # Acceptable b.c.'s
-      bc1D = np.array(['Dirichlet', 'Periodic', 'Mirror'])
-      bc2D = np.array(['Dirichlet', 'Periodic', 'Mirror', 'Stewart1'])
+      bc1D = np.array(['Dirichlet', 'Periodic', 'Mirror', 'Stewart1', 'Neumann'])
+      bc2D = np.array(['Dirichlet', 'Periodic', 'Mirror'])
       for bc in self.bclist:
         if self.dimension == 1:
           if (bc == bc1D).any():
@@ -238,6 +238,10 @@ class Isostasy(BMI):
           print "Exiting."
           sys.exit()
       
+    # q0 may be changed for b.c.'s (if array), so holding onto original version 
+    # here
+    self.q0_orig = self.q0.copy()
+
     # Check consistency of dimensions
     if self.q0.ndim != self.dimension:
       print "Number of dimensions in loads file is inconsistent with"
@@ -248,8 +252,12 @@ class Isostasy(BMI):
     # Plotting selection
     self.plotChoice = self.configGet("string","output","Plot",optional=True)
 
-  # Finalize: just print a line to stdout
+  # Finalize
   def finalize(self):
+    # Change q0 back into original form before plotting
+    # (in case it was altered for b.c.'s)
+    self.q0 = self.q0_orig
+    # Just print a line to stdout
     print ""
 
   # UNIVERSAL SETTER: VALUES THAT EVERYONE NEEDS
