@@ -103,12 +103,12 @@ def main():
   # obj.set_value('method','FD')
   #########################################
   obj.run()
+  obj.finalize()
+  #####################
   obj.output() # Not part of IRF or BMI: Does standalone plotting and file output
   ## GET VALUES HERE ##
   #wout = obj.get_value('Deflection')
   #print wout
-  #####################
-  obj.finalize()
 
 if __name__ == '__main__':
   main()

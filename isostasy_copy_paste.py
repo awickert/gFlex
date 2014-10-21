@@ -35,18 +35,18 @@ if obj.model == 'flexure':
 elif obj.model == 'PrattAiry':
   obj = PrattAiry()
 
+self = obj # easier interaction
 obj.initialize(filename)
 ## SET ALL OTHER MODEL PARAMETERS HERE ##
 # obj.set_value('method','FD')
 #########################################
 obj.run()
+obj.finalize()
+#####################
 obj.output() # Not part of IRF or BMI: Does standalone plotting and file output
 ## GET VALUES HERE ##
 #wout = obj.get_value('Deflection')
 #print wout
-#####################
-obj.finalize()
-
 
 #plt.imshow(obj.Te_padded); plt.show(block=False)
 
