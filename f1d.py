@@ -177,6 +177,19 @@ class F1D(Flexure):
     # SELECT BOUNDARY CONDITIONS #
     ##############################
     
+    # Some links that helped me teach myself how to set up the boundary conditions
+    # in the matrix for the flexure problem:
+    # 
+    # Good explanation of and examples of boundary conditions
+    # https://en.wikipedia.org/wiki/Euler%E2%80%93Bernoulli_beam_theory#Boundary_considerations
+    # 
+    # Copy of Fornberg table:
+    # https://en.wikipedia.org/wiki/Finite_difference_coefficient
+    # 
+    # Implementing b.c.'s:
+    # http://scicomp.stackexchange.com/questions/5355/writing-the-poisson-equation-finite-difference-matrix-with-neumann-boundary-cond
+    # http://scicomp.stackexchange.com/questions/7175/trouble-implementing-neumann-boundary-conditions-because-the-ghost-points-cannot
+    
     print "Boundary condition, West:", self.BC_W, type(self.BC_W)
     print "Boundary condition, East:", self.BC_E, type(self.BC_E)
 
