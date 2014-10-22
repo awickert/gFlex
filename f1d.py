@@ -252,10 +252,11 @@ class F1D(Flexure):
       Dm1 = self.D[:-2]
       D0  = self.D[1:-1]
       Dp1 = self.D[2:]
+      """
       self.l2 = ( Dm1 + D0 - Dp1 ) / self.dx4
-      self.l1 = ( -1.*Dm1 + 2.*D0 + 3.*D1 ) / self.dx4
+      self.l1 = ( -1.*Dm1 + 2.*D0 + 3.*Dp1 ) / self.dx4
       self.c0 = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
-      self.r1 = ( 3.*Dm1 + 2.*D0 - 1.*D1 ) / self.dx4
+      self.r1 = ( 3.*Dm1 + 2.*D0 - 1.*Dp1 ) / self.dx4
       self.r2 = ( -Dm1 + D0 + Dp1 ) / self.dx4
       """
       self.l2 = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
@@ -263,7 +264,6 @@ class F1D(Flexure):
       self.c0 = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
       self.r1 = ( 2.*Dm1 - 6.*D0 ) / self.dx4
       self.r2 = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
-      """
     # Number of columns; equals number of rows too - square coeff matrix
     self.ncolsx = self.c0.shape[0]
     
@@ -321,9 +321,9 @@ class F1D(Flexure):
       self.l2[i] = 2 * self.D/self.dx4
     # If I do nothing to equations, displacements outside region are forced
     # to be 0, so pin solution to this
-    if self.BC_W == 'Dirichlet0':
+    if self.BC_W == 'Dirichlet': # Dirichlet0
       pass
-    if self.BC_E == 'Dirichlet0':
+    if self.BC_E == 'Dirichlet':
       pass
 
     self.l2 = np.roll(self.l2, -2)
@@ -490,19 +490,34 @@ class F1D(Flexure):
         self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
         self.r1[i] = np.nan # OFF GRID
         self.r2[i] = np.nan # OFF GRID
-
-      self.l2 = np.roll(self.l2, -2)
-      self.l1 = np.roll(self.l1, -1)
-      self.r1 = np.roll(self.r1, 1)
-      self.r2 = np.roll(self.r2, 2)
-
-      # Construct sparse array
-      self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
-      self.offsets = np.array([-2,-1,0,1,2])
     else:
-      sys.exit("There are no plans to incorporate the Stewart and Watts\n\
-                (1997) no-moment no-shear (d2w/dx2 = d3w/dx3 = 0)\n\
-                boundary conditions for the variable elastic thickness case.")
+      # Variable Te
+      i=-1
+      self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+      self.r1[i] = np.nan # OFF GRID
+      self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+      self.l1[i] = -8 * self.D/self.dx4
+      self.l2[i] = 2 * self.D/self.dx4
+      i=-2
+      self.r2[i] = np.nan # OFF GRID
+      self.r1[i] = -4 * self.D/self.dx4
+      self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+      self.l1[i] = -4 * self.D/self.dx4
+      self.l2[i] = 2 * self.D/self.dx4
+    
+      
+    self.l2 = np.roll(self.l2, -2)
+    self.l1 = np.roll(self.l1, -1)
+    self.r1 = np.roll(self.r1, 1)
+    self.r2 = np.roll(self.r2, 2)
+
+    # Construct sparse array
+    self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
+    self.offsets = np.array([-2,-1,0,1,2])
+    #else:
+    #  sys.exit("There are no plans to incorporate the Stewart and Watts\n\
+    #            (1997) no-moment no-shear (d2w/dx2 = d3w/dx3 = 0)\n\
+    #            boundary conditions for the variable elastic thickness case.")
 
   def BC_Neumann(self, override=False):
     """
