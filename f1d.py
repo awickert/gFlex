@@ -501,29 +501,45 @@ class F1D(Flexure):
         self.r2[i] = np.nan # OFF GRID
     else:
       # Variable Te
+      # First, just define coefficients for each of the positions in the array
+      # These will be added in code instead of being directly combined by 
+      # the programmer (as I did above for constant Te), which might add 
+      # rather negligibly to the compute time but save a bunch of possibility 
+      # for unfortunate typos!
+
       # Also using 0-curvature boundary condition for D (i.e. Te)
-      # D[i-1] = 2*D[i] - D[i+1]
-      # So this means constant gradient set by local Te distribution
-      i=0
-      # NOPE: just keeping to show that I removed Dm1 = self.D[:-2][i] # = D[2]
-      D0  = self.D[1:-1][i] # = D[1]
-      Dp1 = self.D[2:][i] # = D[2]
-      Dm1 = 2*D0 - Dp1 # BC here
-      self.l2[i] = np.nan # ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
-      self.l1[i] = np.nan # ( -6.*D0 + 2.*Dp1 + 2*(Dm1/2. + D0 - Dp1/2.) ) / self.dx4
-      self.c0[i] = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 + 2*( -6.*D0 + 2.*Dp1 + 2*(Dm1/2. + D0 - Dp1/2.) ) ) / self.dx4 + self.drho*self.g
-      self.r1[i] = ( 2.*Dm1 - 6.*D0 - 2*(Dm1/2. + D0 - Dp1/2.) - ( -6.*D0 + 2.*Dp1 + 2*(Dm1/2. + D0 - Dp1/2.) ) ) / self.dx4
-      self.r2[i] = ( -Dm1/2. + D0 + Dp1/2. + (Dm1/2. + D0 - Dp1/2.) ) / self.dx4
-      i=1
-      Dm1 = self.D[:-2][i] # = D[0]
-      D0  = self.D[1:-1][i] # = D[1]
-      Dp1 = self.D[2:][i] # = D[2]
-      self.l2[i] = np.nan # ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
-      self.l1[i] = ( -6.*D0 + 2.*Dp1 + 2*(Dm1/2. + D0 - Dp1/2.) ) / self.dx4
-      self.c0[i] = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
-      self.r1[i] = ( 2.*Dm1 - 6.*D0 - 2*(Dm1/2. + D0 - Dp1/2.) ) / self.dx4
-      self.r2[i] = ( -Dm1/2. + D0 + Dp1/2. + (Dm1/2. + D0 - Dp1/2.) ) / self.dx4
+      if self.BC_W == 'Stewart1' or override:
+        i=0
+        self.BC_Te_0_curvature(i) # Define coeffs
+        self.l2[i] = np.nan
+        self.l1[i] = np.nan
+        self.c0[i] = self.c0_coeff_i + 4*self.l2_coeff_i + 2*self.l1_coeff_i
+        self.r1[i] = self.r1_coeff_i - 4*self.l2_coeff_i - self.l1_coeff_i
+        self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
+        i=1
+        self.BC_Te_0_curvature(i) # Define coeffs
+        self.l2[i] = np.nan
+        self.l1[i] = self.l1_coeff_i + 2*self.l2_coeff_i
+        self.c0[i] = self.c0_coeff_i
+        self.r1[i] = self.r1_coeff_i - 2*self.l2_coeff_i
+        self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
       
+      if self.BC_E == 'Stewart1' or override:
+        i=-2
+        self.BC_Te_0_curvature(i) # Define coeffs
+        self.l2[i] = self.r2_coeff_i + self.r2_coeff_i
+        self.l1[i] = self.r1_coeff_i - 2*self.r2_coeff_i
+        self.c0[i] = self.c0_coeff_i
+        self.r1[i] = self.r1_coeff_i + 2*self.r2_coeff_i
+        self.r2[i] = np.nan
+        i=-1
+        self.BC_Te_0_curvature(i) # Define coeffs
+        self.l2[i] = self.r2_coeff_i + self.r2_coeff_i
+        self.l1[i] = self.r1_coeff_i - 4*self.r2_coeff_i - self.r1_coeff_i
+        self.c0[i] = self.c0_coeff_i + 4*self.r2_coeff_i + 2*self.r1_coeff_i
+        self.r1[i] = np.nan
+        self.r2[i] = np.nan
+
     self.l2 = np.roll(self.l2, -2)
     self.l1 = np.roll(self.l1, -1)
     self.r1 = np.roll(self.r1, 1)
@@ -813,6 +829,43 @@ class F1D(Flexure):
       else: sys.exit("If only one side is padded and the other isn't, valid boundary\n"+
                      "condition options are 'Stewart1' and 'Dirichlet'. Aborting.")
 
+  def BC_Te_0_curvature(self, i):
+    """
+    Utility function to help implement:
+    0-curvature boundary condition for D (i.e. Te)
+    D[i-1] = 2*D[i] - D[i+1]
+    So this means constant gradient set by local Te distribution
+    """
+    
+    if i == 0:
+      D0  = self.D[1:-1][i] # = D[1]
+      Dp1 = self.D[2:][i] # = D[2]
+      Dm1 = 2*D0 - Dp1 # BC applied here
+    elif i == -1:
+      Dm1 = self.D[:-2][i]
+      D0  = self.D[1:-1][i]
+      Dp1 = 2*D0 - Dm1 # BC applied here
+    else:
+      # Away from boundaries and all is normal
+      Dm1 = self.D[:-2][i]
+      D0  = self.D[1:-1][i]
+      Dp1 = self.D[2:][i]
+    
+    self.l2_coeff_i = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
+    self.l1_coeff_i = ( -6.*D0 + 2.*Dp1 ) / self.dx4
+    self.c0_coeff_i = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
+    self.r1_coeff_i = ( 2.*Dm1 - 6.*D0 ) / self.dx4
+    self.r2_coeff_i = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
+    
+    """
+    # Template
+    self.l2[i] = self.l2_coeff_i
+    self.l1[i] = self.l1_coeff_i
+    self.c0[i] = self.c0_coeff_i
+    self.r1[i] = self.r1_coeff_i
+    self.r2[i] = self.r2_coeff_i
+    """
+      
   def direct_fd_solve(self):
     """
     w = direct_fd_solve()
