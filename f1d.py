@@ -265,13 +265,6 @@ class F1D(Flexure):
       Dm1 = self.D[:-2]
       D0  = self.D[1:-1]
       Dp1 = self.D[2:]
-      """
-      self.l2 = ( Dm1 + D0 - Dp1 ) / self.dx4
-      self.l1 = ( -1.*Dm1 + 2.*D0 + 3.*Dp1 ) / self.dx4
-      self.c0 = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
-      self.r1 = ( 3.*Dm1 + 2.*D0 - 1.*Dp1 ) / self.dx4
-      self.r2 = ( -Dm1 + D0 + Dp1 ) / self.dx4
-      """
       self.l2 = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
       self.l1 = ( -6.*D0 + 2.*Dp1 ) / self.dx4
       self.c0 = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
@@ -452,6 +445,9 @@ class F1D(Flexure):
       # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
 
       if self.BC_E == 'Stewart1' or override:
+        # Here, directly calculated new coefficients instead of just adding
+        # them in like I did to save some time (for me) in the variable Te
+        # case, below.
         i=-1
         self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
         self.r1[i] = np.nan # OFF GRID
@@ -505,19 +501,28 @@ class F1D(Flexure):
         self.r2[i] = np.nan # OFF GRID
     else:
       # Variable Te
-      i=-1
-      self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-      self.r1[i] = np.nan # OFF GRID
-      self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-      self.l1[i] = -8 * self.D/self.dx4
-      self.l2[i] = 2 * self.D/self.dx4
-      i=-2
-      self.r2[i] = np.nan # OFF GRID
-      self.r1[i] = -4 * self.D/self.dx4
-      self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-      self.l1[i] = -4 * self.D/self.dx4
-      self.l2[i] = 2 * self.D/self.dx4
-    
+      # Also using 0-curvature boundary condition for D (i.e. Te)
+      # D[i-1] = 2*D[i] - D[i+1]
+      # So this means constant gradient set by local Te distribution
+      i=0
+      # NOPE: just keeping to show that I removed Dm1 = self.D[:-2][i] # = D[2]
+      D0  = self.D[1:-1][i] # = D[1]
+      Dp1 = self.D[2:][i] # = D[2]
+      Dm1 = 2*D0 - Dp1 # BC here
+      self.l2[i] = np.nan # ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
+      self.l1[i] = np.nan # ( -6.*D0 + 2.*Dp1 + 2*(Dm1/2. + D0 - Dp1/2.) ) / self.dx4
+      self.c0[i] = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 + 2*( -6.*D0 + 2.*Dp1 + 2*(Dm1/2. + D0 - Dp1/2.) ) ) / self.dx4 + self.drho*self.g
+      self.r1[i] = ( 2.*Dm1 - 6.*D0 - 2*(Dm1/2. + D0 - Dp1/2.) - ( -6.*D0 + 2.*Dp1 + 2*(Dm1/2. + D0 - Dp1/2.) ) ) / self.dx4
+      self.r2[i] = ( -Dm1/2. + D0 + Dp1/2. + (Dm1/2. + D0 - Dp1/2.) ) / self.dx4
+      i=1
+      Dm1 = self.D[:-2][i] # = D[0]
+      D0  = self.D[1:-1][i] # = D[1]
+      Dp1 = self.D[2:][i] # = D[2]
+      self.l2[i] = np.nan # ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
+      self.l1[i] = ( -6.*D0 + 2.*Dp1 + 2*(Dm1/2. + D0 - Dp1/2.) ) / self.dx4
+      self.c0[i] = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
+      self.r1[i] = ( 2.*Dm1 - 6.*D0 - 2*(Dm1/2. + D0 - Dp1/2.) ) / self.dx4
+      self.r2[i] = ( -Dm1/2. + D0 + Dp1/2. + (Dm1/2. + D0 - Dp1/2.) ) / self.dx4
       
     self.l2 = np.roll(self.l2, -2)
     self.l1 = np.roll(self.l1, -1)
