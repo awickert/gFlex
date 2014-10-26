@@ -165,17 +165,17 @@ class Isostasy(BMI):
         self.bclist += [self.BC_N, self.BC_S]
       # Check that boundary conditions are acceptable with code implementation
       # Acceptable b.c.'s
-      bc1D = np.array(['Dirichlet', 'Periodic', 'Mirror', 'Stewart1', 'Neumann', 'Symmetric', '0Moment0Shear'])
-      bc2D = np.array(['Dirichlet', 'Periodic', 'Mirror'])
+      self.bc1D = np.array(['Dirichlet', 'Periodic', 'Mirror', 'Stewart1', 'Neumann', 'Symmetric', '0Moment0Shear'])
+      self.bc2D = np.array(['Dirichlet', 'Periodic', 'Mirror'])
       for bc in self.bclist:
         if self.dimension == 1:
-          if (bc == bc1D).any():
+          if (bc == self.bc1D).any():
             pass
           else:
             sys.exit("'"+bc+"'"+ " is not an acceptable 1D boundary condition and/or\n"\
                      +"is not yet implement in the code. Exiting.")
         elif self.dimension == 2:
-          if (bc == bc2D).any():
+          if (bc == self.bc2D).any():
             pass
           else:
             sys.exit("'"+bc+"'"+ " is not an acceptable 2D boundary condition and/or\n"\
