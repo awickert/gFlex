@@ -229,6 +229,16 @@ class F1D(Flexure):
     if self.BC_E == 'Symmetric' or self.BC_W == 'Symmetric':
       self.BC_Symmetric()
                 
+    if self.BC_W != 'Periodic' or self.BC_E != 'Periodic':
+      # TO DO: check if Periodic b.c. also needs to roll!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! (I think it might)
+      self.l2 = np.roll(self.l2, -2)
+      self.l1 = np.roll(self.l1, -1)
+      self.r1 = np.roll(self.r1, 1)
+      self.r2 = np.roll(self.r2, 2)
+      # Scale values if const Te; otherwise everything is the same
+      self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
+      self.offsets = np.array([-2,-1,0,1,2])
+
     self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
 
     self.coeff_creation_time = time.time() - self.coeff_start_time
@@ -326,14 +336,6 @@ class F1D(Flexure):
       pass
     if self.BC_E == 'Dirichlet':
       pass
-
-    self.l2 = np.roll(self.l2, -2)
-    self.l1 = np.roll(self.l1, -1)
-    self.r1 = np.roll(self.r1, 1)
-    self.r2 = np.roll(self.r2, 2)
-    # Scale values if const Te; otherwise everything is the same
-    self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
-    self.offsets = np.array([-2,-1,0,1,2])
 
   def BC_Sandbox(self):
     """
@@ -499,15 +501,6 @@ class F1D(Flexure):
         self.r1[i] = np.nan
         self.r2[i] = np.nan
 
-    self.l2 = np.roll(self.l2, -2)
-    self.l1 = np.roll(self.l1, -1)
-    self.r1 = np.roll(self.r1, 1)
-    self.r2 = np.roll(self.r2, 2)
-
-    # Construct sparse array
-    self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
-    self.offsets = np.array([-2,-1,0,1,2])
-
   def BC_Neumann(self, override=False):
     """
     Constant gradient boundary condition
@@ -538,18 +531,6 @@ class F1D(Flexure):
     self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
     self.l1[i] = -4 * self.D/self.dx4
     self.l2[i] = 2 * self.D/self.dx4
-    
-    self.l2 = np.roll(self.l2, -2)
-    self.l1 = np.roll(self.l1, -1)
-    self.r1 = np.roll(self.r1, 1)
-    self.r2 = np.roll(self.r2, 2)
-    # Construct sparse array
-    self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
-    self.offsets = np.array([-2,-1,0,1,2])
-
-    # Construct sparse array
-    self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
-    self.offsets = np.array([-2,-1,0,1,2])
 
   def BCs_that_need_padding(self):
     """
@@ -665,24 +646,6 @@ class F1D(Flexure):
     elif self.BC_W == 'Mirror':
       self.q0pad = np.concatenate((self.q0_mirror_W,self.q0pad))
 
-  def calc_max_flexural_wavelength(self):
-    """
-    Returns the approximate maximum flexural wavelength
-    This is important when padding of the grid is required: in Flexure (this 
-    code), grids are padded out to one maximum flexural wavelength, but in any 
-    case, the flexural wavelength is a good characteristic distance for any 
-    truncation limit
-    """
-    if np.isscalar(self.D):
-      Dmax = self.D
-    else:
-      Dmax = self.D.max()
-    # This is an approximation if there is fill that evolves with iterations 
-    # (e.g., water), but should be good enough that this won't do much to it
-    alpha = (4*Dmax/(self.drho*self.g))**.25 # 2D flexural parameter
-    self.maxFlexuralWavelength = 2*np.pi*alpha
-    self.maxFlexuralWavelength_ncells = int(np.ceil(self.maxFlexuralWavelength / self.dx))
-    
   def BC_Symmetric(self):
     """
     "Mirror", but elegantly.
@@ -718,15 +681,24 @@ class F1D(Flexure):
       self.c0[i] = self.c0_coeff_i
       self.r1[i] = np.nan
       self.r2[i] = np.nan
-
-    self.l2 = np.roll(self.l2, -2)
-    self.l1 = np.roll(self.l1, -1)
-    self.r1 = np.roll(self.r1, 1)
-    self.r2 = np.roll(self.r2, 2)
-  
-    # Construct sparse array
-    self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
-    self.offsets = np.array([-2,-1,0,1,2])
+    
+  def calc_max_flexural_wavelength(self):
+    """
+    Returns the approximate maximum flexural wavelength
+    This is important when padding of the grid is required: in Flexure (this 
+    code), grids are padded out to one maximum flexural wavelength, but in any 
+    case, the flexural wavelength is a good characteristic distance for any 
+    truncation limit
+    """
+    if np.isscalar(self.D):
+      Dmax = self.D
+    else:
+      Dmax = self.D.max()
+    # This is an approximation if there is fill that evolves with iterations 
+    # (e.g., water), but should be good enough that this won't do much to it
+    alpha = (4*Dmax/(self.drho*self.g))**.25 # 2D flexural parameter
+    self.maxFlexuralWavelength = 2*np.pi*alpha
+    self.maxFlexuralWavelength_ncells = int(np.ceil(self.maxFlexuralWavelength / self.dx))
     
   def pad_Te(self):
     """
