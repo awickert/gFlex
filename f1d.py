@@ -198,21 +198,6 @@ class F1D(Flexure):
       # required distances to pad the array    
       self.calc_max_flexural_wavelength()
 
-    if self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
-      if self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
-        # If both boundaries are periodic, we are good to go (and self-consistent)
-        self.BC_Periodic()
-      else:
-        # If only one boundary is periodic and the other doesn't implicitly 
-        # involve a periodic boundary, this is illegal!
-        # I could allow it, but would have to rewrite the Periodic b.c. case,
-        # which I don't want to do to allow something that doesn't make 
-        # physical sense... so if anyone wants to do this for some unforeseen 
-        # reason, they can just split my function into two pieces themselves.
-        sys.exit("Having the boundary opposite a periodic boundary condition\n"+
-                 "be fixed and not include an implicit periodic boundary\n"+
-                 "condition makes no physical sense.\n"+
-                 "Please fix the input boundary conditions. Aborting.")
     if self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
       # Boundaries that require padding!
       self.BCs_that_need_padding()
@@ -232,17 +217,29 @@ class F1D(Flexure):
       self.BC_Neumann()
     if self.BC_E == 'Symmetric' or self.BC_W == 'Symmetric':
       self.BC_Symmetric()
-                
-    if self.BC_W != 'Periodic' or self.BC_E != 'Periodic':
-      # TO DO: check if Periodic b.c. also needs to roll!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! (I think it might)
-      self.l2 = np.roll(self.l2, -2)
-      self.l1 = np.roll(self.l1, -1)
-      self.r1 = np.roll(self.r1, 1)
-      self.r2 = np.roll(self.r2, 2)
-      # Scale values if const Te; otherwise everything is the same
+
+    #self.assemble_diagonals_with_boundary_conditions() # if separated into fcn
+
+    # Roll to keep the proper coefficients at the proper places in the
+    # arrays: Python will naturally just do vertical shifts instead of 
+    # diagonal shifts, so this takes into account the horizontal compoent 
+    # to ensure that boundary values are at the right place.
+    self.l2_orig = self.l2.copy()
+    self.l2 = np.roll(self.l2, -2)
+    self.l1 = np.roll(self.l1, -1)
+    self.r1 = np.roll(self.r1, 1)
+    self.r2 = np.roll(self.r2, 2)
+    # Then assemble these rows: this is where the periodic boundary condition 
+    # can matter.
+    if self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
+      self.BC_Periodic()
+    # If not periodic, standard assembly (see BC_Periodic fcn for the assembly 
+    # of that set of coefficient rows
+    else:
       self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
       self.offsets = np.array([-2,-1,0,1,2])
 
+    # Everybody now (including periodic b.c. cases)
     self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
 
     self.coeff_creation_time = time.time() - self.coeff_start_time
@@ -292,10 +289,23 @@ class F1D(Flexure):
 
   def BC_Periodic(self):
     """
-    Periodic boundary conditions: wraparound to the other side
+    Periodic boundary conditions: wraparound to the other side.
     """
-    # Scale values if const Te; otherwise everything is the same
-    self.diags = np.vstack((self.l1,self.l2,self.l2,self.l1,self.c0,self.r1,self.r2,self.r2,self.r1))
+    if self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
+      # If both boundaries are periodic, we are good to go (and self-consistent)
+      pass # It is just a shift in the coeff. matrix creation.
+    else:
+      # If only one boundary is periodic and the other doesn't implicitly 
+      # involve a periodic boundary, this is illegal!
+      # I could allow it, but would have to rewrite the Periodic b.c. case,
+      # which I don't want to do to allow something that doesn't make 
+      # physical sense... so if anyone wants to do this for some unforeseen 
+      # reason, they can just split my function into two pieces themselves.
+      sys.exit("Having the boundary opposite a periodic boundary condition\n"+
+               "be fixed and not include an implicit periodic boundary\n"+
+               "condition makes no physical sense.\n"+
+               "Please fix the input boundary conditions. Aborting.")
+    self.diags = np.vstack((self.r1,self.r2,self.l2,self.l1,self.c0,self.r1,self.r2,self.l2,self.l1))
     self.offsets = np.array([1-self.ncolsx,2-self.ncolsx,-2,-1,0,1,2,self.ncolsx-2,self.ncolsx-1])
 
   def BC_Dirichlet(self):
@@ -384,13 +394,6 @@ class F1D(Flexure):
       self.l2[i] = 2 * self.D/self.dx4
       self.q0[i] = self.q0[i] / (2*self.dx**3)
 
-      self.l2 = np.roll(self.l2, -2)
-      self.l1 = np.roll(self.l1, -1)
-      self.r1 = np.roll(self.r1, 1)
-      self.r2 = np.roll(self.r2, 2)
-      # Construct sparse array
-      self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
-      self.offsets = np.array([-2,-1,0,1,2])
     else:
       sys.exit("Non-scalar Te; boundary conditions not valid... and these\n\
                 sandbox experimental bc's are probably not valid for anything!")
