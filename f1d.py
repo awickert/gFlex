@@ -300,7 +300,7 @@ class F1D(Flexure):
       # I could allow it, but would have to rewrite the Periodic b.c. case,
       # which I don't want to do to allow something that doesn't make 
       # physical sense... so if anyone wants to do this for some unforeseen 
-      # reason, they can just split my function into two pieces themselves.
+      # reason, they can just split my function into two pieces themselves.i
       sys.exit("Having the boundary opposite a periodic boundary condition\n"+
                "be fixed and not include an implicit periodic boundary\n"+
                "condition makes no physical sense.\n"+
@@ -539,38 +539,7 @@ class F1D(Flexure):
     self.l1[i] = -4 * self.D/self.dx4
     self.l2[i] = 2 * self.D/self.dx4
 
-  def BCs_that_need_padding(self):
-    """
-    This function acts as a main interface for BC_Mirror.
-    
-    It is needed because these functions pad the array, and if one pads it on 
-    one side and the other pads it on the other, the final array isn't known 
-    until both boundary conditions are evaluated. Because these padding 
-    boundary conditions are evaluated outside of the static boundary b.c.'s, 
-    it is necessary to have them combined here (instead of above)
-    """
-
-    # self.q0 not touched until later; the two functions called from this 
-    # one modify self.q0pad
-    self.q0pad = self.q0.copy() # Prep for concatenation
-
-    #from matplotlib.pyplot import plot, show, figure
-    #figure(2), plot(self.q0pad)
-
-    # Build the proper boundary conditions
-    if self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
-      print "MIRROR!"
-      self.BC_Mirror()
-    # Pad Te, if it is an array, to match q0
-    self.pad_Te()
-
-    #figure(1), plot(self.q0pad)
-    #show()
-
-    # Finally, we build the diagonal matrix and set its boundary conditions
-    self.padded_edges_BCs()
-
-  def BC_Mirror(self):
+  def BC_Symmetric(self):
     """
     Mirrors q0 across the boundary on either the west (left) or east (right) 
     side, depending on the selections.
@@ -578,111 +547,33 @@ class F1D(Flexure):
     This can, for example, produce a scenario in which you are observing 
     a mountain range up to the range crest (or, more correctly, the halfway 
     point across the mountain range).
-    
-    The mirror is run out to one flexural wavelength away from the main 
-    part of the grid, after which it is clipped (if longer) or padded with 
-    additional zeros (if not).
-    
-    This has similar rules to the no outside loads condition: if both sides 
-    are mirrored, one will be mirrored and a periodic boundary condition will 
-    be applied.
     """
-
-    # Before starting, make sure that other side isn't "periodic": in that 
-    # case, change it to Mirror because the solution is OFTEN the same and 
-    # changing it should improve flow control (right-side padding desired 
-    # in this case even if the right boundary was periodic)
-    # Often but not always b/c if the domain is too short, it won't see its 
-    # loads more than once with mirror, which goes against periodic (i.e. 
-    # my numerical mirror doesn't work recursively like a real one would)
-    if self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
-      print "Setting one periodic boundary in conjunction with one Mirror"
-      print "boundary is OFTEN but not ALWAYS the same as setting both sides"
-      print "to have no outside loads; this is because a periodic boundary"
-      print "condition is often used to halve the distance that needs to be"
-      print "padded."
-      print "DEFAULTING TO BOTH MIRROR BOUNDARIES IN THIS SITUATION!"
-      # One is already Mirror, so change both to make sure that we 
-      # get both of them
-      self.BC_E = 'Mirror'
-      self.BC_W = 'Mirror'
-    
-    # First, see how far to pad: 1 flexural wavelength
-    # Now this is done outside this function
-    self.calc_max_flexural_wavelength()
-    
-    # Second, create the mirrored load grid
-    self.q0_mirror = self.q0[::-1]
-    #from matplotlib.pyplot import plot, figure
-    #figure(4), plot(self.q0_mirror)
-    
-    # Third, make padding array (if needed)
-    # If doing both sides, just repeat whole grid (if > flexural wavelength 
-    # and more efficient than just repeating part of it on both sides)
-    if len(self.q0_mirror) < self.maxFlexuralWavelength_ncells:
-      zeropad = np.zeros(self.maxFlexuralWavelength_ncells - len(self.q0_mirror))
-
-    # and self.BC_E = 'Mirror' or self.BC_W = 'Mirror':
-
-    # Fourth, find what may need to be added to each side
-    if self.BC_E == 'Mirror':
-      if len(self.q0_mirror) < self.maxFlexuralWavelength_ncells:
-        self.q0_mirror_E = np.concatenate((self.q0_mirror,zeropad))
-      elif len(self.q0_mirror) >= self.maxFlexuralWavelength_ncells:
-        self.q0_mirror_E = self.q0_mirror[:self.maxFlexuralWavelength_ncells]
     if self.BC_W == 'Mirror':
-      if len(self.q0_mirror) < self.maxFlexuralWavelength_ncells:
-        self.q0_mirror_W = np.concatenate((zeropad,self.q0_mirror))
-      elif len(self.q0_mirror) > self.maxFlexuralWavelength_ncells:
-        self.q0_mirror_W = self.q0_mirror[-self.maxFlexuralWavelength_ncells:]
-
-    # Fifth, add things properly to each side
-    # Starting with both sides being mirror bc's
-    if self.BC_E == 'Mirror' and self.BC_W == 'Mirror':
-      # Case 1: glom onto both sides because it is too short or too long
-      if len(self.q0_mirror) < self.maxFlexuralWavelength_ncells \
-        or len(self.q0_mirror) > 2*self.maxFlexuralWavelength_ncells:
-        self.q0pad = np.concatenate((self.q0_mirror_W,self.q0pad,self.q0_mirror_E))
-      # Case 2: Add to one side and later use a periodic boundary condition  
-      # because it is just right and these are more efficient
-      else:
-        self.q0pad = np.concatenate((self.q0pad,self.q0_mirror))        
-    # And then if just one side or the other is mirror:
-    elif self.BC_E == 'Mirror':
-      self.q0pad = np.concatenate((self.q0pad,self.q0_mirror_E))
-    elif self.BC_W == 'Mirror':
-      self.q0pad = np.concatenate((self.q0_mirror_W,self.q0pad))
-
-  def BC_Symmetric(self):
-    """
-    "Mirror", but elegantly.
-    """
-    if self.BC_W == 'Symmetric':
       i=0
-      self.BC_Te(i, 'symmetric') # Define coeffs
+      self.BC_Te(i, 'mirrorSymmetry') # Define coeffs
       self.l2[i] = np.nan
       self.l1[i] = np.nan
       self.c0[i] = self.c0_coeff_i
       self.r1[i] = self.r1_coeff_i + self.l1_coeff_i
       self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
       i=1
-      self.BC_Te(i, 'symmetric') # Define coeffs
+      self.BC_Te(i, 'mirrorSymmetry') # Define coeffs
       self.l2[i] = np.nan
       self.l1[i] = self.l1_coeff_i
       self.c0[i] = self.c0_coeff_i + self.l2_coeff_i
       self.r1[i] = self.r1_coeff_i
       self.r2[i] = self.r2_coeff_i
     
-    if self.BC_E == 'Symmetric':
+    if self.BC_E == 'Mirror':
       i=-2
-      self.BC_Te(i, 'symmetric') # Define coeffs
+      self.BC_Te(i, 'mirrorSymmetry') # Define coeffs
       self.l2[i] = self.l2_coeff_i
       self.l1[i] = self.l1_coeff_i
       self.c0[i] = self.c0_coeff_i + self.r2_coeff_i
       self.r1[i] = self.r1_coeff_i
       self.r2[i] = np.nan
       i=-1
-      self.BC_Te(i, 'symmetric') # Define coeffs
+      self.BC_Te(i, 'mirrorSymmetry') # Define coeffs
       self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
       self.l1[i] = self.l1_coeff_i + self.r1_coeff_i
       self.c0[i] = self.c0_coeff_i
@@ -707,107 +598,6 @@ class F1D(Flexure):
     self.maxFlexuralWavelength = 2*np.pi*alpha
     self.maxFlexuralWavelength_ncells = int(np.ceil(self.maxFlexuralWavelength / self.dx))
     
-  def pad_Te(self):
-    """
-    Pad elastic thickness to match padded q0 array.
-    This is needed for the Mirror boundary condition
-    
-    Mirror boundary conditions mirror the elastic thickness array out to the 
-    desired distance.
-
-    This function will do nothing if elastic thickness is a scalar... because 
-    then it is not a grid that needs to be padded. It will also do nothing if 
-    the boundary conditions do not include a "Mirror".
-
-    Use linspace to keep value constant on both sides of the padding seam
-    And also update D based on the extended Te array
-    """
-
-    if type(self.Te) == np.ndarray:
-      self.Te_orig = self.Te.copy() # Save original Te
-      if self.BC_W == 'Mirror' and self.BC_E == 'Mirror':
-        # Case 1: padded on both sides 
-        if len(self.Te_orig) < self.maxFlexuralWavelength_ncells:
-          extrapad = np.ones( self.maxFlexuralWavelength_ncells - len(self.Te_orig) )
-          padTeW = np.concatenate(( self.Te_orig[::-1][-1] * extrapad, self.Te_orig[::-1] ))
-          padTeE = np.concatenate(( self.Te_orig[::-1], self.Te_orig[::-1][-1] * extrapad ))
-          self.Te = np.concatenate((padTeW, self.Te,padTeE))
-        elif len(self.Te_orig) > 2*self.maxFlexuralWavelength_ncells:
-          padTeW = self.Te_orig[::-1][-self.maxFlexuralWavelength_ncells:]
-          padTeE = self.Te_orig[::-1][:self.maxFlexuralWavelength_ncells]
-          self.Te = np.concatenate((padTeW, self.Te, padTeE))
-        # Case 2: Padded on right
-        else:
-          # Can't go the whole length because Te_orig is padded
-          # SO THIS IS DIFFERENT FROM THE Q0, TE MIRRORING OF THE ENDPOINT 
-          # BEFORE!
-          padTeE = self.Te_orig[::-1][1:-1]
-          self.Te = np.concatenate((self.Te,padTeE))
-      # Combo and mirror-only cases already accounted for, so can just do a 
-      # simple if
-      elif self.BC_W == 'Mirror':
-        if len(self.Te_orig) < self.maxFlexuralWavelength_ncells:
-          extrapad = np.ones( self.maxFlexuralWavelength_ncells - len(self.Te_orig) )
-          padTeW = np.concatenate(( self.Te_orig[::-1][-1] * extrapad, self.Te_orig[::-1] ))
-        else:
-          padTeW = self.Te_orig[::-1][-self.maxFlexuralWavelength_ncells:]
-        self.Te = np.concatenate((padTeW,self.Te))
-      elif self.BC_E == 'Mirror':
-        if len(self.Te_orig) < self.maxFlexuralWavelength_ncells:
-          extrapad = np.ones( self.maxFlexuralWavelength_ncells - len(self.Te_orig) )
-          padTeE = np.concatenate(( self.Te_orig[::-1], self.Te_orig[::-1][-1] * extrapad ))
-        else:
-          padTeE = self.Te_orig[::-1][:self.maxFlexuralWavelength_ncells]
-        self.Te = np.concatenate((self.Te,padTeE))
-      # Update D
-      self.D = self.E*self.Te**3/(12*(1-self.nu**2)) # Flexural rigidity
-  
-  def padded_edges_BCs(self):
-    """
-    Sets the boundary conditions outside of padded edges; this is important 
-    for Mirror boundary conditions
-
-    Also makes an archival copy of q0 for while q0 is temporarily replaced 
-    by the padded version of it
-    """
-
-    # Then copy over q0
-    self.q0 = self.q0pad.copy()
-        
-    # First, we have to build the diagonal matrix, which wasn't pre-done 
-    # for us because we've just changed its size.
-    self.build_diagonals()
-
-    # Now we are all ready to throw this in the periodic boundary condition
-    # matrix builder, if needed!
-    if self.BC_E == 'Mirror' and self.BC_W == 'Mirror':
-      # Case 1: glommed onto both sides because it is too short or too long
-      # (Should have this be a maxFlexuralWavelength class variable, but
-      # just recalculating for now)
-      if len(self.q0_mirror) < self.maxFlexuralWavelength_ncells \
-        or len(self.q0_mirror) > 2*self.maxFlexuralWavelength_ncells:
-        if np.isscalar(self.Te):
-          # Implemented only for constant Te, but produces less of a 
-          # boundary effect on the solution
-          self.BC_Stewart1(override = True)
-        else:
-          self.BC_Dirichlet()
-      # Case 2: Adedd to one side and now use a periodic boundary condition 
-      # because the array length is just right and these are more efficient
-      else:
-        self.BC_Periodic()
-    else:
-      # Apply other BC to both sides: one is padded so it won't matter, and 
-      # the other one is where it counts
-      if self.BC_E == 'Stewart1' or self.BC_W == 'Stewart1':
-        self.BC_Stewart1(override = True)
-      elif self.BC_E == 'Dirichlet' or self.BC_W == 'Dirichlet':
-        # Would be better to use Stewart1 on padded side if possible, but not 
-        # going to becasue it is implemented only for the constant Te case
-        self.BC_Dirichlet()
-      else: sys.exit("If only one side is padded and the other isn't, valid boundary\n"+
-                     "condition options are 'Stewart1' and 'Dirichlet'. Aborting.")
-
   def BC_Te(self, i, case):
     """
     Utility function to help implement:
@@ -831,7 +621,7 @@ class F1D(Flexure):
         D0  = self.D[1:-1][i]
         Dp1 = self.D[2:][i]
         
-    elif case == "symmetric":
+    elif case == "mirror symmetry":
       if i == 0:
         D0  = self.D[1:-1][i] # = D[1]
         Dp1 = self.D[2:][i] # = D[2]
