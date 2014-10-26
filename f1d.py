@@ -206,6 +206,8 @@ class F1D(Flexure):
       self.BC_Neumann()
     if self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
       self.BC_Mirror()
+    if self.BC_E == '0Slope0Shear' or self.BC_W == '0Slope0Shear':
+      self.BC_0Slope0Shear()
 
     ##########################################################
     # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
@@ -300,48 +302,94 @@ class F1D(Flexure):
     self.diags = np.vstack((self.r1,self.r2,self.l2,self.l1,self.c0,self.r1,self.r2,self.l2,self.l1))
     self.offsets = np.array([1-self.ncolsx,2-self.ncolsx,-2,-1,0,1,2,self.ncolsx-2,self.ncolsx-1])
 
-  def BC_Dirichlet(self):
+  def BC_Dirichlet0(self):
     """
-    Boundary conditions stuck at 0!
-    Nothing really has to be done: boundaries stuck at 0 anyway
-    Haven't figured out how to move them... or if it is possible
-    I have only seen bc motion on RHS with the explicit part of 
-    implicit time-stepping matrix solutions
+    Dirichlet boundary condition for 0 deflection.
+    This requires that nothing be done to the edges of the solution array, 
+    because the lack of the off-grid terms implies that they go to 0
     """
-    if self.BC_W == 'Dirichlet0_Neumann0':
-      i=0
-      self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-      self.l1[i] = np.nan # OFF GRID
-      self.c0[i] = 0 * self.D/self.dx4 + self.drho*self.g
-      self.r1[i] = -8 * self.D/self.dx4
-      self.r2[i] = 2 * self.D/self.dx4
-      i=1
-      self.l2[i] = np.nan # OFF GRID
-      self.l1[i] = -4 * self.D/self.dx4
-      self.c0[i] = 0 * self.D/self.dx4 + self.drho*self.g
-      self.r1[i] = -4 * self.D/self.dx4
-      self.r2[i] = 2 * self.D/self.dx4
-    if self.BC_E == 'Dirichlet0_Neumann0':
-      # Coeffs no longer sum to 0 because, so w no longer free to be whatever 
-      # it wants in absence of a local load, q
-      i=-1
-      self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-      self.r1[i] = np.nan # OFF GRID
-      self.c0[i] = 0 * self.D/self.dx4 + self.drho*self.g
-      self.l1[i] = -8 * self.D/self.dx4
-      self.l2[i] = 2 * self.D/self.dx4
-      i=-2
-      self.r2[i] = np.nan # OFF GRID
-      self.r1[i] = -4 * self.D/self.dx4
-      self.c0[i] = 0 * self.D/self.dx4 + self.drho*self.g
-      self.l1[i] = -4 * self.D/self.dx4
-      self.l2[i] = 2 * self.D/self.dx4
-    # If I do nothing to equations, displacements outside region are forced
-    # to be 0, so pin solution to this
-    if self.BC_W == 'Dirichlet': # Dirichlet0
+    if self.BC_W == 'Dirichlet0':
       pass
-    if self.BC_E == 'Dirichlet':
+    if self.BC_E == 'Dirichlet0':
       pass
+
+  def BC_0Slope0Shear(self):
+    i=0
+    """
+    This boundary condition is esentially a Neumann 0-gradient boundary 
+    condition with that 0-gradient state extended over a longer part of 
+    the grid such that the third derivative also equals 0.
+    
+    This boundary condition has more of a geometric meaning than a physical 
+    meaning. It produces a state in which the boundaries have to have all 
+    gradients in deflection go to 0 (i.e. approach constant values) while 
+    not specifying what those values must be.
+    
+    This uses a 0-curvature boundary condition for elastic thickness 
+    that extends outside of the computational domain.
+    """
+    
+    if np.isscalar(self.Te):
+      if self.BC_W == '0Slope0Shear':
+        i = 0
+        self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
+        self.l1[i] = np.nan # OFF GRID
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = -8 * self.D/self.dx4
+        self.r2[i] = 2 * self.D/self.dx4
+        i = 1
+        self.l2[i] = np.nan # OFF GRID
+        self.l1[i] = -4 * self.D/self.dx4
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = -4 * self.D/self.dx4
+        self.r2[i] = 2 * self.D/self.dx4
+      if self.BC_E == '0Slope0Shear':
+        i = -2
+        self.l2[i] = 2 * self.D/self.dx4
+        self.l1[i] = -4 * self.D/self.dx4
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = -4 * self.D/self.dx4
+        self.r2[i] = np.nan # OFF GRID
+        i = -1
+        self.l2[i] = 2 * self.D/self.dx4
+        self.l1[i] = -8 * self.D/self.dx4
+        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
+        self.r1[i] = np.nan # OFF GRID
+        self.r2[i] = np.nan # OFF GRID
+    else:
+      # More general solution for variable Te: makes above solution 
+      # redundant with this. See comment in 0Moment0Shear for more 
+      # thoughts on this.
+      if self.BC_W == '0Slope0Shear':
+        i=0
+        self.BC_Te(i, '0 curvature') # Define coeffs
+        self.l2[i] = np.nan
+        self.l1[i] = np.nan
+        self.c0[i] = self.c0_coeff_i
+        self.r1[i] = self.r1_coeff_i + self.l1_coeff_i
+        self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
+        i=1
+        self.BC_Te(i, '0 curvature') # Define coeffs
+        self.l2[i] = np.nan
+        self.l1[i] = self.l1_coeff_i
+        self.c0[i] = self.c0_coeff_i
+        self.r1[i] = self.r1_coeff_i
+        self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
+      if self.BC_E == '0Slope0Shear':
+        i=-2
+        self.BC_Te(i, '0 curvature') # Define coeffs
+        self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
+        self.l1[i] = self.l1_coeff_i
+        self.c0[i] = self.c0_coeff_i
+        self.r1[i] = self.r1_coeff_i
+        self.r2[i] = np.nan
+        i=-1
+        self.BC_Te(i, '0 curvature') # Define coeffs
+        self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
+        self.l1[i] = self.l1_coeff_i + self.r1_coeff_i
+        self.c0[i] = self.c0_coeff_i
+        self.r1[i] = np.nan
+        self.r2[i] = np.nan
 
   def BC_Sandbox(self):
     """
@@ -397,7 +445,8 @@ class F1D(Flexure):
     This simulates a free end (broken plate, end of a cantilevered beam: 
     think diving board tip)
     It is *not* yet set up to have loads placed on the ends themselves: 
-    (look up how to do this, actually Wikipdia has some info)
+    (look up how to do this, thought Wikipdia has some info, but can't find
+    it... what I read said something about generalizing)
     """
     # 0 moment and 0 shear
     if np.isscalar(self.Te):
@@ -673,8 +722,10 @@ class F1D(Flexure):
     self.time_to_solve = time.time() - self.solver_start_time
     # Always print this!
     print 'Time to solve [s]:', self.time_to_solve
-    
-    #print self.w.shape
-    
-    #print self.w
+
+    if self.Debug:
+      print "w.shape:"
+      print self.w.shape
+      print "w:"
+      print self.w
     
