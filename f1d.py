@@ -167,11 +167,11 @@ class F1D(Flexure):
     
     self.coeff_start_time = time.time()
     
-    # Construct sparse array
+    ##########################
+    # CONSTRUCT SPARSE ARRAY #
+    ##########################
 
-    if self.BC_W != 'Mirror' or self.BC_E != 'Mirror':
-      # This step is done post-padding if Mirror is the boundary condition
-      self.build_diagonals()
+    self.build_diagonals()
 
     ##############################
     # SELECT BOUNDARY CONDITIONS #
@@ -193,32 +193,21 @@ class F1D(Flexure):
     print "Boundary condition, West:", self.BC_W, type(self.BC_W)
     print "Boundary condition, East:", self.BC_E, type(self.BC_E)
 
-    if self.BC_W != 'Mirror' or self.BC_E != 'Mirror':
-      # Define an approximate maximum flexural wavelength to obtain
-      # required distances to pad the array    
-      self.calc_max_flexural_wavelength()
-
-    if self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
-      # Boundaries that require padding!
-      self.BCs_that_need_padding()
-    # Both Stewart and Dirichlet can be called from inside the boundary 
-    # conditions that require padding, so the "elif" is for if padding 
-    # cases are not used.
-    if self.BC_E == 'Dirichlet' and self.BC_W == 'Dirichlet':
-      # Stewart defaults to Dirichlet for the unpicked side, so only choose 
-      # this if both sides are Dirichlet
+    if self.BC_E == 'Dirichlet' or self.BC_W == 'Dirichlet':
       self.BC_Dirichlet()
-    if self.BC_E == 'Sandbox' and self.BC_W == 'Sandbox':
-      # Sandbox is my testing ground - only choose if both are sandbox
+    if self.BC_E == 'Sandbox' or self.BC_W == 'Sandbox':
+      # Sandbox is the developer's testing ground
       self.BC_Sandbox()
     if self.BC_E == '0Moment0Shear' or self.BC_W == '0Moment0Shear':
       self.BC_0Moment0Shear()
     if self.BC_E == 'Neumann' or self.BC_W == 'Neumann':
       self.BC_Neumann()
-    if self.BC_E == 'Symmetric' or self.BC_W == 'Symmetric':
-      self.BC_Symmetric()
+    if self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
+      self.BC_Mirror()
 
-    #self.assemble_diagonals_with_boundary_conditions() # if separated into fcn
+    ##########################################################
+    # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
+    ##########################################################
 
     # Roll to keep the proper coefficients at the proper places in the
     # arrays: Python will naturally just do vertical shifts instead of 
@@ -539,7 +528,7 @@ class F1D(Flexure):
     self.l1[i] = -4 * self.D/self.dx4
     self.l2[i] = 2 * self.D/self.dx4
 
-  def BC_Symmetric(self):
+  def BC_Mirror(self):
     """
     Mirrors q0 across the boundary on either the west (left) or east (right) 
     side, depending on the selections.
@@ -550,14 +539,14 @@ class F1D(Flexure):
     """
     if self.BC_W == 'Mirror':
       i=0
-      self.BC_Te(i, 'mirrorSymmetry') # Define coeffs
+      self.BC_Te(i, 'mirror symmetry') # Define coeffs
       self.l2[i] = np.nan
       self.l1[i] = np.nan
       self.c0[i] = self.c0_coeff_i
       self.r1[i] = self.r1_coeff_i + self.l1_coeff_i
       self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
       i=1
-      self.BC_Te(i, 'mirrorSymmetry') # Define coeffs
+      self.BC_Te(i, 'mirror symmetry') # Define coeffs
       self.l2[i] = np.nan
       self.l1[i] = self.l1_coeff_i
       self.c0[i] = self.c0_coeff_i + self.l2_coeff_i
@@ -566,14 +555,14 @@ class F1D(Flexure):
     
     if self.BC_E == 'Mirror':
       i=-2
-      self.BC_Te(i, 'mirrorSymmetry') # Define coeffs
+      self.BC_Te(i, 'mirror symmetry') # Define coeffs
       self.l2[i] = self.l2_coeff_i
       self.l1[i] = self.l1_coeff_i
       self.c0[i] = self.c0_coeff_i + self.r2_coeff_i
       self.r1[i] = self.r1_coeff_i
       self.r2[i] = np.nan
       i=-1
-      self.BC_Te(i, 'mirrorSymmetry') # Define coeffs
+      self.BC_Te(i, 'mirror symmetry') # Define coeffs
       self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
       self.l1[i] = self.l1_coeff_i + self.r1_coeff_i
       self.c0[i] = self.c0_coeff_i
@@ -664,6 +653,7 @@ class F1D(Flexure):
     
     #print 'q0', self.q0.shape
     #print 'Te', self.Te.shape
+    self.calc_max_flexural_wavelength()
     print 'maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells
     
     self.solver_start_time = time.time()
@@ -679,36 +669,7 @@ class F1D(Flexure):
     self.time_to_solve = time.time() - self.solver_start_time
     print 'Time to solve [s]:', self.time_to_solve
     
-    # If needed, revert q0 and Te to original dimensions
-    self.back_to_original_q0_Te_w()
-    
     #print self.w.shape
     
     #print self.w
     
-  def back_to_original_q0_Te_w(self):
-    """
-    Pull out the parts of q0, Te that we want for the padded "Mirror" boundary 
-    condition case
-    """
-    # Clipping needed for the Mirror boundary condition.
-    if self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
-      self.q0 = self.q0_orig
-      if type(self.Te) == np.ndarray:
-        self.Te = self.Te_orig
-      if self.BC_E == 'Mirror' and self.BC_W == 'Mirror':
-        # Case 1: padded on both sides 
-        if len(self.q0_mirror) < self.maxFlexuralWavelength_ncells \
-          or len(self.q0_mirror) > 2*self.maxFlexuralWavelength_ncells:
-          print self.w.shape
-          self.w = self.w[self.maxFlexuralWavelength_ncells:-self.maxFlexuralWavelength_ncells]
-        # Case 2: Padded on right
-        else:
-          self.w = self.w[:len(self.q0_orig)]
-      # Combo and mirror-only cases already accounted for, so can just do a 
-      # simple if
-      elif self.BC_W == 'Mirror':
-        self.w = self.w[self.maxFlexuralWavelength_ncells:]
-      elif self.BC_E == 'Mirror':
-        self.w = self.w[:-self.maxFlexuralWavelength_ncells]
-
