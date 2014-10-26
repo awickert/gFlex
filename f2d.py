@@ -10,7 +10,7 @@ from scipy.special import kei
 class F2D(Flexure):
   def initialize(self, filename):
     super(F2D, self).initialize(filename)
-    if debug: print 'F2D initialized'
+    if self.Verbose: print 'F2D initialized'
 
   def run(self):
     if self.method == 'FD':
@@ -31,15 +31,14 @@ class F2D(Flexure):
       super(F2D, self).SPA_NG()
       self.method_func = self.SPA_NG
     else:
-      print 'Error: method must be "FD", "FFT", or "SPA"'
-      self.abort()
+      sys.exit('Error: method must be "FD", "FFT", "SPA", or "SPA_NG"')
 
-    if debug: print 'F2D run'
+    if self.Verbose: print 'F2D run'
     self.method_func()
     #self.imshow(self.w) # debugging
 
   def finalize(self):
-    if debug: print 'F2D finalized'
+    if self.Verbose: print 'F2D finalized'
     super(F2D, self).finalize()
     
   ########################################
@@ -55,10 +54,8 @@ class F2D(Flexure):
       self.coeff_matrix_creator()
     self.fd_solve()
 
-    
   def FFT(self):
-    print "The fast Fourier transform solution method is not yet implemented."
-    sys.exit()
+    sys.exit("The fast Fourier transform solution method is not yet implemented.")
 
   def SPA(self):
     self.spatialDomainVars()
@@ -962,14 +959,14 @@ class F2D(Flexure):
     
     self.solver_start_time = time.time()
 
-    try:
-      # Will fail if scalar
-      print 'self.Te', self.Te.shape
-    except:
-      pass
-    print 'self.q0', self.q0.shape
-
-    #print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
+    if self.Debug:
+      try:
+        # Will fail if scalar
+        print 'self.Te', self.Te.shape
+      except:
+        pass
+      print 'self.q0', self.q0.shape
+      print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
     
     if self.solver == "iterative" or self.solver == "Iterative":
       from scipy.sparse.linalg import isolve

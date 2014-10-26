@@ -89,9 +89,10 @@ class Isostasy(BMI):
         var = self.config.getfloat(category,name)
       elif vartype == 'string' or vartype == 'str':
         var = self.config.get(category,name)
-        if var == "":
+        if var == ""  and optional == False:
           print "Input strings cannot be empty unless they are optional."
-          sys.exit()
+          print name, "is not optional."
+          print "Program crash likely to occur."
       elif vartype == 'integer' or vartype == 'int':
         var = self.config.getint(category,name)
       elif vartype == 'boolean' or vartype == 'bool':
@@ -391,7 +392,7 @@ class Isostasy(BMI):
     # Otherwise, it needs to be set by an input file
     except:
       try:
-        self.wOutFile = self.configGet("string", "output", "DeflectionOut",optional=True)
+        self.wOutFile = self.configGet("string", "output", "DeflectionOut", optional=True)
         # If this exists and is a string, write output to a file
         if self.wOutFile[-4:] == '.npy':
           from numpy import save
@@ -400,11 +401,12 @@ class Isostasy(BMI):
           from numpy import savetxt
           # Shouldn't need more than mm precision, at very most
           savetxt(self.wOutFile,self.w,fmt='%.3f')
-        if self.Verbose: print 'Saving deflections --> ' + self.wOutFile
+          print 'Saving deflections --> ' + self.wOutFile
       except:
         # if there is no parsable output string, do not generate output;
         # this allows the user to leave the line blank and produce no output
-        print 'Not writing any deflection output to file'
+        if self.Debug:
+          print 'Not writing any deflection output to file'
 
   # Plot, if desired
   def plotting(self):
