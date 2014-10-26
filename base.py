@@ -169,7 +169,7 @@ class Isostasy(BMI):
         self.bclist += [self.BC_N, self.BC_S]
       # Check that boundary conditions are acceptable with code implementation
       # Acceptable b.c.'s
-      self.bc1D = np.array(['Dirichlet', 'Periodic', 'Mirror', 'Stewart1', 'Neumann', '0Moment0Shear'])
+      self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
       self.bc2D = np.array(['Dirichlet', 'Periodic', 'Mirror'])
       for bc in self.bclist:
         if self.dimension == 1:
@@ -177,7 +177,10 @@ class Isostasy(BMI):
             pass
           else:
             sys.exit("'"+bc+"'"+ " is not an acceptable 1D boundary condition and/or\n"\
-                     +"is not yet implement in the code. Exiting.")
+                     +"is not yet implement in the code. Acceptable boundary conditions\n"\
+                     +"are:\n"\
+                     +str(self.bc1D)+"\n"\
+                     +"Exiting.")
         elif self.dimension == 2:
           if (bc == self.bc2D).any():
             pass
@@ -669,7 +672,7 @@ class Flexure(Isostasy):
     # Only get Te if you aren't loading a pre-made coefficient matrix
     if coeffPath == None:
       # No grid?
-      if Tepath == None:
+      if Tepath == None or Tepath == '':
         # Go through this only if using an input file
         if self.filename:
           if self.Verbose: print "Trying to use the scalar elastic thickness"
