@@ -201,7 +201,7 @@ class F1D(Flexure):
     if self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
       # If both boundaries are periodic, we are good to go (and self-consistent)
       self.BC_Periodic()
-    elif (self.BC_E == 'Periodic' or self.BC_W == 'Periodic') \
+    if (self.BC_E == 'Periodic' or self.BC_W == 'Periodic') \
       and (self.BC_W != 'Mirror' and self.BC_E != 'Mirror'):
       # If only one boundary is periodic and the other doesn't implicitly 
       # involve a periodic boundary, this is illegal!
@@ -222,19 +222,12 @@ class F1D(Flexure):
     if self.BC_E == 'Sandbox' and self.BC_W == 'Sandbox':
       # Sandbox is my testing ground - only choose if both are sandbox
       self.BC_Sandbox()
-    if self.BC_E == 'Stewart1' or self.BC_W == 'Stewart1':
-      self.BC_Stewart1()
+    if self.BC_E == '0Moment0Shear' or self.BC_W == '0Moment0Shear':
+      self.BC_0Moment0Shear()
     if self.BC_E == 'Neumann' or self.BC_W == 'Neumann':
       self.BC_Neumann()
-    elif self.BC_E == 'Symmetric' or self.BC_W == 'Symmetric':
+    if self.BC_E == 'Symmetric' or self.BC_W == 'Symmetric':
       self.BC_Symmetric()
-    else:
-      # This should be redundant with something that tells the system to exit
-      # before even reaching this routine if the boundary condition doesn't
-      # work.
-      print("Error: boundary conditions: (E)", self.BC_E, "and/or (W)", self.BC_W)
-      sys.exit("Selected boundary condition not recognized for the chosen\n"\
-               +"model run type (1D or 2D, constant or variable $T_e$)")
                 
     self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
 
@@ -396,7 +389,7 @@ class F1D(Flexure):
       sys.exit("Non-scalar Te; boundary conditions not valid... and these\n\
                 sandbox experimental bc's are probably not valid for anything!")
 
-  def BC_0Moment0Shear(self, override=False):
+  def BC_0Moment0Shear(self):
     """
     d2w/dx2 = d3w/dx3 = 0
     (no moment or shear)
