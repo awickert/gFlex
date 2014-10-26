@@ -165,7 +165,7 @@ class Isostasy(BMI):
         self.bclist += [self.BC_N, self.BC_S]
       # Check that boundary conditions are acceptable with code implementation
       # Acceptable b.c.'s
-      bc1D = np.array(['Dirichlet', 'Periodic', 'Mirror', 'Stewart1', 'Neumann'])
+      bc1D = np.array(['Dirichlet', 'Periodic', 'Mirror', 'Stewart1', 'Neumann', 'Symmetric', '0Moment0Shear'])
       bc2D = np.array(['Dirichlet', 'Periodic', 'Mirror'])
       for bc in self.bclist:
         if self.dimension == 1:
@@ -283,10 +283,12 @@ class Isostasy(BMI):
       else:
         self.dy = value
     # Boundary conditions
-    # "Dirichilet" (0-displacement at edges)
-    # "Stewart1" (second and third derivatives are 0: Stewart and Watts (1997))
+    # "Dirichlet0" (0-displacement at edges) # TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # "Dirichlet" (0-displacement at edges) # TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # "BC_Symmetric" (second and third derivatives are 0: free cantilever edge (same as Stewart and Watts (1997) used, and standard in CivE)
     # "Periodic" - wraparound on edges
     # "Mirror" - reflects on edges
+    # "Symmetric" - reflects on edges, elegantly instead of with brute-force padding
     elif value_key == 'BoundaryCondition_East':
       self.BC_E = value
     elif value_key == 'BoundaryCondition_West':
