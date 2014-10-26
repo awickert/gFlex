@@ -476,14 +476,14 @@ class F1D(Flexure):
       # Also using 0-curvature boundary condition for D (i.e. Te)
       if self.BC_W == 'BC_0Moment0Shear':
         i=0
-        self.BC_Te_0_curvature(i) # Define coeffs
+        self.BC_Te(i, '0 curvature') # Define coeffs
         self.l2[i] = np.nan
         self.l1[i] = np.nan
         self.c0[i] = self.c0_coeff_i + 4*self.l2_coeff_i + 2*self.l1_coeff_i
         self.r1[i] = self.r1_coeff_i - 4*self.l2_coeff_i - self.l1_coeff_i
         self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
         i=1
-        self.BC_Te_0_curvature(i) # Define coeffs
+        self.BC_Te_0_curvature(i, '0 curvature') # Define coeffs
         self.l2[i] = np.nan
         self.l1[i] = self.l1_coeff_i + 2*self.l2_coeff_i
         self.c0[i] = self.c0_coeff_i
@@ -492,14 +492,14 @@ class F1D(Flexure):
       
       if self.BC_E == 'BC_0Moment0Shear':
         i=-2
-        self.BC_Te_0_curvature(i) # Define coeffs
+        self.BC_Te_0_curvature(i, '0 curvature') # Define coeffs
         self.l2[i] = self.r2_coeff_i + self.r2_coeff_i
         self.l1[i] = self.r1_coeff_i - 2*self.r2_coeff_i
         self.c0[i] = self.c0_coeff_i
         self.r1[i] = self.r1_coeff_i + 2*self.r2_coeff_i
         self.r2[i] = np.nan
         i=-1
-        self.BC_Te_0_curvature(i) # Define coeffs
+        self.BC_Te_0_curvature(i, '0 curvature') # Define coeffs
         self.l2[i] = self.r2_coeff_i + self.r2_coeff_i
         self.l1[i] = self.r1_coeff_i - 4*self.r2_coeff_i - self.r1_coeff_i
         self.c0[i] = self.c0_coeff_i + 4*self.r2_coeff_i + 2*self.r1_coeff_i
@@ -690,6 +690,49 @@ class F1D(Flexure):
     self.maxFlexuralWavelength = 2*np.pi*alpha
     self.maxFlexuralWavelength_ncells = int(np.ceil(self.maxFlexuralWavelength / self.dx))
     
+  def BC_Symmetric(self):
+    """
+    "Mirror", but elegantly.
+    """
+    if self.BC_W == 'BC_Symmetric':
+      i=0
+      self.BC_Te_0_curvature(i) # Define coeffs
+      self.l2[i] = np.nan
+      self.l1[i] = np.nan
+      self.c0[i] = self.c0_coeff_i
+      self.r1[i] = self.r1_coeff_i + self.l1_coeff_i
+      self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
+      i=1
+      self.BC_Te_0_curvature(i) # Define coeffs
+      self.l2[i] = np.nan
+      self.l1[i] = self.l1_coeff_i
+      self.c0[i] = self.c0_coeff_i + self.l2_coeff_i
+      self.r1[i] = self.r1_coeff_i
+      self.r2[i] = self.r2_coeff_i
+    
+    if self.BC_E == 'BC_Symmetric':
+      i=-2
+      self.BC_Te_0_curvature(i) # Define coeffs
+      self.l2[i] = self.r2_coeff_i
+      self.l1[i] = self.r1_coeff_i
+      self.c0[i] = self.c0_coeff_i
+      self.r1[i] = self.r1_coeff_i
+      self.r2[i] = np.nan
+      i=-1
+      self.BC_Te_0_curvature(i) # Define coeffs
+      self.l2[i] = self.r2_coeff_i
+      self.l1[i] = self.r1_coeff_i
+      self.c0[i] = self.c0_coeff_i
+      self.r1[i] = np.nan
+      self.r2[i] = np.nan
+
+    self.l2 = np.roll(self.l2, -2)
+    self.l1 = np.roll(self.l1, -1)
+    self.r1 = np.roll(self.r1, 1)
+    self.r2 = np.roll(self.r2, 2)
+
+  
+  
   def pad_Te(self):
     """
     Pad elastic thickness to match padded q0 array.
@@ -791,7 +834,7 @@ class F1D(Flexure):
       else: sys.exit("If only one side is padded and the other isn't, valid boundary\n"+
                      "condition options are 'Stewart1' and 'Dirichlet'. Aborting.")
 
-  def BC_Te_0_curvature(self, i):
+  def BC_Te(self, case, i):
     """
     Utility function to help implement:
     0-curvature boundary condition for D (i.e. Te)
@@ -799,19 +842,37 @@ class F1D(Flexure):
     So this means constant gradient set by local Te distribution
     """
     
-    if i == 0:
-      D0  = self.D[1:-1][i] # = D[1]
-      Dp1 = self.D[2:][i] # = D[2]
-      Dm1 = 2*D0 - Dp1 # BC applied here
-    elif i == -1:
-      Dm1 = self.D[:-2][i]
-      D0  = self.D[1:-1][i]
-      Dp1 = 2*D0 - Dm1 # BC applied here
+    if case == "0 curvature":
+      if i == 0:
+        D0  = self.D[1:-1][i] # = D[1]
+        Dp1 = self.D[2:][i] # = D[2]
+        Dm1 = 2*D0 - Dp1 # BC applied here
+      elif i == -1:
+        Dm1 = self.D[:-2][i]
+        D0  = self.D[1:-1][i]
+        Dp1 = 2*D0 - Dm1 # BC applied here
+      else:
+        # Away from boundaries and all is normal
+        Dm1 = self.D[:-2][i]
+        D0  = self.D[1:-1][i]
+        Dp1 = self.D[2:][i]
+        
+    elif case == "symmmetric":
+      if i == 0:
+        D0  = self.D[1:-1][i] # = D[1]
+        Dp1 = self.D[2:][i] # = D[2]
+        Dm1 = self.D[2:][i] # BC applied here
+      elif i == -1:
+        Dm1 = self.D[:-2][i]
+        D0  = self.D[1:-1][i]
+        Dp1 = self.D[:-2][i] # BC applied here
+      else:
+        # Away from boundaries and all is normal
+        Dm1 = self.D[:-2][i]
+        D0  = self.D[1:-1][i]
+        Dp1 = self.D[2:][i]
     else:
-      # Away from boundaries and all is normal
-      Dm1 = self.D[:-2][i]
-      D0  = self.D[1:-1][i]
-      Dp1 = self.D[2:][i]
+      sys.exit("Invalid Te B.C. case")
     
     self.l2_coeff_i = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
     self.l1_coeff_i = ( -6.*D0 + 2.*Dp1 ) / self.dx4
