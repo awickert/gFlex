@@ -11,12 +11,13 @@ PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
 InfillMaterialDensity=0
-ElasticThickness=30000
-; 50000 ; Used for FFT, SPA, and SPA_NG solutions
+ElasticThickness=,15000
+; 30000
+; 50000 ; Used for FFT, SPA, and SPA_NG solutions 
 
 [input]
-Loads=q0_sample/1D/lr_blocks_100m_500cell.txt ; central_block.txt ; q0_sample/1D/l_block.txt
-ElasticThickness=;Te_sample/1D/8km_20km_ramp.txt ; Te_sample/1D/10km_const.txt ; 
+Loads=q0_sample/1D/central_block.txt ; q0_sample/1D/l_block.txt ; lr_blocks_100m_500cell.txt ; 
+ElasticThickness=Te_sample/1D/8km_20km_ramp.txt ; Te_sample/1D/10km_const.txt ; 
 
 [output]
 DeflectionOut=tmpout.txt
@@ -24,12 +25,16 @@ DeflectionOut=tmpout.txt
 Plot=combo
 
 [numerical]
-GridSpacing_x=3000
-BoundaryCondition_West=Stewart1
-BoundaryCondition_East=Stewart1
+GridSpacing_x=5000
+BoundaryCondition_West=Mirror
+BoundaryCondition_East=Mirror
 ; Solver can be direct or iterative; currently only works in 2D
 ; (Direct only in 1D, no matter what is written here)
 Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
 ; Set as 0 if you don't want to iterate
 convergence=1E-3
+
+[verbosity]
+Verbose=False
+Debug=False

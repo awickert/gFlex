@@ -4,8 +4,6 @@ import time # For efficiency counting
 import types # For flow control
 #import CSDMS_base
 
-debug = True
-
 # BMI Interface
 # edited by Andy
 class BMI (object):
@@ -96,22 +94,24 @@ class Isostasy(BMI):
           sys.exit()
       elif vartype == 'integer' or vartype == 'int':
         var = self.config.getint(category,name)
+      elif vartype == 'boolean' or vartype == 'bool':
+        var = self.config.getboolean(category,name)
       else:
-        print "Please enter 'float', 'string' (or 'str'), or 'integer' (or 'int') for vartype"
+        print "Please enter 'float', 'string' (or 'str'), 'integer' (or 'int'), or 'boolean (or 'bool') for vartype"
         sys.exit() # Won't exit, but will lead to exception
       return var
     except:
       if optional:
         # Carry on if the variable is optional
         var = None
-        print 'No value entered for optional parameter "' + name + '" in category "' + category + '" in input file.'
-        print 'No action related to this optional parameter will be taken.'
+        if self.Verbose or self.Debug:
+          print 'No value entered for optional parameter "' + name + '" in category "' + category + '" in input file.'
+          print 'No action related to this optional parameter will be taken.'
       else:
         print 'Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from input file.'
         if specialReturnMessage:
           print specialReturnMessage
-        print "Exiting."
-        sys.exit()
+        sys.exit("Exiting.")
 
   def whichModel(self, filename=None):
     self.filename = filename
@@ -129,16 +129,19 @@ class Isostasy(BMI):
           # (at least for them)
           self.model     = self.configGet("string", "mode", "model")
           self.dimension = self.configGet("integer", "mode", "dimension")
-          print "Successfully loaded input file and obtained model mode"
           self.whichModel_AlreadyRun = True
         except:
-          print "No input file at specified path, or input file configured incorrectly"
-          sys.exit()
+          sys.exit("No input file at specified path, or input file configured incorrectly")
 
   def initialize(self, filename=None):
   
-    if debug: print "" # Blank line at start of run
-    if debug: print "Starting to initialize..."
+    print "" # Blank line at start of run
+    print "*********************************************"
+    print "*** Initializing gFlex development branch ***"
+    print "*********************************************"
+    print ""
+    print "Open-source licensed under GNU GPL v3"
+    print ""
 
     # Values from input file
 
@@ -198,6 +201,11 @@ class Isostasy(BMI):
         self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
       # Loading grid
       q0path = self.configGet('string', "input", "Loads")
+      
+      # Verbosity
+      self.Verbose = self.configGet("bool", "verbosity", "Verbose")
+      # Deebug means that whole arrays, etc., can be printed
+      self.Debug = self.configGet("bool", "verbosity", "Debug")
 
     else:
       self.inpath = os.getcwd()+'/input/' # often correct, but a hack
@@ -217,19 +225,19 @@ class Isostasy(BMI):
         # working directory
         try:
           self.q0 = load(q0path)
-          if debug: print "Loading q0 from numpy binary"
+          if self.Verbose: print "Loading q0 from numpy binary"
         except:
           self.q0 = np.loadtxt(q0path)
-          if debug: print "Loading q0 ASCII"
+          if self.Verbose: print "Loading q0 ASCII"
       except:
         try:
           # Then see if it is relative to the location of the input file
           try:
             self.q0 = load(self.inpath + q0path)
-            if debug: print "Loading q0 from numpy binary"
+            if self.Verbose: print "Loading q0 from numpy binary"
           except:
             self.q0 = np.loadtxt(self.inpath + q0path)
-            if debug: print "Loading q0 ASCII"
+            if self.Verbose: print "Loading q0 ASCII"
         except:
           print "Cannot find q0 file"
           print "q0path = " + q0path
@@ -250,7 +258,7 @@ class Isostasy(BMI):
       sys.exit()
 
     # Plotting selection
-    self.plotChoice = self.configGet("string","output","Plot",optional=True)
+    self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
 
   # Finalize
   def finalize(self):
@@ -268,7 +276,7 @@ class Isostasy(BMI):
     elif value_key =='dimension':
       self.dimension = value
     # Parameters
-    if value_key == 'GravAccel':
+    elif value_key == 'GravAccel':
       self.g = value
     elif value_key == 'MantleDensity':
       self.rho_m = value
@@ -282,6 +290,11 @@ class Isostasy(BMI):
         print "No dy in 1D problems; doing nothing"
       else:
         self.dy = value
+    # Verbosity
+    elif value_key == 'Verbose':
+      self.Verbose = value
+    elif value_key == 'Debug':
+      self.Quiet = value
     # Boundary conditions
     # "Dirichlet0" - 0-displacement at edges) # TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # "Dirichlet" - 0-displacement at edges) # TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -353,7 +366,7 @@ class Isostasy(BMI):
   # Output: One of the functions run by isostasy.py; not part of IRF
   # (for standalone model use)
   def output(self):
-    if debug: print 'Output step'
+    if self.Verbose: print 'Output step'
     self.outputDeflections()
     self.plotting()
 
@@ -371,7 +384,7 @@ class Isostasy(BMI):
     try:
       # If wOutFile exists, has already been set by a setter
       self.wOutFile
-      if debug:
+      if self.Verbose:
         print "Output filename provided by setter"
         print "Not saving file with this code; that should be handled by the driver"
         
@@ -387,7 +400,7 @@ class Isostasy(BMI):
           from numpy import savetxt
           # Shouldn't need more than mm precision, at very most
           savetxt(self.wOutFile,self.w,fmt='%.3f')
-        if debug: print 'Saving deflections --> ' + self.wOutFile
+        if self.Verbose: print 'Saving deflections --> ' + self.wOutFile
       except:
         # if there is no parsable output string, do not generate output;
         # this allows the user to leave the line blank and produce no output
@@ -400,7 +413,7 @@ class Isostasy(BMI):
     # except:
     #   self.plotChoice = None
     if self.plotChoice:
-      if debug: print "Starting to plot " + self.plotChoice
+      if self.Verbose: print "Starting to plot " + self.plotChoice
       if self.dimension==1:
         if self.plotChoice == 'q0':
           self.lineplot(self.q0/(self.rho_m*self.g),
@@ -559,17 +572,10 @@ class Isostasy(BMI):
 
     show()
 
-  # CODE TO ABORT RUN AFTER ERROR
-  # mainly to avoid all of the gobbedygook after I print my error message
-  # that I've tailored to this code
-  def abort(self):
-    print("Aborting.")
-    sys.exit() # Stop program from running after printing only
-               # my error message (calls "raise systemExit")
-
 # class Flexure inherits Isostay and it overrides the __init__ method. It also
 # define three different solution methods, which are implemented by its subclass.
 class Flexure(Isostasy):
+  
   def coeffArraySizeCheck(self):
     """
     Make sure that q0 and coefficient array are the right size compared to 
@@ -594,7 +600,7 @@ class Flexure(Isostasy):
           if (np.array(self.Te.shape) - 2 != np.array(self.q0.shape)).any():
             sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
         else:
-          if debug: print "Te and q0 array sizes pass consistency check"
+          if self.Debug: print "Te and q0 array sizes pass consistency check"
 
   def initialize(self, filename=None):
     super(Flexure, self).initialize(filename)
@@ -635,11 +641,11 @@ class Flexure(Isostasy):
       if coeffPath:
         try:
           self.coeff_matrix = np.load(coeffPath)
-          if debug: print "Loading coefficient array as numpy array binary"
+          if self.Verbose: print "Loading coefficient array as numpy array binary"
         except:
           try:
             self.coeff_matrix = np.loadtxt(coeffPath)
-            if debug: print "Loading coefficient array as ASCII grid"
+            if self.Verbose: print "Loading coefficient array as ASCII grid"
           except:
             print "Could not load coefficient array; check filename provided"
             print "Exiting."
@@ -664,7 +670,7 @@ class Flexure(Isostasy):
       if Tepath == None:
         # Go through this only if using an input file
         if self.filename:
-          if debug: print "Trying to use the scalar elastic thickness"
+          if self.Verbose: print "Trying to use the scalar elastic thickness"
           # Is there are scalar file?
           try:
             # No Te grid path defined, so going for scalar Te

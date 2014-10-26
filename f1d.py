@@ -6,7 +6,7 @@ from scipy.sparse.linalg import spsolve
 class F1D(Flexure):
   def initialize(self, filename):
     super(F1D, self).initialize(filename)
-    if debug: print 'F1D initialized'
+    if self.Verbose: print 'F1D initialized'
 
   def run(self):
     if self.method == 'FD':
@@ -27,15 +27,14 @@ class F1D(Flexure):
       super(F1D, self).SPA_NG()
       self.method_func = self.SPA_NG
     else:
-      print 'Error: method must be "FD", "FFT", or "SPA"'
-      self.abort()
+      sys.exit('Error: method must be "FD", "FFT", or "SPA"')
 
-    if debug: print 'F1D run'
+    if self.Verbose: print 'F1D run'
     self.method_func ()
     # self.plot() # in here temporarily
 
   def finalize(self):
-    if debug: print 'F1D finalized'
+    if self.Verbose: print 'F1D finalized'
     super(F1D, self).finalize()   
     
   ########################################
@@ -60,8 +59,7 @@ class F1D(Flexure):
   def FFT(self):
     if self.plotChoice:
       self.gridded_x()
-    print "The fast Fourier transform solution method is not yet implemented."
-    sys.exit()
+    sys.exit("The fast Fourier transform solution method is not yet implemented.")
     
   def SPA(self):
     self.gridded_x()
@@ -122,7 +120,9 @@ class F1D(Flexure):
     self.q0 = self.q0[:,1]
     
     self.w = np.zeros(self.x.shape)
-    print self.w.shape
+    if self.Debug:
+      print "w = "
+      print self.w.shape
     
     i=0 # counter
     for x0 in self.x:
@@ -130,8 +130,9 @@ class F1D(Flexure):
       self.w -= self.q0[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
         (np.cos(dist/self.alpha) + np.sin(dist/self.alpha))
       if i==10:
-        print dist
-        print self.q0
+        if self.Debug:
+          print dist
+          print self.q0
       i+=1 # counter
 
   ## FINITE DIFFERENCE
@@ -190,8 +191,9 @@ class F1D(Flexure):
     # http://scicomp.stackexchange.com/questions/5355/writing-the-poisson-equation-finite-difference-matrix-with-neumann-boundary-cond
     # http://scicomp.stackexchange.com/questions/7175/trouble-implementing-neumann-boundary-conditions-because-the-ghost-points-cannot
     
-    print "Boundary condition, West:", self.BC_W, type(self.BC_W)
-    print "Boundary condition, East:", self.BC_E, type(self.BC_E)
+    if self.Verbose:
+      print "Boundary condition, West:", self.BC_W, type(self.BC_W)
+      print "Boundary condition, East:", self.BC_E, type(self.BC_E)
 
     if self.BC_E == 'Dirichlet' or self.BC_W == 'Dirichlet':
       self.BC_Dirichlet()
@@ -232,6 +234,7 @@ class F1D(Flexure):
     self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
 
     self.coeff_creation_time = time.time() - self.coeff_start_time
+    # Always print this!
     print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
   
   def build_diagonals(self):
@@ -651,10 +654,11 @@ class F1D(Flexure):
     Sparse solver for one-dimensional flexure of an elastic plate
     """
     
-    #print 'q0', self.q0.shape
-    #print 'Te', self.Te.shape
-    self.calc_max_flexural_wavelength()
-    print 'maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells
+    if self.Debug:
+      print 'q0', self.q0.shape
+      print 'Te', self.Te.shape
+      self.calc_max_flexural_wavelength()
+      print 'maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells
     
     self.solver_start_time = time.time()
     
@@ -667,6 +671,7 @@ class F1D(Flexure):
     self.w = spsolve(self.coeff_matrix, self.q0sparse, use_umfpack=True)
     
     self.time_to_solve = time.time() - self.solver_start_time
+    # Always print this!
     print 'Time to solve [s]:', self.time_to_solve
     
     #print self.w.shape
