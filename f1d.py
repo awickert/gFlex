@@ -696,14 +696,14 @@ class F1D(Flexure):
     """
     if self.BC_W == 'BC_Symmetric':
       i=0
-      self.BC_Te_0_curvature(i) # Define coeffs
+      self.BC_Te_0_curvature(i, 'symmetric') # Define coeffs
       self.l2[i] = np.nan
       self.l1[i] = np.nan
       self.c0[i] = self.c0_coeff_i
       self.r1[i] = self.r1_coeff_i + self.l1_coeff_i
       self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
       i=1
-      self.BC_Te_0_curvature(i) # Define coeffs
+      self.BC_Te_0_curvature(i, 'symmetric') # Define coeffs
       self.l2[i] = np.nan
       self.l1[i] = self.l1_coeff_i
       self.c0[i] = self.c0_coeff_i + self.l2_coeff_i
@@ -712,16 +712,16 @@ class F1D(Flexure):
     
     if self.BC_E == 'BC_Symmetric':
       i=-2
-      self.BC_Te_0_curvature(i) # Define coeffs
+      self.BC_Te_0_curvature(i, 'symmetric') # Define coeffs
       self.l2[i] = self.l2_coeff_i
       self.l1[i] = self.l1_coeff_i
-      self.c0[i] = self.c0_coeff_i
+      self.c0[i] = self.c0_coeff_i + self.r2_coeff_i
       self.r1[i] = self.r1_coeff_i
       self.r2[i] = np.nan
       i=-1
-      self.BC_Te_0_curvature(i) # Define coeffs
-      self.l2[i] = self.l2_coeff_i
-      self.l1[i] = self.l1_coeff_i
+      self.BC_Te_0_curvature(i, 'symmetric') # Define coeffs
+      self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
+      self.l1[i] = self.l1_coeff_i + self.r1_coeff_i
       self.c0[i] = self.c0_coeff_i
       self.r1[i] = np.nan
       self.r2[i] = np.nan
@@ -730,8 +730,6 @@ class F1D(Flexure):
     self.l1 = np.roll(self.l1, -1)
     self.r1 = np.roll(self.r1, 1)
     self.r2 = np.roll(self.r2, 2)
-
-  
   
   def pad_Te(self):
     """
