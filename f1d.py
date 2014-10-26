@@ -192,6 +192,8 @@ class F1D(Flexure):
     
     print "Boundary condition, West:", self.BC_W, type(self.BC_W)
     print "Boundary condition, East:", self.BC_E, type(self.BC_E)
+    
+    
 
     if self.BC_W != 'Mirror' or self.BC_E != 'Mirror':
       # Define an approximate maximum flexural wavelength to obtain
@@ -394,18 +396,14 @@ class F1D(Flexure):
       sys.exit("Non-scalar Te; boundary conditions not valid... and these\n\
                 sandbox experimental bc's are probably not valid for anything!")
 
-  def BC_Stewart1(self, override=False):
+  def BC_0Moment0Shear(self, override=False):
     """
-    d2w/dx2 = d3w/dx3 = 0 per Stewart and Watts (1997) on both sides
+    d2w/dx2 = d3w/dx3 = 0
     (no moment or shear)
-    This doesn't get rid of the boundary being pinned to 0, but hugely decreases 
-    dependence on it.
-    I should add a way to pad around these boundary conditions at some point
-    
-    Override=True causes both sides to experience the boundary condition 
-    regardless of whether they are assgined it
-    
-    Leaves the other boundary as Dirichlet
+    This simulates a free end (broken plate, end of a cantilevered beam: 
+    think diving board tip)
+    It is *not* yet set up to have loads placed on the ends themselves: 
+    (look up how to do this, actually Wikipdia has some info)
     """
     # 0 moment and 0 shear
     if np.isscalar(self.Te):
@@ -413,7 +411,7 @@ class F1D(Flexure):
       #self.q0[:] = np.max(self.q0)
     
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
-      if self.BC_W == 'Stewart1' or override:
+      if self.BC_W == 'BC_0Moment0Shear':
         i=0
         """
         # This is for a Neumann b.c. combined with third deriv. = 0
@@ -429,11 +427,7 @@ class F1D(Flexure):
         """
         self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
         self.l1[i] = np.nan # OFF GRID
-        self.c0[i] = 2 * self.D/self.dx4 + self.drho*self.g # this works but not sure how to get it.
-                                                            # OH, you can w/ 0-flux boundary
-                                                            # And 10 with 0-moment boundary
-                                                            # But that doesn't make sense with pics.
-                                                            # 0 moment should als be free deflec.
+        self.c0[i] = 2 * self.D/self.dx4 + self.drho*self.g
         self.r1[i] = -4 * self.D/self.dx4
         self.r2[i] = 2 * self.D/self.dx4
         i=1
@@ -442,9 +436,9 @@ class F1D(Flexure):
         self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
         self.r1[i] = -6 * self.D/self.dx4
         self.r2[i] = 2 * self.D/self.dx4
+        
       # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
-
-      if self.BC_E == 'Stewart1' or override:
+      if self.BC_E == 'BC_0Moment0Shear' or override:
         # Here, directly calculated new coefficients instead of just adding
         # them in like I did to save some time (for me) in the variable Te
         # case, below.
@@ -467,40 +461,12 @@ class F1D(Flexure):
         self.l1[i] = -4 * self.D/self.dx4
         self.l2[i] = 2 * self.D/self.dx4
         """
-        
-      # Special case for 0 offset, 0 moment, and 0 shear
-      # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
-      if self.BC_W == 'Stewart0':
-        i=0
-        self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-        self.l1[i] = np.nan # OFF GRID
-        self.c0[i] = 10 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -8 * self.D/self.dx4
-        self.r2[i] = 2 * self.D/self.dx4
-        self.q0[i] = self.q0[i] / (2*self.dx**5)
-        i=1
-        self.l2[i] = np.nan # OFF GRID
-        self.l1[i] = -2 * self.D/self.dx4
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -6 * self.D/self.dx4
-        self.r2[i] = 2 * self.D/self.dx4
-        self.q0[i] = self.q0[i] / (2*self.dx**3)
-      # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
-      if self.BC_E == 'Stewart0':
-        i=-2
-        self.l2[i] = 2 * self.D/self.dx4
-        self.l1[i] = -6 * self.D/self.dx4
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -2 * self.D/self.dx4
-        self.r2[i] = np.nan # OFF GRID
-        i=-1
-        self.l2[i] = 2 * self.D/self.dx4
-        self.l1[i] = -8 * self.D/self.dx4
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = np.nan # OFF GRID
-        self.r2[i] = np.nan # OFF GRID
     else:
       # Variable Te
+      # But this is really the more general solution, so we don't need the 
+      # constant Te case... but I just keep it because I already wrote it
+      # and it probably calculates the solution negligibly faster.
+      # 
       # First, just define coefficients for each of the positions in the array
       # These will be added in code instead of being directly combined by 
       # the programmer (as I did above for constant Te), which might add 
@@ -508,7 +474,7 @@ class F1D(Flexure):
       # for unfortunate typos!
 
       # Also using 0-curvature boundary condition for D (i.e. Te)
-      if self.BC_W == 'Stewart1' or override:
+      if self.BC_W == 'BC_0Moment0Shear':
         i=0
         self.BC_Te_0_curvature(i) # Define coeffs
         self.l2[i] = np.nan
@@ -524,7 +490,7 @@ class F1D(Flexure):
         self.r1[i] = self.r1_coeff_i - 2*self.l2_coeff_i
         self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
       
-      if self.BC_E == 'Stewart1' or override:
+      if self.BC_E == 'BC_0Moment0Shear':
         i=-2
         self.BC_Te_0_curvature(i) # Define coeffs
         self.l2[i] = self.r2_coeff_i + self.r2_coeff_i
@@ -548,10 +514,6 @@ class F1D(Flexure):
     # Construct sparse array
     self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
     self.offsets = np.array([-2,-1,0,1,2])
-    #else:
-    #  sys.exit("There are no plans to incorporate the Stewart and Watts\n\
-    #            (1997) no-moment no-shear (d2w/dx2 = d3w/dx3 = 0)\n\
-    #            boundary conditions for the variable elastic thickness case.")
 
   def BC_Neumann(self, override=False):
     """
