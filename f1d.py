@@ -198,17 +198,21 @@ class F1D(Flexure):
       # required distances to pad the array    
       self.calc_max_flexural_wavelength()
 
-    if self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
-      # If both boundaries are periodic, we are good to go (and self-consistent)
-      self.BC_Periodic()
-    if (self.BC_E == 'Periodic' or self.BC_W == 'Periodic') \
-      and (self.BC_W != 'Mirror' and self.BC_E != 'Mirror'):
-      # If only one boundary is periodic and the other doesn't implicitly 
-      # involve a periodic boundary, this is illegal!
-      sys.exit("Having the boundary opposite a periodic boundary condition\n"+
-               "be fixed and not include an implicit periodic boundary\n"+
-               "condition makes no physical sense.\n"+
-               "Please fix the input boundary conditions. Aborting.")
+    if self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
+      if self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
+        # If both boundaries are periodic, we are good to go (and self-consistent)
+        self.BC_Periodic()
+      else:
+        # If only one boundary is periodic and the other doesn't implicitly 
+        # involve a periodic boundary, this is illegal!
+        # I could allow it, but would have to rewrite the Periodic b.c. case,
+        # which I don't want to do to allow something that doesn't make 
+        # physical sense... so if anyone wants to do this for some unforeseen 
+        # reason, they can just split my function into two pieces themselves.
+        sys.exit("Having the boundary opposite a periodic boundary condition\n"+
+                 "be fixed and not include an implicit periodic boundary\n"+
+                 "condition makes no physical sense.\n"+
+                 "Please fix the input boundary conditions. Aborting.")
     if self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
       # Boundaries that require padding!
       self.BCs_that_need_padding()
