@@ -192,8 +192,6 @@ class F1D(Flexure):
     
     print "Boundary condition, West:", self.BC_W, type(self.BC_W)
     print "Boundary condition, East:", self.BC_E, type(self.BC_E)
-    
-    
 
     if self.BC_W != 'Mirror' or self.BC_E != 'Mirror':
       # Define an approximate maximum flexural wavelength to obtain
@@ -211,23 +209,25 @@ class F1D(Flexure):
                "be fixed and not include an implicit periodic boundary\n"+
                "condition makes no physical sense.\n"+
                "Please fix the input boundary conditions. Aborting.")
-    elif self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
+    if self.BC_W == 'Mirror' or self.BC_E == 'Mirror':
       # Boundaries that require padding!
       self.BCs_that_need_padding()
     # Both Stewart and Dirichlet can be called from inside the boundary 
     # conditions that require padding, so the "elif" is for if padding 
     # cases are not used.
-    elif self.BC_E == 'Dirichlet' and self.BC_W == 'Dirichlet':
+    if self.BC_E == 'Dirichlet' and self.BC_W == 'Dirichlet':
       # Stewart defaults to Dirichlet for the unpicked side, so only choose 
       # this if both sides are Dirichlet
       self.BC_Dirichlet()
-    elif self.BC_E == 'Sandbox' and self.BC_W == 'Sandbox':
+    if self.BC_E == 'Sandbox' and self.BC_W == 'Sandbox':
       # Sandbox is my testing ground - only choose if both are sandbox
       self.BC_Sandbox()
-    elif self.BC_E == 'Stewart1' or self.BC_W == 'Stewart1':
+    if self.BC_E == 'Stewart1' or self.BC_W == 'Stewart1':
       self.BC_Stewart1()
-    elif self.BC_E == 'Neumann' or self.BC_W == 'Neumann':
+    if self.BC_E == 'Neumann' or self.BC_W == 'Neumann':
       self.BC_Neumann()
+    elif self.BC_E == 'Symmetric' or self.BC_W == 'Symmetric':
+      self.BC_Symmetric()
     else:
       # This should be redundant with something that tells the system to exit
       # before even reaching this routine if the boundary condition doesn't
@@ -313,7 +313,7 @@ class F1D(Flexure):
       self.r1[i] = -4 * self.D/self.dx4
       self.r2[i] = 2 * self.D/self.dx4
     if self.BC_E == 'Dirichlet0_Neumann0':
-      # Coeff's no longer sum to 0 because, so w no longer free to be whatever 
+      # Coeffs no longer sum to 0 because, so w no longer free to be whatever 
       # it wants in absence of a local load, q
       i=-1
       self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
@@ -411,7 +411,7 @@ class F1D(Flexure):
       #self.q0[:] = np.max(self.q0)
     
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
-      if self.BC_W == 'BC_0Moment0Shear':
+      if self.BC_W == '0Moment0Shear':
         i=0
         """
         # This is for a Neumann b.c. combined with third deriv. = 0
@@ -438,7 +438,7 @@ class F1D(Flexure):
         self.r2[i] = 2 * self.D/self.dx4
         
       # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
-      if self.BC_E == 'BC_0Moment0Shear' or override:
+      if self.BC_E == '0Moment0Shear' or override:
         # Here, directly calculated new coefficients instead of just adding
         # them in like I did to save some time (for me) in the variable Te
         # case, below.
@@ -474,7 +474,7 @@ class F1D(Flexure):
       # for unfortunate typos!
 
       # Also using 0-curvature boundary condition for D (i.e. Te)
-      if self.BC_W == 'BC_0Moment0Shear':
+      if self.BC_W == '0Moment0Shear':
         i=0
         self.BC_Te(i, '0 curvature') # Define coeffs
         self.l2[i] = np.nan
@@ -483,23 +483,23 @@ class F1D(Flexure):
         self.r1[i] = self.r1_coeff_i - 4*self.l2_coeff_i - self.l1_coeff_i
         self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
         i=1
-        self.BC_Te_0_curvature(i, '0 curvature') # Define coeffs
+        self.BC_Te(i, '0 curvature') # Define coeffs
         self.l2[i] = np.nan
         self.l1[i] = self.l1_coeff_i + 2*self.l2_coeff_i
         self.c0[i] = self.c0_coeff_i
         self.r1[i] = self.r1_coeff_i - 2*self.l2_coeff_i
         self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
       
-      if self.BC_E == 'BC_0Moment0Shear':
+      if self.BC_E == '0Moment0Shear':
         i=-2
-        self.BC_Te_0_curvature(i, '0 curvature') # Define coeffs
+        self.BC_Te(i, '0 curvature') # Define coeffs
         self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
         self.l1[i] = self.l1_coeff_i - 2*self.r2_coeff_i
         self.c0[i] = self.c0_coeff_i
         self.r1[i] = self.r1_coeff_i + 2*self.r2_coeff_i
         self.r2[i] = np.nan
         i=-1
-        self.BC_Te_0_curvature(i, '0 curvature') # Define coeffs
+        self.BC_Te(i, '0 curvature') # Define coeffs
         self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
         self.l1[i] = self.l1_coeff_i - 4*self.r2_coeff_i - self.r1_coeff_i
         self.c0[i] = self.c0_coeff_i + 4*self.r2_coeff_i + 2*self.r1_coeff_i
@@ -694,32 +694,32 @@ class F1D(Flexure):
     """
     "Mirror", but elegantly.
     """
-    if self.BC_W == 'BC_Symmetric':
+    if self.BC_W == 'Symmetric':
       i=0
-      self.BC_Te_0_curvature(i, 'symmetric') # Define coeffs
+      self.BC_Te(i, 'symmetric') # Define coeffs
       self.l2[i] = np.nan
       self.l1[i] = np.nan
       self.c0[i] = self.c0_coeff_i
       self.r1[i] = self.r1_coeff_i + self.l1_coeff_i
       self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
       i=1
-      self.BC_Te_0_curvature(i, 'symmetric') # Define coeffs
+      self.BC_Te(i, 'symmetric') # Define coeffs
       self.l2[i] = np.nan
       self.l1[i] = self.l1_coeff_i
       self.c0[i] = self.c0_coeff_i + self.l2_coeff_i
       self.r1[i] = self.r1_coeff_i
       self.r2[i] = self.r2_coeff_i
     
-    if self.BC_E == 'BC_Symmetric':
+    if self.BC_E == 'Symmetric':
       i=-2
-      self.BC_Te_0_curvature(i, 'symmetric') # Define coeffs
+      self.BC_Te(i, 'symmetric') # Define coeffs
       self.l2[i] = self.l2_coeff_i
       self.l1[i] = self.l1_coeff_i
       self.c0[i] = self.c0_coeff_i + self.r2_coeff_i
       self.r1[i] = self.r1_coeff_i
       self.r2[i] = np.nan
       i=-1
-      self.BC_Te_0_curvature(i, 'symmetric') # Define coeffs
+      self.BC_Te(i, 'symmetric') # Define coeffs
       self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
       self.l1[i] = self.l1_coeff_i + self.r1_coeff_i
       self.c0[i] = self.c0_coeff_i
@@ -731,6 +731,10 @@ class F1D(Flexure):
     self.r1 = np.roll(self.r1, 1)
     self.r2 = np.roll(self.r2, 2)
   
+    # Construct sparse array
+    self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
+    self.offsets = np.array([-2,-1,0,1,2])
+    
   def pad_Te(self):
     """
     Pad elastic thickness to match padded q0 array.
@@ -832,7 +836,7 @@ class F1D(Flexure):
       else: sys.exit("If only one side is padded and the other isn't, valid boundary\n"+
                      "condition options are 'Stewart1' and 'Dirichlet'. Aborting.")
 
-  def BC_Te(self, case, i):
+  def BC_Te(self, i, case):
     """
     Utility function to help implement:
     0-curvature boundary condition for D (i.e. Te)
@@ -855,7 +859,7 @@ class F1D(Flexure):
         D0  = self.D[1:-1][i]
         Dp1 = self.D[2:][i]
         
-    elif case == "symmmetric":
+    elif case == "symmetric":
       if i == 0:
         D0  = self.D[1:-1][i] # = D[1]
         Dp1 = self.D[2:][i] # = D[2]
