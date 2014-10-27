@@ -391,53 +391,6 @@ class F1D(Flexure):
         self.r1[i] = np.nan
         self.r2[i] = np.nan
 
-  def BC_Sandbox(self):
-    """
-    This is the sandbox for testing boundary conditions.
-    It is the home of Andy Wickert's failed attempt to move Dirichlet boundary 
-    conditions to non-zero values... he is now convinced that this either is 
-    not possible for this kind of non-time-stepping problem that lacks an 
-    explicit step or that it is beyond his insight (as of 8 March 2012)
-    """
-    print "WARNING! This is the sandbox set of boundary conditions. It is not\n\
-          meant for actual computation, but rather for developing methods.\n\
-          Works only for scalar Te."
-    if np.isscalar(self.Te):
-      """
-      i=0
-      self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-      self.l1[i] = np.nan # OFF GRID
-      self.c0[i] = 10 * self.D/self.dx4 + self.drho*self.g
-      self.r1[i] = -8 * self.D/self.dx4
-      self.r2[i] = 2 * self.D/self.dx4
-      self.q0[i] = self.q0[i] / (2*self.dx**5)
-      i=1
-      self.l2[i] = np.nan # OFF GRID
-      self.l1[i] = -2 * self.D/self.dx4
-      self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-      self.r1[i] = -6 * self.D/self.dx4
-      self.r2[i] = 2 * self.D/self.dx4
-      self.q0[i] = self.q0[i] / (2*self.dx**3)
-      """
-      i=-1
-      self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-      self.r1[i] = np.nan # OFF GRID
-      self.c0[i] = 10 * self.D/self.dx4 + self.drho*self.g
-      self.l1[i] = -8 * self.D/self.dx4
-      self.l2[i] = 2 * self.D/self.dx4
-      self.q0[i] = self.q0[i] / (2*self.dx**5)
-      i=-2
-      self.r2[i] = np.nan # OFF GRID
-      self.r1[i] = -2 * self.D/self.dx4
-      self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-      self.l1[i] = -6 * self.D/self.dx4
-      self.l2[i] = 2 * self.D/self.dx4
-      self.q0[i] = self.q0[i] / (2*self.dx**3)
-
-    else:
-      sys.exit("Non-scalar Te; boundary conditions not valid... and these\n\
-                sandbox experimental bc's are probably not valid for anything!")
-
   def BC_0Moment0Shear(self):
     """
     d2w/dx2 = d3w/dx3 = 0
