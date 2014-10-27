@@ -502,37 +502,6 @@ class F1D(Flexure):
         self.r1[i] = np.nan
         self.r2[i] = np.nan
 
-  def BC_Neumann(self, override=False):
-    """
-    Constant gradient boundary condition
-    Right now, constant gradient = 0, so Neumann0 would be good description
-    And because I reach farther to cells beyond these, it is also 0-curvature
-    """
-    i=0
-    self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-    self.l1[i] = np.nan # OFF GRID
-    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-    self.r1[i] = -8 * self.D/self.dx4
-    self.r2[i] = 2 * self.D/self.dx4
-    i=1
-    self.l2[i] = np.nan # OFF GRID
-    self.l1[i] = -4 * self.D/self.dx4
-    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-    self.r1[i] = -4 * self.D/self.dx4
-    self.r2[i] = 2 * self.D/self.dx4
-    i=-1
-    self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-    self.r1[i] = np.nan # OFF GRID
-    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-    self.l1[i] = -8 * self.D/self.dx4
-    self.l2[i] = 2 * self.D/self.dx4
-    i=-2
-    self.r2[i] = np.nan # OFF GRID
-    self.r1[i] = -4 * self.D/self.dx4
-    self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-    self.l1[i] = -4 * self.D/self.dx4
-    self.l2[i] = 2 * self.D/self.dx4
-
   def BC_Mirror(self):
     """
     Mirrors q0 across the boundary on either the west (left) or east (right) 
