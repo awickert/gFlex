@@ -257,7 +257,7 @@ class F2D(Flexure):
       Dxx = (D_10 - 2.*D00 + D10)
       Dyy = (D0_1 - 2.*D00 + D01)
       Dxy = (D_1_1 - D_11 - D1_1 + D11)/4.
-      """
+      #"""
       # NEW STENCIL
       # x = -2, y = 0
       self.cj_2i0 = (D0 - Dx) / dx4
@@ -270,25 +270,25 @@ class F2D(Flexure):
       # x = -1, y = -1
       self.cj_1i_1 = (2.*D0 - Dx - Dy + Dxy*(1-nu)/2.) / dx2dy2
       # x = -1, y = 1
-      self.cj1i_1 = (2.*D0 - Dx + Dy - Dxy*(1-nu)/2.) / dx2dy2
+      self.cj_1i1 = (2.*D0 - Dx + Dy - Dxy*(1-nu)/2.) / dx2dy2
       # x = 1, y = -1
-      self.cj_1i1 = (2.*D0 + Dx - Dy - Dxy*(1-nu)/2.) / dx2dy2
+      self.cj1i_1 = (2.*D0 + Dx - Dy - Dxy*(1-nu)/2.) / dx2dy2
       # x = 1, y = 1
       self.cj1i1 = (2.*D0 + Dx + Dy + Dxy*(1-nu)/2.) / dx2dy2
       # x = -1, y = 0
-      self.cj0i_1 = (-4.*D0 + 2.*Dx + Dxx)/dx4 + (-4.*D0 + 2.*Dx + nu*Dyy)/dx2dy2 # Think the problem with this stencil is somewhere around here
+      self.cj_1i0 = (-4.*D0 + 2.*Dx + Dxx)/dx4 + (-4.*D0 + 2.*Dx + nu*Dyy)/dx2dy2
       # x = 0, y = -1
-      self.cj_1i0 = (-4.*D0 + 2.*Dy + Dyy)/dy4 + (-4.*D0 + 2.*Dy + nu*Dxx)/dx2dy2
+      self.cj0i_1 = (-4.*D0 + 2.*Dy + Dyy)/dy4 + (-4.*D0 + 2.*Dy + nu*Dxx)/dx2dy2
       # x = 0, y = 1
-      self.cj1i0 = (-4.*D0 - 2.*Dy + Dyy)/dy4 + (-4.*D0 - 2.*Dy + nu*Dxx)/dx2dy2
+      self.cj0i1 = (-4.*D0 - 2.*Dy + Dyy)/dy4 + (-4.*D0 - 2.*Dy + nu*Dxx)/dx2dy2
       # x = 1, y = 0
-      self.cj0i1 = (-4.*D0 - 2.*Dx + Dxx)/dx4 + (-4.*D0 - 2.*Dx + nu*Dyy)/dx2dy2
+      self.cj1i0 = (-4.*D0 - 2.*Dx + Dxx)/dx4 + (-4.*D0 - 2.*Dx + nu*Dyy)/dx2dy2
       # x = 0, y = 0
       self.cj0i0 = (6.*D0 - 2.*Dxx)/dx4 \
                    + (6.*D0 - 2.*Dyy)/dy4 \
                    + (8.*D0 - 2.*nu*Dxx - 2.*nu*Dyy)/dx2dy2 \
                    + drho*g
-      """
+      #"""
       """
       # SIMPLER STENCIL: just del**2(D del**2(w)): only linear variations
       # in Te are allowed.
@@ -322,7 +322,7 @@ class F2D(Flexure):
                    + (8.*D0 - 2.*Dxx - 2.*Dyy)/dx2dy2 \
                    + drho*g
       """
-      #"""
+      """
       # STENCIL FROM GOVERS ET AL. 2009 -- first-order differences
       # x is j and y is i b/c matrix row/column notation
       # x = -2, y = 0
@@ -351,7 +351,7 @@ class F2D(Flexure):
       self.cj1i1 = (D10 + D01)/dx2dy2
       # x = 2, y = 0
       self.cj2i0 = D10/dx4
-      #"""
+      """
       """
       # OLD STENCIL -- think I made some mistakes in the discretization
       # (and maybe even in solving the equation!!!)
@@ -399,7 +399,7 @@ class F2D(Flexure):
     N-S is for the block diagonal matrix ("with fringes")
     Then calls the function to build the diagonal matrix
     """
-    
+
     # Zeroth, print the boundary conditions to the screen
     print "Boundary condition, West:", self.BC_W, type(self.BC_W)
     print "Boundary condition, East:", self.BC_E, type(self.BC_E)
@@ -409,7 +409,7 @@ class F2D(Flexure):
     ################################
     # PERIODIC B.C. VALIDITY CHECK #
     ################################
-    
+
     # First check to make sure that periodic boundary conditions are applied 
     # properly: and abort if they are not.
     
@@ -1008,375 +1008,7 @@ class F2D(Flexure):
     # If needed, revert q0 and Te to original dimensions
     self.back_to_original_q0_Te_w()
 
-  
-  def BC_Te(self, i, case):
-    """
-    Utility function to help implement:
-    0-curvature boundary condition for D (i.e. Te)
-    D[i-1] = 2*D[i] - D[i+1]
-    So this means constant gradient set by local Te distribution
-    """
     
-    # don't want to keep writing "self" everwhere! Like before.
-    D = self.D
-    drho = self.drho
-    dx4 = self.dx4
-    dy4 = self.dy4
-    dx2dy2 = self.dx2dy2
-    nu = self.nu
-    g = self.g
-    
-    D00 = D[1:-1,1:-1]
-    D10 = D[1:-1,2:]
-    D_10 = D[1:-1,:-2]
-    D01 = D[2:,1:-1]
-    D0_1 = D[:-2,1:-1]
-    D11 = D[2:,2:]
-    D_11 = D[2:,:-2]
-    D1_1 = D[:-2,2:]
-    D_1_1 = D[:-2,:-2]
-    
-    self.cj2i0_coeff_ij = D_10 / dx4
-    self.cj1i_1_coeff_ij = (D_10 + D0_1)/dx2dy2
-    self.cj1i0_coeff_ij = -2. * ( (D0_1 + D00)/dx2dy2 + (D00 + D_10)/dx4 )
-    self.cj1i1_coeff_ij = (D_10 + D01)/dx2dy2
-    self.cj0i_2_coeff_ij = D0_1/dy4
-    self.cj0i_1_coeff_ij = -2. * ( (D0_1 + D00)/dx2dy2 + (D00 + D0_1)/dy4)
-    self.cj0i0_coeff_ij = (D10 + 4.*D00 + D_10)/dx4 + (D01 + 4.*D00 + D0_1)/dy4 + (8.*D00/dx2dy2) + drho*g
-    self.cj0i1_coeff_ij = -2. * ( (D01 + D00)/dy4 + (D00 + D01)/dx2dy2 )
-    self.cj0i2_coeff_ij = D0_1/dy4
-    self.cj_1i_1_coeff_ij = (D10+D0_1)/dx2dy2
-    self.cj_1i0_coeff_ij = -2. * ( (D10 + D00)/dx4 + (D10 + D00)/dx2dy2 )
-    self.cj_1i1_coeff_ij = (D10 + D01)/dx2dy2
-    self.cj_2i0_coeff_ij = D10/dx4
-    
-    # Mirror b.c.
-    if self.BC_W == 'Mirror':
-      j = 0
-      self.BC_Te(i, 'mirror symmetry') # Define coeffs
-      self.cj_2i0[:,j] += np.nan # Using np.nan to ensure array rolled properly
-      self.cj_1i_1[:,j] += np.nan
-      self.cj_1i0[:,j] += np.nan
-      self.cj_1i1[:,j] += np.nan
-      self.cj0i_2[:,j] += 0
-      self.cj0i_1[:,j] += 0
-      self.cj0i0[:,j] += 0
-      self.cj0i1[:,j] += 0
-      self.cj0i2[:,j] += 0
-      self.cj1i_1[:,j] += self.cj_1i_1_ceoff_ij
-      self.cj1i0[:,j] += self.cj_1i0_ceoff_ij
-      self.cj1i1[:,j] += self.cj_1i1_ceoff_ij
-      self.cj2i0[:,j] += self.cj_2i0_ceoff_ij
-      j = 1
-      self.BC_Te(i, 'mirror symmetry') # Define coeffs
-      self.cj_2i0[:,j] += np.nan
-      self.cj_1i_1[:,j] += 0
-      self.cj_1i0[:,j] += 0
-      self.cj_1i1[:,j] += 0
-      self.cj0i_2[:,j] += 0
-      self.cj0i_1[:,j] += 0
-      self.cj0i0[:,j] += self.cj_2i0_coeff_ij
-      self.cj0i1[:,j] += 0
-      self.cj0i2[:,j] += 0
-      self.cj1i_1[:,j] += 0
-      self.cj1i0[:,j] += 0
-      self.cj1i1[:,j] += 0
-      self.cj2i0[:,j] += 0
-
-    if self.BC_E == 'Mirror'
-      j = -1
-      self.BC_Te(i, 'mirror symmetry') # Define coeffs
-      self.cj_2i0[:,j] += 
-      self.cj_1i_1[:,j] += 
-      self.cj_1i0[:,j] += 
-      self.cj_1i1[:,j] += 
-      self.cj0i_2[:,j] += 
-      self.cj0i_1[:,j] += 
-      self.cj0i0[:,j] += 
-      self.cj0i1[:,j] += 
-      self.cj0i2[:,j] += 
-      self.cj1i_1[:,j] += np.nan
-      self.cj1i0[:,j] += np.nan
-      self.cj1i1[:,j] += np.nan
-      self.cj2i0[:,j] += np.nan
-      j = -2
-      self.BC_Te(i, 'mirror symmetry') # Define coeffs
-      self.cj_2i0[:,j] += 
-      self.cj_1i_1[:,j] += 
-      self.cj_1i0[:,j] += 
-      self.cj_1i1[:,j] += 
-      self.cj0i_2[:,j] += 
-      self.cj0i_1[:,j] += 
-      self.cj0i0[:,j] += 
-      self.cj0i1[:,j] += 
-      self.cj0i2[:,j] += 
-      self.cj1i_1[:,j] += 
-      self.cj1i0[:,j] += 
-      self.cj1i1[:,j] += 
-      self.cj2i0[:,j] += np.nan
-
-    if self.BC_N == 'Mirror':
-      j = -2
-      self.cj_2i0[i,:] += np.nan
-      self.cj_1i_1[i,:] += 
-      self.cj_1i0[i,:] += 
-      self.cj_1i1[i,:] += 
-      self.cj0i_2[i,:] += 
-      self.cj0i_1[i,:] += 
-      self.cj0i0[i,:] += 
-      self.cj0i1[i,:] += 
-      self.cj0i2[i,:] += 
-      self.cj1i1[i,:] += 
-      self.cj1i0[i,:] += 
-      self.cj1i_1[i,:] += 
-      self.cj2i0[i,:] += 
-      j = -1
-      self.cj_2i0[i,:] += np.nan
-      self.cj_1i_1[i,:] += np.nan
-      self.cj_1i0[i,:] += np.nan
-      self.cj_1i1[i,:] += np.nan
-      self.cj0i_2[i,:] += 
-      self.cj0i_1[i,:] += 
-      self.cj0i0[i,:] += 
-      self.cj0i1[i,:] += 
-      self.cj0i2[i,:] += 
-      self.cj1i1[i,:] += 
-      self.cj1i0[i,:] += 
-      self.cj1i_1[i,:] += 
-      self.cj2i0[i,:] += 
-
-    if self.BC_S == 'Mirror':
-      i = -2
-      self.cj_2i0[i,:] += 
-      self.cj_1i_1[i,:] += 
-      self.cj_1i0[i,:] += 
-      self.cj_1i1[i,:] += 
-      self.cj0i_2[i,:] += 
-      self.cj0i_1[i,:] += 
-      self.cj0i0[i,:] += 
-      self.cj0i1[i,:] += 
-      self.cj0i2[i,:] += 
-      self.cj1i1[i,:] += 
-      self.cj1i0[i,:] += 
-      self.cj1i_1[i,:] += 
-      self.cj2i0[i,:] += np.nan
-      i = -1
-      self.cj_2i0[i,:] += 
-      self.cj_1i_1[i,:] += 
-      self.cj_1i0[i,:] += 
-      self.cj_1i1[i,:] += 
-      self.cj0i_2[i,:] += 
-      self.cj0i_1[i,:] += 
-      self.cj0i0[i,:] += 
-      self.cj0i1[i,:] += 
-      self.cj0i2[i,:] += 
-      self.cj1i1[i,:] += np.nan
-      self.cj1i0[i,:] += np.nan
-      self.cj1i_1[i,:] += np.nan
-      self.cj2i0[i,:] += np.nan
-
-    j = 0
-    self.BC_Te(i, 'mirror symmetry') # Define coeffs
-    
-    
-    
-    
-    # Mirror b.c.
-    i=0
-    self.BC_Te(i, 'mirror symmetry') # Define coeffs
-    self.l2[i] = np.nan
-    self.l1[i] = np.nan
-    self.c0[i] = self.c0_coeff_ij
-    self.r1[i] = self.r1_coeff_ij + self.l1_coeff_ij
-    self.r2[i] = self.r2_coeff_ij + self.l2_coeff_ij
-    i=1
-    self.BC_Te(i, 'mirror symmetry') # Define coeffs
-    self.l2[i] = np.nan
-    self.l1[i] = self.l1_coeff_ij
-    self.c0[i] = self.c0_coeff_ij + self.l2_coeff_ij
-    self.r1[i] = self.r1_coeff_ij
-    self.r2[i] = self.r2_coeff_ij
-    
-    # j is x, i is y
-    # because rows, columns order makes i (rows) == y, j (columns) == x
-    if case == "mirror symmetry":
-      if i == 0:
-        
-    if case == "0 curvature":
-      if i == 0:
-        self.cj2i0 += 
-      if j == 0:
-        self.cj2i0 += 
-    
-    """
-    # PLACEHOLDER!!!!
-    # Consider also that Te
-    if case == "0 curvature":
-      if i == 0:
-        D00 = D[1:-1,1:-1]
-        D10 = D[1:-1,2:]
-        D_10 = D[1:-1,:-2]
-        D01 = D[2:,1:-1]
-        D0_1 = D[:-2,1:-1]
-        D11 = D[2:,2:]
-        D_11 = D[2:,:-2]
-        D1_1 = D[:-2,2:]
-        D_1_1 = D[:-2,:-2]
-      elif i == -1:
-        Dm1 = self.D[:-2][i]
-        D0  = self.D[1:-1][i]
-        Dp1 = 2*D0 - Dm1 # BC applied here
-      else:
-        # Away from boundaries and all is normal
-        Dm1 = self.D[:-2][i]
-        D0  = self.D[1:-1][i]
-        Dp1 = self.D[2:][i]
-        
-    elif case == "mirror symmetry":
-      if i == 0:
-        D0  = self.D[1:-1][i] # = D[1]
-        Dp1 = self.D[2:][i] # = D[2]
-        Dm1 = self.D[2:][i] # BC applied here
-      elif i == -1:
-        Dm1 = self.D[:-2][i]
-        D0  = self.D[1:-1][i]
-        Dp1 = self.D[:-2][i] # BC applied here
-      else:
-        # Away from boundaries and all is normal
-        Dm1 = self.D[:-2][i]
-        D0  = self.D[1:-1][i]
-        Dp1 = self.D[2:][i]
-    else:
-      sys.exit("Invalid Te B.C. case")
-    
-    """
-    """
-    # Template
-    self.cj_2i0[:,j] += 
-    self.cj_1i_1[:,j] += 
-    self.cj_1i0[:,j] += 
-    self.cj_1i1[:,j] += 
-    self.cj0i_2[:,j] += 
-    self.cj0i_1[:,j] += 
-    self.cj0i0[:,j] += 
-    self.cj0i1[:,j] += 
-    self.cj0i2[:,j] += 
-    self.cj1i_1[:,j] += 
-    self.cj1i0[:,j] += 
-    self.cj1i1[:,j] += 
-    self.cj2i0[:,j] += 
-
-    self.cj_2i0[i,:] += 
-    self.cj_1i_1[i,:] += 
-    self.cj_1i0[i,:] += 
-    self.cj_1i1[i,:] += 
-    self.cj0i_2[i,:] += 
-    self.cj0i_1[i,:] += 
-    self.cj0i0[i,:] += 
-    self.cj0i1[i,:] += 
-    self.cj0i2[i,:] += 
-    self.cj1i1[i,:] += 
-    self.cj1i0[i,:] += 
-    self.cj1i_1[i,:] += 
-    self.cj2i0[i,:] += 
-
-    if self.BC_W == 'Mirror':
-      j = -1
-      self.BC_Te(i, 'mirror symmetry') # Define coeffs
-      self.cj_2i0[:,j] += 
-      self.cj_1i_1[:,j] += 
-      self.cj_1i0[:,j] += 
-      self.cj_1i1[:,j] += 
-      self.cj0i_2[:,j] += 
-      self.cj0i_1[:,j] += 
-      self.cj0i0[:,j] += 
-      self.cj0i1[:,j] += 
-      self.cj0i2[:,j] += 
-      self.cj1i_1[:,j] += np.nan
-      self.cj1i0[:,j] += np.nan
-      self.cj1i1[:,j] += np.nan
-      self.cj2i0[:,j] += np.nan
-      j = -2
-      self.BC_Te(i, 'mirror symmetry') # Define coeffs
-      self.cj_2i0[:,j] += 
-      self.cj_1i_1[:,j] += 
-      self.cj_1i0[:,j] += 
-      self.cj_1i1[:,j] += 
-      self.cj0i_2[:,j] += 
-      self.cj0i_1[:,j] += 
-      self.cj0i0[:,j] += 
-      self.cj0i1[:,j] += 
-      self.cj0i2[:,j] += 
-      self.cj1i_1[:,j] += 
-      self.cj1i0[:,j] += 
-      self.cj1i1[:,j] += 
-      self.cj2i0[:,j] += np.nan
-
-    if self.BC_N == 'Mirror':
-      j = -2
-      self.cj_2i0[i,:] += np.nan
-      self.cj_1i_1[i,:] += 
-      self.cj_1i0[i,:] += 
-      self.cj_1i1[i,:] += 
-      self.cj0i_2[i,:] += 
-      self.cj0i_1[i,:] += 
-      self.cj0i0[i,:] += 
-      self.cj0i1[i,:] += 
-      self.cj0i2[i,:] += 
-      self.cj1i1[i,:] += 
-      self.cj1i0[i,:] += 
-      self.cj1i_1[i,:] += 
-      self.cj2i0[i,:] += 
-      j = -1
-      self.cj_2i0[i,:] += np.nan
-      self.cj_1i_1[i,:] += np.nan
-      self.cj_1i0[i,:] += np.nan
-      self.cj_1i1[i,:] += np.nan
-      self.cj0i_2[i,:] += 
-      self.cj0i_1[i,:] += 
-      self.cj0i0[i,:] += 
-      self.cj0i1[i,:] += 
-      self.cj0i2[i,:] += 
-      self.cj1i1[i,:] += 
-      self.cj1i0[i,:] += 
-      self.cj1i_1[i,:] += 
-      self.cj2i0[i,:] += 
-
-    if self.BC_S == 'Mirror':
-      i = -2
-      self.cj_2i0[i,:] += 
-      self.cj_1i_1[i,:] += 
-      self.cj_1i0[i,:] += 
-      self.cj_1i1[i,:] += 
-      self.cj0i_2[i,:] += 
-      self.cj0i_1[i,:] += 
-      self.cj0i0[i,:] += 
-      self.cj0i1[i,:] += 
-      self.cj0i2[i,:] += 
-      self.cj1i1[i,:] += 
-      self.cj1i0[i,:] += 
-      self.cj1i_1[i,:] += 
-      self.cj2i0[i,:] += np.nan
-      i = -1
-      self.cj_2i0[i,:] += 
-      self.cj_1i_1[i,:] += 
-      self.cj_1i0[i,:] += 
-      self.cj_1i1[i,:] += 
-      self.cj0i_2[i,:] += 
-      self.cj0i_1[i,:] += 
-      self.cj0i0[i,:] += 
-      self.cj0i1[i,:] += 
-      self.cj0i2[i,:] += 
-      self.cj1i1[i,:] += np.nan
-      self.cj1i0[i,:] += np.nan
-      self.cj1i_1[i,:] += np.nan
-      self.cj2i0[i,:] += np.nan
-    """
-    
-    
-    
-      
-
   def back_to_original_q0_Te_w(self):
     """
     Pull out the parts of q0, Te that we want for special boundary condition
@@ -1427,4 +1059,5 @@ class F2D(Flexure):
       self.w = self.w[self.maxFlexuralWavelength_ncells_y:,:]
     elif self.BC_S == 'Mirror':
       self.w = self.w[:-self.maxFlexuralWavelength_ncells_y,:]
+
 
