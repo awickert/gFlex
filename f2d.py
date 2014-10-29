@@ -253,7 +253,7 @@ class F2D(Flexure):
       # Derivatives of D -- not including /(dx^a dy^b)
       D0  = D00
       Dx  = (-D_10 + D10)/2.
-      Dy  = (-D0_1 - D01)/2.
+      Dy  = (-D0_1 + D01)/2.
       Dxx = (D_10 - 2.*D00 + D10)
       Dyy = (D0_1 - 2.*D00 + D01)
       Dxy = (D_1_1 - D_11 - D1_1 + D11)/4.
