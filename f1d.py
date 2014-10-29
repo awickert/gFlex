@@ -4,7 +4,7 @@ from scipy.sparse import dia_matrix, csr_matrix, spdiags
 from scipy.sparse.linalg import spsolve
 
 class F1D(Flexure):
-  def initialize(self):
+  def initialize(self, filename):
     super(F1D, self).initialize(filename)
     if self.Verbose: print 'F1D initialized'
 

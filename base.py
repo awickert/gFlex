@@ -59,12 +59,10 @@ class BMI (object):
   def is_raster_grid (self, long_var_name):
       pass
 
-
-# class Isostasy inherits IRF interface, and it determines the simulation type
-# by reading three parameters from input file, but it does not set up other
-# parameters, which is the responsibility of derived concrete classes.
-class Isostasy(BMI):
-
+class Utility(object):
+  """
+  Generic utility functions
+  """
   def configGet(self,vartype,category,name,optional=False,specialReturnMessage=None):
     """
     Wraps a try / except and a check for self.filename around ConfigParser
@@ -113,164 +111,6 @@ class Isostasy(BMI):
         if specialReturnMessage:
           print specialReturnMessage
         sys.exit("Exiting.")
-
-  def whichModel(self, filename=None):
-    self.filename = filename
-    if self.filename:
-      try:
-        # only let this function imoprt things once
-        self.whichModel_AlreadyRun
-      except:
-        # Open parser and get what kind of model
-        self.config = ConfigParser.ConfigParser()
-        try:
-          self.config.read(filename)
-          self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
-          # Need to have these guys inside "try" to make sure it is set up OK
-          # (at least for them)
-          self.model     = self.configGet("string", "mode", "model")
-          self.dimension = self.configGet("integer", "mode", "dimension")
-          self.whichModel_AlreadyRun = True
-        except:
-          sys.exit("No input file at specified path, or input file configured incorrectly")
-
-  def initialize(self, filename=None):
-  
-    print "" # Blank line at start of run
-    print "*********************************************"
-    print "*** Initializing gFlex development branch ***"
-    print "*********************************************"
-    print ""
-    print "Open-source licensed under GNU GPL v3"
-    print ""
-
-    # Values from input file
-
-    self.whichModel(filename) # Use standard routine to pull out values
-                         # If no filename provided, will not initialize input 
-                         # file. If input file provided this should have 
-                         # already run and raised that flag.
-                         # So really, this should never be executed.
-    
-    if self.filename:
-      # Set clocks to None so if they are called by the getter before the 
-      # calculation is performed, there won't be an error
-      self.coeff_creation_time = None
-      self.time_to_solve = None
-      
-      # Boundary conditions
-      # Not optional: flexural solutions can be very sensitive to b.c.'s
-      self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=False)
-      self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=False)
-      self.bclist = [self.BC_E, self.BC_W]
-      if self.dimension == 2:
-        self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=False)
-        self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=False)
-        self.bclist += [self.BC_N, self.BC_S]
-      # Check that boundary conditions are acceptable with code implementation
-      # Acceptable b.c.'s
-      self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-      self.bc2D = np.array(['Dirichlet', 'Periodic', 'Mirror'])
-      for bc in self.bclist:
-        if self.dimension == 1:
-          if (bc == self.bc1D).any():
-            pass
-          else:
-            sys.exit("'"+bc+"'"+ " is not an acceptable 1D boundary condition and/or\n"\
-                     +"is not yet implement in the code. Acceptable boundary conditions\n"\
-                     +"are:\n"\
-                     +str(self.bc1D)+"\n"\
-                     +"Exiting.")
-        elif self.dimension == 2:
-          if (bc == self.bc2D).any():
-            pass
-          else:
-            sys.exit("'"+bc+"'"+ " is not an acceptable 2D boundary condition and/or\n"\
-                     +"is not yet implement in the code. Exiting.")
-        else:
-          sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
-
-      # Parameters
-      self.g = self.configGet('float', "parameter", "GravAccel")
-      self.rho_m = self.configGet('float', "parameter", "MantleDensity")
-      self.rho_fill = self.configGet('float', "parameter", "InfillMaterialDensity")
-
-      # Grid spacing
-      # Unnecessary for PrattAiry, but good to keep along, I think, for use 
-      # in model output and plotting.
-      # No meaning for ungridded superimposed analytical solutions
-      # From input file
-      self.dx = self.configGet("float", "numerical", "GridSpacing_x")
-      if self.dimension == 2:
-        self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
-      # Loading grid
-      q0path = self.configGet('string', "input", "Loads")
-      
-      # Verbosity
-      self.Verbose = self.configGet("bool", "verbosity", "Verbose")
-      # Deebug means that whole arrays, etc., can be printed
-      self.Debug = self.configGet("bool", "verbosity", "Debug")
-
-    else:
-      self.inpath = os.getcwd()+'/input/' # often correct, but a hack
-
-    # Path from setter?
-    try:
-      self.q0
-      if type(self.q0) == str:
-        q0path = self.q0
-    except:
-      self.q0 = None
-
-    # If a q0 hasn't been set already
-    if type(self.q0) != np.ndarray:
-      try:
-        # First see if it is a full path or directly links from the current
-        # working directory
-        try:
-          self.q0 = load(q0path)
-          if self.Verbose: print "Loading q0 from numpy binary"
-        except:
-          self.q0 = np.loadtxt(q0path)
-          if self.Verbose: print "Loading q0 ASCII"
-      except:
-        try:
-          # Then see if it is relative to the location of the input file
-          try:
-            self.q0 = load(self.inpath + q0path)
-            if self.Verbose: print "Loading q0 from numpy binary"
-          except:
-            self.q0 = np.loadtxt(self.inpath + q0path)
-            if self.Verbose: print "Loading q0 ASCII"
-        except:
-          print "Cannot find q0 file"
-          print "q0path = " + q0path
-          print "Looked relative to model python files."
-          print "Also looked relative to input file path, " + self.inpath
-          print "Exiting."
-          sys.exit()
-      
-    # q0 may be changed for b.c.'s (if array), so holding onto original version 
-    # here
-    self.q0_orig = self.q0.copy()
-
-    # Check consistency of dimensions
-    if self.q0.ndim != self.dimension:
-      print "Number of dimensions in loads file is inconsistent with"
-      print "number of dimensions in solution technique."
-      print "Exiting."
-      sys.exit()
-
-    # Plotting selection
-    self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
-
-  # Finalize
-  def finalize(self):
-    # Change q0 back into original form before plotting
-    # (in case it was altered for b.c.'s)
-    self.q0 = self.q0_orig
-    # Just print a line to stdout
-    print ""
 
   # UNIVERSAL SETTER: VALUES THAT EVERYONE NEEDS
   def set_value(self, value_key, value):
@@ -365,52 +205,8 @@ class Isostasy(BMI):
       return self.Te
 
 
-  # SAVING TO FILE AND PLOTTING STEPS
 
-  # Output: One of the functions run by isostasy.py; not part of IRF
-  # (for standalone model use)
-  def output(self):
-    if self.Verbose: print 'Output step'
-    self.outputDeflections()
-    self.plotting()
-
-  # Save output deflections to file, if desired
-  def outputDeflections(self):
-    """
-    Outputs a grid of deflections if an output directory is defined in the 
-    input file
-    
-    If the filename given in the input file ends in ".npy", then a binary 
-    numpy grid will be exported.
-    
-    Otherwise, an ASCII grid will be exported.
-    """
-    try:
-      # If wOutFile exists, has already been set by a setter
-      self.wOutFile
-      if self.Verbose:
-        print "Output filename provided by setter"
-        print "Not saving file with this code; that should be handled by the driver"
-        
-    # Otherwise, it needs to be set by an input file
-    except:
-      try:
-        self.wOutFile = self.configGet("string", "output", "DeflectionOut", optional=True)
-        # If this exists and is a string, write output to a file
-        if self.wOutFile[-4:] == '.npy':
-          from numpy import save
-          save(self.wOutFile,self.w)
-        else:
-          from numpy import savetxt
-          # Shouldn't need more than mm precision, at very most
-          savetxt(self.wOutFile,self.w,fmt='%.3f')
-          print 'Saving deflections --> ' + self.wOutFile
-      except:
-        # if there is no parsable output string, do not generate output;
-        # this allows the user to leave the line blank and produce no output
-        if self.Debug:
-          print 'Not writing any deflection output to file'
-
+class Plotting(object):
   # Plot, if desired
   def plotting(self):
     # try:
@@ -576,6 +372,234 @@ class Isostasy(BMI):
     colorbar()
 
     show()
+
+
+class WhichModel(Utility):
+  def __init__(self, filename=None):
+    self.filename = filename
+    if self.filename:
+      try:
+        # only let this function imoprt things once
+        self.whichModel_AlreadyRun
+      except:
+        # Open parser and get what kind of model
+        self.config = ConfigParser.ConfigParser()
+        try:
+          self.config.read(filename)
+          self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
+          # Need to have these guys inside "try" to make sure it is set up OK
+          # (at least for them)
+          self.model     = self.configGet("string", "mode", "model")
+          self.dimension = self.configGet("integer", "mode", "dimension")
+          self.whichModel_AlreadyRun = True
+        except:
+          sys.exit("No input file at specified path, or input file configured incorrectly")
+
+# class Isostasy inherits IRF interface, and it determines the simulation type
+# by reading three parameters from input file, but it does not set up other
+# parameters, which is the responsibility of derived concrete classes.
+class Isostasy(BMI, Utility, Plotting):
+
+  def __init__(self, filename=None):
+  
+    print "" # Blank line at start of run
+    print "*********************************************"
+    print "*** Initializing gFlex development branch ***"
+    print "*********************************************"
+    print ""
+    print "Open-source licensed under GNU GPL v3"
+    print ""
+
+    # Values from input file
+
+    # Use standard routine to pull out values
+    # If no filename provided, will not initialize input file.
+    self.filename = filename
+    if self.filename:
+      self.config = ConfigParser.ConfigParser()
+      try:
+        self.config.read(filename)
+        self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
+        # Need to have these guys inside "try" to make sure it is set up OK
+        # (at least for them)
+        self.model     = self.configGet("string", "mode", "model")
+        self.dimension = self.configGet("integer", "mode", "dimension")
+        self.whichModel_AlreadyRun = True
+      except:
+        sys.exit("No input file at specified path, or input file configured incorrectly")
+
+    print self.filename
+    
+    if self.filename:
+      # Set clocks to None so if they are called by the getter before the 
+      # calculation is performed, there won't be an error
+      self.coeff_creation_time = None
+      self.time_to_solve = None
+      
+      # Boundary conditions
+      # Not optional: flexural solutions can be very sensitive to b.c.'s
+      self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=False)
+      self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=False)
+      self.bclist = [self.BC_E, self.BC_W]
+      if self.dimension == 2:
+        self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=False)
+        self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=False)
+        self.bclist += [self.BC_N, self.BC_S]
+      # Check that boundary conditions are acceptable with code implementation
+      # Acceptable b.c.'s
+      self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+      self.bc2D = np.array(['Dirichlet', 'Periodic', 'Mirror'])
+      for bc in self.bclist:
+        if self.dimension == 1:
+          if (bc == self.bc1D).any():
+            pass
+          else:
+            sys.exit("'"+bc+"'"+ " is not an acceptable 1D boundary condition and/or\n"\
+                     +"is not yet implement in the code. Acceptable boundary conditions\n"\
+                     +"are:\n"\
+                     +str(self.bc1D)+"\n"\
+                     +"Exiting.")
+        elif self.dimension == 2:
+          if (bc == self.bc2D).any():
+            pass
+          else:
+            sys.exit("'"+bc+"'"+ " is not an acceptable 2D boundary condition and/or\n"\
+                     +"is not yet implement in the code. Exiting.")
+        else:
+          sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
+
+      # Parameters
+      self.g = self.configGet('float', "parameter", "GravAccel")
+      self.rho_m = self.configGet('float', "parameter", "MantleDensity")
+      self.rho_fill = self.configGet('float', "parameter", "InfillMaterialDensity")
+
+      # Grid spacing
+      # Unnecessary for PrattAiry, but good to keep along, I think, for use 
+      # in model output and plotting.
+      # No meaning for ungridded superimposed analytical solutions
+      # From input file
+      self.dx = self.configGet("float", "numerical", "GridSpacing_x")
+      if self.dimension == 2:
+        self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
+      # Loading grid
+      q0path = self.configGet('string', "input", "Loads")
+      
+      # Verbosity
+      self.Verbose = self.configGet("bool", "verbosity", "Verbose")
+      # Deebug means that whole arrays, etc., can be printed
+      self.Debug = self.configGet("bool", "verbosity", "Debug")
+
+    else:
+      self.inpath = os.getcwd()+'/input/' # often correct, but a hack
+
+    # Path from setter?
+    try:
+      self.q0
+      if type(self.q0) == str:
+        q0path = self.q0
+    except:
+      self.q0 = None
+
+    # If a q0 hasn't been set already
+    if type(self.q0) != np.ndarray:
+      try:
+        # First see if it is a full path or directly links from the current
+        # working directory
+        try:
+          self.q0 = load(q0path)
+          if self.Verbose: print "Loading q0 from numpy binary"
+        except:
+          self.q0 = np.loadtxt(q0path)
+          if self.Verbose: print "Loading q0 ASCII"
+      except:
+        try:
+          # Then see if it is relative to the location of the input file
+          try:
+            self.q0 = load(self.inpath + q0path)
+            if self.Verbose: print "Loading q0 from numpy binary"
+          except:
+            self.q0 = np.loadtxt(self.inpath + q0path)
+            if self.Verbose: print "Loading q0 ASCII"
+        except:
+          print "Cannot find q0 file"
+          print "q0path = " + q0path
+          print "Looked relative to model python files."
+          print "Also looked relative to input file path, " + self.inpath
+          print "Exiting."
+          sys.exit()
+      
+    # q0 may be changed for b.c.'s (if array), so holding onto original version 
+    # here
+    self.q0_orig = self.q0.copy()
+
+    # Check consistency of dimensions
+    if self.q0.ndim != self.dimension:
+      print "Number of dimensions in loads file is inconsistent with"
+      print "number of dimensions in solution technique."
+      print "Exiting."
+      sys.exit()
+
+    # Plotting selection
+    self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
+
+  def initialize(self, filename=None):
+    # This is all taken care of in __init__
+    # But this function is here to satisfy CSDMS, if nencesssary
+    pass
+
+  # Finalize
+  def finalize(self):
+    # Change q0 back into original form before plotting
+    # (in case it was altered for b.c.'s)
+    self.q0 = self.q0_orig
+    # Just print a line to stdout
+    print ""
+
+  # SAVING TO FILE AND PLOTTING STEPS
+
+  # Output: One of the functions run by isostasy.py; not part of IRF
+  # (for standalone model use)
+  def output(self):
+    if self.Verbose: print 'Output step'
+    self.outputDeflections()
+    self.plotting()
+
+  # Save output deflections to file, if desired
+  def outputDeflections(self):
+    """
+    Outputs a grid of deflections if an output directory is defined in the 
+    input file
+    
+    If the filename given in the input file ends in ".npy", then a binary 
+    numpy grid will be exported.
+    
+    Otherwise, an ASCII grid will be exported.
+    """
+    try:
+      # If wOutFile exists, has already been set by a setter
+      self.wOutFile
+      if self.Verbose:
+        print "Output filename provided by setter"
+        print "Not saving file with this code; that should be handled by the driver"
+        
+    # Otherwise, it needs to be set by an input file
+    except:
+      try:
+        self.wOutFile = self.configGet("string", "output", "DeflectionOut", optional=True)
+        # If this exists and is a string, write output to a file
+        if self.wOutFile[-4:] == '.npy':
+          from numpy import save
+          save(self.wOutFile,self.w)
+        else:
+          from numpy import savetxt
+          # Shouldn't need more than mm precision, at very most
+          savetxt(self.wOutFile,self.w,fmt='%.3f')
+          print 'Saving deflections --> ' + self.wOutFile
+      except:
+        # if there is no parsable output string, do not generate output;
+        # this allows the user to leave the line blank and produce no output
+        if self.Debug:
+          print 'Not writing any deflection output to file'
 
 # class Flexure inherits Isostay and it overrides the __init__ method. It also
 # define three different solution methods, which are implemented by its subclass.
@@ -875,7 +899,6 @@ class Flexure(Isostasy):
           pass
     else:
       pass # Will just try again next time, when self.method becomes defined (hopefully)
-
     
 class PrattAiry(Isostasy):
   pass

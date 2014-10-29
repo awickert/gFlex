@@ -22,23 +22,6 @@ from f1d import *
 from f2d import *
 from prattairy import *
 
-# Not used right now; holding onto this if it is useful for the BMI/CMI
-# implementation
-def supercomputer_or_standalone():
-  """
-  Find if the program is running on Beach (and therefore we need to load the 
-  CSDMS utility modules)
-  """
-  if gethostname()=='beach':
-    import os.system
-    if debug: print "Running on Beach; loading CSDMS utilities"
-    os.system("module load internal")
-    # CSDMS_base used to manage getters/setters to avoid typing issues w/ bocca
-    from csdms_utils.CSDMS_base import CSDMS_component as cc
-  else:
-    if debug: print "Running in standalone mode"
-    from CSDMS_base import CSDMS_component as cc
-
 def displayUsage():
   print ""
   print "Command line usage help:"
@@ -51,9 +34,7 @@ def displayUsage():
   print '     Otherwise, this menu will appear'
 
 def main():
-  # Instantiate
-  obj = Isostasy()
-
+  # Choose how to instantiate
   if len(sys.argv) == 2:
     if sys.argv[1] == '--help' or sys.argv[1] == '-h':
       displayUsage()
@@ -61,13 +42,15 @@ def main():
     elif sys.argv[1] == '--getset':
       print ""
       print "No input file: running entirely with getters and setters."
+      filename = None
     else:
       # Looks like it wants to be an input file!
       filename = sys.argv[1] # it works for usage (1) and (2)
-      obj.whichModel(filename)
+      obj = WhichModel(filename)
   elif len(sys.argv) == 1:
     print ""
     print "No input file: running entirely with getters and setters."
+    filename = None
     print ""
     if gethostname()=='beach':
       print ""
@@ -86,29 +69,56 @@ def main():
     displayUsage()
     sys.exit()
   
-  if debug: print 'Command line: ',sys.argv
-
   ## SET MODEL TYPE AND DIMENSIONS HERE ##
   ########################################
   if obj.model == 'flexure':
     if obj.dimension == 1:
-      obj = F1D()
+      obj = F1D(filename)
     elif obj.dimension == 2:
-      obj = F2D()
+      obj = F2D(filename)
   elif obj.model == 'PrattAiry':
-    obj = PrattAiry()
+    obj = PrattAiry(filename)
 
-  obj.initialize(filename)
-  ## SET ALL OTHER MODEL PARAMETERS HERE ##
-  # obj.set_value('method','FD')
-  #########################################
+  obj.initialize(filename) # Does nothing
+  
+  if obj.Debug: print 'Command line:', sys.argv
+
+  ####################################
+  ##   SET MODEL PARAMETERS HERE    ##
+  ## (if not defined in input file) ##
+  #################################### 
+  # obj.set_value('method','FD') # for example
+
   obj.run()
   obj.finalize()
-  #####################
+
   obj.output() # Not part of IRF or BMI: Does standalone plotting and file output
+
+  #####################
   ## GET VALUES HERE ##
-  #wout = obj.get_value('Deflection')
-  #print wout
+  ##   (if desired)  ##
+  ##################### 
+  #wout = obj.get_value('Deflection') # for example
+
+
+def supercomputer_or_standalone():
+# Not used right now; holding onto this if it is useful for the BMI/CMI
+# implementation
+  """
+  Find if the program is running on Beach (and therefore we need to load the 
+  CSDMS utility modules)
+  """
+  if gethostname()=='beach':
+    import os.system
+    if obj.Verbose: print "Running on Beach; loading CSDMS utilities"
+    os.system("module load internal")
+    # CSDMS_base used to manage getters/setters to avoid typing issues w/ bocca
+    from csdms_utils.CSDMS_base import CSDMS_component as cc
+  else:
+    if obj.Verbose: print "Running in standalone mode"
+    from CSDMS_base import CSDMS_component as cc
+
+
 
 if __name__ == '__main__':
   main()
