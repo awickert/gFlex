@@ -16,24 +16,19 @@ from prattairy import *
 
 from matplotlib import pyplot as plt
 
-obj = Isostasy()
-
 # Looks like it wants to be an input file!
 filename = 'input/input_f1d' # it works for usage (1) and (2)
-obj.whichModel(filename)
-
-obj.model = 'flexure'
-obj.dimension = 1
+obj = WhichModel(filename)
 
 ## SET MODEL TYPE AND DIMENSIONS HERE ##
 ########################################
 if obj.model == 'flexure':
   if obj.dimension == 1:
-    obj = F1D()
+    obj = F1D(filename)
   elif obj.dimension == 2:
-    obj = F2D()
+    obj = F2D(filename)
 elif obj.model == 'PrattAiry':
-  obj = PrattAiry()
+  obj = PrattAiry(filename)
 
 self = obj # easier interaction
 obj.initialize(filename)
