@@ -285,10 +285,8 @@ class F1D(Flexure):
 
   def BC_Rigidity(self):
     """
-    Utility function to help implement:
-    0-curvature boundary condition for D (i.e. Te)
-    D[i-1] = 2*D[i] - D[i+1]
-    So this means constant gradient set by local Te distribution
+    Utility function to help implement boundary conditions by specifying 
+    them for and applying them to the elastic thickness grid
     """
 
     if np.isscalar(self.Te):
