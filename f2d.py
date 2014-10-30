@@ -551,17 +551,31 @@ class F2D(Flexure):
       # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
       ###############################################################
       if self.BC_Rigidity_W == "0 curvature":
-        self.D[0] = 2*self.D[1] - self.D[2]
+        self.D[:,0] = 2*self.D[:,1] - self.D[:,2]
       if self.BC_Rigidity_E == "0 curvature":
-        self.D[-1] = 2*D[-2] - D[-3]
+        self.D[:,-1] = 2*D[:,-2] - D[:,-3]
+      if self.BC_Rigidity_N == "0 curvature":
+        self.D[0,:] = 2*self.D[1,:] - self.D[2,:]
+      if self.BC_Rigidity_S == "0 curvature":
+        self.D[-1,:] = 2*D[-2,:] - D[-3,:]
+
       if self.BC_Rigidity_W == "mirror symmetry":
-        self.D[0] = self.D[2]
+        self.D[:,0] = self.D[:,2]
       if self.BC_Rigidity_E == "mirror symmetry":
-        self.D[-1] = self.D[-3]
+        self.D[:,-1] = self.D[:,-3]
+      if self.BC_Rigidity_N == "mirror symmetry":
+        self.D[0,:] = self.D[2,:] # Yes, will work on corners -- double-reflection
+      if self.BC_Rigidity_S == "mirror symmetry":
+        self.D[-1,:] = self.D[-3,:]
+        
       if self.BC_Rigidity_W == "periodic":
-        self.D[0] = self.D[-2]
+        self.D[:,0] = self.D[:,-2]
       if self.BC_Rigidity_E == "periodic":
-        self.D[-1] = self.D[-3]
+        self.D[:,-1] = self.D[:,-3]
+      if self.BC_Rigidity_N == "periodic":
+        self.D[0,:] = self.D[-2,:]
+      if self.BC_Rigidity_S == "periodic":
+        self.D[-1,:] = self.D[-3,:]
 
       ###################################################
       # DEFINE SUB-ARRAYS FOR DERIVATIVE DISCRETIZATION #
