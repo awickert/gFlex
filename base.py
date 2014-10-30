@@ -634,9 +634,11 @@ class Flexure(Isostasy):
   def initialize(self, filename=None):
     super(Flexure, self).initialize(filename)
 
-    # Solution method
+    # Mode: solution method and type of plate solution (if applicable)
     if self.filename:
       self.method = self.configGet("string", "mode", "method")
+      if self.dimension == 2:
+        self.PlateSolutionType = self.configGet("string", "mode", "PlateSolutionType")
     
     # Parameters
     self.drho = self.rho_m - self.rho_fill
@@ -782,10 +784,16 @@ class Flexure(Isostasy):
 
     
   # UNIVERSAL SETTER: LITHOSPHERIC ELASTIC PROPERTIES AND SOLUTION METHOD
-  # FOR FLEXURAL ISOSTASY
+  # FOR FLEXURAL ISOSTASY -- EXISTS ATOP THE MORE GENERAL FUNCTION
   def set_value(self, value_key, value):
-    # Parameters
-    if value_key == 'YoungsModulus':
+    # [Mode]
+    # The lowercase version is here from earlier work; should phase it out
+    if value_key == 'method' or value_key == 'Method':
+      self.method = value
+      print "method set"
+
+    # [Parameters]
+    elif value_key == 'YoungsModulus':
       self.E  = value
     elif value_key == 'PoissonsRatio':
       self.nu = value
@@ -797,6 +805,7 @@ class Flexure(Isostasy):
           self.readyElasticThickness() # But need a program to handle converting 
                                        # scalars and arrays, as well as potentially 
                                        # needing to load a Te file
+    # [Input]
     elif value_key == 'CoeffArray':
       # This coefficient array is what is used with the UMFPACK direct solver
       # or the iterative solver
@@ -806,12 +815,14 @@ class Flexure(Isostasy):
       # if so, let everyone know
       print "LOADING COEFFICIENT ARRAY"
       print "Elastic thickness maps will not be used for the solution."
+    # [Numerical]
     elif value_key == 'Solver':
       self.solver = value
-    # The lowercase version is here from earlier work; should phase it out
-    elif value_key == 'method' or value_key == 'Method':
-      self.method = value
-      print "method set"
+    elif value_key == 'PlateSolutionType':
+      self.PlateSolutionType = value
+    # None of the above?
+    else:
+      sys.exit('Error setting, '+value_key)
     # Inherit from higher-level setter, if not one of these
     # Currently not inheriting from the whichModel() setter, as I
     # figure that has to be done right away or not at all
