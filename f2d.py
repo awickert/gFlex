@@ -484,6 +484,225 @@ class F2D(Flexure):
     # Pad Te, if it is an array, to match q0
     self.pad_Te()
 
+
+  def BC_Rigidity(self):
+    """
+    Utility function to help implement boundary conditions by specifying 
+    them for and applying them to the elastic thickness grid
+    """
+
+    if np.isscalar(self.Te):
+      if self.Debug:
+        print("Scalar Te: no need to modify boundaries.")
+    else:
+
+      ##############################################################
+      # AUTOMATICALLY SELECT FLEXURAL RIGIDITY BOUNDARY CONDITIONS #
+      ##############################################################
+      # West
+      if self.BC_W == 'Periodic':
+        self.BC_Rigidity_W = 'periodic'
+      elif (self.BC_W == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+        self.BC_Rigidity_W = '0 curvature'
+      elif self.BC_W == 'Mirror':
+        self.BC_Rigidity_W = 'mirror symmetry'
+      else:
+        sys.exit("Invalid Te B.C. case")
+      # East
+      if self.BC_E == 'Periodic':
+        self.BC_Rigidity_E = 'periodic'
+      elif (self.BC_E == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+        self.BC_Rigidity_E = '0 curvature'
+      elif self.BC_E == 'Mirror':
+        self.BC_Rigidity_E = 'mirror symmetry'
+      else:
+        sys.exit("Invalid Te B.C. case")
+      # North
+      if self.BC_N == 'Periodic':
+        self.BC_Rigidity_N = 'periodic'
+      elif (self.BC_N == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+        self.BC_Rigidity_N = '0 curvature'
+      elif self.BC_N == 'Mirror':
+        self.BC_Rigidity_N = 'mirror symmetry'
+      else:
+        sys.exit("Invalid Te B.C. case")
+      # South
+      if self.BC_S == 'Periodic':
+        self.BC_Rigidity_S = 'periodic'
+      elif (self.BC_S == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+        self.BC_Rigidity_S = '0 curvature'
+      elif self.BC_S == 'Mirror':
+        self.BC_Rigidity_S = 'mirror symmetry'
+      else:
+        sys.exit("Invalid Te B.C. case")
+      
+      #############
+      # PAD ARRAY #
+      #############
+      #self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
+      #self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
+      # Temporarily:
+      self.D[:,0] = np.nan
+      self.D[:,-1] = np.nan
+      self.D[0,:] = np.nan
+      self.D[-1,:] = np.nan
+
+      ###############################################################
+      # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
+      ###############################################################
+      if self.BC_Rigidity_W == "0 curvature":
+        self.D[0] = 2*self.D[1] - self.D[2]
+      if self.BC_Rigidity_E == "0 curvature":
+        self.D[-1] = 2*D[-2] - D[-3]
+      if self.BC_Rigidity_W == "mirror symmetry":
+        self.D[0] = self.D[2]
+      if self.BC_Rigidity_E == "mirror symmetry":
+        self.D[-1] = self.D[-3]
+      if self.BC_Rigidity_W == "periodic":
+        self.D[0] = self.D[-2]
+      if self.BC_Rigidity_E == "periodic":
+        self.D[-1] = self.D[-3]
+
+      ###################################################
+      # DEFINE SUB-ARRAYS FOR DERIVATIVE DISCRETIZATION #
+      ###################################################
+      Dm1 = self.D[:-2]
+      D0  = self.D[1:-1]
+      Dp1 = self.D[2:]
+
+      ###########################################################
+      # DEFINE COEFFICIENTS TO W_-2 -- W_+2 WITH B.C.'S APPLIED #
+      ###########################################################
+      self.l2_coeff_i = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
+      self.l1_coeff_i = ( -6.*D0 + 2.*Dp1 ) / self.dx4
+      self.c0_coeff_i = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
+      self.r1_coeff_i = ( 2.*Dm1 - 6.*D0 ) / self.dx4
+      self.r2_coeff_i = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
+      
+    """
+    # Template: 1 set
+    self.cj_2i0[:,j] += 
+    self.cj_1i_1[:,j] += 
+    self.cj_1i0[:,j] += 
+    self.cj_1i1[:,j] += 
+    self.cj0i_2[:,j] += 
+    self.cj0i_1[:,j] += 
+    self.cj0i0[:,j] += 
+    self.cj0i1[:,j] += 
+    self.cj0i2[:,j] += 
+    self.cj1i_1[:,j] += 
+    self.cj1i0[:,j] += 
+    self.cj1i1[:,j] += 
+    self.cj2i0[:,j] += 
+
+    self.cj_2i0[i,:] += 
+    self.cj_1i_1[i,:] += 
+    self.cj_1i0[i,:] += 
+    self.cj_1i1[i,:] += 
+    self.cj0i_2[i,:] += 
+    self.cj0i_1[i,:] += 
+    self.cj0i0[i,:] += 
+    self.cj0i1[i,:] += 
+    self.cj0i2[i,:] += 
+    self.cj1i1[i,:] += 
+    self.cj1i0[i,:] += 
+    self.cj1i_1[i,:] += 
+    self.cj2i0[i,:] += 
+
+    # Template: All sets
+    if self.BC_W == 'Mirror':
+      j = -1
+      self.BC_Te(i, 'mirror symmetry') # Define coeffs
+      self.cj_2i0[:,j] += 
+      self.cj_1i_1[:,j] += 
+      self.cj_1i0[:,j] += 
+      self.cj_1i1[:,j] += 
+      self.cj0i_2[:,j] += 
+      self.cj0i_1[:,j] += 
+      self.cj0i0[:,j] += 
+      self.cj0i1[:,j] += 
+      self.cj0i2[:,j] += 
+      self.cj1i_1[:,j] += np.nan
+      self.cj1i0[:,j] += np.nan
+      self.cj1i1[:,j] += np.nan
+      self.cj2i0[:,j] += np.nan
+      j = -2
+      self.BC_Te(i, 'mirror symmetry') # Define coeffs
+      self.cj_2i0[:,j] += 
+      self.cj_1i_1[:,j] += 
+      self.cj_1i0[:,j] += 
+      self.cj_1i1[:,j] += 
+      self.cj0i_2[:,j] += 
+      self.cj0i_1[:,j] += 
+      self.cj0i0[:,j] += 
+      self.cj0i1[:,j] += 
+      self.cj0i2[:,j] += 
+      self.cj1i_1[:,j] += 
+      self.cj1i0[:,j] += 
+      self.cj1i1[:,j] += 
+      self.cj2i0[:,j] += np.nan
+
+    if self.BC_N == 'Mirror':
+      j = -2
+      self.cj_2i0[i,:] += np.nan
+      self.cj_1i_1[i,:] += 
+      self.cj_1i0[i,:] += 
+      self.cj_1i1[i,:] += 
+      self.cj0i_2[i,:] += 
+      self.cj0i_1[i,:] += 
+      self.cj0i0[i,:] += 
+      self.cj0i1[i,:] += 
+      self.cj0i2[i,:] += 
+      self.cj1i1[i,:] += 
+      self.cj1i0[i,:] += 
+      self.cj1i_1[i,:] += 
+      self.cj2i0[i,:] += 
+      j = -1
+      self.cj_2i0[i,:] += np.nan
+      self.cj_1i_1[i,:] += np.nan
+      self.cj_1i0[i,:] += np.nan
+      self.cj_1i1[i,:] += np.nan
+      self.cj0i_2[i,:] += 
+      self.cj0i_1[i,:] += 
+      self.cj0i0[i,:] += 
+      self.cj0i1[i,:] += 
+      self.cj0i2[i,:] += 
+      self.cj1i1[i,:] += 
+      self.cj1i0[i,:] += 
+      self.cj1i_1[i,:] += 
+      self.cj2i0[i,:] += 
+
+    if self.BC_S == 'Mirror':
+      i = -2
+      self.cj_2i0[i,:] += 
+      self.cj_1i_1[i,:] += 
+      self.cj_1i0[i,:] += 
+      self.cj_1i1[i,:] += 
+      self.cj0i_2[i,:] += 
+      self.cj0i_1[i,:] += 
+      self.cj0i0[i,:] += 
+      self.cj0i1[i,:] += 
+      self.cj0i2[i,:] += 
+      self.cj1i1[i,:] += 
+      self.cj1i0[i,:] += 
+      self.cj1i_1[i,:] += 
+      self.cj2i0[i,:] += np.nan
+      i = -1
+      self.cj_2i0[i,:] += 
+      self.cj_1i_1[i,:] += 
+      self.cj_1i0[i,:] += 
+      self.cj_1i1[i,:] += 
+      self.cj0i_2[i,:] += 
+      self.cj0i_1[i,:] += 
+      self.cj0i0[i,:] += 
+      self.cj0i1[i,:] += 
+      self.cj0i2[i,:] += 
+      self.cj1i1[i,:] += np.nan
+      self.cj1i0[i,:] += np.nan
+      self.cj1i_1[i,:] += np.nan
+      self.cj2i0[i,:] += np.nan
+    """
+
   def BC_Mirror_EW(self):
     """
     Mirrors q0 across the boundary on either the west (left) or east (right) 
