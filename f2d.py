@@ -199,7 +199,7 @@ class F2D(Flexure):
     13 coefficients: 13 matrices of the same size as the load
     """
 
-    # don't want to keep saying "self." everwhere!
+    # don't want to keep typing "self." everwhere!
     D = self.D
     drho = self.drho
     dx4 = self.dx4
@@ -580,19 +580,139 @@ class F2D(Flexure):
       ###################################################
       # DEFINE SUB-ARRAYS FOR DERIVATIVE DISCRETIZATION #
       ###################################################
-      Dm1 = self.D[:-2]
-      D0  = self.D[1:-1]
-      Dp1 = self.D[2:]
+      # don't want to keep typing "self." everwhere!
+      D = self.D
+      drho = self.drho
+      dx4 = self.dx4
+      dy4 = self.dy4
+      dx2dy2 = self.dx2dy2
+      nu = self.nu
+      g = self.g
+
+      D00 = D[1:-1,1:-1]
+      D10 = D[1:-1,2:]
+      D_10 = D[1:-1,:-2]
+      D01 = D[2:,1:-1]
+      D0_1 = D[:-2,1:-1]
+      D11 = D[2:,2:]
+      D_11 = D[2:,:-2]
+      D1_1 = D[:-2,2:]
+      D_1_1 = D[:-2,:-2]
+
+
+### NEW FCN HERE
+### AND TRY REMOVING THE REPEAT CODE IN 1D CASE!
 
       ###########################################################
       # DEFINE COEFFICIENTS TO W_-2 -- W_+2 WITH B.C.'S APPLIED #
       ###########################################################
-      self.l2_coeff_i = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
-      self.l1_coeff_i = ( -6.*D0 + 2.*Dp1 ) / self.dx4
-      self.c0_coeff_i = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
-      self.r1_coeff_i = ( 2.*Dm1 - 6.*D0 ) / self.dx4
-      self.r2_coeff_i = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
       
+      if self.PlateSolutionType == 'Thick':
+        # Check that it is thick
+        # van Wees and Cloetingh (1994) solution, re-discretized by me
+        # using a central difference approx. to 2nd order precision
+        # NEW STENCIL
+        # x = -2, y = 0
+        self.cj_2i0_coeff_ij = (D0 - Dx) / dx4
+        # x = 0, y = -2
+        self.cj0i_2_coeff_ij = (D0 - Dy) / dy4
+        # x = 0, y = 2
+        self.cj0i2_coeff_ij = (D0 + Dy) / dy4
+        # x = 2, y = 0
+        self.cj2i0_coeff_ij = (D0 + Dx) / dx4
+        # x = -1, y = -1
+        self.cj_1i_1_coeff_ij = (2.*D0 - Dx - Dy + Dxy*(1-nu)/2.) / dx2dy2
+        # x = -1, y = 1
+        self.cj_1i1_coeff_ij = (2.*D0 - Dx + Dy - Dxy*(1-nu)/2.) / dx2dy2
+        # x = 1, y = -1
+        self.cj1i_1_coeff_ij = (2.*D0 + Dx - Dy - Dxy*(1-nu)/2.) / dx2dy2
+        # x = 1, y = 1
+        self.cj1i1_coeff_ij = (2.*D0 + Dx + Dy + Dxy*(1-nu)/2.) / dx2dy2
+        # x = -1, y = 0
+        self.cj_1i0_coeff_ij = (-4.*D0 + 2.*Dx + Dxx)/dx4 + (-4.*D0 + 2.*Dx + nu*Dyy)/dx2dy2
+        # x = 0, y = -1
+        self.cj0i_1_coeff_ij = (-4.*D0 + 2.*Dy + Dyy)/dy4 + (-4.*D0 + 2.*Dy + nu*Dxx)/dx2dy2
+        # x = 0, y = 1
+        self.cj0i1_coeff_ij = (-4.*D0 - 2.*Dy + Dyy)/dy4 + (-4.*D0 - 2.*Dy + nu*Dxx)/dx2dy2
+        # x = 1, y = 0
+        self.cj1i0_coeff_ij = (-4.*D0 - 2.*Dx + Dxx)/dx4 + (-4.*D0 - 2.*Dx + nu*Dyy)/dx2dy2
+        # x = 0, y = 0
+        self.cj0i0_coeff_ij = (6.*D0 - 2.*Dxx)/dx4 \
+                     + (6.*D0 - 2.*Dyy)/dy4 \
+                     + (8.*D0 - 2.*nu*Dxx - 2.*nu*Dyy)/dx2dy2 \
+                     + drho*g
+                     
+      elif self.PlateSolutionType == 'LinearTeVariationsOnly':
+        sys.exit("CHECK LATER PARTS OF SOLUTION: NOT SURE IF THEY ARE RIGHT")
+        # So check starting with self.c_j1i0
+        # These were flipped around in x and y
+        # And need a good look over
+        # before I will feel OK using them
+        # More info here!!!!!!!!!
+        # SIMPLER STENCIL: just del**2(D del**2(w)): only linear variations
+        # in Te are allowed.
+        # x = -2, y = 0
+        self.cj_2i0_coeff_ij = D0 / dx4
+        # x = 0, y = -2
+        self.cj0i_2_coeff_ij = D0 / dy4
+        # x = 0, y = 2
+        self.cj0i2_coeff_ij = D0 / dy4
+        # x = 2, y = 0
+        self.cj2i0_coeff_ij = D0 / dx4
+        # x = -1, y = -1
+        self.cj_1i_1_coeff_ij = 2.*D0 / dx2dy2
+        # x = -1, y = 1
+        self.cj_1i1_coeff_ij = 2.*D0 / dx2dy2
+        # x = 1, y = -1
+        self.cj1i_1_coeff_ij = 2.*D0 / dx2dy2
+        # x = 1, y = 1
+        self.cj1i1_coeff_ij = 2.*D0 / dx2dy2
+        # x = -1, y = 0
+        self.cj_1i0_coeff_ij = (-4.*D0 + Dxx)/dx4 + (-4.*D0 + Dyy)/dx2dy2
+        # x = 0, y = -1
+        self.cj0i_1_coeff_ij = (-4.*D0 + Dyy)/dx4 + (-4.*D0 + Dxx)/dx2dy2
+        # x = 0, y = 1
+        self.cj0i1_coeff_ij = (-4.*D0 + Dyy)/dx4 + (-4.*D0 + Dxx)/dx2dy2
+        # x = 1, y = 0
+        self.cj1i0_coeff_ij = (-4.*D0 + Dxx)/dx4 + (-4.*D0 + Dyy)/dx2dy2
+        # x = 0, y = 0
+        self.cj0i0_coeff_ij = (6.*D0 - 2.*Dxx)/dx4 \
+                     + (6.*D0 - 2.*Dyy)/dy4 \
+                     + (8.*D0 - 2.*Dxx - 2.*Dyy)/dx2dy2 \
+                     + drho*g
+
+      elif self.PlateSolutionType == 'Thin':
+        # STENCIL FROM GOVERS ET AL. 2009 -- first-order differences
+        # x is j and y is i b/c matrix row/column notation
+        # Note that this breaks down with b.c.'s that place too much control 
+        # on the solution -- harmonic wavetrains
+        # x = -2, y = 0
+        self.cj_2i0_coeff_ij = D_10/dx4
+        # x = -1, y = -1
+        self.cj_1i_1_coeff_ij = (D_10 + D0_1)/dx2dy2
+        # x = -1, y = 0
+        self.cj_1i0_coeff_ij = -2. * ( (D0_1 + D00)/dx2dy2 + (D00 + D_10)/dx4 )
+        # x = -1, y = 1
+        self.cj_1i1_coeff_ij = (D_10 + D01)/dx2dy2
+        # x = 0, y = -2
+        self.cj0i_2_coeff_ij = D0_1/dy4
+        # x = 0, y = -1
+        self.cj0i_1_coeff_ij = -2. * ( (D0_1 + D00)/dx2dy2 + (D00 + D0_1)/dy4)
+        # x = 0, y = 0
+        self.cj0i0_coeff_ij = (D10 + 4.*D00 + D_10)/dx4 + (D01 + 4.*D00 + D0_1)/dy4 + (8.*D00/dx2dy2) + drho*g
+        # x = 0, y = 1
+        self.cj0i1_coeff_ij = -2. * ( (D01 + D00)/dy4 + (D00 + D01)/dx2dy2 )
+        # x = 0, y = 2
+        self.cj0i2_coeff_ij = D0_1/dy4
+        # x = 1, y = -1
+        self.cj1i_1_coeff_ij = (D10+D0_1)/dx2dy2
+        # x = 1, y = 0
+        self.cj1i0_coeff_ij = -2. * ( (D10 + D00)/dx4 + (D10 + D00)/dx2dy2 )
+        # x = 1, y = 1
+        self.cj1i1_coeff_ij = (D10 + D01)/dx2dy2
+        # x = 2, y = 0
+        self.cj2i0_coeff_ij = D10/dx4
+
     """
     # Template: 1 set
     self.cj_2i0[:,j] += 
