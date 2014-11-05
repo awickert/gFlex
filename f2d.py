@@ -617,10 +617,73 @@ class F2D(Flexure):
 ### NEW FCN HERE
 ### AND TRY REMOVING THE REPEAT CODE IN 1D CASE!
 
-      ###########################################################
-      # DEFINE COEFFICIENTS TO W_-2 -- W_+2 WITH B.C.'S APPLIED #
-      ###########################################################
+      # The next section of code is split over several functions for the 1D 
+      # case, but will be all in one function here, at least for now.
+
+      #######################################################################
+      # DEFINE COEFFICIENTS TO W_j-2 -- W_j+2 WITH B.C.'S APPLIED (x: W, E) #
+      #######################################################################
       
+      if self.BC_W == 'Periodic':
+        pass
+      elif self.BC_W == 'Dirichlet0'
+        pass
+      elif self.BC_W == '0Moment0Shear'
+        pass
+      elif self.BC_W == '0Slope0Shear'
+        pass
+      elif self.BC_W == 'Mirror'
+        pass
+      else:
+        # Possibly redundant safeguard
+        sys.exit("Invalid boundary condition")
+
+      if self.BC_E == 'Periodic':
+        pass
+      elif self.BC_E == 'Dirichlet0'
+        pass
+      elif self.BC_E == '0Moment0Shear'
+        pass
+      elif self.BC_E == '0Slope0Shear'
+        pass
+      elif self.BC_E == 'Mirror'
+        pass
+      else:
+        # Possibly redundant safeguard
+        sys.exit("Invalid boundary condition")
+
+      #######################################################################
+      # DEFINE COEFFICIENTS TO W_i-2 -- W_i+2 WITH B.C.'S APPLIED (y: N, S) #
+      #######################################################################
+
+      if self.BC_N == 'Periodic':
+        pass
+      elif self.BC_N == 'Dirichlet0'
+        pass
+      elif self.BC_N == '0Moment0Shear'
+        pass
+      elif self.BC_N == '0Slope0Shear'
+        pass
+      elif self.BC_N == 'Mirror'
+        pass
+      else:
+        # Possibly redundant safeguard
+        sys.exit("Invalid boundary condition")
+
+
+      if self.BC_S == 'Periodic':
+        pass
+      elif self.BC_S == 'Dirichlet0'
+        pass
+      elif self.BC_S == '0Moment0Shear'
+        pass
+      elif self.BC_S == '0Slope0Shear'
+        pass
+      elif self.BC_S == 'Mirror'
+        pass
+      else:
+        # Possibly redundant safeguard
+        sys.exit("Invalid boundary condition")
 
     """
     # Template: 1 set
