@@ -224,7 +224,6 @@ class F1D(Flexure):
     # arrays: Python will naturally just do vertical shifts instead of 
     # diagonal shifts, so this takes into account the horizontal compoent 
     # to ensure that boundary values are at the right place.
-    self.l2_orig = self.l2.copy()
     self.l2 = np.roll(self.l2, -2)
     self.l1 = np.roll(self.l1, -1)
     self.r1 = np.roll(self.r1, 1)
@@ -492,18 +491,6 @@ class F1D(Flexure):
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
       if self.BC_W == '0Moment0Shear':
         i=0
-        """
-        # This is for a Neumann b.c. combined with third deriv. = 0
-        self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-        self.l1[i] = np.nan # OFF GRID
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g # this works but not sure how to get it.
-                                                            # OH, you can w/ 0-flux boundary
-                                                            # And 10 with 0-moment boundary
-                                                            # But that doesn't make sense with pics.
-                                                            # 0 moment should als be free deflec.
-        self.r1[i] = -8 * self.D/self.dx4
-        self.r2[i] = 2 * self.D/self.dx4
-        """
         self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
         self.l1[i] = np.nan # OFF GRID
         self.c0[i] = 2 * self.D/self.dx4 + self.drho*self.g
@@ -533,13 +520,6 @@ class F1D(Flexure):
         self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
         self.l1[i] = -4 * self.D/self.dx4
         self.l2[i] = 2 * self.D/self.dx4
-        """
-        self.r2[i] = np.nan # OFF GRID
-        self.r1[i] = -4 * self.D/self.dx4
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.l1[i] = -4 * self.D/self.dx4
-        self.l2[i] = 2 * self.D/self.dx4
-        """
     else:
       # Variable Te
       # But this is really the more general solution, so we don't need the 
