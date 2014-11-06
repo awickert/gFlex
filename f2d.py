@@ -1290,6 +1290,7 @@ class F2D(Flexure):
   def build_diags(self):
     # Assign boundary conditions
     # Dirichlet force right now
+    """
     self.cj_2i0[:2,:] = 0
     self.cj_2i0[-2:,:] = 0
 
@@ -1326,6 +1327,7 @@ class F2D(Flexure):
 
     self.cj2i0[:2,:] = 0
     self.cj2i0[-2:,:] = 0
+    """
     
     ##########################################################
     # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
@@ -1335,14 +1337,48 @@ class F2D(Flexure):
     # arrays: Python will naturally just do vertical shifts instead of 
     # diagonal shifts, so this takes into account the horizontal compoent 
     # to ensure that boundary values are at the right place.
-    """
-    self.l2 = np.roll(self.l2, -2)
-    self.l1 = np.roll(self.l1, -1)
-    self.r1 = np.roll(self.r1, 1)
-    self.r2 = np.roll(self.r2, 2)
     
-    self.c
     """
+    # Roll x
+    self.cj_2i0 = np.roll(self.cj_2i0, -2, 1)
+    self.cj_1i0 = np.roll(self.cj_1i0, -1, 1)
+    self.cj1i0 = np.roll(self.cj1i0, 1, 1)
+    self.cj2i0 = np.roll(self.cj2i0, 2, 1)
+    # Roll y
+    self.cj0i_2 = np.roll(self.cj0i_2, -2, 0)
+    self.cj0i_1 = np.roll(self.cj0i_1, -1, 0)
+    self.cj0i1 = np.roll(self.cj0i1, 1, 0)
+    self.cj0i2 = np.roll(self.cj0i2, 2, 0)
+    # Roll x and y
+    self.cj_1i_1 = np.roll(self.cj_1i_1, -1, 1)
+    self.cj_1i_1 = np.roll(self.cj_1i_1, -1, 0)
+    self.cj_1i1 = np.roll(self.cj_1i1, -1, 1)
+    self.cj_1i1 = np.roll(self.cj_1i1, 1, 0)
+    self.cj1i_1 = np.roll(self.cj1i_1, 1, 1)
+    self.cj1i_1 = np.roll(self.cj1i_1, -1, 0)
+    self.cj1i1 = np.roll(self.cj1i1, 1, 1)
+    self.cj1i1 = np.roll(self.cj1i1, 1, 0)
+    """
+
+    # Roll x
+    self.cj_2i0 = np.roll(self.cj_2i0, -2, 0)
+    self.cj_1i0 = np.roll(self.cj_1i0, -1, 0)
+    self.cj1i0 = np.roll(self.cj1i0, 1, 0)
+    self.cj2i0 = np.roll(self.cj2i0, 2, 0)
+    # Roll y
+    self.cj0i_2 = np.roll(self.cj0i_2, -2, 1)
+    self.cj0i_1 = np.roll(self.cj0i_1, -1, 1)
+    self.cj0i1 = np.roll(self.cj0i1, 1, 1)
+    self.cj0i2 = np.roll(self.cj0i2, 2, 1)
+    # Roll x and y
+    self.cj_1i_1 = np.roll(self.cj_1i_1, -1, 0)
+    self.cj_1i_1 = np.roll(self.cj_1i_1, -1, 1)
+    self.cj_1i1 = np.roll(self.cj_1i1, -1, 0)
+    self.cj_1i1 = np.roll(self.cj_1i1, 1, 1)
+    self.cj1i_1 = np.roll(self.cj1i_1, 1, 0)
+    self.cj1i_1 = np.roll(self.cj1i_1, -1, 1)
+    self.cj1i1 = np.roll(self.cj1i1, 1, 0)
+    self.cj1i1 = np.roll(self.cj1i1, 1, 1)
     
     # Reshape to put in solver
     vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
