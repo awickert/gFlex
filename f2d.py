@@ -448,6 +448,7 @@ class F2D(Flexure):
                "condition makes no physical sense.\n"+
                "Please fix the input boundary conditions. Aborting.")
 
+
     ###################################
     # PADDING CAN BE REQUIRED: MIRROR #
     ###################################
@@ -470,7 +471,10 @@ class F2D(Flexure):
 
       # Now I can build the coefficient arrays
       self.get_coeff_values()
-      
+        
+      # Rigidity b.c.?
+      self.BC_Rigidity()
+
       # Once the array is its definitive size, can start applying real, solid
       # boundary conditions
       # However, because these are related in a non-simple way to the padding 
@@ -590,11 +594,11 @@ class F2D(Flexure):
       if self.BC_Rigidity_W == "0 curvature":
         self.D[:,0] = 2*self.D[:,1] - self.D[:,2]
       if self.BC_Rigidity_E == "0 curvature":
-        self.D[:,-1] = 2*D[:,-2] - D[:,-3]
+        self.D[:,-1] = 2*self.D[:,-2] - self.D[:,-3]
       if self.BC_Rigidity_N == "0 curvature":
         self.D[0,:] = 2*self.D[1,:] - self.D[2,:]
       if self.BC_Rigidity_S == "0 curvature":
-        self.D[-1,:] = 2*D[-2,:] - D[-3,:]
+        self.D[-1,:] = 2*self.D[-2,:] - self.D[-3,:]
 
       if self.BC_Rigidity_W == "mirror symmetry":
         self.D[:,0] = self.D[:,2]
@@ -627,6 +631,7 @@ class F2D(Flexure):
       if self.BC_W == 'Periodic':
         pass
       elif self.BC_W == 'Dirichlet0':
+        print "BOUNDARY CONDITIONS!!!"
         j = -1
         self.cj_2i0[:,j] += np.nan
         self.cj_1i_1[:,j] += np.nan
@@ -713,7 +718,7 @@ class F2D(Flexure):
       if self.BC_N == 'Periodic':
         pass
       elif self.BC_N == 'Dirichlet0':
-        j = -2
+        i = -2
         self.cj_2i0[i,:] += np.nan
         self.cj_1i_1[i,:] += 0
         self.cj_1i0[i,:] += 0
@@ -727,7 +732,7 @@ class F2D(Flexure):
         self.cj1i0[i,:] += 0
         self.cj1i_1[i,:] += 0
         self.cj2i0[i,:] += 0
-        j = -1
+        i = -1
         self.cj_2i0[i,:] += np.nan
         self.cj_1i_1[i,:] += np.nan
         self.cj_1i0[i,:] += np.nan
@@ -1358,7 +1363,6 @@ class F2D(Flexure):
     self.cj1i_1 = np.roll(self.cj1i_1, -1, 0)
     self.cj1i1 = np.roll(self.cj1i1, 1, 1)
     self.cj1i1 = np.roll(self.cj1i1, 1, 0)
-    """
 
     # Roll x
     self.cj_2i0 = np.roll(self.cj_2i0, -2, 0)
@@ -1379,6 +1383,7 @@ class F2D(Flexure):
     self.cj1i_1 = np.roll(self.cj1i_1, -1, 1)
     self.cj1i1 = np.roll(self.cj1i1, 1, 0)
     self.cj1i1 = np.roll(self.cj1i1, 1, 1)
+    """
     
     # Reshape to put in solver
     vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
