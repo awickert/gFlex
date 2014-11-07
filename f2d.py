@@ -486,6 +486,10 @@ class F2D(Flexure):
     ####################################################
     else:
       self.get_coeff_values()
+
+      # Rigidity b.c.?
+      self.BC_Rigidity()
+
       #for i in range(self.nrowsy):
         #self.build_coeff_matrix_nonzero_blocks_1row(i)
         #self.assemble_blocks_sparse_1row(i)
@@ -617,12 +621,17 @@ class F2D(Flexure):
         self.D[0,:] = self.D[-2,:]
       if self.BC_Rigidity_S == "periodic":
         self.D[-1,:] = self.D[-3,:]
-
+        
 ### NEW FCN HERE
 ### AND TRY REMOVING THE REPEAT CODE IN 1D CASE!
 
       # The next section of code is split over several functions for the 1D 
       # case, but will be all in one function here, at least for now.
+      
+      # Inf for E-W to separate from nan for N-S. N-S will spill off ends
+      # of array (C order, in rows), while E-W will be internal, so I will
+      # later change np.inf to 0 to represent where internal boundaries 
+      # occur.
 
       #######################################################################
       # DEFINE COEFFICIENTS TO W_j-2 -- W_j+2 WITH B.C.'S APPLIED (x: W, E) #
@@ -632,11 +641,11 @@ class F2D(Flexure):
         pass
       elif self.BC_W == 'Dirichlet0':
         print "BOUNDARY CONDITIONS!!!"
-        j = -1
-        self.cj_2i0[:,j] += np.nan
-        self.cj_1i_1[:,j] += np.nan
-        self.cj_1i0[:,j] += np.nan
-        self.cj_1i1[:,j] += np.nan
+        j = 0
+        self.cj_2i0[:,j] += np.inf
+        self.cj_1i_1[:,j] += np.inf
+        self.cj_1i0[:,j] += np.inf
+        self.cj_1i1[:,j] += np.inf
         self.cj0i_2[:,j] += 0
         self.cj0i_1[:,j] += 0
         self.cj0i0[:,j] += 0
@@ -646,8 +655,8 @@ class F2D(Flexure):
         self.cj1i0[:,j] += 0
         self.cj1i1[:,j] += 0
         self.cj2i0[:,j] += 0
-        j = -2
-        self.cj_2i0[:,j] += np.nan
+        j = 1
+        self.cj_2i0[:,j] += np.inf
         self.cj_1i_1[:,j] += 0
         self.cj_1i0[:,j] += 0
         self.cj_1i1[:,j] += 0
@@ -683,10 +692,10 @@ class F2D(Flexure):
         self.cj0i0[:,j] += 0
         self.cj0i1[:,j] += 0
         self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += np.nan
-        self.cj1i0[:,j] += np.nan
-        self.cj1i1[:,j] += np.nan
-        self.cj2i0[:,j] += np.nan
+        self.cj1i_1[:,j] += np.inf
+        self.cj1i0[:,j] += np.inf
+        self.cj1i1[:,j] += np.inf
+        self.cj2i0[:,j] += np.inf
         j = -2
         self.cj_2i0[:,j] += 0
         self.cj_1i_1[:,j] += 0
@@ -700,7 +709,7 @@ class F2D(Flexure):
         self.cj1i_1[:,j] += 0
         self.cj1i0[:,j] += 0
         self.cj1i1[:,j] += 0
-        self.cj2i0[:,j] += np.nan
+        self.cj2i0[:,j] += np.inf
       elif self.BC_E == '0Moment0Shear':
         pass
       elif self.BC_E == '0Slope0Shear':
@@ -714,16 +723,20 @@ class F2D(Flexure):
       #######################################################################
       # DEFINE COEFFICIENTS TO W_i-2 -- W_i+2 WITH B.C.'S APPLIED (y: N, S) #
       #######################################################################
+      
+      # Infinitiy dominates over nan where they cross, because this is used 
+      # to flag places where coeff values should be 0, and this would otherwise
+      # cause boundary condition nan's to appear in the cross-derivatives
 
       if self.BC_N == 'Periodic':
         pass
       elif self.BC_N == 'Dirichlet0':
-        i = -2
-        self.cj_2i0[i,:] += np.nan
+        i = 1
+        self.cj_2i0[i,:] += 0
         self.cj_1i_1[i,:] += 0
         self.cj_1i0[i,:] += 0
         self.cj_1i1[i,:] += 0
-        self.cj0i_2[i,:] += 0
+        self.cj0i_2[i,:] += np.nan
         self.cj0i_1[i,:] += 0
         self.cj0i0[i,:] += 0
         self.cj0i1[i,:] += 0
@@ -732,19 +745,19 @@ class F2D(Flexure):
         self.cj1i0[i,:] += 0
         self.cj1i_1[i,:] += 0
         self.cj2i0[i,:] += 0
-        i = -1
-        self.cj_2i0[i,:] += np.nan
-        self.cj_1i_1[i,:] += np.nan
-        self.cj_1i0[i,:] += np.nan
-        self.cj_1i1[i,:] += np.nan
-        self.cj0i_2[i,:] += 0
-        self.cj0i_1[i,:] += 0
+        i = 0
+        self.cj_2i0[i,:] += 0
+        self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
+        self.cj_1i0[i,:] += 0
+        self.cj_1i1[i,:] += 0
+        self.cj0i_2[i,:] += np.nan
+        self.cj0i_1[i,:] += np.nan
         self.cj0i0[i,:] += 0
         self.cj0i1[i,:] += 0
         self.cj0i2[i,:] += 0
         self.cj1i1[i,:] += 0
         self.cj1i0[i,:] += 0
-        self.cj1i_1[i,:] += 0
+        self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
         self.cj2i0[i,:] += 0
       elif self.BC_N == '0Moment0Shear':
         pass
@@ -768,25 +781,25 @@ class F2D(Flexure):
         self.cj0i_1[i,:] += 0
         self.cj0i0[i,:] += 0
         self.cj0i1[i,:] += 0
-        self.cj0i2[i,:] += 0
+        self.cj0i2[i,:] += np.nan
         self.cj1i1[i,:] += 0
         self.cj1i0[i,:] += 0
         self.cj1i_1[i,:] += 0
-        self.cj2i0[i,:] += np.nan
+        self.cj2i0[i,:] += 0
         i = -1
         self.cj_2i0[i,:] += 0
         self.cj_1i_1[i,:] += 0
         self.cj_1i0[i,:] += 0
-        self.cj_1i1[i,:] += 0
+        self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += np.nan
         self.cj0i_2[i,:] += 0
         self.cj0i_1[i,:] += 0
         self.cj0i0[i,:] += 0
-        self.cj0i1[i,:] += 0
-        self.cj0i2[i,:] += 0
-        self.cj1i1[i,:] += np.nan
-        self.cj1i0[i,:] += np.nan
-        self.cj1i_1[i,:] += np.nan
-        self.cj2i0[i,:] += np.nan
+        self.cj0i1[i,:] += np.nan
+        self.cj0i2[i,:] += np.nan
+        self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
+        self.cj1i0[i,:] += 0
+        self.cj1i_1[i,:] += 0
+        self.cj2i0[i,:] += 0
       elif self.BC_S == '0Moment0Shear':
         pass
       elif self.BC_S == '0Slope0Shear':
@@ -1343,7 +1356,6 @@ class F2D(Flexure):
     # diagonal shifts, so this takes into account the horizontal compoent 
     # to ensure that boundary values are at the right place.
     
-    """
     # Roll x
     self.cj_2i0 = np.roll(self.cj_2i0, -2, 1)
     self.cj_1i0 = np.roll(self.cj_1i0, -1, 1)
@@ -1364,6 +1376,7 @@ class F2D(Flexure):
     self.cj1i1 = np.roll(self.cj1i1, 1, 1)
     self.cj1i1 = np.roll(self.cj1i1, 1, 0)
 
+    """
     # Roll x
     self.cj_2i0 = np.roll(self.cj_2i0, -2, 0)
     self.cj_1i0 = np.roll(self.cj_1i0, -1, 0)
@@ -1385,41 +1398,60 @@ class F2D(Flexure):
     self.cj1i1 = np.roll(self.cj1i1, 1, 1)
     """
     
-    # Reshape to put in solver
-    vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
-    vec_cj_1i_1 = np.reshape(self.cj_1i_1, -1, order='C')
-    vec_cj_1i0 = np.reshape(self.cj_1i0, -1, order='C')
-    vec_cj_1i1 = np.reshape(self.cj_1i1, -1, order='C')
-    vec_cj0i_2 = np.reshape(self.cj0i_2, -1, order='C')
-    vec_cj0i_1 = np.reshape(self.cj0i_1, -1, order='C')
-    vec_cj0i0 = np.reshape(self.cj0i0, -1, order='C')
-    vec_cj0i1 = np.reshape(self.cj0i1, -1, order='C')
-    vec_cj0i2 = np.reshape(self.cj0i2, -1, order='C')
-    vec_cj1i_1 = np.reshape(self.cj1i_1, -1, order='C')
-    vec_cj1i0 = np.reshape(self.cj1i0, -1, order='C')
-    vec_cj1i1 = np.reshape(self.cj1i1, -1, order='C')
-    vec_cj2i0 = np.reshape(self.cj2i0, -1, order='C')
+    coeff_array_list = [self.cj_2i0, self.cj_1i0, self.cj1i0, self.cj2i0, self.cj0i_2, self.cj0i_1, self.cj0i1, self.cj0i2, self.cj_1i_1, self.cj_1i1, self.cj1i_1, self.cj1i1, self.cj0i0]
+    for array in coeff_array_list:
+      array[np.isinf(array)] = 0
+      #array[np.isnan(array)] = 0
     
-    Up2 = vec_cj_2i0
-    Up1 = np.vstack(( vec_cj_1i_1, vec_cj_1i0, vec_cj_1i1 ))
-    Mid = np.vstack(( vec_cj0i_2, vec_cj0i_1, vec_cj0i0, vec_cj0i1, vec_cj0i2 ))
-    Dn1 = np.vstack(( vec_cj1i_1, vec_cj1i0, vec_cj1i1 ))
-    Dn2 = vec_cj2i0
-    
-    # Arrange in solver
-                        
-    diags = np.vstack(( Up2, \
-                        Up1, \
-                        Mid, \
-                        Dn1, \
-                        Dn2 ))
-                        
-    self.ny = self.nrowsy
-    self.nx = self.ncolsx
-                        
-    import scipy
-                        
-    self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx,  -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
+      # Reshape to put in solver
+      vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
+      vec_cj_1i_1 = np.reshape(self.cj_1i_1, -1, order='C')
+      vec_cj_1i0 = np.reshape(self.cj_1i0, -1, order='C')
+      vec_cj_1i1 = np.reshape(self.cj_1i1, -1, order='C')
+      vec_cj0i_2 = np.reshape(self.cj0i_2, -1, order='C')
+      vec_cj0i_1 = np.reshape(self.cj0i_1, -1, order='C')
+      vec_cj0i0 = np.reshape(self.cj0i0, -1, order='C')
+      vec_cj0i1 = np.reshape(self.cj0i1, -1, order='C')
+      vec_cj0i2 = np.reshape(self.cj0i2, -1, order='C')
+      vec_cj1i_1 = np.reshape(self.cj1i_1, -1, order='C')
+      vec_cj1i0 = np.reshape(self.cj1i0, -1, order='C')
+      vec_cj1i1 = np.reshape(self.cj1i1, -1, order='C')
+      vec_cj2i0 = np.reshape(self.cj2i0, -1, order='C')
+      
+      vec_cj_1i1[59] = vec_cj_1i1[60]
+      
+      # Changed this 6 Nov. 2014 in betahaus Berlin to be x-based
+      Up2 = vec_cj0i2
+      Up1 = np.vstack(( vec_cj_1i1, vec_cj0i1, vec_cj1i1 ))
+      Mid = np.vstack(( vec_cj_2i0, vec_cj_1i0, vec_cj0i0, vec_cj1i0, vec_cj2i0 ))
+      Dn1 = np.vstack(( vec_cj_1i_1, vec_cj0i_1, vec_cj1i_1 ))
+      Dn2 = vec_cj0i_2
+      
+      """
+      # Old
+      Up2 = vec_cj_2i0
+      Up1 = np.vstack(( vec_cj_1i_1, vec_cj_1i0, vec_cj_1i1 ))
+      Mid = np.vstack(( vec_cj0i_2, vec_cj0i_1, vec_cj0i0, vec_cj0i1, vec_cj0i2 ))
+      Dn1 = np.vstack(( vec_cj1i_1, vec_cj1i0, vec_cj1i1 ))
+      Dn2 = vec_cj2i0
+      """
+
+      # Arrange in solver
+                          
+      diags = np.vstack(( Dn2, \
+                          Dn1, \
+                          Mid, \
+                          Up1, \
+                          Up2 ))
+                          
+      self.ny = self.nrowsy
+      self.nx = self.ncolsx
+                          
+      import scipy
+      
+      self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
+
+      #self.coeff_matrix = scipy.sparse.spdiags(np.vstack((Up1, Mid)), [-self.nx-1, -self.nx,  -self.nx+1, -2, -1, 0, 1, 2], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
 
   def calc_max_flexural_wavelength(self):
     """
