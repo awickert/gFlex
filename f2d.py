@@ -1638,7 +1638,7 @@ class F2D(Flexure):
     q0vector = self.q0.reshape(-1, order='C')
     if self.solver == "iterative" or self.solver == "Iterative":
       if self.Debug:
-        print "Using congugate gradient method for iterative solution"
+        print "Using generalized minimal residual method for iterative solution"
       wvector = scipy.sparse.linalg.isolve.lgmres(self.coeff_matrix, q0vector)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
       wvector = wvector[0] # Reach into tuple to get my array back
     else:
