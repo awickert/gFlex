@@ -388,34 +388,33 @@ class F2D(Flexure):
       # CREATE COEFFICIENT ARRAYS: PLAIN, WITH NO B.C.'S YET APPLIED #
       ################################################################
       # x = -2, y = 0
-      self.cj_2i0 = self.cj_2i0_coeff_ij
+      self.cj_2i0 = self.cj_2i0_coeff_ij.copy()
       # x = -1, y = -1
-      self.cj_1i_1 = self.cj_1i_1_coeff_ij
+      self.cj_1i_1 = self.cj_1i_1_coeff_ij.copy()
       # x = -1, y = 0
-      self.cj_1i0 = self.cj_1i0_coeff_ij
+      self.cj_1i0 = self.cj_1i0_coeff_ij.copy()
       # x = -1, y = 1
-      self.cj_1i1 = self.cj_1i1_coeff_ij
+      self.cj_1i1 = self.cj_1i1_coeff_ij.copy()
       # x = 0, y = -2
-      self.cj0i_2 = self.cj0i_2_coeff_ij
+      self.cj0i_2 = self.cj0i_2_coeff_ij.copy()
       # x = 0, y = -1
-      self.cj0i_1 = self.cj0i_1_coeff_ij
+      self.cj0i_1 = self.cj0i_1_coeff_ij.copy()
       # x = 0, y = 0
-      self.cj0i0 = self.cj0i0_coeff_ij
+      self.cj0i0 = self.cj0i0_coeff_ij.copy()
       # x = 0, y = 1
-      self.cj0i1 = self.cj0i1_coeff_ij
+      self.cj0i1 = self.cj0i1_coeff_ij.copy()
       # x = 0, y = 2
-      self.cj0i2 = self.cj0i2_coeff_ij
+      self.cj0i2 = self.cj0i2_coeff_ij.copy()
       # x = 1, y = -1
-      self.cj1i_1 = self.cj1i_1_coeff_ij
+      self.cj1i_1 = self.cj1i_1_coeff_ij.copy()
       # x = 1, y = 0
-      self.cj1i0 = self.cj1i0_coeff_ij
+      self.cj1i0 = self.cj1i0_coeff_ij.copy()
       # x = 1, y = 1
-      self.cj1i1 = self.cj1i1_coeff_ij
+      self.cj1i1 = self.cj1i1_coeff_ij.copy()
       # x = 2, y = 0
-      self.cj2i0 = self.cj2i0_coeff_ij
+      self.cj2i0 = self.cj2i0_coeff_ij.copy()
 
     # Provide rows and columns in the 2D input to later functions
-    print self.cj0i0
     self.ncolsx = self.cj0i0.shape[1]
     self.nrowsy = self.cj0i0.shape[0]
 
@@ -508,6 +507,9 @@ class F2D(Flexure):
         #self.build_coeff_matrix_nonzero_blocks_1row(i)
         #self.assemble_blocks_sparse_1row(i)
       self.build_diags()
+
+    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
+    print "HOWL!"
 
   def BCs_that_need_padding(self):
     """
@@ -732,7 +734,6 @@ class F2D(Flexure):
       self.cj1i0[:,j] += self.cj_1i0_coeff_ij[:,j]
       self.cj1i1[:,j] += self.cj_1i1_coeff_ij[:,j] #Interference
       self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
-      self.cj1i1[0,0] +=  + self.cj_1i1_coeff_ij[0,0] #This is fix -- in 2D, have to consider diagonals and interference among boundary conditions! Is anything else needed?
       j = 1
       self.cj_2i0[:,j] += np.inf
       self.cj_1i_1[:,j] += 0
@@ -756,7 +757,6 @@ class F2D(Flexure):
     if self.BC_E == 'Periodic':
       pass
     elif self.BC_E == 'Dirichlet0':
-      print "E BC D"
       j = -1
       self.cj_2i0[:,j] += 0
       self.cj_1i_1[:,j] += 0
@@ -786,7 +786,6 @@ class F2D(Flexure):
       self.cj1i1[:,j] += 0
       self.cj2i0[:,j] += np.inf
     elif self.BC_E == '0Moment0Shear':
-      print "E BC D"
       j = -1
       self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
       self.cj_1i_1[:,j] += 0#-self.cj1i_1_coeff_ij[:,j]
@@ -816,7 +815,6 @@ class F2D(Flexure):
       self.cj1i1[:,j] += 0
       self.cj2i0[:,j] += np.inf
     elif self.BC_E == '0Slope0Shear':
-      print "E BC D"
       j = -1
       self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
       self.cj_1i_1[:,j] += self.cj1i_1_coeff_ij[:,j]
@@ -1035,6 +1033,23 @@ class F2D(Flexure):
     else:
       # Possibly redundant safeguard
       sys.exit("Invalid boundary condition")
+
+    #####################################################
+    # CORNERS: INTERFERENCE BETWEEN BOUNDARY CONDITIONS #
+    #####################################################
+    
+    # In 2D, have to consider diagonals and interference (additive) among 
+    # boundary conditions
+    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
+    if self.BC_N == '0Slope0Shear' and self.BC_W == '0Slope0Shear':
+      self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
+    if self.BC_N == '0Slope0Shear' and self.BC_E == '0Slope0Shear':
+      self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
+    if self.BC_S == '0Slope0Shear' and self.BC_W == '0Slope0Shear':
+      self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
+    if self.BC_S == '0Slope0Shear' and self.BC_E == '0Slope0Shear':
+      self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
+    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
 
     """
     # Template: 1 set
@@ -1533,6 +1548,9 @@ class F2D(Flexure):
   
   def build_diags(self):
     
+    print "OINK"
+    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
+
     ##########################################################
     # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
     ##########################################################
@@ -1561,6 +1579,9 @@ class F2D(Flexure):
     self.cj1i_1 = np.roll(self.cj1i_1, -1, 0)
     self.cj1i1 = np.roll(self.cj1i1, 1, 1)
     self.cj1i1 = np.roll(self.cj1i1, 1, 0)
+
+    print "OINK"
+    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
 
     coeff_array_list = [self.cj_2i0, self.cj_1i0, self.cj1i0, self.cj2i0, self.cj0i_2, self.cj0i_1, self.cj0i1, self.cj0i2, self.cj_1i_1, self.cj_1i1, self.cj1i_1, self.cj1i1, self.cj0i0]
     for array in coeff_array_list:
@@ -1636,6 +1657,8 @@ class F2D(Flexure):
     Requires the coefficient matrix from "2D.coeff_matrix"
     """
     
+    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
+
     self.solver_start_time = time.time()
 
     if self.Debug:
