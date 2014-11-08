@@ -1,8 +1,6 @@
 from __future__ import division # No automatic floor division
 from base import *
 import scipy
-from scipy.sparse.linalg import spsolve
-from scipy import sparse
 from scipy.special import kei
 
 # class F2D inherits Flexure and overrides __init__ therefore setting up the same
@@ -1696,7 +1694,6 @@ class F2D(Flexure):
       print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
     
     if self.solver == "iterative" or self.solver == "Iterative":
-      from scipy.sparse.linalg import isolve
       q0vector = self.q0.reshape(np.prod(self.q0.shape),1, order='F')
       wvector = scipy.sparse.linalg.isolve.lgmres(self.coeff_matrix,q0vector)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
       wvector = wvector[0] # Reach into tuple to get my array back
@@ -1711,7 +1708,7 @@ class F2D(Flexure):
       q0vector = self.q0.reshape(-1)
       # UMFpack is the default direct solver now in python, 
       # but being explicit here
-      wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
+      wvector = scipy.sparse.linalg.spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
 
     # Reshape into grid
     self.w = -wvector.reshape(self.q0.shape)
