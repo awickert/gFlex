@@ -746,6 +746,34 @@ class F2D(Flexure):
       self.cj1i0[:,j] += 0
       self.cj1i1[:,j] += 0
       self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
+      i = 0
+      self.cj_2i0[i,:] += 0
+      self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
+      self.cj_1i0[i,:] += 0
+      self.cj_1i1[i,:] += self.cj_1i_1_coeff_ij[i,:]
+      self.cj0i_2[i,:] += np.nan
+      self.cj0i_1[i,:] += np.nan
+      self.cj0i0[i,:] += 0
+      self.cj0i1[i,:] += self.cj0i_1_coeff_ij[i,:]
+      self.cj0i2[i,:] += self.cj0i_2_coeff_ij[i,:]
+      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj1i0[i,:] += 0
+      self.cj1i1[i,:] += self.cj1i_1_coeff_ij[i,:]
+      self.cj2i0[i,:] += 0
+      i = 1
+      self.cj_2i0[i,:] += 0
+      self.cj_1i_1[i,:] += 0
+      self.cj_1i0[i,:] += 0
+      self.cj_1i1[i,:] += 0
+      self.cj0i_2[i,:] += np.nan
+      self.cj0i_1[i,:] += 0
+      self.cj0i0[i,:] += 0
+      self.cj0i1[i,:] += 0
+      self.cj0i2[i,:] += self.cj0i_2_coeff_ij[i,:]
+      self.cj1i_1[i,:] += 0
+      self.cj1i0[i,:] += 0
+      self.cj1i1[i,:] += 0
+      self.cj2i0[i,:] += 0
     elif self.BC_W == 'Mirror':
       pass
     else:
@@ -871,9 +899,9 @@ class F2D(Flexure):
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 0
       self.cj0i2[i,:] += 0
-      self.cj1i1[i,:] += 0
-      self.cj1i0[i,:] += 0
       self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj1i0[i,:] += 0
+      self.cj1i1[i,:] += 0
       self.cj2i0[i,:] += 0
       i = 1
       self.cj_2i0[i,:] += 0
@@ -885,9 +913,9 @@ class F2D(Flexure):
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 0
       self.cj0i2[i,:] += 0
-      self.cj1i1[i,:] += 0
-      self.cj1i0[i,:] += 0
       self.cj1i_1[i,:] += 0
+      self.cj1i0[i,:] += 0
+      self.cj1i1[i,:] += 0
       self.cj2i0[i,:] += 0
     elif self.BC_N == '0Moment0Shear':
       i = 0
@@ -900,9 +928,9 @@ class F2D(Flexure):
       self.cj0i0[i,:] += 4*self.cj_2i0_coeff_ij + 2*self.cj_1i0_coeff_ij
       self.cj0i1[i,:] += 0
       self.cj0i2[i,:] += 0
-      self.cj1i1[i,:] += 0
-      self.cj1i0[i,:] += -4*self.cj_2i0_coeff_ij - self.cj_1i0_coeff_ij
       self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj1i0[i,:] += -4*self.cj_2i0_coeff_ij - self.cj_1i0_coeff_ij
+      self.cj1i1[i,:] += 0
       self.cj2i0[i,:] += self.cj_2i0_coeff_ij
       i = 1
       self.cj_2i0[i,:] += 0
@@ -914,9 +942,9 @@ class F2D(Flexure):
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 0
       self.cj0i2[i,:] += 0
-      self.cj1i1[i,:] += 0
-      self.cj1i0[i,:] += - 2*self.cj_2i0_coeff_ij
       self.cj1i_1[i,:] += 0
+      self.cj1i0[i,:] += - 2*self.cj_2i0_coeff_ij
+      self.cj1i1[i,:] += 0
       self.cj2i0[i,:] += self.cj_2i0_coeff_ij
 
       i=0
@@ -943,9 +971,9 @@ class F2D(Flexure):
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += self.cj0i_1_coeff_ij[i,:]
       self.cj0i2[i,:] += self.cj0i_2_coeff_ij[i,:]
-      self.cj1i1[i,:] += self.cj1i_1_coeff_ij[i,:]
-      self.cj1i0[i,:] += 0
       self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj1i0[i,:] += 0
+      self.cj1i1[i,:] += self.cj1i_1_coeff_ij[i,:]
       self.cj2i0[i,:] += 0
       i = 1
       self.cj_2i0[i,:] += 0
@@ -957,9 +985,9 @@ class F2D(Flexure):
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 0
       self.cj0i2[i,:] += self.cj0i_2_coeff_ij[i,:]
-      self.cj1i1[i,:] += 0
-      self.cj1i0[i,:] += 0
       self.cj1i_1[i,:] += 0
+      self.cj1i0[i,:] += 0
+      self.cj1i1[i,:] += 0
       self.cj2i0[i,:] += 0
     elif self.BC_N == 'Mirror':
       pass
@@ -994,9 +1022,9 @@ class F2D(Flexure):
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += np.nan
       self.cj0i2[i,:] += np.nan
-      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
-      self.cj1i0[i,:] += 0
       self.cj1i_1[i,:] += 0
+      self.cj1i0[i,:] += 0
+      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
       self.cj2i0[i,:] += 0
     elif self.BC_S == '0Moment0Shear':
       pass
@@ -1011,9 +1039,9 @@ class F2D(Flexure):
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 0
       self.cj0i2[i,:] += np.nan
-      self.cj1i1[i,:] += 0
-      self.cj1i0[i,:] += 0
       self.cj1i_1[i,:] += 0
+      self.cj1i0[i,:] += 0
+      self.cj1i1[i,:] += 0
       self.cj2i0[i,:] += 0
       i = -1
       self.cj_2i0[i,:] += 0
@@ -1025,9 +1053,9 @@ class F2D(Flexure):
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += np.nan
       self.cj0i2[i,:] += np.nan
-      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
-      self.cj1i0[i,:] += 0
       self.cj1i_1[i,:] += self.cj1i1_coeff_ij[i,:]
+      self.cj1i0[i,:] += 0
+      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
       self.cj2i0[i,:] += 0
     elif self.BC_S == 'Mirror':
       pass
@@ -1060,9 +1088,9 @@ class F2D(Flexure):
     self.cj0i0[i,:] += 
     self.cj0i1[i,:] += 
     self.cj0i2[i,:] += 
-    self.cj1i1[i,:] += 
-    self.cj1i0[i,:] += 
     self.cj1i_1[i,:] += 
+    self.cj1i0[i,:] += 
+    self.cj1i1[i,:] += 
     self.cj2i0[i,:] += 
 
     # Template: All sets
@@ -1137,9 +1165,9 @@ class F2D(Flexure):
         self.cj0i0[i,:] += 
         self.cj0i1[i,:] += 
         self.cj0i2[i,:] += 
-        self.cj1i1[i,:] += 
-        self.cj1i0[i,:] += 
         self.cj1i_1[i,:] += 
+        self.cj1i0[i,:] += 
+        self.cj1i1[i,:] += 
         self.cj2i0[i,:] += 
         j = -1
         self.cj_2i0[i,:] += np.nan
@@ -1151,9 +1179,9 @@ class F2D(Flexure):
         self.cj0i0[i,:] += 
         self.cj0i1[i,:] += 
         self.cj0i2[i,:] += 
-        self.cj1i1[i,:] += 
-        self.cj1i0[i,:] += 
         self.cj1i_1[i,:] += 
+        self.cj1i0[i,:] += 
+        self.cj1i1[i,:] += 
         self.cj2i0[i,:] += 
 
       if self.BC_S == 
@@ -1167,9 +1195,9 @@ class F2D(Flexure):
         self.cj0i0[i,:] += 
         self.cj0i1[i,:] += 
         self.cj0i2[i,:] += 
-        self.cj1i1[i,:] += 
-        self.cj1i0[i,:] += 
         self.cj1i_1[i,:] += 
+        self.cj1i0[i,:] += 
+        self.cj1i1[i,:] += 
         self.cj2i0[i,:] += np.nan
         i = -1
         self.cj_2i0[i,:] += 
@@ -1181,9 +1209,9 @@ class F2D(Flexure):
         self.cj0i0[i,:] += 
         self.cj0i1[i,:] += 
         self.cj0i2[i,:] += 
-        self.cj1i1[i,:] += np.nan
-        self.cj1i0[i,:] += np.nan
         self.cj1i_1[i,:] += np.nan
+        self.cj1i0[i,:] += np.nan
+        self.cj1i1[i,:] += np.nan
         self.cj2i0[i,:] += np.nan
     """
 
