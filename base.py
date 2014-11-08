@@ -786,11 +786,14 @@ class Flexure(Isostasy):
   # UNIVERSAL SETTER: LITHOSPHERIC ELASTIC PROPERTIES AND SOLUTION METHOD
   # FOR FLEXURAL ISOSTASY -- EXISTS ATOP THE MORE GENERAL FUNCTION
   def set_value(self, value_key, value):
+
     # [Mode]
     # The lowercase version is here from earlier work; should phase it out
     if value_key == 'method' or value_key == 'Method':
       self.method = value
       print "method set"
+    elif value_key == 'PlateSolutionType':
+      self.PlateSolutionType = value
 
     # [Parameters]
     elif value_key == 'YoungsModulus':
@@ -805,6 +808,7 @@ class Flexure(Isostasy):
           self.readyElasticThickness() # But need a program to handle converting 
                                        # scalars and arrays, as well as potentially 
                                        # needing to load a Te file
+
     # [Input]
     elif value_key == 'CoeffArray':
       # This coefficient array is what is used with the UMFPACK direct solver
@@ -815,11 +819,12 @@ class Flexure(Isostasy):
       # if so, let everyone know
       print "LOADING COEFFICIENT ARRAY"
       print "Elastic thickness maps will not be used for the solution."
+
     # [Numerical]
     elif value_key == 'Solver':
-      self.solver = value
-    elif value_key == 'PlateSolutionType':
-      self.PlateSolutionType = value
+      self.solver = value # Direct or iterative
+    elif value_key == 'convergence':
+      self.iterative_convergence = value
     # None of the above?
     else:
       sys.exit('Error setting, '+value_key)
