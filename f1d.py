@@ -535,31 +535,31 @@ class F1D(Flexure):
       # Also using 0-curvature boundary condition for D (i.e. Te)
       if self.BC_W == '0Moment0Shear':
         i=0
-        self.l2[i] = np.nan
-        self.l1[i] = np.nan
-        self.c0[i] = self.c0_coeff_i + 4*self.l2_coeff_i + 2*self.l1_coeff_i
-        self.r1[i] = self.r1_coeff_i - 4*self.l2_coeff_i - self.l1_coeff_i
-        self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
+        self.l2[i] += np.nan
+        self.l1[i] += np.nan
+        self.c0[i] += 4*self.l2_coeff_i + 2*self.l1_coeff_i
+        self.r1[i] += - 4*self.l2_coeff_i - self.l1_coeff_i
+        self.r2[i] += self.l2_coeff_i
         i=1
-        self.l2[i] = np.nan
-        self.l1[i] = self.l1_coeff_i + 2*self.l2_coeff_i
-        self.c0[i] = self.c0_coeff_i
-        self.r1[i] = self.r1_coeff_i - 2*self.l2_coeff_i
-        self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
+        self.l2[i] += np.nan
+        self.l1[i] += 2*self.l2_coeff_i
+        self.c0[i] += 0
+        self.r1[i] += - 2*self.l2_coeff_i
+        self.r2[i] += self.l2_coeff_i
       
       if self.BC_E == '0Moment0Shear':
         i=-2
-        self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
-        self.l1[i] = self.l1_coeff_i - 2*self.r2_coeff_i
-        self.c0[i] = self.c0_coeff_i
-        self.r1[i] = self.r1_coeff_i + 2*self.r2_coeff_i
-        self.r2[i] = np.nan
+        self.l2[i] += self.r2_coeff_i
+        self.l1[i] += - 2*self.r2_coeff_i
+        self.c0[i] += 0
+        self.r1[i] += self.r1_coeff_i + 2*self.r2_coeff_i
+        self.r2[i] += np.nan
         i=-1
-        self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
-        self.l1[i] = self.l1_coeff_i - 4*self.r2_coeff_i - self.r1_coeff_i
-        self.c0[i] = self.c0_coeff_i + 4*self.r2_coeff_i + 2*self.r1_coeff_i
-        self.r1[i] = np.nan
-        self.r2[i] = np.nan
+        self.l2[i] += self.r2_coeff_i
+        self.l1[i] += - 4*self.r2_coeff_i - self.r1_coeff_i
+        self.c0[i] += 4*self.r2_coeff_i + 2*self.r1_coeff_i
+        self.r1[i] += np.nan
+        self.r2[i] += np.nan
 
   def BC_Mirror(self):
     """
