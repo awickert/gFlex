@@ -236,6 +236,20 @@ class F2D(Flexure):
       self.cj_1i0 *= np.ones(self.q0.shape)
       self.cj_1i1 *= np.ones(self.q0.shape)
       self.cj_2i0 *= np.ones(self.q0.shape)
+      # Create coefficient arrays to manage boundary conditions
+      self.cj2i0_coeff_ij = self.cj2i0.copy()
+      self.cj1i_1_coeff_ij = self.cj1i_1.copy()
+      self.cj1i0_coeff_ij = self.cj1i0.copy()
+      self.cj1i1_coeff_ij = self.cj1i1.copy()
+      self.cj0i_2_coeff_ij = self.cj0i_2.copy()
+      self.cj0i_1_coeff_ij = self.cj0i_1.copy()
+      self.cj0i0_coeff_ij = self.cj0i0.copy()
+      self.cj0i1_coeff_ij = self.cj0i1.copy()
+      self.cj0i2_coeff_ij = self.cj0i2.copy()
+      self.cj_1i_1_coeff_ij = self.cj_1i_1.copy()
+      self.cj_1i0_coeff_ij = self.cj_1i0.copy()
+      self.cj_1i1_coeff_ij = self.cj_1i1.copy()
+      self.cj_2i0_coeff_ij = self.cj_2i0.copy()
       
     elif type(self.Te) == np.ndarray:
     
@@ -401,6 +415,7 @@ class F2D(Flexure):
       self.cj2i0 = self.cj2i0_coeff_ij
 
     # Provide rows and columns in the 2D input to later functions
+    print self.cj0i0
     self.ncolsx = self.cj0i0.shape[1]
     self.nrowsy = self.cj0i0.shape[0]
 
@@ -1538,7 +1553,7 @@ class F2D(Flexure):
     coeff_array_list = [self.cj_2i0, self.cj_1i0, self.cj1i0, self.cj2i0, self.cj0i_2, self.cj0i_1, self.cj0i1, self.cj0i2, self.cj_1i_1, self.cj_1i1, self.cj1i_1, self.cj1i1, self.cj0i0]
     for array in coeff_array_list:
       array[np.isinf(array)] = 0
-      #array[np.isnan(array)] = 0
+      #array[np.isnan(array)] = 0 # had been used for testing
     
       # Reshape to put in solver
       vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
