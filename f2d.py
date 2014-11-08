@@ -1,5 +1,6 @@
 from __future__ import division # No automatic floor division
 from base import *
+import scipy
 from scipy.sparse.linalg import spsolve
 from scipy import sparse
 from scipy.special import kei
@@ -1628,7 +1629,9 @@ class F2D(Flexure):
       Dn2 = vec_cj0i_2
       
       """
-      # Old
+      # Old: y-based
+      # Must have been always wrong, because I used self.nx to separate
+      # these rows.... ?
       Up2 = vec_cj_2i0
       Up1 = np.vstack(( vec_cj_1i_1, vec_cj_1i0, vec_cj_1i1 ))
       Mid = np.vstack(( vec_cj0i_2, vec_cj0i_1, vec_cj0i0, vec_cj0i1, vec_cj0i2 ))
@@ -1637,18 +1640,16 @@ class F2D(Flexure):
       """
 
       # Arrange in solver
-                          
       diags = np.vstack(( Dn2, \
                           Dn1, \
                           Mid, \
                           Up1, \
                           Up2 ))
                           
+      # Number of rows and columns for array size and offsets
       self.ny = self.nrowsy
       self.nx = self.ncolsx
                           
-      import scipy
-      
       self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
 
       #self.coeff_matrix = scipy.sparse.spdiags(np.vstack((Up1, Mid)), [-self.nx-1, -self.nx,  -self.nx+1, -2, -1, 0, 1, 2], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
@@ -1696,20 +1697,9 @@ class F2D(Flexure):
     
     if self.solver == "iterative" or self.solver == "Iterative":
       from scipy.sparse.linalg import isolve
-      # Set x0 from direct solver
-      #coeff_matrix = sparse.csr_matrix(self.coeff_matrix)
-      #q0vector = self.q0.reshape(1,np.prod(self.q0.shape))
-      #q0vector = sparse.csr_matrix(q0vector)
-      # UMFpack is the default direct solver now in python, 
-      # but being explicit here
-      #wvector = spsolve(coeff_matrix,q0vector,use_umfpack=True)
-      # Now iterative
       q0vector = self.q0.reshape(np.prod(self.q0.shape),1, order='F')
-      #woldvector = self.wold.reshape(np.prod(self.wold.shape),1)
-      #wvector = isolve.minres(self.coeff_matrix,q0vector)    # fast
-      wvector = isolve.lgmres(self.coeff_matrix,q0vector)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
+      wvector = scipy.sparse.linalg.isolve.lgmres(self.coeff_matrix,q0vector)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
       wvector = wvector[0] # Reach into tuple to get my array back
-
     else:
       if self.solver == "direct" or self.solver == "Direct":
         pass
@@ -1719,7 +1709,6 @@ class F2D(Flexure):
       # Convert coefficient array format to csr for sparse solver
       #coeff_matrix = sparse.csr_matrix(self.coeff_matrix)
       q0vector = self.q0.reshape(-1)
-      #q0vector = sparse.csr_matrix(q0vector)
       # UMFpack is the default direct solver now in python, 
       # but being explicit here
       wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
