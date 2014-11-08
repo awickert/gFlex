@@ -1588,44 +1588,44 @@ class F2D(Flexure):
       array[np.isinf(array)] = 0
       #array[np.isnan(array)] = 0 # had been used for testing
     
-      # Reshape to put in solver
-      vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
-      vec_cj_1i_1 = np.reshape(self.cj_1i_1, -1, order='C')
-      vec_cj_1i0 = np.reshape(self.cj_1i0, -1, order='C')
-      vec_cj_1i1 = np.reshape(self.cj_1i1, -1, order='C')
-      vec_cj0i_2 = np.reshape(self.cj0i_2, -1, order='C')
-      vec_cj0i_1 = np.reshape(self.cj0i_1, -1, order='C')
-      vec_cj0i0 = np.reshape(self.cj0i0, -1, order='C')
-      vec_cj0i1 = np.reshape(self.cj0i1, -1, order='C')
-      vec_cj0i2 = np.reshape(self.cj0i2, -1, order='C')
-      vec_cj1i_1 = np.reshape(self.cj1i_1, -1, order='C')
-      vec_cj1i0 = np.reshape(self.cj1i0, -1, order='C')
-      vec_cj1i1 = np.reshape(self.cj1i1, -1, order='C')
-      vec_cj2i0 = np.reshape(self.cj2i0, -1, order='C')
-      
-      vec_cj_1i1[59] = vec_cj_1i1[60]
-      
-      # Changed this 6 Nov. 2014 in betahaus Berlin to be x-based
-      Up2 = vec_cj0i2
-      Up1 = np.vstack(( vec_cj_1i1, vec_cj0i1, vec_cj1i1 ))
-      Mid = np.vstack(( vec_cj_2i0, vec_cj_1i0, vec_cj0i0, vec_cj1i0, vec_cj2i0 ))
-      Dn1 = np.vstack(( vec_cj_1i_1, vec_cj0i_1, vec_cj1i_1 ))
-      Dn2 = vec_cj0i_2
-      
-      # Arrange in solver
-      diags = np.vstack(( Dn2, \
-                          Dn1, \
-                          Mid, \
-                          Up1, \
-                          Up2 ))
-                          
-      # Number of rows and columns for array size and offsets
-      self.ny = self.nrowsy
-      self.nx = self.ncolsx
-                          
-      self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
+    # Reshape to put in solver
+    vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
+    vec_cj_1i_1 = np.reshape(self.cj_1i_1, -1, order='C')
+    vec_cj_1i0 = np.reshape(self.cj_1i0, -1, order='C')
+    vec_cj_1i1 = np.reshape(self.cj_1i1, -1, order='C')
+    vec_cj0i_2 = np.reshape(self.cj0i_2, -1, order='C')
+    vec_cj0i_1 = np.reshape(self.cj0i_1, -1, order='C')
+    vec_cj0i0 = np.reshape(self.cj0i0, -1, order='C')
+    vec_cj0i1 = np.reshape(self.cj0i1, -1, order='C')
+    vec_cj0i2 = np.reshape(self.cj0i2, -1, order='C')
+    vec_cj1i_1 = np.reshape(self.cj1i_1, -1, order='C')
+    vec_cj1i0 = np.reshape(self.cj1i0, -1, order='C')
+    vec_cj1i1 = np.reshape(self.cj1i1, -1, order='C')
+    vec_cj2i0 = np.reshape(self.cj2i0, -1, order='C')
+    
+    vec_cj_1i1[59] = vec_cj_1i1[60]
+    
+    # Changed this 6 Nov. 2014 in betahaus Berlin to be x-based
+    Up2 = vec_cj0i2
+    Up1 = np.vstack(( vec_cj_1i1, vec_cj0i1, vec_cj1i1 ))
+    Mid = np.vstack(( vec_cj_2i0, vec_cj_1i0, vec_cj0i0, vec_cj1i0, vec_cj2i0 ))
+    Dn1 = np.vstack(( vec_cj_1i_1, vec_cj0i_1, vec_cj1i_1 ))
+    Dn2 = vec_cj0i_2
+    
+    # Arrange in solver
+    diags = np.vstack(( Dn2, \
+                        Dn1, \
+                        Mid, \
+                        Up1, \
+                        Up2 ))
+                        
+    # Number of rows and columns for array size and offsets
+    self.ny = self.nrowsy
+    self.nx = self.ncolsx
+                        
+    self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
 
-      #self.coeff_matrix = scipy.sparse.spdiags(np.vstack((Up1, Mid)), [-self.nx-1, -self.nx,  -self.nx+1, -2, -1, 0, 1, 2], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
+    #self.coeff_matrix = scipy.sparse.spdiags(np.vstack((Up1, Mid)), [-self.nx-1, -self.nx,  -self.nx+1, -2, -1, 0, 1, 2], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
 
   def calc_max_flexural_wavelength(self):
     """
