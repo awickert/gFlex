@@ -1505,46 +1505,6 @@ class F2D(Flexure):
     
   
   def build_diags(self):
-    # Assign boundary conditions
-    # Dirichlet force right now
-    """
-    self.cj_2i0[:2,:] = 0
-    self.cj_2i0[-2:,:] = 0
-
-    self.cj_1i_1[:1,:] = 0
-    self.cj_1i_1[-1:,:] = 0
-    self.cj_1i_1[:,:1] = 0
-    self.cj_1i_1[:,-1:] = 0
-    self.cj_1i0[:1,:] = 0
-    self.cj_1i0[-1:,:] = 0
-    self.cj_1i1[:1,:] = 0
-    self.cj_1i1[-1:,:] = 0
-    self.cj_1i1[:,:1] = 0
-    self.cj_1i1[:,-1:] = 0
-
-    self.cj0i_2[:,:2] = 0
-    self.cj0i_2[:,-2:] = 0
-    self.cj0i_1[:,:1] = 0
-    self.cj0i_1[:,-1:] = 0
-    self.cj0i1[:,:1] = 0
-    self.cj0i1[:,-1:] = 0
-    self.cj0i2[:,:2] = 0
-    self.cj0i2[:,-2:] = 0
-    
-    self.cj1i_1[:1,:] = 0
-    self.cj1i_1[-1:,:] = 0
-    self.cj1i_1[:,:1] = 0
-    self.cj1i_1[:,-1:] = 0
-    self.cj_1i0[:1,:] = 0
-    self.cj_1i0[-1:,:] = 0
-    self.cj1i1[:1,:] = 0
-    self.cj1i1[-1:,:] = 0
-    self.cj1i1[:,:1] = 0
-    self.cj1i1[:,-1:] = 0
-
-    self.cj2i0[:2,:] = 0
-    self.cj2i0[-2:,:] = 0
-    """
     
     ##########################################################
     # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
@@ -1575,28 +1535,6 @@ class F2D(Flexure):
     self.cj1i1 = np.roll(self.cj1i1, 1, 1)
     self.cj1i1 = np.roll(self.cj1i1, 1, 0)
 
-    """
-    # Roll x
-    self.cj_2i0 = np.roll(self.cj_2i0, -2, 0)
-    self.cj_1i0 = np.roll(self.cj_1i0, -1, 0)
-    self.cj1i0 = np.roll(self.cj1i0, 1, 0)
-    self.cj2i0 = np.roll(self.cj2i0, 2, 0)
-    # Roll y
-    self.cj0i_2 = np.roll(self.cj0i_2, -2, 1)
-    self.cj0i_1 = np.roll(self.cj0i_1, -1, 1)
-    self.cj0i1 = np.roll(self.cj0i1, 1, 1)
-    self.cj0i2 = np.roll(self.cj0i2, 2, 1)
-    # Roll x and y
-    self.cj_1i_1 = np.roll(self.cj_1i_1, -1, 0)
-    self.cj_1i_1 = np.roll(self.cj_1i_1, -1, 1)
-    self.cj_1i1 = np.roll(self.cj_1i1, -1, 0)
-    self.cj_1i1 = np.roll(self.cj_1i1, 1, 1)
-    self.cj1i_1 = np.roll(self.cj1i_1, 1, 0)
-    self.cj1i_1 = np.roll(self.cj1i_1, -1, 1)
-    self.cj1i1 = np.roll(self.cj1i1, 1, 0)
-    self.cj1i1 = np.roll(self.cj1i1, 1, 1)
-    """
-    
     coeff_array_list = [self.cj_2i0, self.cj_1i0, self.cj1i0, self.cj2i0, self.cj0i_2, self.cj0i_1, self.cj0i1, self.cj0i2, self.cj_1i_1, self.cj_1i1, self.cj1i_1, self.cj1i1, self.cj0i0]
     for array in coeff_array_list:
       array[np.isinf(array)] = 0
@@ -1626,17 +1564,6 @@ class F2D(Flexure):
       Dn1 = np.vstack(( vec_cj_1i_1, vec_cj0i_1, vec_cj1i_1 ))
       Dn2 = vec_cj0i_2
       
-      """
-      # Old: y-based
-      # Must have been always wrong, because I used self.nx to separate
-      # these rows.... ?
-      Up2 = vec_cj_2i0
-      Up1 = np.vstack(( vec_cj_1i_1, vec_cj_1i0, vec_cj_1i1 ))
-      Mid = np.vstack(( vec_cj0i_2, vec_cj0i_1, vec_cj0i0, vec_cj0i1, vec_cj0i2 ))
-      Dn1 = np.vstack(( vec_cj1i_1, vec_cj1i0, vec_cj1i1 ))
-      Dn2 = vec_cj2i0
-      """
-
       # Arrange in solver
       diags = np.vstack(( Dn2, \
                           Dn1, \
