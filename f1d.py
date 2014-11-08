@@ -249,6 +249,45 @@ class F1D(Flexure):
     """
     Builds the diagonals for the coefficient array
     """
+
+    ##############################
+    # BUILD GENERAL COEFFICIENTS #
+    ##############################
+
+    # l2 corresponds to top value in solution vector, so to the left (-) side
+    # Good reference for how to determine central difference (and other) coefficients is:
+    # Fornberg, 1998: Generation of Finite Difference Formulas on Arbitrarily Spaced Grids
+
+    ###################################################
+    # DEFINE SUB-ARRAYS FOR DERIVATIVE DISCRETIZATION #
+    ###################################################
+    if np.isscalar(self.Te):
+      Dm1 = D0 = Dp1 = self.D
+    else:
+      Dm1 = self.D[:-2]
+      D0  = self.D[1:-1]
+      Dp1 = self.D[2:]
+
+    ###########################################################
+    # DEFINE COEFFICIENTS TO W_-2 -- W_+2 WITH B.C.'S APPLIED #
+    ###########################################################
+    self.l2_coeff_i = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
+    self.l1_coeff_i = ( -6.*D0 + 2.*Dp1 ) / self.dx4
+    self.c0_coeff_i = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
+    self.r1_coeff_i = ( 2.*Dm1 - 6.*D0 ) / self.dx4
+    self.r2_coeff_i = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
+    # These will be just the 1, -4, 6, -4, 1 for constant Te, but are used in 
+    # some solution methods, so will be calculated no matter what.
+    
+    """
+    # Template For Coefficient Combination
+    self.l2[i] = self.l2_coeff_i
+    self.l1[i] = self.l1_coeff_i
+    self.c0[i] = self.c0_coeff_i
+    self.r1[i] = self.r1_coeff_i
+    self.r2[i] = self.r2_coeff_i
+    """
+
     if np.isscalar(self.Te):
       # Diagonals, from left to right, for all but the boundaries 
       self.l2 = 1 * self.D/self.dx4
@@ -264,36 +303,6 @@ class F1D(Flexure):
       self.r2 *= np.ones(self.q0.shape)
 
     elif type(self.Te) == np.ndarray:
-      # l2 corresponds to top value in solution vector, so to the left (-) side
-      # Good reference for how to determine central difference (and other) coefficients is:
-      # Fornberg, 1998: Generation of Finite Difference Formulas on Arbitrarily Spaced Grids
-
-
-      ###################################################
-      # DEFINE SUB-ARRAYS FOR DERIVATIVE DISCRETIZATION #
-      ###################################################
-      Dm1 = self.D[:-2]
-      D0  = self.D[1:-1]
-      Dp1 = self.D[2:]
-
-      ###########################################################
-      # DEFINE COEFFICIENTS TO W_-2 -- W_+2 WITH B.C.'S APPLIED #
-      ###########################################################
-      self.l2_coeff_i = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
-      self.l1_coeff_i = ( -6.*D0 + 2.*Dp1 ) / self.dx4
-      self.c0_coeff_i = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
-      self.r1_coeff_i = ( 2.*Dm1 - 6.*D0 ) / self.dx4
-      self.r2_coeff_i = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
-      
-      """
-      # Template For Coefficient Combination
-      self.l2[i] = self.l2_coeff_i
-      self.l1[i] = self.l1_coeff_i
-      self.c0[i] = self.c0_coeff_i
-      self.r1[i] = self.r1_coeff_i
-      self.r2[i] = self.r2_coeff_i
-      """
-
       ###################################################################
       # START DIAGONALS AS SIMPLY THE BASE COEFFICIENTS, WITH NO B.C.'S #
       ###################################################################
@@ -302,6 +311,7 @@ class F1D(Flexure):
       self.c0 = self.c0_coeff_i.copy()
       self.r1 = self.r1_coeff_i.copy()
       self.r2 = self.r2_coeff_i.copy()
+
     # Number of columns; equals number of rows too - square coeff matrix
     self.ncolsx = self.c0.shape[0]
     
@@ -572,31 +582,31 @@ class F1D(Flexure):
     """
     if self.BC_W == 'Mirror':
       i=0
-      self.l2[i] = np.nan
-      self.l1[i] = np.nan
-      self.c0[i] = self.c0_coeff_i
-      self.r1[i] = self.r1_coeff_i + self.l1_coeff_i
-      self.r2[i] = self.r2_coeff_i + self.l2_coeff_i
+      self.l2[i] += np.nan
+      self.l1[i] += np.nan
+      self.c0[i] += 0
+      self.r1[i] += self.l1_coeff_i
+      self.r2[i] += self.l2_coeff_i
       i=1
-      self.l2[i] = np.nan
-      self.l1[i] = self.l1_coeff_i
-      self.c0[i] = self.c0_coeff_i + self.l2_coeff_i
-      self.r1[i] = self.r1_coeff_i
-      self.r2[i] = self.r2_coeff_i
+      self.l2[i] += np.nan
+      self.l1[i] += 0
+      self.c0[i] += self.l2_coeff_i
+      self.r1[i] += 0
+      self.r2[i] += 0
     
     if self.BC_E == 'Mirror':
       i=-2
-      self.l2[i] = self.l2_coeff_i
-      self.l1[i] = self.l1_coeff_i
-      self.c0[i] = self.c0_coeff_i + self.r2_coeff_i
-      self.r1[i] = self.r1_coeff_i
-      self.r2[i] = np.nan
+      self.l2[i] += 0
+      self.l1[i] += 0
+      self.c0[i] += self.r2_coeff_i
+      self.r1[i] += 0
+      self.r2[i] += np.nan
       i=-1
-      self.l2[i] = self.l2_coeff_i + self.r2_coeff_i
-      self.l1[i] = self.l1_coeff_i + self.r1_coeff_i
-      self.c0[i] = self.c0_coeff_i
-      self.r1[i] = np.nan
-      self.r2[i] = np.nan
+      self.l2[i] += self.r2_coeff_i
+      self.l1[i] += self.r1_coeff_i
+      self.c0[i] += 0
+      self.r1[i] += np.nan
+      self.r2[i] += np.nan
     
   def calc_max_flexural_wavelength(self):
     """
