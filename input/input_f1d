@@ -29,10 +29,9 @@ Plot=combo
 [numerical]
 GridSpacing_x=6000
 BoundaryCondition_West=0Moment0Shear
-BoundaryCondition_East=Dirichlet0
-; Solver can be direct or iterative; currently only works in 2D
-; (Direct only in 1D, no matter what is written here)
-Solver=direct
+BoundaryCondition_East=Mirror
+; Solver can be direct or iterative
+Solver=iterative
 ; Iterates until this is the difference between two subsequent iterations
 ; Set as 0 if you don't want to iterate
 convergence=1E-3

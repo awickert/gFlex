@@ -1,7 +1,7 @@
 from __future__ import division # No automatic floor division
 from base import *
 from scipy.sparse import dia_matrix, csr_matrix, spdiags
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import spsolve, isolve
 
 class F1D(Flexure):
   def initialize(self, filename):
@@ -54,7 +54,7 @@ class F1D(Flexure):
     except:
       self.elasprep() # define dx4 and D within self
       self.coeff_matrix_creator() # And define self.coeff
-    self.direct_fd_solve() # Get the deflection, "w"
+    self.fd_solve() # Get the deflection, "w"
 
   def FFT(self):
     if self.plotChoice:
@@ -626,9 +626,9 @@ class F1D(Flexure):
     self.maxFlexuralWavelength = 2*np.pi*alpha
     self.maxFlexuralWavelength_ncells = int(np.ceil(self.maxFlexuralWavelength / self.dx))
     
-  def direct_fd_solve(self):
+  def fd_solve(self):
     """
-    w = direct_fd_solve()
+    w = fd_solve()
       where coeff is the sparse coefficient matrix output from function
       coeff_matrix and q0 is the array of loads
 
@@ -643,13 +643,25 @@ class F1D(Flexure):
     
     self.solver_start_time = time.time()
     
-    self.q0sparse = csr_matrix(-self.q0) # Negative so bending down with positive load,
-                                    # bending up with negative load (i.e. material
-                                    # removed)
-                                    # *self.dx
-    # UMFpack is now the default, but setting true just to be sure in case
-    # anything changes
-    self.w = spsolve(self.coeff_matrix, self.q0sparse, use_umfpack=True)
+    if self.solver == "iterative" or self.solver == "Iterative":
+      if self.Debug:
+        print "Using generalized minimal residual method for iterative solution"
+      # q0 negative so bends down with positive load, bends up with neative load 
+      # (i.e. material removed)
+      w = isolve.lgmres(self.coeff_matrix, -self.q0)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
+      self.w = w[0] # Reach into tuple to get my array back
+    else:
+      if self.solver == "direct" or self.solver == "Direct":
+        if self.Debug:
+          print "Using direct solution with UMFpack"
+      else:
+        print "Solution type not understood:"
+        print "Defaulting to direct solution with UMFpack"
+      # UMFpack is now the default, but setting true just to be sure in case
+      # anything changes
+      # q0 negative so bends down with positive load, bends up with neative load 
+      # (i.e. material removed)
+      self.w = spsolve(self.coeff_matrix, -self.q0, use_umfpack=True)
     
     self.time_to_solve = time.time() - self.solver_start_time
     # Always print this!
