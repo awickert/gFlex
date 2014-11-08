@@ -1694,8 +1694,13 @@ class F2D(Flexure):
       print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
     
     if self.solver == "iterative" or self.solver == "Iterative":
+      sys.exit("\nCurrently, iterative solvers smear out the solution from\n"+
+                "SW to NE. This must be fixed before they are implemented.\n"+
+                "However, the direct solver works well enough that this is\n"+
+                "not a current priority.")
       q0vector = self.q0.reshape(np.prod(self.q0.shape),1, order='F')
-      wvector = scipy.sparse.linalg.isolve.lgmres(self.coeff_matrix,q0vector)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
+      # Used to have "lgmres", but gave different answer than direct solver!
+      wvector = scipy.sparse.linalg.isolve.cgs(self.coeff_matrix, q0vector)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
       wvector = wvector[0] # Reach into tuple to get my array back
     else:
       if self.solver == "direct" or self.solver == "Direct":
