@@ -508,9 +508,6 @@ class F2D(Flexure):
         #self.assemble_blocks_sparse_1row(i)
       self.build_diags()
 
-    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
-    print "HOWL!"
-
   def BCs_that_need_padding(self):
     """
     This function acts as a main interface for BC_Mirror
@@ -1040,7 +1037,6 @@ class F2D(Flexure):
     
     # In 2D, have to consider diagonals and interference (additive) among 
     # boundary conditions
-    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
     if self.BC_N == '0Slope0Shear' and self.BC_W == '0Slope0Shear':
       self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
     if self.BC_N == '0Slope0Shear' and self.BC_E == '0Slope0Shear':
@@ -1049,7 +1045,6 @@ class F2D(Flexure):
       self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
     if self.BC_S == '0Slope0Shear' and self.BC_E == '0Slope0Shear':
       self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
-    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
 
     """
     # Template: 1 set
@@ -1547,9 +1542,6 @@ class F2D(Flexure):
     
   
   def build_diags(self):
-    
-    print "OINK"
-    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
 
     ##########################################################
     # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
@@ -1580,9 +1572,6 @@ class F2D(Flexure):
     self.cj1i1 = np.roll(self.cj1i1, 1, 1)
     self.cj1i1 = np.roll(self.cj1i1, 1, 0)
 
-    print "OINK"
-    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
-
     coeff_array_list = [self.cj_2i0, self.cj_1i0, self.cj1i0, self.cj2i0, self.cj0i_2, self.cj0i_1, self.cj0i1, self.cj0i2, self.cj_1i_1, self.cj_1i1, self.cj1i_1, self.cj1i1, self.cj0i0]
     for array in coeff_array_list:
       array[np.isinf(array)] = 0
@@ -1602,8 +1591,6 @@ class F2D(Flexure):
     vec_cj1i0 = np.reshape(self.cj1i0, -1, order='C')
     vec_cj1i1 = np.reshape(self.cj1i1, -1, order='C')
     vec_cj2i0 = np.reshape(self.cj2i0, -1, order='C')
-    
-    vec_cj_1i1[59] = vec_cj_1i1[60]
     
     # Changed this 6 Nov. 2014 in betahaus Berlin to be x-based
     Up2 = vec_cj0i2
@@ -1657,8 +1644,6 @@ class F2D(Flexure):
     Requires the coefficient matrix from "2D.coeff_matrix"
     """
     
-    print self.cj1i1[0,0], self.cj_1i1[0,-1], self.cj1i_1[-1,0], self.cj_1i_1[-1,-1]
-
     self.solver_start_time = time.time()
 
     if self.Debug:
