@@ -1635,14 +1635,11 @@ class F2D(Flexure):
       print 'self.q0', self.q0.shape
       print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
     
+    q0vector = self.q0.reshape(-1, order='C')
     if self.solver == "iterative" or self.solver == "Iterative":
-      sys.exit("\nCurrently, iterative solvers smear out the solution from\n"+
-                "SW to NE. This must be fixed before they are implemented.\n"+
-                "However, the direct solver works well enough that this is\n"+
-                "not a current priority.")
-      q0vector = self.q0.reshape(np.prod(self.q0.shape),1, order='F')
-      # Used to have "lgmres", but gave different answer than direct solver!
-      wvector = scipy.sparse.linalg.isolve.cgs(self.coeff_matrix, q0vector)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
+      if self.Debug:
+        print "Using congugate gradient method for iterative solution"
+      wvector = scipy.sparse.linalg.isolve.lgmres(self.coeff_matrix, q0vector)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
       wvector = wvector[0] # Reach into tuple to get my array back
     else:
       if self.solver == "direct" or self.solver == "Direct":
@@ -1650,11 +1647,6 @@ class F2D(Flexure):
       else:
         print "Solution type not understood:"
         print "Defaulting to direct solution with UMFpack"
-      # Convert coefficient array format to csr for sparse solver
-      #coeff_matrix = sparse.csr_matrix(self.coeff_matrix)
-      q0vector = self.q0.reshape(-1)
-      # UMFpack is the default direct solver now in python, 
-      # but being explicit here
       wvector = scipy.sparse.linalg.spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
 
     # Reshape into grid
