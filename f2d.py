@@ -536,470 +536,479 @@ class F2D(Flexure):
     them for and applying them to the elastic thickness grid
     """
 
-    if np.isscalar(self.Te):
-      if self.Debug:
-        print("Scalar Te: no need to modify boundaries.")
+    ##############################################################
+    # AUTOMATICALLY SELECT FLEXURAL RIGIDITY BOUNDARY CONDITIONS #
+    ##############################################################
+    # West
+    if self.BC_W == 'Periodic':
+      self.BC_Rigidity_W = 'periodic'
+    elif (self.BC_W == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+      self.BC_Rigidity_W = '0 curvature'
+    elif self.BC_W == 'Mirror':
+      self.BC_Rigidity_W = 'mirror symmetry'
     else:
-
-      ##############################################################
-      # AUTOMATICALLY SELECT FLEXURAL RIGIDITY BOUNDARY CONDITIONS #
-      ##############################################################
-      # West
-      if self.BC_W == 'Periodic':
-        self.BC_Rigidity_W = 'periodic'
-      elif (self.BC_W == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
-        self.BC_Rigidity_W = '0 curvature'
-      elif self.BC_W == 'Mirror':
-        self.BC_Rigidity_W = 'mirror symmetry'
-      else:
-        sys.exit("Invalid Te B.C. case")
-      # East
-      if self.BC_E == 'Periodic':
-        self.BC_Rigidity_E = 'periodic'
-      elif (self.BC_E == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
-        self.BC_Rigidity_E = '0 curvature'
-      elif self.BC_E == 'Mirror':
-        self.BC_Rigidity_E = 'mirror symmetry'
-      else:
-        sys.exit("Invalid Te B.C. case")
-      # North
-      if self.BC_N == 'Periodic':
-        self.BC_Rigidity_N = 'periodic'
-      elif (self.BC_N == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
-        self.BC_Rigidity_N = '0 curvature'
-      elif self.BC_N == 'Mirror':
-        self.BC_Rigidity_N = 'mirror symmetry'
-      else:
-        sys.exit("Invalid Te B.C. case")
-      # South
-      if self.BC_S == 'Periodic':
-        self.BC_Rigidity_S = 'periodic'
-      elif (self.BC_S == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
-        self.BC_Rigidity_S = '0 curvature'
-      elif self.BC_S == 'Mirror':
-        self.BC_Rigidity_S = 'mirror symmetry'
-      else:
-        sys.exit("Invalid Te B.C. case")
-      
-      #############
-      # PAD ARRAY #
-      #############
-      #self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
-      #self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
+      sys.exit("Invalid Te B.C. case")
+    # East
+    if self.BC_E == 'Periodic':
+      self.BC_Rigidity_E = 'periodic'
+    elif (self.BC_E == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+      self.BC_Rigidity_E = '0 curvature'
+    elif self.BC_E == 'Mirror':
+      self.BC_Rigidity_E = 'mirror symmetry'
+    else:
+      sys.exit("Invalid Te B.C. case")
+    # North
+    if self.BC_N == 'Periodic':
+      self.BC_Rigidity_N = 'periodic'
+    elif (self.BC_N == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+      self.BC_Rigidity_N = '0 curvature'
+    elif self.BC_N == 'Mirror':
+      self.BC_Rigidity_N = 'mirror symmetry'
+    else:
+      sys.exit("Invalid Te B.C. case")
+    # South
+    if self.BC_S == 'Periodic':
+      self.BC_Rigidity_S = 'periodic'
+    elif (self.BC_S == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+      self.BC_Rigidity_S = '0 curvature'
+    elif self.BC_S == 'Mirror':
+      self.BC_Rigidity_S = 'mirror symmetry'
+    else:
+      sys.exit("Invalid Te B.C. case")
+    
+    #############
+    # PAD ARRAY #
+    #############
+    #self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
+    #self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
+    if np.isscalar(self.Te):
+      # No longer scalar! But already went through get_coeff_values() step, 
+      # which is the other important check
+      # Though of course constant Te is just a special case and can be solved
+      # by the general solution methods
+      self.D *= np.ones(self.q0.shape)
+      # THIS WILL GO OUTSIDE IF-STATEMENT ONCE I CHANGE THE SHAPE OF THE
+      # Te ARRAYS!!!
+      self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
+      self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
+    else:
       # Temporarily:
       self.D[:,0] = np.nan
       self.D[:,-1] = np.nan
       self.D[0,:] = np.nan
       self.D[-1,:] = np.nan
 
-      ###############################################################
-      # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
-      ###############################################################
-      if self.BC_Rigidity_W == "0 curvature":
-        self.D[:,0] = 2*self.D[:,1] - self.D[:,2]
-      if self.BC_Rigidity_E == "0 curvature":
-        self.D[:,-1] = 2*self.D[:,-2] - self.D[:,-3]
-      if self.BC_Rigidity_N == "0 curvature":
-        self.D[0,:] = 2*self.D[1,:] - self.D[2,:]
-      if self.BC_Rigidity_S == "0 curvature":
-        self.D[-1,:] = 2*self.D[-2,:] - self.D[-3,:]
+    ###############################################################
+    # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
+    ###############################################################
+    if self.BC_Rigidity_W == "0 curvature":
+      self.D[:,0] = 2*self.D[:,1] - self.D[:,2]
+    if self.BC_Rigidity_E == "0 curvature":
+      self.D[:,-1] = 2*self.D[:,-2] - self.D[:,-3]
+    if self.BC_Rigidity_N == "0 curvature":
+      self.D[0,:] = 2*self.D[1,:] - self.D[2,:]
+    if self.BC_Rigidity_S == "0 curvature":
+      self.D[-1,:] = 2*self.D[-2,:] - self.D[-3,:]
 
-      if self.BC_Rigidity_W == "mirror symmetry":
-        self.D[:,0] = self.D[:,2]
-      if self.BC_Rigidity_E == "mirror symmetry":
-        self.D[:,-1] = self.D[:,-3]
-      if self.BC_Rigidity_N == "mirror symmetry":
-        self.D[0,:] = self.D[2,:] # Yes, will work on corners -- double-reflection
-      if self.BC_Rigidity_S == "mirror symmetry":
-        self.D[-1,:] = self.D[-3,:]
-        
-      if self.BC_Rigidity_W == "periodic":
-        self.D[:,0] = self.D[:,-2]
-      if self.BC_Rigidity_E == "periodic":
-        self.D[:,-1] = self.D[:,-3]
-      if self.BC_Rigidity_N == "periodic":
-        self.D[0,:] = self.D[-2,:]
-      if self.BC_Rigidity_S == "periodic":
-        self.D[-1,:] = self.D[-3,:]
-        
+    if self.BC_Rigidity_W == "mirror symmetry":
+      self.D[:,0] = self.D[:,2]
+    if self.BC_Rigidity_E == "mirror symmetry":
+      self.D[:,-1] = self.D[:,-3]
+    if self.BC_Rigidity_N == "mirror symmetry":
+      self.D[0,:] = self.D[2,:] # Yes, will work on corners -- double-reflection
+    if self.BC_Rigidity_S == "mirror symmetry":
+      self.D[-1,:] = self.D[-3,:]
+      
+    if self.BC_Rigidity_W == "periodic":
+      self.D[:,0] = self.D[:,-2]
+    if self.BC_Rigidity_E == "periodic":
+      self.D[:,-1] = self.D[:,-3]
+    if self.BC_Rigidity_N == "periodic":
+      self.D[0,:] = self.D[-2,:]
+    if self.BC_Rigidity_S == "periodic":
+      self.D[-1,:] = self.D[-3,:]
+      
 ### NEW FCN HERE
 ### AND TRY REMOVING THE REPEAT CODE IN 1D CASE!
 
-      # The next section of code is split over several functions for the 1D 
-      # case, but will be all in one function here, at least for now.
-      
-      # Inf for E-W to separate from nan for N-S. N-S will spill off ends
-      # of array (C order, in rows), while E-W will be internal, so I will
-      # later change np.inf to 0 to represent where internal boundaries 
-      # occur.
+    # The next section of code is split over several functions for the 1D 
+    # case, but will be all in one function here, at least for now.
+    
+    # Inf for E-W to separate from nan for N-S. N-S will spill off ends
+    # of array (C order, in rows), while E-W will be internal, so I will
+    # later change np.inf to 0 to represent where internal boundaries 
+    # occur.
 
-      #######################################################################
-      # DEFINE COEFFICIENTS TO W_j-2 -- W_j+2 WITH B.C.'S APPLIED (x: W, E) #
-      #######################################################################
-      
-      if self.BC_W == 'Periodic':
-        pass
-      elif self.BC_W == 'Dirichlet0':
-        j = 0
-        self.cj_2i0[:,j] += np.inf
-        self.cj_1i_1[:,j] += np.inf
-        self.cj_1i0[:,j] += np.inf
-        self.cj_1i1[:,j] += np.inf
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += 0
-        self.cj1i0[:,j] += 0
-        self.cj1i1[:,j] += 0
-        self.cj2i0[:,j] += 0
-        j = 1
-        self.cj_2i0[:,j] += np.inf
-        self.cj_1i_1[:,j] += 0
-        self.cj_1i0[:,j] += 0
-        self.cj_1i1[:,j] += 0
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += 0
-        self.cj1i0[:,j] += 0
-        self.cj1i1[:,j] += 0
-        self.cj2i0[:,j] += 0
-      elif self.BC_W == '0Moment0Shear':
-        j = 0
-        self.cj_2i0[:,j] += np.inf
-        self.cj_1i_1[:,j] += np.inf
-        self.cj_1i0[:,j] += np.inf
-        self.cj_1i1[:,j] += np.inf
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 4*self.cj_2i0_coeff_ij[:,j] + 2*self.cj_1i0_coeff_ij[:,j]
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += 0
-        self.cj1i0[:,j] += -4*self.cj_2i0_coeff_ij[:,j] - self.cj_1i0_coeff_ij[:,j]
-        self.cj1i1[:,j] += 0
-        self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
-        j = 1
-        self.cj_2i0[:,j] += np.inf
-        self.cj_1i_1[:,j] += 0
-        self.cj_1i0[:,j] += 2*self.cj_2i0_coeff_ij[:,j]
-        self.cj_1i1[:,j] += 0
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += 0
-        self.cj1i0[:,j] += -2*self.cj_2i0_coeff_ij[:,j]
-        self.cj1i1[:,j] += 0
-        self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
-      elif self.BC_W == '0Slope0Shear':
-        j = 0
-        self.cj_2i0[:,j] += np.inf
-        self.cj_1i_1[:,j] += np.inf
-        self.cj_1i0[:,j] += np.inf
-        self.cj_1i1[:,j] += np.inf
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += self.cj_1i_1_coeff_ij[:,j]
-        self.cj1i0[:,j] += self.cj_1i0_coeff_ij[:,j]
-        self.cj1i1[:,j] += self.cj_1i1_coeff_ij[:,j]
-        self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
-        j = 1
-        self.cj_2i0[:,j] += np.inf
-        self.cj_1i_1[:,j] += 0
-        self.cj_1i0[:,j] += 0
-        self.cj_1i1[:,j] += 0
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += 0
-        self.cj1i0[:,j] += 0
-        self.cj1i1[:,j] += 0
-        self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
-      elif self.BC_W == 'Mirror':
-        pass
-      else:
-        # Possibly redundant safeguard
-        sys.exit("Invalid boundary condition")
+    #######################################################################
+    # DEFINE COEFFICIENTS TO W_j-2 -- W_j+2 WITH B.C.'S APPLIED (x: W, E) #
+    #######################################################################
+    
+    if self.BC_W == 'Periodic':
+      pass
+    elif self.BC_W == 'Dirichlet0':
+      j = 0
+      self.cj_2i0[:,j] += np.inf
+      self.cj_1i_1[:,j] += np.inf
+      self.cj_1i0[:,j] += np.inf
+      self.cj_1i1[:,j] += np.inf
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += 0
+      self.cj1i0[:,j] += 0
+      self.cj1i1[:,j] += 0
+      self.cj2i0[:,j] += 0
+      j = 1
+      self.cj_2i0[:,j] += np.inf
+      self.cj_1i_1[:,j] += 0
+      self.cj_1i0[:,j] += 0
+      self.cj_1i1[:,j] += 0
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += 0
+      self.cj1i0[:,j] += 0
+      self.cj1i1[:,j] += 0
+      self.cj2i0[:,j] += 0
+    elif self.BC_W == '0Moment0Shear':
+      j = 0
+      self.cj_2i0[:,j] += np.inf
+      self.cj_1i_1[:,j] += np.inf
+      self.cj_1i0[:,j] += np.inf
+      self.cj_1i1[:,j] += np.inf
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 4*self.cj_2i0_coeff_ij[:,j] + 2*self.cj_1i0_coeff_ij[:,j]
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += 0
+      self.cj1i0[:,j] += -4*self.cj_2i0_coeff_ij[:,j] - self.cj_1i0_coeff_ij[:,j]
+      self.cj1i1[:,j] += 0
+      self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
+      j = 1
+      self.cj_2i0[:,j] += np.inf
+      self.cj_1i_1[:,j] += 0
+      self.cj_1i0[:,j] += 2*self.cj_2i0_coeff_ij[:,j]
+      self.cj_1i1[:,j] += 0
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += 0
+      self.cj1i0[:,j] += -2*self.cj_2i0_coeff_ij[:,j]
+      self.cj1i1[:,j] += 0
+      self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
+    elif self.BC_W == '0Slope0Shear':
+      j = 0
+      self.cj_2i0[:,j] += np.inf
+      self.cj_1i_1[:,j] += np.inf
+      self.cj_1i0[:,j] += np.inf
+      self.cj_1i1[:,j] += np.inf
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += self.cj_1i_1_coeff_ij[:,j]
+      self.cj1i0[:,j] += self.cj_1i0_coeff_ij[:,j]
+      self.cj1i1[:,j] += self.cj_1i1_coeff_ij[:,j]
+      self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
+      j = 1
+      self.cj_2i0[:,j] += np.inf
+      self.cj_1i_1[:,j] += 0
+      self.cj_1i0[:,j] += 0
+      self.cj_1i1[:,j] += 0
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += 0
+      self.cj1i0[:,j] += 0
+      self.cj1i1[:,j] += 0
+      self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
+    elif self.BC_W == 'Mirror':
+      pass
+    else:
+      # Possibly redundant safeguard
+      sys.exit("Invalid boundary condition")
 
-      if self.BC_E == 'Periodic':
-        pass
-      elif self.BC_E == 'Dirichlet0':
-        j = -1
-        self.cj_2i0[:,j] += 0
-        self.cj_1i_1[:,j] += 0
-        self.cj_1i0[:,j] += 0
-        self.cj_1i1[:,j] += 0
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += np.inf
-        self.cj1i0[:,j] += np.inf
-        self.cj1i1[:,j] += np.inf
-        self.cj2i0[:,j] += np.inf
-        j = -2
-        self.cj_2i0[:,j] += 0
-        self.cj_1i_1[:,j] += 0
-        self.cj_1i0[:,j] += 0
-        self.cj_1i1[:,j] += 0
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += 0
-        self.cj1i0[:,j] += 0
-        self.cj1i1[:,j] += 0
-        self.cj2i0[:,j] += np.inf
-      elif self.BC_E == '0Moment0Shear':
-        j = -1
-        self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
-        self.cj_1i_1[:,j] += 0#-self.cj1i_1_coeff_ij[:,j]
-        self.cj_1i0[:,j] += -4*self.cj2i0_coeff_ij[:,j] - self.cj1i0_coeff_ij[:,j]
-        self.cj_1i1[:,j] += 0#-self.cj1i1_coeff_ij[:,j]
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0#2*self.cj1i_1_coeff_ij[:,j]
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0#2*self.cj1i1_coeff_ij[:,j]
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += np.inf
-        self.cj1i0[:,j] += np.inf
-        self.cj1i1[:,j] += np.inf
-        self.cj2i0[:,j] += np.inf
-        j = -2
-        self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
-        self.cj_1i_1[:,j] += 0
-        self.cj_1i0[:,j] += -2*self.cj2i0_coeff_ij[:,j]
-        self.cj_1i1[:,j] += 0
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += 0
-        self.cj1i0[:,j] += 2*self.cj2i0_coeff_ij[:,j]
-        self.cj1i1[:,j] += 0
-        self.cj2i0[:,j] += np.inf
-      elif self.BC_E == '0Slope0Shear':
-        j = -1
-        self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
-        self.cj_1i_1[:,j] += self.cj1i_1_coeff_ij[:,j]
-        self.cj_1i0[:,j] += self.cj1i0_coeff_ij[:,j]
-        self.cj_1i1[:,j] += self.cj1i1_coeff_ij[:,j]
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += np.inf
-        self.cj1i0[:,j] += np.inf
-        self.cj1i1[:,j] += np.inf
-        self.cj2i0[:,j] += np.inf
-        j = -2
-        self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
-        self.cj_1i_1[:,j] += 0
-        self.cj_1i0[:,j] += 0
-        self.cj_1i1[:,j] += 0
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += 0
-        self.cj1i0[:,j] += 0
-        self.cj1i1[:,j] += 0
-        self.cj2i0[:,j] += np.inf
-      elif self.BC_E == 'Mirror':
-        pass
-      else:
-        # Possibly redundant safeguard
-        sys.exit("Invalid boundary condition")
+    if self.BC_E == 'Periodic':
+      pass
+    elif self.BC_E == 'Dirichlet0':
+      print "E BC D"
+      j = -1
+      self.cj_2i0[:,j] += 0
+      self.cj_1i_1[:,j] += 0
+      self.cj_1i0[:,j] += 0
+      self.cj_1i1[:,j] += 0
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += np.inf
+      self.cj1i0[:,j] += np.inf
+      self.cj1i1[:,j] += np.inf
+      self.cj2i0[:,j] += np.inf
+      j = -2
+      self.cj_2i0[:,j] += 0
+      self.cj_1i_1[:,j] += 0
+      self.cj_1i0[:,j] += 0
+      self.cj_1i1[:,j] += 0
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += 0
+      self.cj1i0[:,j] += 0
+      self.cj1i1[:,j] += 0
+      self.cj2i0[:,j] += np.inf
+    elif self.BC_E == '0Moment0Shear':
+      print "E BC D"
+      j = -1
+      self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
+      self.cj_1i_1[:,j] += 0#-self.cj1i_1_coeff_ij[:,j]
+      self.cj_1i0[:,j] += -4*self.cj2i0_coeff_ij[:,j] - self.cj1i0_coeff_ij[:,j]
+      self.cj_1i1[:,j] += 0#-self.cj1i1_coeff_ij[:,j]
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0#2*self.cj1i_1_coeff_ij[:,j]
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0#2*self.cj1i1_coeff_ij[:,j]
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += np.inf
+      self.cj1i0[:,j] += np.inf
+      self.cj1i1[:,j] += np.inf
+      self.cj2i0[:,j] += np.inf
+      j = -2
+      self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
+      self.cj_1i_1[:,j] += 0
+      self.cj_1i0[:,j] += -2*self.cj2i0_coeff_ij[:,j]
+      self.cj_1i1[:,j] += 0
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += 0
+      self.cj1i0[:,j] += 2*self.cj2i0_coeff_ij[:,j]
+      self.cj1i1[:,j] += 0
+      self.cj2i0[:,j] += np.inf
+    elif self.BC_E == '0Slope0Shear':
+      print "E BC D"
+      j = -1
+      self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
+      self.cj_1i_1[:,j] += self.cj1i_1_coeff_ij[:,j]
+      self.cj_1i0[:,j] += self.cj1i0_coeff_ij[:,j]
+      self.cj_1i1[:,j] += self.cj1i1_coeff_ij[:,j]
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += np.inf
+      self.cj1i0[:,j] += np.inf
+      self.cj1i1[:,j] += np.inf
+      self.cj2i0[:,j] += np.inf
+      j = -2
+      self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
+      self.cj_1i_1[:,j] += 0
+      self.cj_1i0[:,j] += 0
+      self.cj_1i1[:,j] += 0
+      self.cj0i_2[:,j] += 0
+      self.cj0i_1[:,j] += 0
+      self.cj0i0[:,j] += 0
+      self.cj0i1[:,j] += 0
+      self.cj0i2[:,j] += 0
+      self.cj1i_1[:,j] += 0
+      self.cj1i0[:,j] += 0
+      self.cj1i1[:,j] += 0
+      self.cj2i0[:,j] += np.inf
+    elif self.BC_E == 'Mirror':
+      pass
+    else:
+      # Possibly redundant safeguard
+      sys.exit("Invalid boundary condition")
 
-      #######################################################################
-      # DEFINE COEFFICIENTS TO W_i-2 -- W_i+2 WITH B.C.'S APPLIED (y: N, S) #
-      #######################################################################
-      
-      # Infinitiy dominates over nan where they cross, because this is used 
-      # to flag places where coeff values should be 0, and this would otherwise
-      # cause boundary condition nan's to appear in the cross-derivatives
+    #######################################################################
+    # DEFINE COEFFICIENTS TO W_i-2 -- W_i+2 WITH B.C.'S APPLIED (y: N, S) #
+    #######################################################################
+    
+    # Infinitiy dominates over nan where they cross, because this is used 
+    # to flag places where coeff values should be 0, and this would otherwise
+    # cause boundary condition nan's to appear in the cross-derivatives
 
-      if self.BC_N == 'Periodic':
-        pass
-      elif self.BC_N == 'Dirichlet0':
-        i = 0
-        self.cj_2i0[i,:] += 0
-        self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
-        self.cj_1i0[i,:] += 0
-        self.cj_1i1[i,:] += 0
-        self.cj0i_2[i,:] += np.nan
-        self.cj0i_1[i,:] += np.nan
-        self.cj0i0[i,:] += 0
-        self.cj0i1[i,:] += 0
-        self.cj0i2[i,:] += 0
-        self.cj1i1[i,:] += 0
-        self.cj1i0[i,:] += 0
-        self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
-        self.cj2i0[i,:] += 0
-        i = 1
-        self.cj_2i0[i,:] += 0
-        self.cj_1i_1[i,:] += 0
-        self.cj_1i0[i,:] += 0
-        self.cj_1i1[i,:] += 0
-        self.cj0i_2[i,:] += np.nan
-        self.cj0i_1[i,:] += 0
-        self.cj0i0[i,:] += 0
-        self.cj0i1[i,:] += 0
-        self.cj0i2[i,:] += 0
-        self.cj1i1[i,:] += 0
-        self.cj1i0[i,:] += 0
-        self.cj1i_1[i,:] += 0
-        self.cj2i0[i,:] += 0
-      elif self.BC_N == '0Moment0Shear':
-        i = 0
-        self.cj_2i0[i,:] += 0
-        self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
-        self.cj_1i0[i,:] += 0
-        self.cj_1i1[i,:] += 0
-        self.cj0i_2[i,:] += np.nan
-        self.cj0i_1[i,:] += np.nan
-        self.cj0i0[i,:] += 4*self.cj_2i0_coeff_ij + 2*self.cj_1i0_coeff_ij
-        self.cj0i1[i,:] += 0
-        self.cj0i2[i,:] += 0
-        self.cj1i1[i,:] += 0
-        self.cj1i0[i,:] += -4*self.cj_2i0_coeff_ij - self.cj_1i0_coeff_ij
-        self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
-        self.cj2i0[i,:] += self.cj_2i0_coeff_ij
-        i = 1
-        self.cj_2i0[i,:] += 0
-        self.cj_1i_1[i,:] += 0
-        self.cj_1i0[i,:] += 2*self.cj_2i0_coeff_ij
-        self.cj_1i1[i,:] += 0
-        self.cj0i_2[i,:] += np.nan
-        self.cj0i_1[i,:] += 0
-        self.cj0i0[i,:] += 0
-        self.cj0i1[i,:] += 0
-        self.cj0i2[i,:] += 0
-        self.cj1i1[i,:] += 0
-        self.cj1i0[i,:] += - 2*self.cj_2i0_coeff_ij
-        self.cj1i_1[i,:] += 0
-        self.cj2i0[i,:] += self.cj_2i0_coeff_ij
+    if self.BC_N == 'Periodic':
+      pass
+    elif self.BC_N == 'Dirichlet0':
+      i = 0
+      self.cj_2i0[i,:] += 0
+      self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
+      self.cj_1i0[i,:] += 0
+      self.cj_1i1[i,:] += 0
+      self.cj0i_2[i,:] += np.nan
+      self.cj0i_1[i,:] += np.nan
+      self.cj0i0[i,:] += 0
+      self.cj0i1[i,:] += 0
+      self.cj0i2[i,:] += 0
+      self.cj1i1[i,:] += 0
+      self.cj1i0[i,:] += 0
+      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj2i0[i,:] += 0
+      i = 1
+      self.cj_2i0[i,:] += 0
+      self.cj_1i_1[i,:] += 0
+      self.cj_1i0[i,:] += 0
+      self.cj_1i1[i,:] += 0
+      self.cj0i_2[i,:] += np.nan
+      self.cj0i_1[i,:] += 0
+      self.cj0i0[i,:] += 0
+      self.cj0i1[i,:] += 0
+      self.cj0i2[i,:] += 0
+      self.cj1i1[i,:] += 0
+      self.cj1i0[i,:] += 0
+      self.cj1i_1[i,:] += 0
+      self.cj2i0[i,:] += 0
+    elif self.BC_N == '0Moment0Shear':
+      i = 0
+      self.cj_2i0[i,:] += 0
+      self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
+      self.cj_1i0[i,:] += 0
+      self.cj_1i1[i,:] += 0
+      self.cj0i_2[i,:] += np.nan
+      self.cj0i_1[i,:] += np.nan
+      self.cj0i0[i,:] += 4*self.cj_2i0_coeff_ij + 2*self.cj_1i0_coeff_ij
+      self.cj0i1[i,:] += 0
+      self.cj0i2[i,:] += 0
+      self.cj1i1[i,:] += 0
+      self.cj1i0[i,:] += -4*self.cj_2i0_coeff_ij - self.cj_1i0_coeff_ij
+      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj2i0[i,:] += self.cj_2i0_coeff_ij
+      i = 1
+      self.cj_2i0[i,:] += 0
+      self.cj_1i_1[i,:] += 0
+      self.cj_1i0[i,:] += 2*self.cj_2i0_coeff_ij
+      self.cj_1i1[i,:] += 0
+      self.cj0i_2[i,:] += np.nan
+      self.cj0i_1[i,:] += 0
+      self.cj0i0[i,:] += 0
+      self.cj0i1[i,:] += 0
+      self.cj0i2[i,:] += 0
+      self.cj1i1[i,:] += 0
+      self.cj1i0[i,:] += - 2*self.cj_2i0_coeff_ij
+      self.cj1i_1[i,:] += 0
+      self.cj2i0[i,:] += self.cj_2i0_coeff_ij
 
-        i=0
-        self.l2[i] += np.nan
-        self.l1[i] += np.nan
-        self.c0[i] += 4*self.l2_coeff_i + 2*self.l1_coeff_i
-        self.r1[i] += - 4*self.l2_coeff_i - self.l1_coeff_i
-        self.r2[i] += self.l2_coeff_i
-        i=1
-        self.l2[i] += np.nan
-        self.l1[i] += 2*self.l2_coeff_i
-        self.c0[i] += 0
-        self.r1[i] += - 2*self.l2_coeff_i
-        self.r2[i] += self.l2_coeff_i
+      i=0
+      self.l2[i] += np.nan
+      self.l1[i] += np.nan
+      self.c0[i] += 4*self.l2_coeff_i + 2*self.l1_coeff_i
+      self.r1[i] += - 4*self.l2_coeff_i - self.l1_coeff_i
+      self.r2[i] += self.l2_coeff_i
+      i=1
+      self.l2[i] += np.nan
+      self.l1[i] += 2*self.l2_coeff_i
+      self.c0[i] += 0
+      self.r1[i] += - 2*self.l2_coeff_i
+      self.r2[i] += self.l2_coeff_i
 
-      elif self.BC_N == '0Slope0Shear':
-        i = 1
-        self.cj_2i0[i,:] += 0
-        self.cj_1i_1[i,:] += 0
-        self.cj_1i0[i,:] += 0
-        self.cj_1i1[i,:] += 0
-        self.cj0i_2[i,:] += np.nan
-        self.cj0i_1[i,:] += 0
-        self.cj0i0[i,:] += 0
-        self.cj0i1[i,:] += 0
-        self.cj0i2[i,:] += 0
-        self.cj1i1[i,:] += 0
-        self.cj1i0[i,:] += 0
-        self.cj1i_1[i,:] += 0
-        self.cj2i0[i,:] += 0
-        i = 0
-        self.cj_2i0[i,:] += 0
-        self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
-        self.cj_1i0[i,:] += 0
-        self.cj_1i1[i,:] += 0
-        self.cj0i_2[i,:] += np.nan
-        self.cj0i_1[i,:] += np.nan
-        self.cj0i0[i,:] += 0
-        self.cj0i1[i,:] += 0
-        self.cj0i2[i,:] += 0
-        self.cj1i1[i,:] += 0
-        self.cj1i0[i,:] += 0
-        self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
-        self.cj2i0[i,:] += 0
+    elif self.BC_N == '0Slope0Shear':
+      i = 1
+      self.cj_2i0[i,:] += 0
+      self.cj_1i_1[i,:] += 0
+      self.cj_1i0[i,:] += 0
+      self.cj_1i1[i,:] += 0
+      self.cj0i_2[i,:] += np.nan
+      self.cj0i_1[i,:] += 0
+      self.cj0i0[i,:] += 0
+      self.cj0i1[i,:] += 0
+      self.cj0i2[i,:] += 0
+      self.cj1i1[i,:] += 0
+      self.cj1i0[i,:] += 0
+      self.cj1i_1[i,:] += 0
+      self.cj2i0[i,:] += 0
+      i = 0
+      self.cj_2i0[i,:] += 0
+      self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
+      self.cj_1i0[i,:] += 0
+      self.cj_1i1[i,:] += 0
+      self.cj0i_2[i,:] += np.nan
+      self.cj0i_1[i,:] += np.nan
+      self.cj0i0[i,:] += 0
+      self.cj0i1[i,:] += 0
+      self.cj0i2[i,:] += 0
+      self.cj1i1[i,:] += 0
+      self.cj1i0[i,:] += 0
+      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj2i0[i,:] += 0
 
 
 
-        i=0
-        self.l2[i] = np.nan
-        self.l1[i] = np.nan
-        self.c0[i] += 0
-        self.r1[i] += self.l1_coeff_i
-        self.r2[i] += self.l2_coeff_i
-        i=1
-        self.l2[i] = np.nan
-        self.l1[i] += 0
-        self.c0[i] += 0
-        self.r1[i] += 0
-        self.r2[i] += self.l2_coeff_i
+      i=0
+      self.l2[i] = np.nan
+      self.l1[i] = np.nan
+      self.c0[i] += 0
+      self.r1[i] += self.l1_coeff_i
+      self.r2[i] += self.l2_coeff_i
+      i=1
+      self.l2[i] = np.nan
+      self.l1[i] += 0
+      self.c0[i] += 0
+      self.r1[i] += 0
+      self.r2[i] += self.l2_coeff_i
 
-      elif self.BC_N == 'Mirror':
-        pass
-      else:
-        # Possibly redundant safeguard
-        sys.exit("Invalid boundary condition")
+    elif self.BC_N == 'Mirror':
+      pass
+    else:
+      # Possibly redundant safeguard
+      sys.exit("Invalid boundary condition")
 
-      if self.BC_S == 'Periodic':
-        pass
-      elif self.BC_S == 'Dirichlet0':
-        i = -2
-        self.cj_2i0[i,:] += 0
-        self.cj_1i_1[i,:] += 0
-        self.cj_1i0[i,:] += 0
-        self.cj_1i1[i,:] += 0
-        self.cj0i_2[i,:] += 0
-        self.cj0i_1[i,:] += 0
-        self.cj0i0[i,:] += 0
-        self.cj0i1[i,:] += 0
-        self.cj0i2[i,:] += np.nan
-        self.cj1i1[i,:] += 0
-        self.cj1i0[i,:] += 0
-        self.cj1i_1[i,:] += 0
-        self.cj2i0[i,:] += 0
-        i = -1
-        self.cj_2i0[i,:] += 0
-        self.cj_1i_1[i,:] += 0
-        self.cj_1i0[i,:] += 0
-        self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += np.nan
-        self.cj0i_2[i,:] += 0
-        self.cj0i_1[i,:] += 0
-        self.cj0i0[i,:] += 0
-        self.cj0i1[i,:] += np.nan
-        self.cj0i2[i,:] += np.nan
-        self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
-        self.cj1i0[i,:] += 0
-        self.cj1i_1[i,:] += 0
-        self.cj2i0[i,:] += 0
-      elif self.BC_S == '0Moment0Shear':
-        pass
-      elif self.BC_S == '0Slope0Shear':
-        pass
-      elif self.BC_S == 'Mirror':
-        pass
-      else:
-        # Possibly redundant safeguard
-        sys.exit("Invalid boundary condition")
+    if self.BC_S == 'Periodic':
+      pass
+    elif self.BC_S == 'Dirichlet0':
+      i = -2
+      self.cj_2i0[i,:] += 0
+      self.cj_1i_1[i,:] += 0
+      self.cj_1i0[i,:] += 0
+      self.cj_1i1[i,:] += 0
+      self.cj0i_2[i,:] += 0
+      self.cj0i_1[i,:] += 0
+      self.cj0i0[i,:] += 0
+      self.cj0i1[i,:] += 0
+      self.cj0i2[i,:] += np.nan
+      self.cj1i1[i,:] += 0
+      self.cj1i0[i,:] += 0
+      self.cj1i_1[i,:] += 0
+      self.cj2i0[i,:] += 0
+      i = -1
+      self.cj_2i0[i,:] += 0
+      self.cj_1i_1[i,:] += 0
+      self.cj_1i0[i,:] += 0
+      self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += np.nan
+      self.cj0i_2[i,:] += 0
+      self.cj0i_1[i,:] += 0
+      self.cj0i0[i,:] += 0
+      self.cj0i1[i,:] += np.nan
+      self.cj0i2[i,:] += np.nan
+      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
+      self.cj1i0[i,:] += 0
+      self.cj1i_1[i,:] += 0
+      self.cj2i0[i,:] += 0
+    elif self.BC_S == '0Moment0Shear':
+      pass
+    elif self.BC_S == '0Slope0Shear':
+      pass
+    elif self.BC_S == 'Mirror':
+      pass
+    else:
+      # Possibly redundant safeguard
+      sys.exit("Invalid boundary condition")
 
     """
     # Template: 1 set
