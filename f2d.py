@@ -1640,7 +1640,7 @@ class F2D(Flexure):
       if self.Debug:
         print "Using generalized minimal residual method for iterative solution"
       if self.Verbose:
-        print "Converging to a tolerance of", self.iterative_ConvergenceTolerance, "between iterations"
+        print "Converging to a tolerance of", self.iterative_ConvergenceTolerance, "m between iterations"
       wvector = scipy.sparse.linalg.isolve.lgmres(self.coeff_matrix, q0vector)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
       wvector = wvector[0] # Reach into tuple to get my array back
     else:

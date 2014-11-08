@@ -647,7 +647,7 @@ class F1D(Flexure):
       if self.Debug:
         print "Using generalized minimal residual method for iterative solution"
       if self.Verbose:
-        print "Converging to a tolerance of", self.iterative_ConvergenceTolerance, "between iterations"
+        print "Converging to a tolerance of", self.iterative_ConvergenceTolerance, "m between iterations"
       # q0 negative so bends down with positive load, bends up with neative load 
       # (i.e. material removed)
       w = isolve.lgmres(self.coeff_matrix, -self.q0, tol=self.iterative_ConvergenceTolerance)  
