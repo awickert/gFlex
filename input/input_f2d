@@ -4,6 +4,8 @@
 model=flexure ; "flexure" or "PrattAiry"
 dimension=2 ; 1 or 2 dimensions
 method=FD ; Solution method: FD, FFT, SPA, SPA_NG
+PlateSolutionType=Thick
+# Read names of plate solutions
 
 [parameter]
 YoungsModulus=1.0E11
@@ -12,17 +14,19 @@ GravAccel=9.8
 MantleDensity=3300
 InfillMaterialDensity=0
 ; Scalar constant Te usable for any solution type
-ElasticThickness=
+ElasticThickness=40000
 ; 25000
 
 [input]
 ; Path to input load array
-Loads=q0_sample/2D/central_square_load.txt ; diag.txt ; q0_sample/2D/global1degDEM.txt ; 
+Loads=q0_sample/2D/central_square_load.txt ; central_square_load.txt ; q0_sample/2D/global1degDEM.txt ; q0_sample/2D/diag.txt ; 
 ; Elastic thickness grid goes here; cannot coexist with a constant Te
 ; defined above
-ElasticThickness=Te_sample/2D/corner_range_15_31.txt
-#Te_sample/2D/10km_const.txt
+ElasticThickness=
+#Te_sample/2D/range_8_42_km_full_of_discontinuities.txt
+#Te_sample/2D/40km_const.txt
 #Te_sample/2D/corner_range_15_31.txt
+#Te_sample/2D/10km_const.txt
 #Te_sample/2D/40km_const.txt ; Te_sample/2D/corner_range_15_31.txt
 
 [output]
@@ -32,21 +36,22 @@ DeflectionOut=
 Plot=both
 
 [numerical]
-GridSpacing_x=22400 ; dx
-BoundaryCondition_West=Dirichlet ; Periodic
-BoundaryCondition_East=Dirichlet ; Periodic
-; Solver can be direct or iterative; currently only works in 2D
-; (Direct only in 1D, no matter what is written here)
+GridSpacing_x=5000 ; dx
+BoundaryCondition_West=Dirichlet0 ; Periodic
+BoundaryCondition_East=0Slope0Shear ; Periodic
+; Solver can be direct or iterative
 Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
 ; Set as 0 if you don't want to iterate
-convergence=1E-3
+ConvergenceTolerance=1E-3
+CoeffArray=
+# CoeffArray import instead of computation; not sure how well this has been implemented
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
-GridSpacing_y=22400 ; dy
-BoundaryCondition_South=Dirichlet ; Mirror
-BoundaryCondition_North=Dirichlet ; Mirror
+GridSpacing_y=5000 ; dy
+BoundaryCondition_South=Dirichlet0 ; Mirror
+BoundaryCondition_North=Dirichlet0 ; Mirror
 
 [verbosity]
 Verbose=False

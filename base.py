@@ -656,11 +656,13 @@ class Flexure(Isostasy):
       self.solver # See if it exists already
     except:
       self.solver = self.configGet("string", "numerical", "Solver")
+    # In the case that it is iterative, find the convergence criterion
+    self.iterative_ConvergenceTolerance = self.configGet("float", "numerical", "ConvergenceTolerance")    
     if self.filename:
       # Try to import Te grid or scalar for the finite difference solution
-      Tepath = self.configGet("string", "input", "ElasticThickness",optional=True)
+      Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
       # See if there is a pre-made coefficient matrix to import
-      coeffPath = self.configGet("string", "input", "CoeffMatrix",optional=True)
+      coeffPath = self.configGet("string", "input", "CoeffMatrix", optional=True)
       # If there is, import it.
     # or if getter/setter
     elif type(self.Te) == str: # Not super stable here either
@@ -823,8 +825,8 @@ class Flexure(Isostasy):
     # [Numerical]
     elif value_key == 'Solver':
       self.solver = value # Direct or iterative
-    elif value_key == 'convergence':
-      self.iterative_convergence = value
+    elif value_key == 'ConvergenceTolerance':
+      self.iterative_ConvergenceTolerance = value
     # None of the above?
     else:
       sys.exit('Error setting, '+value_key)

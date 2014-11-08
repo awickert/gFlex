@@ -33,8 +33,10 @@ BoundaryCondition_East=Mirror
 ; Solver can be direct or iterative
 Solver=iterative
 ; Iterates until this is the difference between two subsequent iterations
-; Set as 0 if you don't want to iterate
-convergence=1E-3
+; (here given in meters)
+; Function defaults will not be chosen, but are 1E-5, if you wish to set
+; that here.
+ConvergenceTolerance=0.001
 
 [verbosity]
 Verbose=False

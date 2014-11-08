@@ -646,9 +646,11 @@ class F1D(Flexure):
     if self.solver == "iterative" or self.solver == "Iterative":
       if self.Debug:
         print "Using generalized minimal residual method for iterative solution"
+      if self.Verbose:
+        print "Converging to a tolerance of", self.iterative_ConvergenceTolerance, "between iterations"
       # q0 negative so bends down with positive load, bends up with neative load 
       # (i.e. material removed)
-      w = isolve.lgmres(self.coeff_matrix, -self.q0)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
+      w = isolve.lgmres(self.coeff_matrix, -self.q0, tol=self.iterative_ConvergenceTolerance)  
       self.w = w[0] # Reach into tuple to get my array back
     else:
       if self.solver == "direct" or self.solver == "Direct":
