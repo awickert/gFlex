@@ -625,13 +625,13 @@ class F2D(Flexure):
       self.cj_1i0[:,j] += np.inf
       self.cj_1i1[:,j] += np.inf
       self.cj0i_2[:,j] += 0
-      self.cj0i_1[:,j] += 0
+      self.cj0i_1[:,j] += 2*self.cj_1i_1[:,j]
       self.cj0i0[:,j] += 4*self.cj_2i0_coeff_ij[:,j] + 2*self.cj_1i0_coeff_ij[:,j]
-      self.cj0i1[:,j] += 0
+      self.cj0i1[:,j] += 2*self.cj_1i1[:,j]
       self.cj0i2[:,j] += 0
-      self.cj1i_1[:,j] += 0
+      self.cj1i_1[:,j] += -self.cj_1i_1[:,j]
       self.cj1i0[:,j] += -4*self.cj_2i0_coeff_ij[:,j] - self.cj_1i0_coeff_ij[:,j]
-      self.cj1i1[:,j] += 0
+      self.cj1i1[:,j] += -self.cj_1i1[:,j]
       self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
       j = 1
       self.cj_2i0[:,j] += np.inf
@@ -743,13 +743,13 @@ class F2D(Flexure):
     elif self.BC_E == '0Moment0Shear':
       j = -1
       self.cj_2i0[:,j] += self.cj2i0_coeff_ij[:,j]
-      self.cj_1i_1[:,j] += 0#-self.cj1i_1_coeff_ij[:,j]
+      self.cj_1i_1[:,j] += -self.cj1i_1_coeff_ij[:,j]
       self.cj_1i0[:,j] += -4*self.cj2i0_coeff_ij[:,j] - self.cj1i0_coeff_ij[:,j]
-      self.cj_1i1[:,j] += 0#-self.cj1i1_coeff_ij[:,j]
+      self.cj_1i1[:,j] += -self.cj1i1_coeff_ij[:,j]
       self.cj0i_2[:,j] += 0
-      self.cj0i_1[:,j] += 0#2*self.cj1i_1_coeff_ij[:,j]
-      self.cj0i0[:,j] += 0
-      self.cj0i1[:,j] += 0#2*self.cj1i1_coeff_ij[:,j]
+      self.cj0i_1[:,j] += 2*self.cj1i_1_coeff_ij[:,j]
+      self.cj0i0[:,j] += 4*self.cj2i0_coeff_ij[:,j] + 2*self.cj1i0_coeff_ij[:,j]
+      self.cj0i1[:,j] += 2*self.cj1i1_coeff_ij[:,j]
       self.cj0i2[:,j] += 0
       self.cj1i_1[:,j] += np.inf
       self.cj1i0[:,j] += np.inf
@@ -1077,7 +1077,8 @@ class F2D(Flexure):
     # In 2D, have to consider diagonals and interference (additive) among 
     # boundary conditions
     # DIRICHLET -- DO NOTHING.
-    # 0Slope0Shear
+    # 0Slope0Shear -- is this generic (i.e. should I just change to != Dirichlet0?)
+    # How do multiple types of b.c.'s interfere?
     if self.BC_N == '0Slope0Shear' and self.BC_W == '0Slope0Shear':
       self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
     if self.BC_N == '0Slope0Shear' and self.BC_E == '0Slope0Shear':
@@ -1088,6 +1089,15 @@ class F2D(Flexure):
       self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
     # 0Moment0Shear
     # Mirror
+    # Currently the same as 0Slope0Shear -- a placeholder.
+    if self.BC_N == 'Mirror' and self.BC_W == 'Mirror':
+      self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
+    if self.BC_N == 'Mirror' and self.BC_E == 'Mirror':
+      self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
+    if self.BC_S == 'Mirror' and self.BC_W == 'Mirror':
+      self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
+    if self.BC_S == 'Mirror' and self.BC_E == 'Mirror':
+      self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
     # Periodic
 
     """
