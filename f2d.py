@@ -561,13 +561,9 @@ class F2D(Flexure):
     # DEFINE COEFFICIENTS TO W_j-2 -- W_j+2 WITH B.C.'S APPLIED (x: W, E) #
     #######################################################################
     
-    #######################################################################
-    # DEFINE COEFFICIENTS TO W_i-2 -- W_i+2 WITH B.C.'S APPLIED (y: N, S) #
-    #######################################################################
-    
-    # Infinitiy dominates over nan where they cross, because this is used 
-    # to flag places where coeff values should be 0, and this would otherwise
-    # cause boundary condition nan's to appear in the cross-derivatives
+    # Infinitiy is used to flag places where coeff values should be 0, 
+    # and would otherwise cause boundary condition nan's to appear in the 
+    # cross-derivatives: infinity is changed into 0 later.
 
     if self.BC_W == 'Periodic':
       if self.BC_E == 'Periodic':
@@ -816,6 +812,10 @@ class F2D(Flexure):
       # Possibly redundant safeguard
       sys.exit("Invalid boundary condition")
 
+    #######################################################################
+    # DEFINE COEFFICIENTS TO W_i-2 -- W_i+2 WITH B.C.'S APPLIED (y: N, S) #
+    #######################################################################
+   
     if self.BC_N == 'Periodic':
       if self.BC_S == 'Periodic':
         pass
@@ -1163,159 +1163,6 @@ class F2D(Flexure):
       and (self.BC_E == '0Moment0Shear'):
       self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
       self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
-
-
-    """
-    # Template: 1 set
-    self.cj_2i0[:,j] += 
-    self.cj_1i_1[:,j] += 
-    self.cj_1i0[:,j] += 
-    self.cj_1i1[:,j] += 
-    self.cj0i_2[:,j] += 
-    self.cj0i_1[:,j] += 
-    self.cj0i0[:,j] += 
-    self.cj0i1[:,j] += 
-    self.cj0i2[:,j] += 
-    self.cj1i_1[:,j] += 
-    self.cj1i0[:,j] += 
-    self.cj1i1[:,j] += 
-    self.cj2i0[:,j] += 
-
-    self.cj_2i0[i,:] += 
-    self.cj_1i_1[i,:] += 
-    self.cj_1i0[i,:] += 
-    self.cj_1i1[i,:] += 
-    self.cj0i_2[i,:] += 
-    self.cj0i_1[i,:] += 
-    self.cj0i0[i,:] += 
-    self.cj0i1[i,:] += 
-    self.cj0i2[i,:] += 
-    self.cj1i_1[i,:] += 
-    self.cj1i0[i,:] += 
-    self.cj1i1[i,:] += 
-    self.cj2i0[i,:] += 
-
-    # Template: All sets
-      if self.BC_W == 
-        j = -1
-        self.cj_2i0[:,j] += np.nan
-        self.cj_1i_1[:,j] += np.nan
-        self.cj_1i0[:,j] += np.nan
-        self.cj_1i1[:,j] += np.nan
-        self.cj0i_2[:,j] += 
-        self.cj0i_1[:,j] += 
-        self.cj0i0[:,j] += 
-        self.cj0i1[:,j] += 
-        self.cj0i2[:,j] += 
-        self.cj1i_1[:,j] += 
-        self.cj1i0[:,j] += 
-        self.cj1i1[:,j] += 
-        self.cj2i0[:,j] += 
-        j = -2
-        self.cj_2i0[:,j] += np.nan
-        self.cj_1i_1[:,j] += 
-        self.cj_1i0[:,j] += 
-        self.cj_1i1[:,j] += 
-        self.cj0i_2[:,j] += 
-        self.cj0i_1[:,j] += 
-        self.cj0i0[:,j] += 
-        self.cj0i1[:,j] += 
-        self.cj0i2[:,j] += 
-        self.cj1i_1[:,j] += 
-        self.cj1i0[:,j] += 
-        self.cj1i1[:,j] += 
-        self.cj2i0[:,j] += 
-      
-      if self.BC_E == 
-        j = -1
-        self.cj_2i0[:,j] += 
-        self.cj_1i_1[:,j] += 
-        self.cj_1i0[:,j] += 
-        self.cj_1i1[:,j] += 
-        self.cj0i_2[:,j] += 
-        self.cj0i_1[:,j] += 
-        self.cj0i0[:,j] += 
-        self.cj0i1[:,j] += 
-        self.cj0i2[:,j] += 
-        self.cj1i_1[:,j] += np.nan
-        self.cj1i0[:,j] += np.nan
-        self.cj1i1[:,j] += np.nan
-        self.cj2i0[:,j] += np.nan
-        j = -2
-        self.cj_2i0[:,j] += 
-        self.cj_1i_1[:,j] += 
-        self.cj_1i0[:,j] += 
-        self.cj_1i1[:,j] += 
-        self.cj0i_2[:,j] += 
-        self.cj0i_1[:,j] += 
-        self.cj0i0[:,j] += 
-        self.cj0i1[:,j] += 
-        self.cj0i2[:,j] += 
-        self.cj1i_1[:,j] += 
-        self.cj1i0[:,j] += 
-        self.cj1i1[:,j] += 
-        self.cj2i0[:,j] += np.nan
-
-      if self.BC_N == 
-        j = -2
-        self.cj_2i0[i,:] += np.nan
-        self.cj_1i_1[i,:] += 
-        self.cj_1i0[i,:] += 
-        self.cj_1i1[i,:] += 
-        self.cj0i_2[i,:] += 
-        self.cj0i_1[i,:] += 
-        self.cj0i0[i,:] += 
-        self.cj0i1[i,:] += 
-        self.cj0i2[i,:] += 
-        self.cj1i_1[i,:] += 
-        self.cj1i0[i,:] += 
-        self.cj1i1[i,:] += 
-        self.cj2i0[i,:] += 
-        j = -1
-        self.cj_2i0[i,:] += np.nan
-        self.cj_1i_1[i,:] += np.nan
-        self.cj_1i0[i,:] += np.nan
-        self.cj_1i1[i,:] += np.nan
-        self.cj0i_2[i,:] += 
-        self.cj0i_1[i,:] += 
-        self.cj0i0[i,:] += 
-        self.cj0i1[i,:] += 
-        self.cj0i2[i,:] += 
-        self.cj1i_1[i,:] += 
-        self.cj1i0[i,:] += 
-        self.cj1i1[i,:] += 
-        self.cj2i0[i,:] += 
-
-      if self.BC_S == 
-        i = -2
-        self.cj_2i0[i,:] += 
-        self.cj_1i_1[i,:] += 
-        self.cj_1i0[i,:] += 
-        self.cj_1i1[i,:] += 
-        self.cj0i_2[i,:] += 
-        self.cj0i_1[i,:] += 
-        self.cj0i0[i,:] += 
-        self.cj0i1[i,:] += 
-        self.cj0i2[i,:] += 
-        self.cj1i_1[i,:] += 
-        self.cj1i0[i,:] += 
-        self.cj1i1[i,:] += 
-        self.cj2i0[i,:] += np.nan
-        i = -1
-        self.cj_2i0[i,:] += 
-        self.cj_1i_1[i,:] += 
-        self.cj_1i0[i,:] += 
-        self.cj_1i1[i,:] += 
-        self.cj0i_2[i,:] += 
-        self.cj0i_1[i,:] += 
-        self.cj0i0[i,:] += 
-        self.cj0i1[i,:] += 
-        self.cj0i2[i,:] += 
-        self.cj1i_1[i,:] += np.nan
-        self.cj1i0[i,:] += np.nan
-        self.cj1i1[i,:] += np.nan
-        self.cj2i0[i,:] += np.nan
-    """
 
   def build_diags(self):
 
