@@ -432,10 +432,6 @@ class F2D(Flexure):
     print "Boundary condition, North:", self.BC_N, type(self.BC_N)
     print "Boundary condition, South:", self.BC_S, type(self.BC_S)
     
-    ################################
-    # PERIODIC B.C. VALIDITY CHECK #
-    ################################
-
     # Need to hold on to q0 array to keep its size; self.q0 will be redefined 
     # for the computation
     self.q0_orig = self.q0.copy()
@@ -567,6 +563,7 @@ class F2D(Flexure):
 
     if self.BC_W == 'Periodic':
       if self.BC_E == 'Periodic':
+        # Don't add inf or nan: let these just roll as they should
         pass
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
@@ -827,12 +824,12 @@ class F2D(Flexure):
       self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
       self.cj_1i0[i,:] += 0
       self.cj_1i1[i,:] += 0
-      self.cj0i_2[i,:] += np.nan
-      self.cj0i_1[i,:] += np.nan
+      self.cj0i_2[i,:] += 0 #np.nan
+      self.cj0i_1[i,:] += 0 #np.nan
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 0
       self.cj0i2[i,:] += 0
-      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += 0 #np.nan
       self.cj1i0[i,:] += 0
       self.cj1i1[i,:] += 0
       self.cj2i0[i,:] += 0
@@ -841,7 +838,7 @@ class F2D(Flexure):
       self.cj_1i_1[i,:] += 0
       self.cj_1i0[i,:] += 0
       self.cj_1i1[i,:] += 0
-      self.cj0i_2[i,:] += np.nan
+      self.cj0i_2[i,:] += 0 #np.nan
       self.cj0i_1[i,:] += 0
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 0
@@ -856,12 +853,12 @@ class F2D(Flexure):
       self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
       self.cj_1i0[i,:] += 2*self.cj_1i_1_coeff_ij[i,:]
       self.cj_1i1[i,:] += -self.cj_1i_1_coeff_ij[i,:]
-      self.cj0i_2[i,:] += np.nan
-      self.cj0i_1[i,:] += np.nan
+      self.cj0i_2[i,:] += 0 #np.nan
+      self.cj0i_1[i,:] += 0 #np.nan
       self.cj0i0[i,:] += 4*self.cj0i_2_coeff_ij[i,:] + 2*self.cj0i_1_coeff_ij[i,:]
       self.cj0i1[i,:] += -4*self.cj0i_2_coeff_ij[i,:] - self.cj0i_1_coeff_ij[i,:]
       self.cj0i2[i,:] += self.cj0i_2_coeff_ij[i,:]
-      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += 0 #np.nan
       self.cj1i0[i,:] += 2*self.cj1i_1_coeff_ij[i,:]
       self.cj1i1[i,:] += -self.cj1i_1_coeff_ij[i,:]
       self.cj2i0[i,:] += 0
@@ -870,7 +867,7 @@ class F2D(Flexure):
       self.cj_1i_1[i,:] += 0
       self.cj_1i0[i,:] += 0
       self.cj_1i1[i,:] += 0
-      self.cj0i_2[i,:] += np.nan
+      self.cj0i_2[i,:] += 0 #np.nan
       self.cj0i_1[i,:] += 2*self.cj0i_2_coeff_ij[i,:]
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += -2*self.cj0i_2_coeff_ij[i,:]
@@ -885,12 +882,12 @@ class F2D(Flexure):
       self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
       self.cj_1i0[i,:] += 0
       self.cj_1i1[i,:] += self.cj_1i_1_coeff_ij[i,:]
-      self.cj0i_2[i,:] += np.nan
-      self.cj0i_1[i,:] += np.nan
+      self.cj0i_2[i,:] += 0 #np.nan
+      self.cj0i_1[i,:] += 0 #np.nan
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += self.cj0i_1_coeff_ij[i,:]
       self.cj0i2[i,:] += self.cj0i_2_coeff_ij[i,:]
-      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += 0 #np.nan
       self.cj1i0[i,:] += 0
       self.cj1i1[i,:] += self.cj1i_1_coeff_ij[i,:]
       self.cj2i0[i,:] += 0
@@ -899,7 +896,7 @@ class F2D(Flexure):
       self.cj_1i_1[i,:] += 0
       self.cj_1i0[i,:] += 0
       self.cj_1i1[i,:] += 0
-      self.cj0i_2[i,:] += np.nan
+      self.cj0i_2[i,:] += 0 #np.nan
       self.cj0i_1[i,:] += 0
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 0
@@ -914,12 +911,12 @@ class F2D(Flexure):
       self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
       self.cj_1i0[i,:] += 0
       self.cj_1i1[i,:] += self.cj_1i_1_coeff_ij[i,:]
-      self.cj0i_2[i,:] += np.nan
-      self.cj0i_1[i,:] += np.nan
+      self.cj0i_2[i,:] += 0 #np.nan
+      self.cj0i_1[i,:] += 0 #np.nan
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += self.cj0i_1_coeff_ij[i,:]
       self.cj0i2[i,:] += self.cj0i_2_coeff_ij[i,:]
-      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += np.nan
+      self.cj1i_1[i,:][self.cj1i_1[i,:] != np.inf] += 0 #np.nan
       self.cj1i0[i,:] += 0
       self.cj1i1[i,:] += self.cj1i_1_coeff_ij[i,:]
       self.cj2i0[i,:] += 0
@@ -928,7 +925,7 @@ class F2D(Flexure):
       self.cj_1i_1[i,:] += 0
       self.cj_1i0[i,:] += 0
       self.cj_1i1[i,:] += 0
-      self.cj0i_2[i,:] += np.nan
+      self.cj0i_2[i,:] += 0 #np.nan
       self.cj0i_1[i,:] += 0
       self.cj0i0[i,:] += self.cj0i_2_coeff_ij[i,:]
       self.cj0i1[i,:] += 0
@@ -953,7 +950,7 @@ class F2D(Flexure):
       self.cj0i_1[i,:] += 0
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 0
-      self.cj0i2[i,:] += np.nan
+      self.cj0i2[i,:] += 0 #np.nan
       self.cj1i1[i,:] += 0
       self.cj1i0[i,:] += 0
       self.cj1i_1[i,:] += 0
@@ -962,15 +959,15 @@ class F2D(Flexure):
       self.cj_2i0[i,:] += 0
       self.cj_1i_1[i,:] += 0
       self.cj_1i0[i,:] += 0
-      self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += np.nan
+      self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += 0 #np.nan
       self.cj0i_2[i,:] += 0
       self.cj0i_1[i,:] += 0
       self.cj0i0[i,:] += 0
-      self.cj0i1[i,:] += np.nan
-      self.cj0i2[i,:] += np.nan
+      self.cj0i1[i,:] += 0 #np.nan
+      self.cj0i2[i,:] += 0 #np.nan
       self.cj1i_1[i,:] += 0
       self.cj1i0[i,:] += 0
-      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
+      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += 0 #np.nan
       self.cj2i0[i,:] += 0
     elif self.BC_S == '0Moment0Shear':
       i = -2
@@ -982,7 +979,7 @@ class F2D(Flexure):
       self.cj0i_1[i,:] += -2*self.cj0i2_coeff_ij[i,:]
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 2*self.cj0i2_coeff_ij[i,:]
-      self.cj0i2[i,:] += np.nan
+      self.cj0i2[i,:] += 0 #np.nan
       self.cj1i1[i,:] += 0
       self.cj1i0[i,:] += 0
       self.cj1i_1[i,:] += 0
@@ -991,15 +988,15 @@ class F2D(Flexure):
       self.cj_2i0[i,:] += 0
       self.cj_1i_1[i,:] += -self.cj1i1_coeff_ij[i,:]
       self.cj_1i0[i,:] += 2*self.cj1i1_coeff_ij[i,:]
-      self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += np.nan
+      self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += 0 #np.nan
       self.cj0i_2[i,:] += self.cj0i2_coeff_ij[i,:]
       self.cj0i_1[i,:] += -4*self.cj0i2_coeff_ij[i,:] - self.cj0i1_coeff_ij[i,:]
       self.cj0i0[i,:] += 4*self.cj0i2_coeff_ij[i,:] + 2*self.cj0i1_coeff_ij[i,:]
-      self.cj0i1[i,:] += np.nan
-      self.cj0i2[i,:] += np.nan
+      self.cj0i1[i,:] += 0 #np.nan
+      self.cj0i2[i,:] += 0 #np.nan
       self.cj1i_1[i,:] += -self.cj_1i1_coeff_ij[i,:]
       self.cj1i0[i,:] += 2*self.cj_1i1_coeff_ij[i,:]
-      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
+      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += 0 #np.nan
       self.cj2i0[i,:] += 0
     elif self.BC_S == '0Slope0Shear':
       i = -2
@@ -1011,7 +1008,7 @@ class F2D(Flexure):
       self.cj0i_1[i,:] += 0
       self.cj0i0[i,:] += 0
       self.cj0i1[i,:] += 0
-      self.cj0i2[i,:] += np.nan
+      self.cj0i2[i,:] += 0 #np.nan
       self.cj1i_1[i,:] += 0
       self.cj1i0[i,:] += 0
       self.cj1i1[i,:] += 0
@@ -1020,15 +1017,15 @@ class F2D(Flexure):
       self.cj_2i0[i,:] += 0
       self.cj_1i_1[i,:] += self.cj_1i1_coeff_ij[i,:]
       self.cj_1i0[i,:] += 0
-      self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += np.nan
+      self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += 0 #np.nan
       self.cj0i_2[i,:] += self.cj0i2_coeff_ij[i,:]
       self.cj0i_1[i,:] += self.cj0i1_coeff_ij[i,:]
       self.cj0i0[i,:] += 0
-      self.cj0i1[i,:] += np.nan
-      self.cj0i2[i,:] += np.nan
+      self.cj0i1[i,:] += 0 #np.nan
+      self.cj0i2[i,:] += 0 #np.nan
       self.cj1i_1[i,:] += self.cj1i1_coeff_ij[i,:]
       self.cj1i0[i,:] += 0
-      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
+      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += 0 #np.nan
       self.cj2i0[i,:] += 0
     elif self.BC_S == 'Mirror':
       i = -2
@@ -1040,7 +1037,7 @@ class F2D(Flexure):
       self.cj0i_1[i,:] += 0
       self.cj0i0[i,:] += self.cj0i2_coeff_ij[i,:]
       self.cj0i1[i,:] += 0
-      self.cj0i2[i,:] += np.nan
+      self.cj0i2[i,:] += 0 #np.nan
       self.cj1i_1[i,:] += 0
       self.cj1i0[i,:] += 0
       self.cj1i1[i,:] += 0
@@ -1049,15 +1046,15 @@ class F2D(Flexure):
       self.cj_2i0[i,:] += 0
       self.cj_1i_1[i,:] += self.cj_1i1_coeff_ij[i,:]
       self.cj_1i0[i,:] += 0
-      self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += np.nan
+      self.cj_1i1[i,:][self.cj_1i1[i,:] != np.inf] += 0 #np.nan
       self.cj0i_2[i,:] += self.cj0i2_coeff_ij[i,:]
       self.cj0i_1[i,:] += self.cj0i1_coeff_ij[i,:]
       self.cj0i0[i,:] += 0
-      self.cj0i1[i,:] += np.nan
-      self.cj0i2[i,:] += np.nan
+      self.cj0i1[i,:] += 0 #np.nan
+      self.cj0i2[i,:] += 0 #np.nan
       self.cj1i_1[i,:] += self.cj1i1_coeff_ij[i,:]
       self.cj1i0[i,:] += 0
-      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += np.nan
+      self.cj1i1[i,:][self.cj1i1[i,:] != np.inf] += 0 #np.nan
       self.cj2i0[i,:] += 0
     else:
       # Possibly redundant safeguard
