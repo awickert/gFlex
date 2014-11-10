@@ -1083,11 +1083,6 @@ class F2D(Flexure):
       # Possibly redundant safeguard
       sys.exit("Invalid boundary condition")
 
-    self.listall = np.vstack([self.cj_2i0, self.cj_1i0, self.cj1i0, self.cj2i0, self.cj0i_2, self.cj0i_1, self.cj0i1, self.cj0i2, self.cj_1i_1, self.cj_1i1, self.cj1i_1, self.cj1i1, self.cj0i0])
-    self.listall[np.isinf(self.listall)] = 0
-    self.listall[np.isnan(self.listall)] = 0
-    self.listall_start = self.listall.copy()
-
     #####################################################
     # CORNERS: INTERFERENCE BETWEEN BOUNDARY CONDITIONS #
     #####################################################
@@ -1097,7 +1092,6 @@ class F2D(Flexure):
     # DIRICHLET -- DO NOTHING.
     # 0Slope0Shear -- is this generic (i.e. should I just change to != Dirichlet0?)
     # How do multiple types of b.c.'s interfere?
-    """
     if self.BC_N == '0Slope0Shear' and self.BC_W == '0Slope0Shear':
       self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
     if self.BC_N == '0Slope0Shear' and self.BC_E == '0Slope0Shear':
@@ -1118,7 +1112,7 @@ class F2D(Flexure):
     if self.BC_S == 'Mirror' and self.BC_E == 'Mirror':
       self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
     # Periodic
-    """
+
     """
     # Template: 1 set
     self.cj_2i0[:,j] += 
@@ -1282,10 +1276,6 @@ class F2D(Flexure):
     # diagonal shifts, so this takes into account the horizontal compoent 
     # to ensure that boundary values are at the right place.
         
-    self.listall = np.vstack([self.cj_2i0, self.cj_1i0, self.cj1i0, self.cj2i0, self.cj0i_2, self.cj0i_1, self.cj0i1, self.cj0i2, self.cj_1i_1, self.cj_1i1, self.cj1i_1, self.cj1i1, self.cj0i0])
-    self.listall[np.isinf(self.listall)] = 0
-    self.listall[np.isnan(self.listall)] = 0
-
     # Roll x
 # ASYMMETRIC RESPONSE HERE -- THIS GETS TOWARDS SOURCE OF PROBLEM!
     self.cj_2i0 = np.roll(self.cj_2i0, -2, 1)
