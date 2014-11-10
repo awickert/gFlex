@@ -436,32 +436,6 @@ class F2D(Flexure):
     # PERIODIC B.C. VALIDITY CHECK #
     ################################
 
-    # First check to make sure that periodic boundary conditions are applied 
-    # properly: and abort if they are not.
-    
-    # E-W CHECK
-    if ((self.BC_W == 'Periodic' and self.BC_E != 'Periodic') \
-      or (self.BC_W != 'Periodic' and self.BC_E == 'Periodic')) \
-      and (self.BC_W != 'Mirror' and self.BC_E != 'Mirror'):
-      # If only one boundary is periodic and the other doesn't implicitly 
-      # involve a periodic boundary, this is illegal!
-      sys.exit("Having the boundary opposite a periodic boundary condition\n"+
-               "be fixed and not include an implicit periodic boundary\n"+
-               "condition makes no physical sense.\n"+
-               "Please fix the input boundary conditions. Aborting.")
-
-    # N-S CHECK
-    if ((self.BC_N == 'Periodic' and self.BC_S != 'Periodic') \
-      or (self.BC_N != 'Periodic' and self.BC_S == 'Periodic')) \
-      and (self.BC_N != 'Mirror' and self.BC_S != 'Mirror'):
-      # If only one boundary is periodic and the other doesn't implicitly 
-      # involve a periodic boundary, this is illegal!
-      sys.exit("Having the boundary opposite a periodic boundary condition\n"+
-               "be fixed and not include an implicit periodic boundary\n"+
-               "condition makes no physical sense.\n"+
-               "Please fix the input boundary conditions. Aborting.")
-
-
     # Need to hold on to q0 array to keep its size; self.q0 will be redefined 
     # for the computation
     self.q0_orig = self.q0.copy()
@@ -596,7 +570,10 @@ class F2D(Flexure):
     # cause boundary condition nan's to appear in the cross-derivatives
 
     if self.BC_W == 'Periodic':
-      pass
+      if self.BC_E == 'Periodic':
+        pass
+      else:
+        sys.exit("Not physical to have one wrap-around boundary but not its pair.")
     elif self.BC_W == 'Dirichlet0':
       j = 0
       self.cj_2i0[:,j] += np.inf
@@ -718,7 +695,7 @@ class F2D(Flexure):
       sys.exit("Invalid boundary condition")
 
     if self.BC_E == 'Periodic':
-      pass
+      pass # sanity check performed above
     elif self.BC_E == 'Dirichlet0':
       j = -1
       self.cj_2i0[:,j] += 0
@@ -840,7 +817,10 @@ class F2D(Flexure):
       sys.exit("Invalid boundary condition")
 
     if self.BC_N == 'Periodic':
-      pass
+      if self.BC_S == 'Periodic':
+        pass
+      else:
+        sys.exit("Not physical to have one wrap-around boundary but not its pair.")
     elif self.BC_N == 'Dirichlet0':
       i = 0
       self.cj_2i0[i,:] += 0
@@ -962,7 +942,7 @@ class F2D(Flexure):
       sys.exit("Invalid boundary condition")
 
     if self.BC_S == 'Periodic':
-      pass
+      pass # sanity check performed above
     elif self.BC_S == 'Dirichlet0':
       i = -2
       self.cj_2i0[i,:] += 0
