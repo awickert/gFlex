@@ -1089,18 +1089,33 @@ class F2D(Flexure):
     
     # In 2D, have to consider diagonals and interference (additive) among 
     # boundary conditions
-    # DIRICHLET -- DO NOTHING.
-    # 0Slope0Shear -- is this generic (i.e. should I just change to != Dirichlet0?)
-    # How do multiple types of b.c.'s interfere?
-    if self.BC_N == '0Slope0Shear' and self.BC_W == '0Slope0Shear':
+    
+    ############################
+    # DIRICHLET -- DO NOTHING. #
+    ############################
+    
+    # Do nothing.
+    
+    ##############################
+    # 0SLOPE0SHEAR AND/OR MIRROR #
+    ##############################
+    # (both end up being the same)
+    if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror') \
+      and (self.BC_W == '0Slope0Shear' or self.BC_W == 'Mirror'):
       self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
-    if self.BC_N == '0Slope0Shear' and self.BC_E == '0Slope0Shear':
+    if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror') \
+      and (self.BC_E == '0Slope0Shear' or self.BC_E == 'Mirror'):
       self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
-    if self.BC_S == '0Slope0Shear' and self.BC_W == '0Slope0Shear':
+    if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror') \
+      and (self.BC_W == '0Slope0Shear' or self.BC_W == 'Mirror'):
       self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
-    if self.BC_S == '0Slope0Shear' and self.BC_E == '0Slope0Shear':
+    if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror') \
+      and (self.BC_E == '0Slope0Shear' or self.BC_E == 'Mirror'):
       self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
-    # 0Moment0Shear
+
+    #################
+    # 0MOMENT0SHEAR #
+    #################
     if self.BC_N == '0Moment0Shear' and self.BC_W == '0Moment0Shear':
       self.cj0i0[0,0] += 2*self.cj_1i_1_coeff_ij[0,0]
       self.cj1i1[0,0] -= self.cj_1i_1_coeff_ij[0,0]
@@ -1113,17 +1128,62 @@ class F2D(Flexure):
     if self.BC_S == '0Moment0Shear' and self.BC_E == '0Moment0Shear':
       self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
       self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
-    # Mirror
-    # Currently the same as 0Slope0Shear -- a placeholder.
-    if self.BC_N == 'Mirror' and self.BC_W == 'Mirror':
+
+    ############
+    # PERIODIC #
+    ############
+    
+    # I think that nothing will be needed here.
+    # Periodic should just take care of all repeating in all directions by
+    # its very nature.
+
+    ################
+    # COMBINATIONS #
+    ################
+    
+    ################################
+    # 0MOMENT0SHEAR - AND - MIRROR #
+    ################################
+    # How do multiple types of b.c.'s interfere
+    # Mirror dominates with 0Moment0Shear -- so this will be the same as 
+    # 0Slope0Shear (above), but repeating here just because this is all
+    # new and I am working it out as I go... so easier to think through
+    # different secitons than to make code super-compact
+    if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror') \
+      and (self.BC_W == '0Moment0Shear'):
       self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
-    if self.BC_N == 'Mirror' and self.BC_E == 'Mirror':
+    if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror') \
+      and (self.BC_E == '0Moment0Shear'):
       self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
-    if self.BC_S == 'Mirror' and self.BC_W == 'Mirror':
+    if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror') \
+      and (self.BC_W == '0Slope0Shear' or self.BC_W == 'Mirror'):
       self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
-    if self.BC_S == 'Mirror' and self.BC_E == 'Mirror':
+    if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror') \
+      and (self.BC_E == '0Slope0Shear' or self.BC_E == 'Mirror'):
       self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
-    # Periodic
+
+    ######################################
+    # 0MOMENT0SHEAR - AND - 0SLOPE0SHEAR #
+    ######################################
+    # Just use 0Moment0Shear-style b.c.'s at corners: letting this dominate
+    # because it is the more physically reasonable b.c.
+    if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror') \
+      and (self.BC_W == '0Moment0Shear'):
+      self.cj0i0[0,0] += 2*self.cj_1i_1_coeff_ij[0,0]
+      self.cj1i1[0,0] -= self.cj_1i_1_coeff_ij[0,0]
+    if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror') \
+      and (self.BC_E == '0Moment0Shear'):
+      self.cj0i0[0,-1] += 2*self.cj_1i_1_coeff_ij[0,-1]
+      self.cj1i1[0,-1] -= self.cj_1i_1_coeff_ij[0,-1]
+    if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror') \
+      and (self.BC_W == '0Moment0Shear'):
+      self.cj0i0[-1,0] += 2*self.cj_1i_1_coeff_ij[-1,0]
+      self.cj1i_1[-1,0] -= self.cj_1i1_coeff_ij[-1,0]
+    if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror') \
+      and (self.BC_E == '0Moment0Shear'):
+      self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
+      self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
+
 
     """
     # Template: 1 set
