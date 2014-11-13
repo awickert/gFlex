@@ -564,6 +564,7 @@ class F2D(Flexure):
     if self.BC_W == 'Periodic':
       if self.BC_E == 'Periodic':
         # Don't add inf or nan: let these just roll as they should
+        # ACTUALLY DO HAVE TO CHANGE THEM, OTHERWISE TE WON'T MAP CORRECTLY.
         pass
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
@@ -815,7 +816,8 @@ class F2D(Flexure):
    
     if self.BC_N == 'Periodic':
       if self.BC_S == 'Periodic':
-        pass
+        pass # Will address the N-S (i.e. whole-matrix) boundary condition 
+             # inclusion below
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
     elif self.BC_N == 'Dirichlet0':
@@ -1196,7 +1198,7 @@ class F2D(Flexure):
     coeff_array_list = [self.cj_2i0, self.cj_1i0, self.cj1i0, self.cj2i0, self.cj0i_2, self.cj0i_1, self.cj0i1, self.cj0i2, self.cj_1i_1, self.cj_1i1, self.cj1i_1, self.cj1i1, self.cj0i0]
     for array in coeff_array_list:
       array[np.isinf(array)] = 0
-      #array[np.isnan(array)] = 0 # had been used for testing
+     #array[np.isnan(array)] = 0 # had been used for testing
     
     # Reshape to put in solver
     vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
@@ -1213,27 +1215,55 @@ class F2D(Flexure):
     vec_cj1i1 = np.reshape(self.cj1i1, -1, order='C')
     vec_cj2i0 = np.reshape(self.cj2i0, -1, order='C')
     
-    # Changed this 6 Nov. 2014 in betahaus Berlin to be x-based
     Up2 = vec_cj0i2
     Up1 = np.vstack(( vec_cj_1i1, vec_cj0i1, vec_cj1i1 ))
     Mid = np.vstack(( vec_cj_2i0, vec_cj_1i0, vec_cj0i0, vec_cj1i0, vec_cj2i0 ))
     Dn1 = np.vstack(( vec_cj_1i_1, vec_cj0i_1, vec_cj1i_1 ))
     Dn2 = vec_cj0i_2
-    
-    # Arrange in solver
-    diags = np.vstack(( Dn2, \
-                        Dn1, \
-                        Mid, \
-                        Up1, \
-                        Up2 ))
-                        
+
     # Number of rows and columns for array size and offsets
     self.ny = self.nrowsy
     self.nx = self.ncolsx
-                        
-    self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
 
-    #self.coeff_matrix = scipy.sparse.spdiags(np.vstack((Up1, Mid)), [-self.nx-1, -self.nx,  -self.nx+1, -2, -1, 0, 1, 2], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
+    if (self.BC_N != 'Periodic' and self.BC_S != 'Periodic'):
+      # Changed this 6 Nov. 2014 in betahaus Berlin to be x-based
+      # Arrange in solver
+      self.diags = np.vstack(( Dn2, \
+                               Dn1, \
+                               Mid, \
+                               Up1, \
+                               Up2 ))
+      # Create banded sparse matrix
+      self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
+    else:
+      print "PERIODIC!"
+      # Periodic.
+      # If these are periodic, we need to wrap around the ends of the
+      # large-scale diagonal structure
+      # Could it be that there are significant zeros?
+      # But why do they have zeros anyway? Should have all periodic b.c.'s
+      #for i in range(5):
+      #  Mid[i,:] = Mid[i,2]
+      #for i in range(3):
+      #  Up1[i,:]= Up1[i,2]
+      #Up2[:]= Up2[2]
+      self.diags = np.vstack(( Up1, \
+                               Up2, \
+                               Dn2, \
+                               Dn1, \
+                               Mid, \
+                               Up1, \
+                               Up2, \
+                               Dn2, \
+                               Dn1 ))
+      # Create banded sparse matrix
+      self.coeff_matrix = scipy.sparse.spdiags(self.diags, [self.nx-self.ny*self.nx-1, self.nx-self.ny*self.nx, self.nx-self.ny*self.nx+1, 2*self.nx-self.ny*self.nx, 
+                                                            -2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx, \
+                                                            self.ny*self.nx-2*self.nx, self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1], \
+                                                            self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
+
+#1-self.ny*self.nx, 2-self.ny*self.nx, 
+#self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1, self.ny*self.nx-1
 
   def calc_max_flexural_wavelength(self):
     """
