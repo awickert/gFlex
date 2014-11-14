@@ -580,17 +580,19 @@ class F2D(Flexure):
         # overwritten in the initiating grid by the next perioidic b.c. over
         self.cj_1i1_Periodic_right = np.zeros(self.q0.shape)
         self.cj_2i0_Periodic_right = np.zeros(self.q0.shape)
-        # -2, -1 --> 0
-        self.cj_1i1_Periodic_right[:,-1] = self.cj_1i_1[:,0]
-        self.cj_2i0_Periodic_right[:,-1] = self.cj_2i0[:,1]
-        # -1 --> 1
-        self.cj_2i0_Periodic_right[:,-2] = self.cj_2i0[:,0]
+        j = 0
+        self.cj_1i1_Periodic_right[:,j] = self.cj_1i_1[:,j]
+        self.cj_2i0_Periodic_right[:,j] = self.cj_2i0[:,j]
+        j = 1
+        self.cj_2i0_Periodic_right[:,j] = self.cj_2i0[:,j]
         
         # Then, replace existing values with what will be needed to make the
         # periodic boundary condition work.
         j = 0
-        self.cj_1i0[:,j] = self.cj_1i_1[:,j]
+        # ORDER IS IMPORTANT HERE! Don't change first before it changes other.
+        # (We are shuffling down the line)
         self.cj_1i1[:,j] = self.cj_1i0[:,j]
+        self.cj_1i0[:,j] = self.cj_1i_1[:,j]
 
         # And then change remaning off-grid values to np.inf (i.e. those that 
         # were not altered to a real value
@@ -748,7 +750,7 @@ class F2D(Flexure):
       # Then, replace existing values with what will be needed to make the
       # periodic boundary condition work.
       j =-1
-      self.cj1i_1[:,j] = self.cj_1i0[:,j]
+      self.cj1i_1[:,j] = self.cj1i0[:,j]
       self.cj1i0[:,j] = self.cj1i1[:,j]
 
       # And then change remaning off-grid values to np.inf (i.e. those that 
@@ -756,8 +758,8 @@ class F2D(Flexure):
       j = -1
       self.cj1i1[:,j] += np.inf
       self.cj2i0[:,j] += np.inf
-      j = 1
-      self.cj_2i0[:,j] += np.inf
+      j = -2
+      self.cj2i0[:,j] += np.inf
 
     elif self.BC_E == 'Dirichlet0':
       j = -1
@@ -1305,11 +1307,22 @@ class F2D(Flexure):
       print "PERIODIC EW!"
       # Additional vector creation
       # West
+      # Roll
+      self.cj_2i0_Periodic_right = np.roll(self.cj_2i0_Periodic_right, -2, 1)
+      self.cj_1i1_Periodic_right = np.roll(self.cj_1i1_Periodic_right, -1, 1)
+      self.cj_1i1_Periodic_right = np.roll(self.cj_1i1_Periodic_right, 1, 0)
+      # Reshape
       vec_cj_2i0_Periodic_right = np.reshape(self.cj_2i0_Periodic_right, -1, order='C')
       vec_cj_1i1_Periodic_right = np.reshape(self.cj_1i1_Periodic_right, -1, order='C')
       # East
+      # Roll
+      self.cj1i_1_Periodic_left = np.roll(self.cj1i_1_Periodic_left, 1, 1)
+      self.cj1i_1_Periodic_left = np.roll(self.cj1i_1_Periodic_left, -1, 0)
+      self.cj2i0_Periodic_left = np.roll(self.cj2i0_Periodic_left, 2, 1)
+      # Reshape
       vec_cj1i_1_Periodic_left = np.reshape(self.cj1i_1_Periodic_left, -1, order='C')
       vec_cj2i0_Periodic_left = np.reshape(self.cj2i0_Periodic_left, -1, order='C')
+      # Roll these vectors the same as their counterparts
       
 
       # Build diagonals with additional entries
@@ -1322,24 +1335,26 @@ class F2D(Flexure):
                                Up1,
                                vec_cj_1i1_Periodic_right,
                                Up2 ))
+      # Getting too complicated to have everything together
+      self.offsets = [-2*self.nx,
+                      # New:
+                      -2*self.nx+1,
+                      # Right term here (-self.nx+1) modified:
+                      -self.nx-1, -self.nx, -self.nx+1,
+                      # New:
+                      -self.nx+2,
+                      # -1 and 1 terms here modified:
+                      -2, -1, 0, 1, 2,
+                      # New:
+                      self.nx-2,
+                      # Left term here (self.nx-1) modified:
+                      self.nx-1, self.nx, self.nx+1,
+                      # New:
+                      2*self.nx-1,
+                      2*self.nx]
+
       # create banded sparse matrix
-      self.coeff_matrix = scipy.sparse.spdiags(diags,
-        [-2*self.nx,
-          # New:
-         -2*self.nx+1,
-         # Right term here (-self.nx+1) modified:
-         -self.nx-1, -self.nx, -self.nx+1,
-         # New:
-         -self.nx+2
-         # -1 and 1 terms here modified:
-         -2, -1, 0, 1, 2,
-         # New:
-         self.nx-2,
-         # Left term here (self.nx-1) modified:
-         self.nx-1, self.nx, self.nx+1,
-         # New:
-         2*self.nx-1,
-         2*self.nx],
+      self.coeff_matrix = scipy.sparse.spdiags(self.diags, self.offsets,
         self.ny*self.nx, self.ny*self.nx, format='csr') 
     
     elif (self.BC_N == 'Periodic' and self.BC_S == 'Periodic'):
@@ -1376,7 +1391,7 @@ class F2D(Flexure):
                                Up1,
                                Up2 ))
       # Create banded sparse matrix
-      self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
+      self.coeff_matrix = scipy.sparse.spdiags(self.diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
 
   def calc_max_flexural_wavelength(self):
     """
