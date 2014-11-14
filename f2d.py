@@ -1243,11 +1243,41 @@ class F2D(Flexure):
     ##############################
     # Other boundary conditions will control corners when periodic is just
     # 1 direction: only when it is both should it tesseltate
+    # Dirichlet requires no modifications.
     if (self.BC_W == 'Periodic' and self.BC_E == 'Periodic'):
       if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror'):
         self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
         self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
-      elif (self.BC_N == '0Moment0Shear')
+      elif (self.BC_N == '0Moment0Shear'):
+        self.cj0i0[0,0] += 2*self.cj_1i_1_coeff_ij[0,0]
+        self.cj1i1[0,0] -= self.cj_1i_1_coeff_ij[0,0]
+        self.cj0i0[0,-1] += 2*self.cj_1i_1_coeff_ij[0,-1]
+        self.cj1i1[0,-1] -= self.cj_1i_1_coeff_ij[0,-1]
+      if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror'):
+        self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
+        self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
+      elif (self.BC_S == '0Moment0Shear'):
+        self.cj0i0[-1,0] += 2*self.cj_1i_1_coeff_ij[-1,0]
+        self.cj1i_1[-1,0] -= self.cj_1i1_coeff_ij[-1,0]
+        self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
+        self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
+    if (self.BC_N == 'Periodic' and self.BC_S == 'Periodic'):
+      if (self.BC_W == '0Slope0Shear' or self.BC_W == 'Mirror'):
+        self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
+        self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
+      elif (self.BC_W == '0Moment0Shear'):
+        self.cj0i0[0,0] += 2*self.cj_1i_1_coeff_ij[0,0]
+        self.cj1i1[0,0] -= self.cj_1i_1_coeff_ij[0,0]
+      if (self.BC_E == '0Slope0Shear' or self.BC_E == 'Mirror'):
+        self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
+        self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
+        self.cj0i0[-1,0] += 2*self.cj_1i_1_coeff_ij[-1,0]
+        self.cj1i_1[-1,0] -= self.cj_1i1_coeff_ij[-1,0]
+      elif (self.BC_E == '0Moment0Shear'):
+        self.cj0i0[0,-1] += 2*self.cj_1i_1_coeff_ij[0,-1]
+        self.cj1i1[0,-1] -= self.cj_1i_1_coeff_ij[0,-1]
+        self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
+        self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
 
   def build_diags(self):
 
