@@ -1285,6 +1285,7 @@ class F2D(Flexure):
     vec_cj1i1 = np.reshape(self.cj1i1, -1, order='C')
     vec_cj2i0 = np.reshape(self.cj2i0, -1, order='C')
     
+    # Changed this 6 Nov. 2014 in betahaus Berlin to be x-based
     Up2 = vec_cj0i2
     Up1 = np.vstack(( vec_cj_1i1, vec_cj0i1, vec_cj1i1 ))
     Mid = np.vstack(( vec_cj_2i0, vec_cj_1i0, vec_cj0i0, vec_cj1i0, vec_cj2i0 ))
@@ -1295,28 +1296,21 @@ class F2D(Flexure):
     self.ny = self.nrowsy
     self.nx = self.ncolsx
 
-    if (self.BC_N != 'Periodic' and self.BC_S != 'Periodic'):
-      # Changed this 6 Nov. 2014 in betahaus Berlin to be x-based
-      # Arrange in solver
-      self.diags = np.vstack(( Dn2, \
-                               Dn1, \
-                               Mid, \
-                               Up1, \
-                               Up2 ))
-      # Create banded sparse matrix
-      self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
-    else:
-      print "PERIODIC!"
+    if (self.BC_N == 'Periodic' and self.BC_S == 'Periodic' and \
+        self.BC_W == 'Periodic' and self.BC_E == 'Periodic' ):
+      print "PERIODIC NSEW -- PLACEHOLDER!"
+      # Don't know what to do yet
+      # but this will eventually handle corners as well
+    
+    elif (self.BC_W == 'Periodic' and self.BC_E == 'Periodic'):
+      print "PERIODIC EW!"
+      
+    
+    elif (self.BC_N == 'Periodic' and self.BC_S == 'Periodic'):
+      print "PERIODIC NS!"
       # Periodic.
       # If these are periodic, we need to wrap around the ends of the
       # large-scale diagonal structure
-      # Could it be that there are significant zeros?
-      # But why do they have zeros anyway? Should have all periodic b.c.'s
-      #for i in range(5):
-      #  Mid[i,:] = Mid[i,2]
-      #for i in range(3):
-      #  Up1[i,:]= Up1[i,2]
-      #Up2[:]= Up2[2]
       self.diags = np.vstack(( Up1, \
                                Up2, \
                                Dn2, \
@@ -1331,7 +1325,17 @@ class F2D(Flexure):
                                                             -2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx, \   # Middle
                                                             self.ny*self.nx-2*self.nx, self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1], \ # Upper right
                                                             self.ny*self.nx, self.ny*self.nx, format='csr')
-
+    else:
+      # No periodic boundary conditions -- original form of coeff_matrix
+      # creator.
+      # Arrange in solver
+      self.diags = np.vstack(( Dn2, \
+                               Dn1, \
+                               Mid, \
+                               Up1, \
+                               Up2 ))
+      # Create banded sparse matrix
+      self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
 
   def calc_max_flexural_wavelength(self):
     """
