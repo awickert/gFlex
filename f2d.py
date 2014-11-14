@@ -1313,17 +1313,17 @@ class F2D(Flexure):
       
 
       # Build diagonals with additional entries
-      self.diags = np.vstack(( Dn2, \
-                               vec_cj1i_1_Periodic_left, \
-                               Dn1, \
-                               vec_cj2i0_Periodic_left, \
-                               Mid, \
-                               vec_cj_2i0_Periodic_right, \
-                               Up1, \
-                               vec_cj_1i1_Periodic_right, \
+      self.diags = np.vstack(( Dn2,
+                               vec_cj1i_1_Periodic_left,
+                               Dn1,
+                               vec_cj2i0_Periodic_left,
+                               Mid,
+                               vec_cj_2i0_Periodic_right,
+                               Up1,
+                               vec_cj_1i1_Periodic_right,
                                Up2 ))
       # create banded sparse matrix
-      self.coeff_matrix = scipy.sparse.spdiags(diags, \
+      self.coeff_matrix = scipy.sparse.spdiags(diags,
         [-2*self.nx,
           # New:
          -2*self.nx+1,
@@ -1347,14 +1347,14 @@ class F2D(Flexure):
       # Periodic.
       # If these are periodic, we need to wrap around the ends of the
       # large-scale diagonal structure
-      self.diags = np.vstack(( Up1, \
-                               Up2, \
-                               Dn2, \
-                               Dn1, \
-                               Mid, \
-                               Up1, \
-                               Up2, \
-                               Dn2, \
+      self.diags = np.vstack(( Up1,
+                               Up2,
+                               Dn2,
+                               Dn1,
+                               Mid,
+                               Up1,
+                               Up2,
+                               Dn2,
                                Dn1 ))
       # Create banded sparse matrix
       # Rows:
@@ -1370,10 +1370,10 @@ class F2D(Flexure):
       # No periodic boundary conditions -- original form of coeff_matrix
       # creator.
       # Arrange in solver
-      self.diags = np.vstack(( Dn2, \
-                               Dn1, \
-                               Mid, \
-                               Up1, \
+      self.diags = np.vstack(( Dn2,
+                               Dn1,
+                               Mid,
+                               Up1,
                                Up2 ))
       # Create banded sparse matrix
       self.coeff_matrix = scipy.sparse.spdiags(diags, [-2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx], self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
