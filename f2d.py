@@ -1324,15 +1324,22 @@ class F2D(Flexure):
                                Up2 ))
       # create banded sparse matrix
       self.coeff_matrix = scipy.sparse.spdiags(diags, \
-        [-2*self.nx, \
-         -2*self.nx+1, \ # New
-         -self.nx-1, -self.nx, -self.nx+1, \ # Right term here (-self.nx+1) modified
-         -self.nx+2, \ # New
-         -2, -1, 0, 1, 2, \ # -1 and 1 terms here modified
-         self.nx-2, \ # New
-         self.nx-1, self.nx, self.nx+1, \ # Left term here (self.nx-1) modified
-         2*self.nx-1, \ # New
-         2*self.nx], \
+        [-2*self.nx,
+          # New:
+         -2*self.nx+1,
+         # Right term here (-self.nx+1) modified:
+         -self.nx-1, -self.nx, -self.nx+1,
+         # New:
+         -self.nx+2
+         # -1 and 1 terms here modified:
+         -2, -1, 0, 1, 2,
+         # New:
+         self.nx-2,
+         # Left term here (self.nx-1) modified:
+         self.nx-1, self.nx, self.nx+1,
+         # New:
+         2*self.nx-1,
+         2*self.nx],
         self.ny*self.nx, self.ny*self.nx, format='csr') 
     
     elif (self.BC_N == 'Periodic' and self.BC_S == 'Periodic'):
@@ -1350,9 +1357,13 @@ class F2D(Flexure):
                                Dn2, \
                                Dn1 ))
       # Create banded sparse matrix
-      self.coeff_matrix = scipy.sparse.spdiags(self.diags, [self.nx-self.ny*self.nx-1, self.nx-self.ny*self.nx, self.nx-self.ny*self.nx+1, 2*self.nx-self.ny*self.nx,    # Lower left
-                                                            -2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx, \   # Middle
-                                                            self.ny*self.nx-2*self.nx, self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1], \ # Upper right
+      # Rows:
+      #      Lower left
+      #      Middle
+      #      Upper right
+      self.coeff_matrix = scipy.sparse.spdiags(self.diags, [self.nx-self.ny*self.nx-1, self.nx-self.ny*self.nx, self.nx-self.ny*self.nx+1, 2*self.nx-self.ny*self.nx,
+                                                            -2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx,
+                                                            self.ny*self.nx-2*self.nx, self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1],
                                                             self.ny*self.nx, self.ny*self.nx, format='csr')
                                                             
     else:
