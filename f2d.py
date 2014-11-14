@@ -1185,7 +1185,9 @@ class F2D(Flexure):
     
     # I think that nothing will be needed here.
     # Periodic should just take care of all repeating in all directions by
-    # its very nature.
+    # its very nature. (I.e. it is embedded in the sparse array structure
+    # of diagonals)
+
 
     ################
     # COMBINATIONS #
@@ -1195,21 +1197,22 @@ class F2D(Flexure):
     # 0MOMENT0SHEAR - AND - MIRROR #
     ################################
     # How do multiple types of b.c.'s interfere
-    # Mirror dominates with 0Moment0Shear -- so this will be the same as 
+    # Mirror dominates with 0Moment0Shear -- it just mirrors the 
+    # 0Moment0Shear free end -- so this will be the same as 
     # 0Slope0Shear (above), but repeating here just because this is all
     # new and I am working it out as I go... so easier to think through
     # different secitons than to make code super-compact
-    if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror') \
-      and (self.BC_W == '0Moment0Shear'):
+    if (self.BC_N == 'Mirror' and self.BC_W == '0Moment0Shear')
+      or (self.BC_W == 'Mirror' and self.BC_N == '0Moment0Shear'):
       self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
-    if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror') \
-      and (self.BC_E == '0Moment0Shear'):
+    if (self.BC_N == 'Mirror' and self.BC_E == '0Moment0Shear')
+      or (self.BC_E == 'Mirror' and self.BC_N == '0Moment0Shear'):
       self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
-    if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror') \
-      and (self.BC_W == '0Slope0Shear' or self.BC_W == 'Mirror'):
+    if (self.BC_S == 'Mirror' and self.BC_W == '0Moment0Shear')
+      or (self.BC_W == 'Mirror' and self.BC_S == '0Moment0Shear'):
       self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
-    if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror') \
-      and (self.BC_E == '0Slope0Shear' or self.BC_E == 'Mirror'):
+    if (self.BC_S == 'Mirror' and self.BC_E == '0Moment0Shear')
+      or (self.BC_E == 'Mirror' and self.BC_S == '0Moment0Shear'):
       self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
 
     ######################################
@@ -1217,22 +1220,34 @@ class F2D(Flexure):
     ######################################
     # Just use 0Moment0Shear-style b.c.'s at corners: letting this dominate
     # because it is the more physically reasonable b.c.
-    if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror') \
-      and (self.BC_W == '0Moment0Shear'):
+    if (self.BC_N == '0Slope0Shear' and self.BC_W == '0Moment0Shear' \
+      or (self.BC_W == '0Slope0Shear' and self.BC_N == '0Moment0Shear'):
       self.cj0i0[0,0] += 2*self.cj_1i_1_coeff_ij[0,0]
       self.cj1i1[0,0] -= self.cj_1i_1_coeff_ij[0,0]
-    if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror') \
-      and (self.BC_E == '0Moment0Shear'):
+    if (self.BC_N == '0Slope0Shear' and self.BC_E == '0Moment0Shear' \
+      or (self.BC_E == '0Slope0Shear' and self.BC_N == '0Moment0Shear'):
       self.cj0i0[0,-1] += 2*self.cj_1i_1_coeff_ij[0,-1]
       self.cj1i1[0,-1] -= self.cj_1i_1_coeff_ij[0,-1]
-    if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror') \
-      and (self.BC_W == '0Moment0Shear'):
+    if (self.BC_S == '0Slope0Shear' and self.BC_W == '0Moment0Shear' \
+      or (self.BC_W == '0Slope0Shear' and self.BC_S == '0Moment0Shear'):
       self.cj0i0[-1,0] += 2*self.cj_1i_1_coeff_ij[-1,0]
       self.cj1i_1[-1,0] -= self.cj_1i1_coeff_ij[-1,0]
-    if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror') \
-      and (self.BC_E == '0Moment0Shear'):
+    if (self.BC_S == '0Slope0Shear' and self.BC_E == '0Moment0Shear' \
+      or (self.BC_E == '0Slope0Shear' and self.BC_S == '0Moment0Shear'):
       self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
       self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
+    # What about 0Moment0SHear on N/S part?
+
+    ##############################
+    # PERIODIC B.C.'S AND OTHERS #
+    ##############################
+    # Other boundary conditions will control corners when periodic is just
+    # 1 direction: only when it is both should it tesseltate
+    if (self.BC_W == 'Periodic' and self.BC_E == 'Periodic'):
+      if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror'):
+        self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
+        self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
+      elif (self.BC_N == '0Moment0Shear')
 
   def build_diags(self):
 
