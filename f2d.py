@@ -1202,16 +1202,16 @@ class F2D(Flexure):
     # 0Slope0Shear (above), but repeating here just because this is all
     # new and I am working it out as I go... so easier to think through
     # different secitons than to make code super-compact
-    if (self.BC_N == 'Mirror' and self.BC_W == '0Moment0Shear')
+    if (self.BC_N == 'Mirror' and self.BC_W == '0Moment0Shear') \
       or (self.BC_W == 'Mirror' and self.BC_N == '0Moment0Shear'):
       self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
-    if (self.BC_N == 'Mirror' and self.BC_E == '0Moment0Shear')
+    if (self.BC_N == 'Mirror' and self.BC_E == '0Moment0Shear') \
       or (self.BC_E == 'Mirror' and self.BC_N == '0Moment0Shear'):
       self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
-    if (self.BC_S == 'Mirror' and self.BC_W == '0Moment0Shear')
+    if (self.BC_S == 'Mirror' and self.BC_W == '0Moment0Shear') \
       or (self.BC_W == 'Mirror' and self.BC_S == '0Moment0Shear'):
       self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
-    if (self.BC_S == 'Mirror' and self.BC_E == '0Moment0Shear')
+    if (self.BC_S == 'Mirror' and self.BC_E == '0Moment0Shear') \
       or (self.BC_E == 'Mirror' and self.BC_S == '0Moment0Shear'):
       self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
 
@@ -1220,19 +1220,19 @@ class F2D(Flexure):
     ######################################
     # Just use 0Moment0Shear-style b.c.'s at corners: letting this dominate
     # because it is the more physically reasonable b.c.
-    if (self.BC_N == '0Slope0Shear' and self.BC_W == '0Moment0Shear' \
+    if (self.BC_N == '0Slope0Shear' and self.BC_W == '0Moment0Shear') \
       or (self.BC_W == '0Slope0Shear' and self.BC_N == '0Moment0Shear'):
       self.cj0i0[0,0] += 2*self.cj_1i_1_coeff_ij[0,0]
       self.cj1i1[0,0] -= self.cj_1i_1_coeff_ij[0,0]
-    if (self.BC_N == '0Slope0Shear' and self.BC_E == '0Moment0Shear' \
+    if (self.BC_N == '0Slope0Shear' and self.BC_E == '0Moment0Shear') \
       or (self.BC_E == '0Slope0Shear' and self.BC_N == '0Moment0Shear'):
       self.cj0i0[0,-1] += 2*self.cj_1i_1_coeff_ij[0,-1]
       self.cj1i1[0,-1] -= self.cj_1i_1_coeff_ij[0,-1]
-    if (self.BC_S == '0Slope0Shear' and self.BC_W == '0Moment0Shear' \
+    if (self.BC_S == '0Slope0Shear' and self.BC_W == '0Moment0Shear') \
       or (self.BC_W == '0Slope0Shear' and self.BC_S == '0Moment0Shear'):
       self.cj0i0[-1,0] += 2*self.cj_1i_1_coeff_ij[-1,0]
       self.cj1i_1[-1,0] -= self.cj_1i1_coeff_ij[-1,0]
-    if (self.BC_S == '0Slope0Shear' and self.BC_E == '0Moment0Shear' \
+    if (self.BC_S == '0Slope0Shear' and self.BC_E == '0Moment0Shear') \
       or (self.BC_E == '0Slope0Shear' and self.BC_S == '0Moment0Shear'):
       self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
       self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
