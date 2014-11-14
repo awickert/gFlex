@@ -255,7 +255,7 @@ class F2D(Flexure):
     
     #######################################################
     # GENERATE COEFFICIENT VALUES FOR EACH SOLUTION TYPE. #
-    #     "THICK" IS THE BEST: LOOSEST ASSUMPTIONS.       #
+    #    "vWC1994" IS THE BEST: LOOSEST ASSUMPTIONS.      #
     #        OTHERS HERE LARGELY FOR COMPARISON           #
     #######################################################
     
@@ -278,8 +278,7 @@ class F2D(Flexure):
       Dyy = (D0_1 - 2.*D00 + D01)
       Dxy = (D_1_1 - D_11 - D1_1 + D11)/4.
       
-      if self.PlateSolutionType == 'Thick':
-        # Check that it is thick
+      if self.PlateSolutionType == 'vWC1994':
         # van Wees and Cloetingh (1994) solution, re-discretized by me
         # using a central difference approx. to 2nd order precision
         # NEW STENCIL
@@ -352,7 +351,7 @@ class F2D(Flexure):
                      + (8.*D0 - 2.*Dxx - 2.*Dyy)/dx2dy2 \
                      + drho*g
 
-      elif self.PlateSolutionType == 'Thin':
+      elif self.PlateSolutionType == 'G2009':
         # STENCIL FROM GOVERS ET AL. 2009 -- first-order differences
         # x is j and y is i b/c matrix row/column notation
         # Note that this breaks down with b.c.'s that place too much control 
@@ -383,6 +382,13 @@ class F2D(Flexure):
         self.cj1i1_coeff_ij = (D10 + D01)/dx2dy2
         # x = 2, y = 0
         self.cj2i0_coeff_ij = D10/dx4
+      else:
+        sys.exit("Not an acceptable plate solution type. Please choose from:\n"+
+                  "* vWC1994\n"+
+                  "* LinearTeVariationsOnly\n"+
+                  "* G2009\n"+
+                  "")
+                  
 
       ################################################################
       # CREATE COEFFICIENT ARRAYS: PLAIN, WITH NO B.C.'S YET APPLIED #
