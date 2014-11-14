@@ -734,32 +734,35 @@ class F2D(Flexure):
       sys.exit("Invalid boundary condition")
 
     if self.BC_E == 'Periodic':
-      # sanity check performed above.
-      # See more extensive comments there too.
+      # See more extensive comments above (BC_W)
       
-      # New arrays -- new diagonals, but mostly empty. Just corners of blocks
-      # (boxes) in block-diagonal matrix
-      self.cj1i_1_Periodic_left = np.zeros(self.q0.shape)
-      self.cj2i0_Periodic_left = np.zeros(self.q0.shape)
-      j = -1
-      self.cj1i_1_Periodic_left[:,j] = self.cj1i_1[:,j]
-      self.cj2i0_Periodic_left[:,j] = self.cj2i0[:,j]
-      j=-2
-      self.cj2i0_Periodic_left[:,j] = self.cj2i0[:,j]
-      
-      # Then, replace existing values with what will be needed to make the
-      # periodic boundary condition work.
-      j =-1
-      self.cj1i_1[:,j] = self.cj1i0[:,j]
-      self.cj1i0[:,j] = self.cj1i1[:,j]
+      if self.BC_W == 'Periodic':
+        # New arrays -- new diagonals, but mostly empty. Just corners of blocks
+        # (boxes) in block-diagonal matrix
+        self.cj1i_1_Periodic_left = np.zeros(self.q0.shape)
+        self.cj2i0_Periodic_left = np.zeros(self.q0.shape)
+        j = -1
+        self.cj1i_1_Periodic_left[:,j] = self.cj1i_1[:,j]
+        self.cj2i0_Periodic_left[:,j] = self.cj2i0[:,j]
+        j=-2
+        self.cj2i0_Periodic_left[:,j] = self.cj2i0[:,j]
+        
+        # Then, replace existing values with what will be needed to make the
+        # periodic boundary condition work.
+        j =-1
+        self.cj1i_1[:,j] = self.cj1i0[:,j]
+        self.cj1i0[:,j] = self.cj1i1[:,j]
 
-      # And then change remaning off-grid values to np.inf (i.e. those that 
-      # were not altered to a real value
-      j = -1
-      self.cj1i1[:,j] += np.inf
-      self.cj2i0[:,j] += np.inf
-      j = -2
-      self.cj2i0[:,j] += np.inf
+        # And then change remaning off-grid values to np.inf (i.e. those that 
+        # were not altered to a real value
+        j = -1
+        self.cj1i1[:,j] += np.inf
+        self.cj2i0[:,j] += np.inf
+        j = -2
+        self.cj2i0[:,j] += np.inf
+
+      else:
+        sys.exit("Not physical to have one wrap-around boundary but not its pair.")
 
     elif self.BC_E == 'Dirichlet0':
       j = -1
@@ -887,8 +890,8 @@ class F2D(Flexure):
    
     if self.BC_N == 'Periodic':
       if self.BC_S == 'Periodic':
-        pass # Will address the N-S (i.e. whole-matrix) boundary condition 
-             # inclusion below
+        pass # Will address the N-S (whole-matrix-involving) boundary condition 
+             # inclusion below, when constructing sparse matrix diagonals
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
     elif self.BC_N == 'Dirichlet0':
@@ -1012,7 +1015,11 @@ class F2D(Flexure):
       sys.exit("Invalid boundary condition")
 
     if self.BC_S == 'Periodic':
-      pass # sanity check performed above
+      if self.BC_N == 'Periodic':
+        pass # Will address the N-S (whole-matrix-involving) boundary condition 
+             # inclusion below, when constructing sparse matrix diagonals
+      else:
+        sys.exit("Not physical to have one wrap-around boundary but not its pair.")
     elif self.BC_S == 'Dirichlet0':
       i = -2
       self.cj_2i0[i,:] += 0
@@ -1268,11 +1275,11 @@ class F2D(Flexure):
       elif (self.BC_W == '0Moment0Shear'):
         self.cj0i0[0,0] += 2*self.cj_1i_1_coeff_ij[0,0]
         self.cj1i1[0,0] -= self.cj_1i_1_coeff_ij[0,0]
+        self.cj0i0[-1,0] += 2*self.cj_1i_1_coeff_ij[-1,0]
+        self.cj1i_1[-1,0] -= self.cj_1i1_coeff_ij[-1,0]
       if (self.BC_E == '0Slope0Shear' or self.BC_E == 'Mirror'):
         self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
         self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
-        self.cj0i0[-1,0] += 2*self.cj_1i_1_coeff_ij[-1,0]
-        self.cj1i_1[-1,0] -= self.cj_1i1_coeff_ij[-1,0]
       elif (self.BC_E == '0Moment0Shear'):
         self.cj0i0[0,-1] += 2*self.cj_1i_1_coeff_ij[0,-1]
         self.cj1i1[0,-1] -= self.cj_1i_1_coeff_ij[0,-1]
