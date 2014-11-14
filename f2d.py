@@ -1304,7 +1304,37 @@ class F2D(Flexure):
     
     elif (self.BC_W == 'Periodic' and self.BC_E == 'Periodic'):
       print "PERIODIC EW!"
+      # Additional vector creation
+      # West
+      vec_cj_2i0_Periodic_right = np.reshape(self.cj_2i0_Periodic_right, -1, order='C')
+      vec_cj_1i1_Periodic_right = np.reshape(self.cj_1i1_Periodic_right, -1, order='C')
+      # East
+      vec_cj1i_1_Periodic_left = np.reshape(self.cj1i_1_Periodic_left, -1, order='C')
+      vec_cj2i0_Periodic_left = np.reshape(self.cj2i0_Periodic_left, -1, order='C')
       
+
+      # Build diagonals with additional entries
+      self.diags = np.vstack(( Dn2, \
+                               vec_cj1i_1_Periodic_left, \
+                               Dn1, \
+                               vec_cj2i0_Periodic_left, \
+                               Mid, \
+                               vec_cj_2i0_Periodic_right, \
+                               Up1, \
+                               vec_cj_1i1_Periodic_right, \
+                               Up2 ))
+      # create banded sparse matrix
+      self.coeff_matrix = scipy.sparse.spdiags(diags, \
+        [-2*self.nx, \
+         -2*self.nx+1, \ # New
+         -self.nx-1, -self.nx, -self.nx+1, \ # Right term here (-self.nx+1) modified
+         -self.nx+2, \ # New
+         -2, -1, 0, 1, 2, \ # -1 and 1 terms here modified
+         self.nx-2, \ # New
+         self.nx-1, self.nx, self.nx+1, \ # Left term here (self.nx-1) modified
+         2*self.nx-1, \ # New
+         2*self.nx], \
+        self.ny*self.nx, self.ny*self.nx, format='csr') 
     
     elif (self.BC_N == 'Periodic' and self.BC_S == 'Periodic'):
       print "PERIODIC NS!"
@@ -1325,6 +1355,7 @@ class F2D(Flexure):
                                                             -2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx, \   # Middle
                                                             self.ny*self.nx-2*self.nx, self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1], \ # Upper right
                                                             self.ny*self.nx, self.ny*self.nx, format='csr')
+                                                            
     else:
       # No periodic boundary conditions -- original form of coeff_matrix
       # creator.
