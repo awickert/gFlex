@@ -1300,8 +1300,87 @@ class F2D(Flexure):
     if (self.BC_N == 'Periodic' and self.BC_S == 'Periodic' and \
         self.BC_W == 'Periodic' and self.BC_E == 'Periodic' ):
       print "PERIODIC NSEW -- PLACEHOLDER!"
-      # Don't know what to do yet
-      # but this will eventually handle corners as well
+
+      print "PERIODIC EW!"
+      # Additional vector creation
+      # West
+      # Roll
+      self.cj_2i0_Periodic_right = np.roll(self.cj_2i0_Periodic_right, -2, 1)
+      self.cj_1i1_Periodic_right = np.roll(self.cj_1i1_Periodic_right, -1, 1)
+      self.cj_1i1_Periodic_right = np.roll(self.cj_1i1_Periodic_right, 1, 0)
+      # Reshape
+      vec_cj_2i0_Periodic_right = np.reshape(self.cj_2i0_Periodic_right, -1, order='C')
+      vec_cj_1i1_Periodic_right = np.reshape(self.cj_1i1_Periodic_right, -1, order='C')
+      # East
+      # Roll
+      self.cj1i_1_Periodic_left = np.roll(self.cj1i_1_Periodic_left, 1, 1)
+      self.cj1i_1_Periodic_left = np.roll(self.cj1i_1_Periodic_left, -1, 0)
+      self.cj2i0_Periodic_left = np.roll(self.cj2i0_Periodic_left, 2, 1)
+      # Reshape
+      vec_cj1i_1_Periodic_left = np.reshape(self.cj1i_1_Periodic_left, -1, order='C')
+      vec_cj2i0_Periodic_left = np.reshape(self.cj2i0_Periodic_left, -1, order='C')
+    
+      # Build diagonals with additional entries
+      # I think the fact that everything is rolled will make this work all right
+      # without any additional rolling.
+      # Checked -- and indeed, what would be in my mind the last value for 
+      # Mid[3] is the first value in its array. Hooray, patterns!
+      self.diags = np.vstack(( vec_cj1i_1_Periodic_left,
+                               Up1,
+                               vec_cj_1i1_Periodic_right,
+                               Up2,
+                               Dn2,
+                               vec_cj1i_1_Periodic_left,
+                               Dn1,
+                               vec_cj2i0_Periodic_left,
+                               Mid,
+                               vec_cj_2i0_Periodic_right,
+                               Up1,
+                               vec_cj_1i1_Periodic_right,
+                               Up2,
+                               Dn2,
+                               vec_cj1i_1_Periodic_left,
+                               Dn1,
+                               vec_cj_1i1_Periodic_right ))
+      # Getting too complicated to have everything together
+      self.offsets = [
+                      # New: LL corner of LL box
+                      -self.ny*self.nx+1,
+                      # Periodic b.c. tridiag
+                      self.nx-self.ny*self.nx-1, self.nx-self.ny*self.nx, self.nx-self.ny*self.nx+1,
+                      # New: UR corner of LL box
+                      2*self.nx-self.ny*self.nx-1,
+                      # Periodic b.c. single diag
+                      2*self.nx-self.ny*self.nx,
+                      -2*self.nx,
+                      # New:
+                      -2*self.nx+1,
+                      # Right term here (-self.nx+1) modified:
+                      -self.nx-1, -self.nx, -self.nx+1,
+                      # New:
+                      -self.nx+2,
+                      # -1 and 1 terms here modified:
+                      -2, -1, 0, 1, 2,
+                      # New:
+                      self.nx-2,
+                      # Left term here (self.nx-1) modified:
+                      self.nx-1, self.nx, self.nx+1,
+                      # New:
+                      2*self.nx-1,
+                      2*self.nx,
+                      # Periodic b.c. single diag
+                      self.ny*self.nx-2*self.nx,
+                      # New: LL corner of UR box
+                      self.ny*self.nx-2*self.nx+1,
+                      # Periodic b.c. tridiag
+                      self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1,
+                      # New: UR corner of UR box
+                      self.ny*self.nx-1
+                     ]
+
+      # create banded sparse matrix
+      self.coeff_matrix = scipy.sparse.spdiags(self.diags, self.offsets,
+        self.ny*self.nx, self.ny*self.nx, format='csr') 
     
     elif (self.BC_W == 'Periodic' and self.BC_E == 'Periodic'):
       print "PERIODIC EW!"
@@ -1322,8 +1401,6 @@ class F2D(Flexure):
       # Reshape
       vec_cj1i_1_Periodic_left = np.reshape(self.cj1i_1_Periodic_left, -1, order='C')
       vec_cj2i0_Periodic_left = np.reshape(self.cj2i0_Periodic_left, -1, order='C')
-      # Roll these vectors the same as their counterparts
-      
 
       # Build diagonals with additional entries
       self.diags = np.vstack(( Dn2,
