@@ -563,9 +563,71 @@ class F2D(Flexure):
 
     if self.BC_W == 'Periodic':
       if self.BC_E == 'Periodic':
-        # Don't add inf or nan: let these just roll as they should
-        # ACTUALLY DO HAVE TO CHANGE THEM, OTHERWISE TE WON'T MAP CORRECTLY.
-        pass
+        # For each side, there will be two new diagonals (mostly zeros), and 
+        # two sets of diagonals that will replace values in current diagonals.
+        # This is because of the pattern of fill in the periodic b.c.'s in the 
+        # x-direction.
+        
+        # First, create arrays for the new values.
+        # One of the two values here, that from the y -/+ 1, x +/- 1 (E/W)
+        # boundary condition, will be in the same location that will be 
+        # overwritten in the initiating grid by the next perioidic b.c. over
+        self.cj_1i1_Periodic_right = np.zeros(self.q0.shape)
+        self.cj_2i0_Periodic_right = np.zeros(self.q0.shape)
+        # -2, -1 --> 0
+        self.cj_1i1_Periodic_right[:,-1] = self.cj_1i_1[:,0]
+        self.cj_2i0_Periodic_right[:,-1] = self.cj_2i0[:,1]
+        # -1 --> 1
+        self.cj_2i0_Periodic_right[:,-2] = self.cj_2i0[:,0]
+        
+        # Then, replace existing values with what will be needed to make the
+        # periodic boundary condition work.
+        self.cj_1i0
+
+        # Also, recognize that the diags will be added to other diags, right? Just incidentally. And shifted.
+        j = 0
+        # First, copy diagonal values into new arrays
+        self.cj_2i0_Periodic = np.zeros(self.cj_2i0.shape)
+        self.cj_2i0_Periodic[:,j] = self.cj_2i0[:,j]
+        self.cj_1i_1_Periodic = np.zeros(self.cj_1i_1.shape)
+        self.cj_1i_1_Periodic[:,j] = self.cj_1i_1[:,j]
+        self.cj_1i0_Periodic = np.zeros(self.cj_1i0.shape)
+        self.cj_1i0_Periodic[:,j] = self.cj_1i0[:,j]
+        self.cj_1i1_Periodic = np.zeros(self.cj_1i1.shape)
+        self.cj_1i1_Periodic[:,j] = self.cj_1i1[:,j]
+
+        self.cj_2i0_Periodic = np.zeros(self.cj_2i0.shape)
+        self.cj_2i0_Periodic[:,j] = self.cj_2i0[:,j]
+        self.cj_1i_1_Periodic = np.zeros(self.cj_1i_1.shape)
+        self.cj_1i_1_Periodic[:,j] = self.cj_1i_1[:,j]
+        self.cj_1i0_Periodic = np.zeros(self.cj_1i0.shape)
+        self.cj_1i0_Periodic[:,j] = self.cj_1i0[:,j]
+        self.cj_1i1_Periodic = np.zeros(self.cj_1i1.shape)
+        self.cj_1i1_Periodic[:,j] = self.cj_1i1[:,j]
+        
+        # Find out where to add them in
+        self.cj_1
+
+
+        # Then overwrite values in old arrays where needed (i.e. on same
+        # diagonal -- replacing np.inf), or keep values at np.inf if they
+        # are not needed outside of the region
+        # Wait, do I want to do this? Or add in Periodic values at the end,
+        # after zeroing everything? Hm, where does it make more sense?
+        # I guess b.c.'s should be entirely defined here, but diags there...?
+        self.cj_2i0[:,j] += np.inf
+        self.cj_1i_1[:,j] += np.inf
+        self.cj_1i0[:,j] += np.inf
+        self.cj_1i1[:,j] += np.inf
+        self.cj0i_2[:,j] += 0
+        self.cj0i_1[:,j] += 0
+        self.cj0i0[:,j] += 0
+        self.cj0i1[:,j] += 0
+        self.cj0i2[:,j] += 0
+        self.cj1i_1[:,j] += 0
+        self.cj1i0[:,j] += 0
+        self.cj1i1[:,j] += 0
+        self.cj2i0[:,j] += 0
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
     elif self.BC_W == 'Dirichlet0':
@@ -689,7 +751,15 @@ class F2D(Flexure):
       sys.exit("Invalid boundary condition")
 
     if self.BC_E == 'Periodic':
-      pass # sanity check performed above
+      # sanity check performed above.
+      # See comments there too.
+      self.cj1i_1_Periodic_left = np.zeros(self.D.shape)
+      self.cj_2i0_Periodic_left = np.zeros(self.D.shape)
+      j = 0
+      self.cj1i_1_Periodic_left[:,j] = self.cj1i_1[:,j]
+      self.j2i0_Periodic_left[:,j] = self.j2i0[:,j]
+      j=1
+      self.j2i0_Periodic_left[:,j] = self.j2i0[:,j]
     elif self.BC_E == 'Dirichlet0':
       j = -1
       self.cj_2i0[:,j] += 0
@@ -1257,13 +1327,11 @@ class F2D(Flexure):
                                Dn2, \
                                Dn1 ))
       # Create banded sparse matrix
-      self.coeff_matrix = scipy.sparse.spdiags(self.diags, [self.nx-self.ny*self.nx-1, self.nx-self.ny*self.nx, self.nx-self.ny*self.nx+1, 2*self.nx-self.ny*self.nx, 
-                                                            -2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx, \
-                                                            self.ny*self.nx-2*self.nx, self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1], \
-                                                            self.ny*self.nx, self.ny*self.nx, format='csr') # create banded sparse matrix
+      self.coeff_matrix = scipy.sparse.spdiags(self.diags, [self.nx-self.ny*self.nx-1, self.nx-self.ny*self.nx, self.nx-self.ny*self.nx+1, 2*self.nx-self.ny*self.nx,    # Lower left
+                                                            -2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx, \   # Middle
+                                                            self.ny*self.nx-2*self.nx, self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1], \ # Upper right
+                                                            self.ny*self.nx, self.ny*self.nx, format='csr')
 
-#1-self.ny*self.nx, 2-self.ny*self.nx, 
-#self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1, self.ny*self.nx-1
 
   def calc_max_flexural_wavelength(self):
     """
