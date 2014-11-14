@@ -588,52 +588,27 @@ class F2D(Flexure):
         
         # Then, replace existing values with what will be needed to make the
         # periodic boundary condition work.
-        self.cj_1i0
-
-        # Also, recognize that the diags will be added to other diags, right? Just incidentally. And shifted.
         j = 0
-        # First, copy diagonal values into new arrays
-        self.cj_2i0_Periodic = np.zeros(self.cj_2i0.shape)
-        self.cj_2i0_Periodic[:,j] = self.cj_2i0[:,j]
-        self.cj_1i_1_Periodic = np.zeros(self.cj_1i_1.shape)
-        self.cj_1i_1_Periodic[:,j] = self.cj_1i_1[:,j]
-        self.cj_1i0_Periodic = np.zeros(self.cj_1i0.shape)
-        self.cj_1i0_Periodic[:,j] = self.cj_1i0[:,j]
-        self.cj_1i1_Periodic = np.zeros(self.cj_1i1.shape)
-        self.cj_1i1_Periodic[:,j] = self.cj_1i1[:,j]
+        self.cj_1i0[:,j] = self.cj_1i_1[:,j]
+        self.cj_1i1[:,j] = self.cj_1i0[:,j]
 
-        self.cj_2i0_Periodic = np.zeros(self.cj_2i0.shape)
-        self.cj_2i0_Periodic[:,j] = self.cj_2i0[:,j]
-        self.cj_1i_1_Periodic = np.zeros(self.cj_1i_1.shape)
-        self.cj_1i_1_Periodic[:,j] = self.cj_1i_1[:,j]
-        self.cj_1i0_Periodic = np.zeros(self.cj_1i0.shape)
-        self.cj_1i0_Periodic[:,j] = self.cj_1i0[:,j]
-        self.cj_1i1_Periodic = np.zeros(self.cj_1i1.shape)
-        self.cj_1i1_Periodic[:,j] = self.cj_1i1[:,j]
-        
-        # Find out where to add them in
-        self.cj_1
-
-
-        # Then overwrite values in old arrays where needed (i.e. on same
-        # diagonal -- replacing np.inf), or keep values at np.inf if they
-        # are not needed outside of the region
-        # Wait, do I want to do this? Or add in Periodic values at the end,
-        # after zeroing everything? Hm, where does it make more sense?
-        # I guess b.c.'s should be entirely defined here, but diags there...?
+        # And then change remaning off-grid values to np.inf (i.e. those that 
+        # were not altered to a real value
+        # These will be the +/- 2's and the j_1i_1 and the j1i1
+        # These are the farthest-out pentadiagonals that can't be reached by 
+        # the tridiagonals, and the tridiagonals that are farther away on the 
+        # y (big grid) axis that can't be reached by the single diagonals 
+        # that are farthest out
+        # So 4 diagonals.
+        # But ci1j1 is taken care of on -1 end before being rolled forwards
+        # (i.e. clockwise, if we are reading from the top of the tread of a 
+        # tire)
+        j = 0
         self.cj_2i0[:,j] += np.inf
         self.cj_1i_1[:,j] += np.inf
-        self.cj_1i0[:,j] += np.inf
-        self.cj_1i1[:,j] += np.inf
-        self.cj0i_2[:,j] += 0
-        self.cj0i_1[:,j] += 0
-        self.cj0i0[:,j] += 0
-        self.cj0i1[:,j] += 0
-        self.cj0i2[:,j] += 0
-        self.cj1i_1[:,j] += 0
-        self.cj1i0[:,j] += 0
-        self.cj1i1[:,j] += 0
-        self.cj2i0[:,j] += 0
+        j = 1
+        self.cj_2i0[:,j] += np.inf
+
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
     elif self.BC_W == 'Dirichlet0':
@@ -758,14 +733,32 @@ class F2D(Flexure):
 
     if self.BC_E == 'Periodic':
       # sanity check performed above.
-      # See comments there too.
-      self.cj1i_1_Periodic_left = np.zeros(self.D.shape)
-      self.cj_2i0_Periodic_left = np.zeros(self.D.shape)
-      j = 0
+      # See more extensive comments there too.
+      
+      # New arrays -- new diagonals, but mostly empty. Just corners of blocks
+      # (boxes) in block-diagonal matrix
+      self.cj1i_1_Periodic_left = np.zeros(self.q0.shape)
+      self.cj2i0_Periodic_left = np.zeros(self.q0.shape)
+      j = -1
       self.cj1i_1_Periodic_left[:,j] = self.cj1i_1[:,j]
-      self.j2i0_Periodic_left[:,j] = self.j2i0[:,j]
-      j=1
-      self.j2i0_Periodic_left[:,j] = self.j2i0[:,j]
+      self.cj2i0_Periodic_left[:,j] = self.cj2i0[:,j]
+      j=-2
+      self.cj2i0_Periodic_left[:,j] = self.cj2i0[:,j]
+      
+      # Then, replace existing values with what will be needed to make the
+      # periodic boundary condition work.
+      j =-1
+      self.cj1i_1[:,j] = self.cj_1i0[:,j]
+      self.cj1i0[:,j] = self.cj1i1[:,j]
+
+      # And then change remaning off-grid values to np.inf (i.e. those that 
+      # were not altered to a real value
+      j = -1
+      self.cj1i1[:,j] += np.inf
+      self.cj2i0[:,j] += np.inf
+      j = 1
+      self.cj_2i0[:,j] += np.inf
+
     elif self.BC_E == 'Dirichlet0':
       j = -1
       self.cj_2i0[:,j] += 0
