@@ -250,14 +250,14 @@ class Plotting(object):
 
     subplot(211)
     title('Loads and Lithospheric Deflections',fontsize=20)
-    if self.method == "SPA_NG":
+    if self.method == "SAS_NG":
       plot(self.x,self.q0/(self.rho_m*self.g),'o')
     else:
       plot(self.x,self.q0/(self.rho_m*self.g))
     ylabel('Load thickness, mantle equivalent [m]')
 
     subplot(212)
-    if self.method == "SPA_NG":
+    if self.method == "SAS_NG":
       plot(self.x,self.w,'o')
     else:
       plot(self.x,self.w)
@@ -293,19 +293,19 @@ class Plotting(object):
     xkm = self.x/1000
 
     # Plot undeflected load
-    if self.method == "SPA_NG":
+    if self.method == "SAS_NG":
       ax.plot(xkm,self.q0/(self.rho_m*self.g),'go',linewidth=2,label="Load thickness [m mantle equivalent]")
     else:
       ax.plot(xkm,self.q0/(self.rho_m*self.g),'g--',linewidth=2,label="Load thickness [m mantle equivalent]")
     
     # Plot deflected load
-    if self.method == "SPA_NG":
+    if self.method == "SAS_NG":
       ax.plot(xkm,self.q0/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load thickness [m mantle equivalent]")
     else:
       ax.plot(xkm,self.q0/(self.rho_m*self.g) + self.w,'g',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
 
     # Plot deflection
-    if self.method == "SPA_NG":
+    if self.method == "SAS_NG":
       ax.plot(xkm,self.w,'ko-',linewidth=2,label="Deflection [m mantle equivalent]")
     else:
       ax.plot(xkm,self.w,'k',linewidth=2,label="Deflection [m mantle equivalent]")
@@ -767,17 +767,17 @@ class Flexure(Isostasy):
   def FFT(self):
     pass
 
-  # SPA and SPA_NG are the exact same here; leaving separate just for symmetry 
+  # SAS and SAS_NG are the exact same here; leaving separate just for symmetry 
   # with other functions
 
-  def SPA(self):
+  def SAS(self):
     if self.filename:
       # Define the (scalar) elastic thickness
       self.Te = self.configGet("float", "parameter", "ElasticThickness")
       if self.dimension == 2:
         from scipy.special import kei
 
-  def SPA_NG(self):
+  def SAS_NG(self):
     if self.filename:
       # Define the (scalar) elastic thickness
       self.Te = self.configGet("float", "parameter", "ElasticThickness")

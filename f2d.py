@@ -20,17 +20,17 @@ class F2D(Flexure):
       # Fast Fourier transform
       super(F2D, self).FFT()
       self.method_func = self.FFT
-    elif self.method == "SPA":
+    elif self.method == "SAS":
       # Superposition of analytical solutions
-      super(F2D, self).SPA()
-      self.method_func = self.SPA   
-    elif self.method == "SPA_NG":
+      super(F2D, self).SAS()
+      self.method_func = self.SAS
+    elif self.method == "SAS_NG":
       # Superposition of analytical solutions,
-      # nonuniform points
-      super(F2D, self).SPA_NG()
-      self.method_func = self.SPA_NG
+      # nonuniform points (no grid)
+      super(F2D, self).SAS_NG()
+      self.method_func = self.SAS_NG
     else:
-      sys.exit('Error: method must be "FD", "FFT", "SPA", or "SPA_NG"')
+      sys.exit('Error: method must be "FD", "FFT", "SAS", or "SAS_NG"')
 
     if self.Verbose: print 'F2D run'
     self.method_func()
@@ -56,11 +56,11 @@ class F2D(Flexure):
   def FFT(self):
     sys.exit("The fast Fourier transform solution method is not yet implemented.")
 
-  def SPA(self):
+  def SAS(self):
     self.spatialDomainVars()
     self.spatialDomainGridded()
 
-  def SPA_NG(self):
+  def SAS_NG(self):
     self.spatialDomainVars()
     self.spatialDomainNoGrid()
 

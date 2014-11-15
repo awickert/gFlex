@@ -17,17 +17,17 @@ class F1D(Flexure):
       # Fast Fourier transform
       super(F1D, self).FFT()
       self.method_func = self.FFT
-    elif self.method == "SPA":
+    elif self.method == "SAS":
       # Superposition of analytical solutions
-      super(F1D, self).SPA()
-      self.method_func = self.SPA
-    elif self.method == "SPA_NG":
+      super(F1D, self).SAS()
+      self.method_func = self.SAS
+    elif self.method == "SAS_NG":
       # Superposition of analytical solutions,
       # nonuniform points
-      super(F1D, self).SPA_NG()
-      self.method_func = self.SPA_NG
+      super(F1D, self).SAS_NG()
+      self.method_func = self.SAS_NG
     else:
-      sys.exit('Error: method must be "FD", "FFT", or "SPA"')
+      sys.exit('Error: method must be "FD", "FFT", "SAS", or "SAS_NG"')
 
     if self.Verbose: print 'F1D run'
     self.method_func ()
@@ -61,12 +61,12 @@ class F1D(Flexure):
       self.gridded_x()
     sys.exit("The fast Fourier transform solution method is not yet implemented.")
     
-  def SPA(self):
+  def SAS(self):
     self.gridded_x()
     self.spatialDomainVars()
     self.spatialDomainGridded()
 
-  def SPA_NG(self):
+  def SAS_NG(self):
     self.spatialDomainVars()
     self.spatialDomainNoGrid()
 
@@ -94,7 +94,8 @@ class F1D(Flexure):
     self.alpha = (4*self.D/(self.drho*self.g))**.25 # 1D flexural parameter
     self.coeff = self.alpha**3/(8*self.D)
 
-  # GRIDDED
+  # UNIFORM DX ("GRIDDED"): LOADS PROVIDED AS AN ARRAY WITH KNOWN DX TO
+  # CONVERT LOAD MAGNITUDE AT A POINT INTO MASS INTEGRATED ACROSS DX
 
   def spatialDomainGridded(self):
   
@@ -110,7 +111,8 @@ class F1D(Flexure):
     # No need to return: w already belongs to "self"
     
 
-  # NO GRID
+  # NONUNIFORM DX (NO "GRID"): ARBITRARILY-SPACED POINT LOADS
+  # So essentially a sum of Green's functions for flexural response
 
   def spatialDomainNoGrid(self):
   
