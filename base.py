@@ -33,11 +33,15 @@ class BMI (object):
   def get_var_name (self, var):
       pass
 
+  """
+  # JUST CAUSING PROBLEMS BY PREVENTING CODE FROM RUNNING NORMALLY
+  # EVEN IF TEMPLATE SEEMED LIKE A GOOD IDEA WHEN BEICHUAN INTRODUCED IT TO ME
   def get_value (self, long_var_name):
       pass
   # replaced "src" with "value" to match my code as it stands
   def set_value (self, long_var_name, value):
       pass
+  """
 
   # NONE OF THESE ARE IMPLEMENTED
   def get_component_name (self):
@@ -137,6 +141,7 @@ class Utility(object):
     # Loading grid
     elif value_key == 'Loads':
       self.q0 = value
+      print "LOADS SET!"
 
     # [numerical]
     # Grid spacing
@@ -500,8 +505,6 @@ class Isostasy(BMI, Utility, Plotting):
       except:
         sys.exit("No input file at specified path, or input file configured incorrectly")
 
-    print self.filename
-    
     if self.filename:
       # Set clocks to None so if they are called by the getter before the 
       # calculation is performed, there won't be an error
@@ -561,17 +564,21 @@ class Isostasy(BMI, Utility, Plotting):
       # Deebug means that whole arrays, etc., can be printed
       self.Debug = self.configGet("bool", "verbosity", "Debug")
 
-    # Stop program if there is no q0 defined
-    if self.q0 == None:
+    print self.q0
+
+    # Stop program if there is no q0 defined or if it is None-type
+    try:
+      self.q0
+      # Stop program if q0 is None-type
+      if type(self.q0) == None: # if is None type, just be patient
+        sys.exit("Must define non-None-type q0 by this stage in the initialization step\n"+\
+                 "from either input file (string) or direct array import")
+    except:
       sys.exit("Must define q0 by this stage in the initialization step\n"+\
                "from either input file (string) or direct array import")
-    # or if it is None-type
-    if type(self.q0) == None: # if is None type, just be patient
-      sys.exit("Must define non-None-type q0 by this stage in the initialization step\n"+\
-               "from either input file (string) or direct array import")
 
-    # If a q0 hasn't been set already
-    if type(self.q0) != np.ndarray:
+    # If a q0 is a string (i.e. we need to load something)
+    if type(self.q0) == str:
       try:
         # First see if it is a full path or directly links from the current
         # working directory
@@ -581,7 +588,6 @@ class Isostasy(BMI, Utility, Plotting):
         try:
           self.q0 = np.loadtxt(self.q0)
           if self.Verbose: print "Loading q0 ASCII"
-          print self.q0
         except:
           # Then see if it is relative to the location of the input file
           try:
