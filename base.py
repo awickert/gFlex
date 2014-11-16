@@ -490,10 +490,14 @@ class Isostasy(BMI, Utility, Plotting):
     # If a filename is provided here, overwrite any prior value
     if filename:
       if self.filename:
-        if self.Debug:
-          print "Overwriting filename from '__init__' step with that from\n"+\
-                "initialize step."
-      self.filename = filename
+        pass # Don't overwrite if filename is None-type
+        # "Debug" not yet defined.
+        #if self.Debug:
+        #  print "Overwriting filename from '__init__' step with that from\n"+\
+        #        "initialize step."
+      else:
+        # Update to new filename
+        self.filename = filename
 
     if self.filename:
       self.config = ConfigParser.ConfigParser()
@@ -562,56 +566,52 @@ class Isostasy(BMI, Utility, Plotting):
       if self.dimension == 2:
         self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
       # Loading grid
-      q0path = self.configGet('string', "input", "Loads")
+      self.q0 = self.configGet('string', "input", "Loads")
       
       # Verbosity
       self.Verbose = self.configGet("bool", "verbosity", "Verbose")
       # Deebug means that whole arrays, etc., can be printed
       self.Debug = self.configGet("bool", "verbosity", "Debug")
 
-    else:
-      self.inpath = os.getcwd()+'/input/' # often correct, but a hack
-
-    # Path from setter?
-    try:
-      self.q0
-      if type(self.q0) == str:
-        q0path = self.q0
-    except:
-      self.q0 = None
+    # Stop program if there is no q0 defined
+    if self.q0 == None:
+      sys.exit("Must define q0 by this stage in the initialization step\n"+\
+               "from either input file (string) or direct array import")
+    # or if it is None-type
+    if type(self.q0) == None: # if is None type, just be patient
+      sys.exit("Must define non-None-type q0 by this stage in the initialization step\n"+\
+               "from either input file (string) or direct array import")
 
     # If a q0 hasn't been set already
     if type(self.q0) != np.ndarray:
-      print type(self.q0)
-      if type(self.q0) != None: # if is None type, just be patient
-        pass
-      else:
+      try:
+        # First see if it is a full path or directly links from the current
+        # working directory
+        self.q0 = np.load(self.q0)
+        if self.Verbose: print "Loading q0 from numpy binary"
+      except:
         try:
-          # First see if it is a full path or directly links from the current
-          # working directory
+          self.q0 = np.loadtxt(self.q0)
+          if self.Verbose: print "Loading q0 ASCII"
+          print self.q0
+        except:
+          # Then see if it is relative to the location of the input file
           try:
-            self.q0 = load(q0path)
+            self.q0 = load(self.inpath + self.q0)
             if self.Verbose: print "Loading q0 from numpy binary"
           except:
-            self.q0 = np.loadtxt(q0path)
-            if self.Verbose: print "Loading q0 ASCII"
-        except:
-          try:
-            # Then see if it is relative to the location of the input file
             try:
-              self.q0 = load(self.inpath + q0path)
-              if self.Verbose: print "Loading q0 from numpy binary"
-            except:
-              self.q0 = np.loadtxt(self.inpath + q0path)
+              self.q0 = np.loadtxt(self.inpath + self.q0)
               if self.Verbose: print "Loading q0 ASCII"
-          except:
-            print "Cannot find q0 file"
-            print "q0path = " + q0path
-            print "Looked relative to model python files."
-            print "Also looked relative to input file path, " + self.inpath
-            print "Exiting."
-            sys.exit()
-      
+            # If failure
+            except:
+              print "Cannot find q0 file"
+              print "q0path = " + self.q0
+              print "Looked relative to model python files."
+              print "Also looked relative to input file path, " + self.inpath
+              print "Exiting."
+              sys.exit()
+    
     # Check consistency of dimensions
     if self.q0.ndim != self.dimension:
       print "Number of dimensions in loads file is inconsistent with"
@@ -624,9 +624,6 @@ class Isostasy(BMI, Utility, Plotting):
 
   # Finalize
   def finalize(self):
-    # Change q0 back into original form before plotting
-    # (in case it was altered for b.c.'s)
-    self.q0 = self.q0_orig
     # Just print a line to stdout
     print ""
 
