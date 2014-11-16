@@ -507,8 +507,8 @@ class Isostasy(BMI, Utility, Plotting):
     if self.filename:
       self.config = ConfigParser.ConfigParser()
       try:
-        self.config.read(filename)
-        self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
+        self.config.read(self.filename)
+        self.inpath = os.path.dirname(os.path.realpath(self.filename)) + '/'
         # Need to have these guys inside "try" to make sure it is set up OK
         # (at least for them)
         self.model     = self.configGet("string", "mode", "model")
