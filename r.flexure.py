@@ -151,13 +151,15 @@ from f1d import *
 from f2d import *
 from prattairy import *
 
-# GRASS
+# PYTHON
 import numpy as np
+import time
+
+# GRASS
 from grass.script import core as grass
 from grass.script import mapcalc
 from grass.script import db as db
 import grass.script.array as garray
-import time
 
 def main():
 
@@ -198,9 +200,9 @@ def main():
   obj.set_value('dimension', 2)
   
   obj.set_value('GravAccel', 9.8) # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if method == SAs:
+  if method == 'SAS':
     obj.set_value('method', 'SAS')
-  elif method == FD:
+  elif method == 'FD':
     obj.set_value('method', 'FD')
     obj.set_value('Solver', 'direct')
     # Always use the van Wees and Cloetingh (1994) solution type.
@@ -254,9 +256,9 @@ def main():
     FlexureTe * 1000 # for km --> m
     # meters are the only other option, so just do nothing otherwise
 
-  # Values set by user
-  obj.set_value('Loads', q0rast) # Te needs to be 1 cell bigger on each edge
-  obj.set_value('ElasticThickness', FlexureTe)# np.ones(Te.shape)*20000)#
+  # Values set by user -- set to np.array for flow control in main code
+  obj.set_value('Loads', np.array(q0rast)) # Te needs to be 1 cell bigger on each edge
+  obj.set_value('ElasticThickness', np.array(FlexureTe))# np.ones(Te.shape)*20000)#
   obj.set_value('InfillMaterialDensity', rho_fill) # defaults to 0
 
   # Calculated values
