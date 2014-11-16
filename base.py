@@ -205,14 +205,8 @@ class Utility(object):
     elif value_key == 'PoissonsRatio':
       self.nu = value
     elif value_key == 'ElasticThickness':
-      self.Te = value # How to dynamically type for scalar or array?
-                      # Python is smart enough to handle it.
-      if type(self.q0) == np.ndarray:
-        if self.q0.any(): # Check for this on both q0 and Te
-          self.readyElasticThickness() # But need a program to handle converting 
-                                       # scalars and arrays, as well as potentially 
-                                       # needing to load a Te file
-
+      self.Te = value
+      
     # [Input]
     elif value_key == 'CoeffArray':
       # This coefficient array is what is used with the UMFPACK direct solver
@@ -842,7 +836,6 @@ class Flexure(Isostasy):
           print "Exiting."
           sys.exit()
     # Otherwise, all set!
-    self.readyElasticThickness()
     
   ### need work
   def FFT(self):
