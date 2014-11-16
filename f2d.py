@@ -254,12 +254,12 @@ class F2D(Flexure):
       
     elif type(self.Te) == np.ndarray:
     
-    #######################################################
-    # GENERATE COEFFICIENT VALUES FOR EACH SOLUTION TYPE. #
-    #    "vWC1994" IS THE BEST: LOOSEST ASSUMPTIONS.      #
-    #        OTHERS HERE LARGELY FOR COMPARISON           #
-    #######################################################
-    
+      #######################################################
+      # GENERATE COEFFICIENT VALUES FOR EACH SOLUTION TYPE. #
+      #    "vWC1994" IS THE BEST: LOOSEST ASSUMPTIONS.      #
+      #        OTHERS HERE LARGELY FOR COMPARISON           #
+      #######################################################
+      
       # All derivatives here, to make reading the equations below easier
       D00 = D[1:-1,1:-1]
       D10 = D[1:-1,2:]
@@ -439,16 +439,18 @@ class F2D(Flexure):
     print "Boundary condition, North:", self.BC_N, type(self.BC_N)
     print "Boundary condition, South:", self.BC_S, type(self.BC_S)
     
-    # Need to hold on to q0 array to keep its size; self.q0 will be redefined 
-    # for the computation
-    self.q0_orig = self.q0.copy()
-    
-    # Now I can build the coefficient arrays
-    self.get_coeff_values()
-      
-    # Rigidity b.c.?
+    # First, set flexural rigidity boundary conditions to flesh out this padded
+    # array
     self.BC_Rigidity()
-
+    
+    # Second, build the coefficient arrays -- with the rigidity b.c.'s
+    self.get_coeff_values()
+    
+    # Third, apply boundary conditions to the coeff_arrays to create the 
+    # flexural solution
+    self.BC_Flexure()
+    
+    # Fourth, construct the sparse diagonal array
     self.build_diags()
 
   def BC_Rigidity(self):
@@ -496,28 +498,19 @@ class F2D(Flexure):
       self.BC_Rigidity_S = 'mirror symmetry'
     else:
       sys.exit("Invalid Te B.C. case")
-    
+  
     #############
     # PAD ARRAY #
     #############
     #self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
     #self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
     if np.isscalar(self.Te):
-      # No longer scalar! But already went through get_coeff_values() step, 
-      # which is the other important check
-      # Though of course constant Te is just a special case and can be solved
-      # by the general solution methods
-      self.D *= np.ones(self.q0.shape)
-      # THIS WILL GO OUTSIDE IF-STATEMENT ONCE I CHANGE THE SHAPE OF THE
-      # Te ARRAYS!!!
-      self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
-      self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
-    else:
-      # Temporarily:
-      self.D[:,0] = np.nan
-      self.D[:,-1] = np.nan
-      self.D[0,:] = np.nan
-      self.D[-1,:] = np.nan
+      self.D *= np.ones(self.q0.shape) # And leave Te as a scalar for checks
+    self.Te_unpadded = self.Te.copy()
+    self.Te = np.hstack(( np.nan*np.zeros((self.Te.shape[0], 1)), self.Te, np.nan*np.zeros((self.Te.shape[0], 1)) ))
+    self.Te = np.vstack(( np.nan*np.zeros(self.Te.shape[1]), self.Te, np.nan*np.zeros(self.Te.shape[1]) ))
+    self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
+    self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
 
     ###############################################################
     # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
@@ -549,8 +542,7 @@ class F2D(Flexure):
     if self.BC_Rigidity_S == "periodic":
       self.D[-1,:] = self.D[-3,:]
       
-### NEW FCN HERE
-### AND TRY REMOVING THE REPEAT CODE IN 1D CASE!
+  def BC_Flexure(self):
 
     # The next section of code is split over several functions for the 1D 
     # case, but will be all in one function here, at least for now.
