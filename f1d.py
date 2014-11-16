@@ -4,7 +4,7 @@ from scipy.sparse import dia_matrix, csr_matrix, spdiags
 from scipy.sparse.linalg import spsolve, isolve
 
 class F1D(Flexure):
-  def initialize(self, filename):
+  def initialize(self, filename=None):
     self.dimension = 1 # Set it here in case it wasn't set for selection before
     super(F1D, self).initialize(filename)
     if self.Verbose: print 'F1D initialized'

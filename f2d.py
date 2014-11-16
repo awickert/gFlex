@@ -7,7 +7,7 @@ from scipy.special import kei
 # three parameters as class Isostasy; and it then sets up more parameters specific
 # to its own type of simulation.
 class F2D(Flexure):
-  def initialize(self, filename):
+  def initialize(self, filename=None):
     self.dimension = 2 # Set it here in case it wasn't set for selection before
     super(F2D, self).initialize(filename)
     if self.Verbose: print 'F2D initialized'
