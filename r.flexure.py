@@ -77,6 +77,21 @@
 #%  required : yes
 #%end
 #%option
+#%  key: solver
+#%  type: string
+#%  description: Solver type
+#%  options: direct, iterative
+#%  answer: direct
+#%  required : no
+#%end
+#%option
+#%  key: tolerance
+#%  type: double
+#%  description: Convergence tolerance (between iterations) for iterative solver
+#%  answer: 1E-3
+#%  required : no
+#%end
+#%option
 #%  key: northbc
 #%  type: string
 #%  description: Northern boundary condition
@@ -179,6 +194,9 @@ def main():
   YoungsModulus = float(options['ym']) # Can't just use "E" because reserved for "east", I think
   PoissonsRatio = float(options['nu'])
   MantleDensity = float(options['rho_m'])
+  # Solver type and iteration tolerance
+  Solver = options['solver']
+  ConvergenceTolerance = float(options['tolerance'])
   # Boundary conditions
   bcn = options['northbc']
   bcs = options['southbc']
@@ -198,6 +216,14 @@ def main():
   obj = F2D()
   obj.set_value('model', 'flexure')
   obj.set_value('dimension', 2)
+   
+  # Set verbosity
+  if grass.verbosity() >= 2:
+    obj.set_value('Verbose', True)
+  if grass.verbosity() >= 3:
+    obj.set_value('Debug', True)
+  elif grass.verbosity() == 0:
+    obj.set_value('Quiet', True)
   
   obj.set_value('GravAccel', 9.8) # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if method == 'SAS':
@@ -215,11 +241,14 @@ def main():
   obj.filename = None
 
   # Make a bunch of standard selections
-  # CHANGE THESE INTO PARAMETERS THAT CAN BE CHOSEN!
   obj.set_value('GravAccel', GravAccel) # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   obj.set_value('YoungsModulus', YoungsModulus)#70E6/(600/3300.))#
   obj.set_value('PoissonsRatio', PoissonsRatio)
   obj.set_value('MantleDensity', MantleDensity)
+  
+  # And solver / iterations (if needed)
+  obj.set_value('Solver', Solver)
+  obj.set_value('ConvergenceTolerance', ConvergenceTolerance)
 
   # Set all boundary conditions
   obj.set_value('BoundaryCondition_East', bce)
@@ -235,7 +264,7 @@ def main():
       if obj.get_value('Verbosity'):
         print "Based on r_Earth = 6371 km"
         print "Setting y-resolution [m] to 111,195 * [degrees]"
-      obj.set_value('GridSpacing_y', grass.region()['ewres']*111195.)
+      obj.set_value('GridSpacing_x', grass.region()['ewres']*111195.)
       NSmid = (grass.region()['n'] + grass.region()['s'])/2.
       dx_at_mid_latitude = (3.14159/180.) * 6371000. * np.cos(np.deg2rad(NSmid))
       print "Setting x-resolution [m] to "+"%.2f" %dx_at_mid_latitude+" * [degrees]"
@@ -253,23 +282,30 @@ def main():
   # Get elastic thickness from GRASS if it is not a scalar value
   if TeIsRast:
     FlexureTe = garray.array() # FlexureTe is the one that is used by Flexure
-    FlexureTe.read('Teresamp')
+    FlexureTe.read(Te)
+  else:
+    FlexureTe = Te
     
   # Adjust elastic thickness if given in km
   if Te_units == 'km':
-    FlexureTe * 1000 # for km --> m
+    FlexureTe *= 1000 # for km --> m
+    print FlexureTe
     # meters are the only other option, so just do nothing otherwise
 
   # Values set by user -- set to np.array for flow control in main code
-  obj.set_value('Loads', np.array(q0rast)) # Te needs to be 1 cell bigger on each edge
-  obj.set_value('ElasticThickness', np.array(FlexureTe))# np.ones(Te.shape)*20000)#
-  obj.set_value('InfillMaterialDensity', rho_fill) # defaults to 0
+  obj.set_value('Loads', np.array(q0rast))
+  if type(FlexureTe) == type(garray.array()):
+    obj.set_value('ElasticThickness', np.array(FlexureTe))
+  else:
+    # if scalar
+    obj.set_value('ElasticThickness', FlexureTe)
+  obj.set_value('InfillMaterialDensity', rho_fill)
 
   # Calculated values
-  obj.drho = obj.rho_m - obj.rho_fill
+  #obj.drho = obj.rho_m - obj.rho_fill
 
   # CALCULATE!
-  #obj.initialize(None)
+  obj.initialize()
   obj.run()
   obj.finalize()
 

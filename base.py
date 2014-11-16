@@ -141,7 +141,6 @@ class Utility(object):
     # Loading grid
     elif value_key == 'Loads':
       self.q0 = value
-      print "LOADS SET!"
 
     # [numerical]
     # Grid spacing
@@ -168,10 +167,18 @@ class Utility(object):
       self.BC_S = value
 
     # [verbosity]
-    elif value_key == 'Verbose':
-      self.Verbose = value
+    elif value_key == 'Verbosity' or value_key == 'Verbose':
+      if self.Quiet:
+        self.Debug = False
+      else:
+        self.Verbose = value
     elif value_key == 'Debug':
-      self.Quiet = value
+      if self.Quiet:
+        self.Debug = False
+      else:
+        self.Debug = value
+    elif value_key == 'Quiet':
+      self.Quiet = True
 
     # Output
     elif value_key == 'DeflectionOut':
@@ -264,7 +271,6 @@ class Utility(object):
       return self.Te
     if val_string=='Verbosity':
       return self.Verbose
-
 
 
 class Plotting(object):
@@ -476,6 +482,12 @@ class Isostasy(BMI, Utility, Plotting):
     # Use standard routine to pull out values
     # If no filename provided, will not initialize input file.
     self.filename = filename
+    # Set default "quiet" to False, unless set by setter
+    # This will not work with input file; is designed for GRASS GIS
+    self.Quiet = False
+    # And also set default verbosity
+    self.Verbose = True
+    self.Debug = False
 
   def initialize(self, filename=None):
     # Values from input file
@@ -564,8 +576,6 @@ class Isostasy(BMI, Utility, Plotting):
       # Deebug means that whole arrays, etc., can be printed
       self.Debug = self.configGet("bool", "verbosity", "Debug")
 
-    print self.q0
-
     # Stop program if there is no q0 defined or if it is None-type
     try:
       self.q0
@@ -610,6 +620,9 @@ class Isostasy(BMI, Utility, Plotting):
     if self.q0.ndim != self.dimension:
       print "Number of dimensions in loads file is inconsistent with"
       print "number of dimensions in solution technique."
+      print "Loads", self.q0.ndim
+      print "Dimensions", self.dimension
+      print self.q0
       print "Exiting."
       sys.exit()
 
@@ -722,9 +735,9 @@ class Flexure(Isostasy):
       self.solver # See if it exists already
     except:
       self.solver = self.configGet("string", "numerical", "Solver")
-    # In the case that it is iterative, find the convergence criterion
-    self.iterative_ConvergenceTolerance = self.configGet("float", "numerical", "ConvergenceTolerance")    
     if self.filename:
+      # In the case that it is iterative, find the convergence criterion
+      self.iterative_ConvergenceTolerance = self.configGet("float", "numerical", "ConvergenceTolerance")    
       # Try to import Te grid or scalar for the finite difference solution
       Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
       # See if there is a pre-made coefficient matrix to import
