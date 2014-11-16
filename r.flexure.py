@@ -28,8 +28,10 @@
 
 #%module
 #%  description: Lithospheric flexure
+#% keywords: raster
 #%end
 #%flag
+#%  key: l
 #%  description: Allows running in lat/lon, assumes 1deg lat = 111.32 km, 1 deg lon is f(lat) at grid N-S midpoint
 #%end
 #%option
@@ -75,7 +77,7 @@
 #%  required : yes
 #%end
 #%option
-#%  key: n
+#%  key: northbc
 #%  type: string
 #%  description: Northern boundary condition
 #%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
@@ -83,7 +85,7 @@
 #%  required : no
 #%end
 #%option
-#%  key: s
+#%  key: southbc
 #%  type: string
 #%  description: Southern boundary condition
 #%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
@@ -91,7 +93,7 @@
 #%  required : no
 #%end
 #%option
-#%  key: w
+#%  key: westbc
 #%  type: string
 #%  description: Western boundary condition
 #%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
@@ -99,7 +101,7 @@
 #%  required : no
 #%end
 #%option
-#%  key: e
+#%  key: eastbc
 #%  type: string
 #%  description: Eastern boundary condition
 #%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
@@ -114,7 +116,7 @@
 #%  required : no
 #%end
 #%option
-#%  key: E
+#%  key: ym
 #%  type: double
 #%  description: Young's Modulus [Pa]
 #%  answer: 65E9
@@ -139,7 +141,9 @@
 # PATH
 import sys
 # Path to Flexure model - hard-coded here
-sys.path.append("/home/awickert/models/flexure/trunk")
+sys.path.append("/home/awickert/models/flexure") # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# OTHER POSSIBLE PROBLEM -- MAKEFILE NEEDS SPECIAL DIR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# made "scriptstrings" b/c I had to in "locale", may be a problem in general in the future !!!!!!!!!!!!!!!
 
 # FLEXURE
 from base import *
@@ -170,14 +174,14 @@ def main():
   rho_fill = float(options['rho_fill'])
   # Parameters that often stay at their default values
   GravAccel = float(options['g'])
-  YoungsModulus = float(options['E'])
-  PoissonsRatio = float(options['nu'])
+  YoungsModulus = float(options['ym']) # Can't just use "E" because reserved for "east", I think
+  PoissonsRatio = float(options['u'])
   MantleDensity = float(options['rho_m'])
   # Boundary conditions
-  bcn = options['n']
-  bcs = options['s']
-  bcw = options['w']
-  bce = options['e']
+  bcn = options['northbc']
+  bcs = options['southbc']
+  bcw = options['westbc']
+  bce = options['eastbc']
   # Output
   output = options['output']
   
@@ -249,13 +253,6 @@ def main():
   if Te_units == 'km':
     FlexureTe * 1000 # for km --> m
     # meters are the only other option, so just do nothing otherwise
-
-  # Change these grids into basic numpy arrays for easier use with Flexure
-  q0rast = np.array(q0rast)
-  if TeIsRast:
-    FlexureTe = np.array(FlexureTe * 1000) # *1000 for km-->m
-  else:
-    FlexureTe = Te * 1000 # km --> m (scalar)
 
   # Values set by user
   obj.set_value('Loads', q0rast) # Te needs to be 1 cell bigger on each edge
