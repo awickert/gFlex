@@ -310,32 +310,19 @@ def main():
   obj.finalize()
 
   # Write to GRASS
-  # First, shrink the region by 1 cell so it accepts the flexural solution
-  n = grass.region()['n'] - grass.region()['nsres']
-  s = grass.region()['s'] + grass.region()['nsres']
-  e = grass.region()['e'] - grass.region()['ewres']
-  w = grass.region()['w'] + grass.region()['ewres']
-  nrows = grass.region()['rows']-2
-  ncols = grass.region()['cols']-2
-  grass.run_command('g.region', n=n, s=s, w=w, e=e, rows=nrows, cols=ncols) 
-  # Then create a new garray buffer and write to it
+  # Create a new garray buffer and write to it
   outbuffer = garray.array() # Instantiate output buffer
   outbuffer[...] = obj.w
   outbuffer.write(output, overwrite=True) # Write it with the desired name
   # And create a nice colormap!
-  grass.run_command('r.colors', map=output, color='rainbow', quiet=True)#, flags='e')
-  # Then revert to the old region
-  grass.run_command('g.region', n=n, s=s, w=w, e=e) 
-  n = grass.region()['n'] + grass.region()['ewres']
-  s = grass.region()['s'] - grass.region()['ewres']
-  e = grass.region()['e'] + grass.region()['ewres']
-  w = grass.region()['w'] - grass.region()['ewres']
-  grass.run_command('g.region', n=n, s=s, w=w, e=e)
+  grass.run_command('r.colors', map=output, color='differences', quiet=True)
 
   # Finally, return to original resolution (overwrites previous region selection)
-  grass.run_command('g.region', rast=Te)
-  grass.run_command('r.resamp.interp', input=output, output=output + '_interp', method='lanczos', overwrite=True, quiet=True)
-  grass.run_command('r.colors', map=output + '_interp', color='rainbow', quiet=True)#, flags='e')
+  grass.run_command('g.region', rast=q)
+  
+  # Reinstate this with a flag or output filename
+  #grass.run_command('r.resamp.interp', input=output, output=output + '_interp', method='lanczos', overwrite=True, quiet=True)
+  #grass.run_command('r.colors', map=output + '_interp', color='rainbow', quiet=True)#, flags='e')
 
   #imshow(obj.w, interpolation='nearest'), show()
 
