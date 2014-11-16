@@ -32,12 +32,12 @@
 #%end
 #%flag
 #%  key: l
-#%  description: Allows running in lat/lon, assumes 1deg lat = 111.32 km, 1 deg lon is f(lat) at grid N-S midpoint
+#%  description: Allows running in lat/lon: dx is f(lat) at grid N-S midpoint
 #%end
 #%option
 #%  key: method
 #%  type: string
-#%  description: Solution method: FD (finite difference) or SAS (superposition of analytical solutions)
+#%  description: Solution method: Finite Diff. or Superpos. of analytical sol'ns
 #%  options: FD, SAS
 #%  required : yes
 #%end
@@ -52,7 +52,14 @@
 #%  key: te
 #%  type: string
 #%  gisprompt: old,cell,raster
-#%  description: Elastic thicnkess: constant value or raster map (~constant ) name [km or m: see "units" option]
+#%  description: Elastic thicnkess: scalar or raster; unis chosen in "te_units"
+#%  required : yes
+#%end
+#%option
+#%  key: te_units
+#%  type: string
+#%  description: Units for elastic thickness
+#%  options: m, km
 #%  required : yes
 #%end
 #%option
@@ -68,13 +75,6 @@
 #%  description: Density of material that fills flexural depressions [kg/m^3]
 #%  answer: 0
 #%  required : no
-#%end
-#%option
-#%  key: te_units
-#%  type: string
-#%  description: Units for elastic thickness
-#%  options: m, km
-#%  required : yes
 #%end
 #%option
 #%  key: solver
