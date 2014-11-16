@@ -225,7 +225,6 @@ def main():
   elif grass.verbosity() == 0:
     obj.set_value('Quiet', True)
   
-  obj.set_value('GravAccel', 9.8) # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if method == 'SAS':
     obj.set_value('method', 'SAS')
   elif method == 'FD':
@@ -234,14 +233,11 @@ def main():
     # Always use the van Wees and Cloetingh (1994) solution type.
     # It is the best.
     obj.set_value('PlateSolutionType', 'vWC1994')
-    # will this automatically fail if the param is something else via parser?!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-  # No filename: getter/setter interface isn't totally worked out
-  # FIX THIS!!!! # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  obj.filename = None
+  # No need for "else" here:
+  # Will automatically fail via parser if value is out of range
 
   # Make a bunch of standard selections
-  obj.set_value('GravAccel', GravAccel) # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  obj.set_value('GravAccel', GravAccel)
   obj.set_value('YoungsModulus', YoungsModulus)#70E6/(600/3300.))#
   obj.set_value('PoissonsRatio', PoissonsRatio)
   obj.set_value('MantleDensity', MantleDensity)
