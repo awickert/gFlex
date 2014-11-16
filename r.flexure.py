@@ -256,14 +256,15 @@ def main():
   # Check if lat/lon
   if grass.region_env()[6] == '3':
     if latlon_override:
-      print "Latitude/longitude grid."
       if obj.get_value('Verbosity'):
+        print "Latitude/longitude grid."
         print "Based on r_Earth = 6371 km"
         print "Setting y-resolution [m] to 111,195 * [degrees]"
       obj.set_value('GridSpacing_x', grass.region()['ewres']*111195.)
       NSmid = (grass.region()['n'] + grass.region()['s'])/2.
       dx_at_mid_latitude = (3.14159/180.) * 6371000. * np.cos(np.deg2rad(NSmid))
-      print "Setting x-resolution [m] to "+"%.2f" %dx_at_mid_latitude+" * [degrees]"
+      if obj.get_value('Verbosity'):
+        print "Setting x-resolution [m] to "+"%.2f" %dx_at_mid_latitude+" * [degrees]"
       obj.set_value('GridSpacing_y', grass.region()['nsres']*dx_at_mid_latitude)
     else:
       sys.exit("Need projected coordinates, or the '-l' flag to approximate.")
@@ -285,7 +286,6 @@ def main():
   # Adjust elastic thickness if given in km
   if Te_units == 'km':
     FlexureTe *= 1000 # for km --> m
-    print FlexureTe
     # meters are the only other option, so just do nothing otherwise
 
   # Values set by user -- set to np.array for flow control in main code
@@ -297,13 +297,11 @@ def main():
     obj.set_value('ElasticThickness', FlexureTe)
   obj.set_value('InfillMaterialDensity', rho_fill)
 
-  # Calculated values
-  #obj.drho = obj.rho_m - obj.rho_fill
-
   # CALCULATE!
   obj.initialize()
   obj.run()
   obj.finalize()
+
 
   # Write to GRASS
   # Create a new garray buffer and write to it

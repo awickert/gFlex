@@ -108,8 +108,11 @@ class Utility(object):
         # Carry on if the variable is optional
         var = None
         if self.Verbose or self.Debug:
-          print 'No value entered for optional parameter "' + name + '" in category "' + category + '" in input file.'
+          print ""
+          print 'No value entered for optional parameter "' + name + '"'
+          print 'in category "' + category + '" in input file.'
           print 'No action related to this optional parameter will be taken.'
+          print ""
       else:
         print 'Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from input file.'
         if specialReturnMessage:
@@ -169,7 +172,7 @@ class Utility(object):
     # [verbosity]
     elif value_key == 'Verbosity' or value_key == 'Verbose':
       if self.Quiet:
-        self.Debug = False
+        self.Verbose = False
       else:
         self.Verbose = value
     elif value_key == 'Debug':
@@ -179,6 +182,8 @@ class Utility(object):
         self.Debug = value
     elif value_key == 'Quiet':
       self.Quiet = True
+      self.Debug = False
+      self.Verbose = False
 
     # Output
     elif value_key == 'DeflectionOut':
@@ -195,7 +200,6 @@ class Utility(object):
     # The lowercase version is here from earlier work; should phase it out
     elif value_key == 'method' or value_key == 'Method':
       self.method = value
-      print "method set"
     elif value_key == 'PlateSolutionType':
       self.PlateSolutionType = value
 
@@ -215,8 +219,9 @@ class Utility(object):
       self.readyCoeff() # See if this is a sparse or something that needs to be loaded
       coeffArraySizeCheck() # Make sure that array size is all right
       # if so, let everyone know
-      print "LOADING COEFFICIENT ARRAY"
-      print "Elastic thickness maps will not be used for the solution."
+      if self.Verbose:
+        print "LOADING COEFFICIENT ARRAY"
+        print "Elastic thickness maps will not be used for the solution."
 
     # [Numerical]
     elif value_key == 'Solver':
@@ -269,7 +274,7 @@ class Utility(object):
     if val_string=='ElasticThickness':
       # This is the model input
       return self.Te
-    if val_string=='Verbosity':
+    if val_string=='Verbosity' or val_string=='Verbose':
       return self.Verbose
 
 
@@ -293,9 +298,10 @@ class Plotting(object):
         elif self.plotChoice == 'combo':
           self.plotTogether()
         else:
-          print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
-          print "Possible input strings are: q0, w, both, and (for 1D) combo"
-          print "Unable to produce plot."
+          if self.Quiet == False:
+            print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
+            print "Possible input strings are: q0, w, both, and (for 1D) combo"
+            print "Unable to produce plot."
       elif self.dimension==2:
         if self.plotChoice == 'q0':
           self.surfplot(self.q0/(self.rho_m*self.g),
@@ -305,9 +311,10 @@ class Plotting(object):
         elif self.plotChoice == 'both':
           self.surfsubplots()
         else:
-          print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
-          print "Possible input strings are: q0, w, both, and (for 1D) combo"
-          print "Unable to produce plot."
+          if self.Quiet == False:
+            print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
+            print "Possible input strings are: q0, w, both, and (for 1D) combo"
+            print "Unable to produce plot."
 
   def linesubplots(self,figNum=1):
     from matplotlib.pyplot import plot, show, figure, subplot, xlabel, \
@@ -470,15 +477,7 @@ class Isostasy(BMI, Utility, Plotting):
   def __init__(self, filename=None):
     # 17 Nov 2014: Splitting out initialize from __init__ to allow space
     # to use getters and setters to define values
-  
-    print "" # Blank line at start of run
-    print "*********************************************"
-    print "*** Initializing gFlex development branch ***"
-    print "*********************************************"
-    print ""
-    print "Open-source licensed under GNU GPL v3"
-    print ""
-
+    
     # Use standard routine to pull out values
     # If no filename provided, will not initialize input file.
     self.filename = filename
@@ -492,6 +491,16 @@ class Isostasy(BMI, Utility, Plotting):
   def initialize(self, filename=None):
     # Values from input file
     
+    # Introduce model
+    if self.Quiet == False:
+      print "" # Blank line at start of run
+      print "*********************************************"
+      print "*** Initializing gFlex development branch ***"
+      print "*********************************************"
+      print ""
+      print "Open-source licensed under GNU GPL v3"
+      print ""
+
     # If a filename is provided here, overwrite any prior value
     if filename:
       if self.filename:
@@ -632,7 +641,8 @@ class Isostasy(BMI, Utility, Plotting):
   # Finalize
   def finalize(self):
     # Just print a line to stdout
-    print ""
+    if self.Quiet==False:
+      print ""
 
   # SAVING TO FILE AND PLOTTING STEPS
 
@@ -673,7 +683,8 @@ class Isostasy(BMI, Utility, Plotting):
           from numpy import savetxt
           # Shouldn't need more than mm precision, at very most
           savetxt(self.wOutFile,self.w,fmt='%.3f')
-          print 'Saving deflections --> ' + self.wOutFile
+          if self.Verbose:
+            print 'Saving deflections --> ' + self.wOutFile
       except:
         # if there is no parsable output string, do not generate output;
         # this allows the user to leave the line blank and produce no output
@@ -729,7 +740,8 @@ class Flexure(Isostasy):
   ### no matter it is 1D or 2D; but if it can't be that way, we can set up a
   ### variable-length arguments, which is the way how Python overloads functions.
   def FD(self):
-    print "Finite Difference Solution Technique"
+    if self.Verbose:
+      print "Finite Difference Solution Technique"
     # Find the solver
     try:
       self.solver # See if it exists already

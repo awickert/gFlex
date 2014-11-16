@@ -189,7 +189,8 @@ class F2D(Flexure):
     self.coeff_start_time = time.time()
     self.BC_selector_and_coeff_matrix_creator()
     self.coeff_creation_time = time.time() - self.coeff_start_time
-    print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
+    if self.Quiet == False:
+      print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
 
 
   def get_coeff_values(self):
@@ -270,7 +271,6 @@ class F2D(Flexure):
       D_11 = D[2:,:-2]
       D1_1 = D[:-2,2:]
       D_1_1 = D[:-2,:-2]
-      print "VAR!"
       # Derivatives of D -- not including /(dx^a dy^b)
       D0  = D00
       Dx  = (-D_10 + D10)/2.
@@ -432,12 +432,13 @@ class F2D(Flexure):
     N-S is for the block diagonal matrix ("with fringes")
     Then calls the function to build the diagonal matrix
     """
-
+    
     # Zeroth, print the boundary conditions to the screen
-    print "Boundary condition, West:", self.BC_W, type(self.BC_W)
-    print "Boundary condition, East:", self.BC_E, type(self.BC_E)
-    print "Boundary condition, North:", self.BC_N, type(self.BC_N)
-    print "Boundary condition, South:", self.BC_S, type(self.BC_S)
+    if self.Verbose:
+      print "Boundary condition, West:", self.BC_W, type(self.BC_W)
+      print "Boundary condition, East:", self.BC_E, type(self.BC_E)
+      print "Boundary condition, North:", self.BC_N, type(self.BC_N)
+      print "Boundary condition, South:", self.BC_S, type(self.BC_S)
     
     # First, set flexural rigidity boundary conditions to flesh out this padded
     # array
@@ -1344,9 +1345,6 @@ class F2D(Flexure):
 
     if (self.BC_N == 'Periodic' and self.BC_S == 'Periodic' and \
         self.BC_W == 'Periodic' and self.BC_E == 'Periodic' ):
-      print "PERIODIC NSEW -- PLACEHOLDER!"
-
-      print "PERIODIC EW!"
       # Additional vector creation
       # West
       # Roll
@@ -1428,7 +1426,6 @@ class F2D(Flexure):
         self.ny*self.nx, self.ny*self.nx, format='csr') 
     
     elif (self.BC_W == 'Periodic' and self.BC_E == 'Periodic'):
-      print "PERIODIC EW!"
       # Additional vector creation
       # West
       # Roll
@@ -1480,7 +1477,6 @@ class F2D(Flexure):
         self.ny*self.nx, self.ny*self.nx, format='csr') 
     
     elif (self.BC_N == 'Periodic' and self.BC_S == 'Periodic'):
-      print "PERIODIC NS!"
       # Periodic.
       # If these are periodic, we need to wrap around the ends of the
       # large-scale diagonal structure
@@ -1569,8 +1565,9 @@ class F2D(Flexure):
         if self.Debug:
           print "Using direct solution with UMFpack"
       else:
-        print "Solution type not understood:"
-        print "Defaulting to direct solution with UMFpack"
+        if self.Quiet == False:
+          print "Solution type not understood:"
+          print "Defaulting to direct solution with UMFpack"
       wvector = scipy.sparse.linalg.spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
 
     # Reshape into grid
@@ -1578,5 +1575,6 @@ class F2D(Flexure):
     self.w_padded = self.w.copy() # for troubleshooting
 
     self.time_to_solve = time.time() - self.solver_start_time
-    print 'Time to solve [s]:', self.time_to_solve
+    if self.Quiet == False:
+      print 'Time to solve [s]:', self.time_to_solve
 
