@@ -130,7 +130,7 @@
 #%  required : no
 #%end
 #%option
-#%  key: g
+#%  key: rho_m
 #%  type: double
 #%  description: Mantle density [kg/m^3]
 #%  answer: 3300
@@ -175,7 +175,7 @@ def main():
   # Parameters that often stay at their default values
   GravAccel = float(options['g'])
   YoungsModulus = float(options['ym']) # Can't just use "E" because reserved for "east", I think
-  PoissonsRatio = float(options['u'])
+  PoissonsRatio = float(options['nu'])
   MantleDensity = float(options['rho_m'])
   # Boundary conditions
   bcn = options['northbc']
