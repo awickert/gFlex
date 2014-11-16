@@ -112,47 +112,28 @@ class Utility(object):
           print specialReturnMessage
         sys.exit("Exiting.")
 
-  # UNIVERSAL SETTER: VALUES THAT EVERYONE NEEDS
   def set_value(self, value_key, value):
+    """
+    Universal setter
+    """
+    # FIRST, VALUES THAT EVERYONE NEEDS::   
+    
+    # [mode]
     # Model type
     if value_key == 'model':
       self.model = value
     elif value_key =='dimension':
       self.dimension = value
-    # Parameters
+
+    # [parameter]
     elif value_key == 'GravAccel':
       self.g = value
     elif value_key == 'MantleDensity':
       self.rho_m = value
     elif value_key == 'InfillMaterialDensity':
       self.rho_fill = value
-    # Grid spacing
-    elif value_key == 'GridSpacing_x':
-      self.dx = value
-    elif value_key == 'GridSpacing_y':
-      if self.dimension == 1:
-        print "No dy in 1D problems; doing nothing"
-      else:
-        self.dy = value
-    # Verbosity
-    elif value_key == 'Verbose':
-      self.Verbose = value
-    elif value_key == 'Debug':
-      self.Quiet = value
-    # Boundary conditions
-    # "Dirichlet0" - 0-displacement at edges) # TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # "Dirichlet" - 0-displacement at edges) # TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # "0Moment0Shear" - second and third derivatives are 0: free cantilever edge (same as Stewart and Watts (1997) used, and standard in CivE)
-    # "Periodic" - wraparound on edges
-    # "Mirror" - reflects on edges
-    elif value_key == 'BoundaryCondition_East':
-      self.BC_E = value
-    elif value_key == 'BoundaryCondition_West':
-      self.BC_W = value
-    elif value_key == 'BoundaryCondition_North':
-      self.BC_N = value
-    elif value_key == 'BoundaryCondition_South':
-      self.BC_S = value
+
+    # [input]
     # Loading grid
     elif value_key == 'Loads':
       self.q0 = value
@@ -168,11 +149,37 @@ class Utility(object):
                                      # compatability check if Te defined first
         #pass # If this doesn't succeed, everything should be fine.
              # And if it does, program will try to make everything work
-    # Dimensions
-    elif value_key == "x":
-      self.x = value
-    elif value_key == "y":
-      self.y = value
+
+    # [numerical]
+    # Grid spacing
+    elif value_key == 'GridSpacing_x':
+      self.dx = value
+    elif value_key == 'GridSpacing_y':
+      if self.dimension == 1:
+        print "No dy in 1D problems; doing nothing"
+      else:
+        self.dy = value
+    # Boundary conditions
+    # "Dirichlet0" - 0-displacement at edges) # TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # "0Slope0Shear" - First and third derivatives are 0: not so physical, but basically means that dw/dx_i at boundaries is flat and at a value that is not externally imposed
+    # "0Moment0Shear" - second and third derivatives are 0: free cantilever edge (same as Stewart and Watts (1997) used, and standard in CivE)
+    # "Periodic" - wraparound on edges
+    # "Mirror" - reflects on edges
+    elif value_key == 'BoundaryCondition_East':
+      self.BC_E = value
+    elif value_key == 'BoundaryCondition_West':
+      self.BC_W = value
+    elif value_key == 'BoundaryCondition_North':
+      self.BC_N = value
+    elif value_key == 'BoundaryCondition_South':
+      self.BC_S = value
+
+    # [verbosity]
+    elif value_key == 'Verbose':
+      self.Verbose = value
+    elif value_key == 'Debug':
+      self.Quiet = value
+
     # Output
     elif value_key == 'DeflectionOut':
       # Output file name (string)
@@ -180,6 +187,72 @@ class Utility(object):
     elif value_key == 'Plot':
       # 'q0', 'w', 'both', or (1D) 'combo'
       self.plotChoice = value
+    
+    # THEN, LITHOSPHERIC ELASTIC PROPERTIES AND SOLUTION METHOD
+    # FOR FLEXURAL ISOSTASY
+
+    # [Mode]
+    # The lowercase version is here from earlier work; should phase it out
+    elif value_key == 'method' or value_key == 'Method':
+      self.method = value
+      print "method set"
+    elif value_key == 'PlateSolutionType':
+      self.PlateSolutionType = value
+
+    # [Parameters]
+    elif value_key == 'YoungsModulus':
+      self.E  = value
+    elif value_key == 'PoissonsRatio':
+      self.nu = value
+    elif value_key == 'ElasticThickness':
+      self.Te = value # How to dynamically type for scalar or array?
+                      # Python is smart enough to handle it.
+      if type(self.q0) == np.ndarray:
+        if self.q0.any(): # Check for this on both q0 and Te
+          self.readyElasticThickness() # But need a program to handle converting 
+                                       # scalars and arrays, as well as potentially 
+                                       # needing to load a Te file
+
+    # [Input]
+    elif value_key == 'CoeffArray':
+      # This coefficient array is what is used with the UMFPACK direct solver
+      # or the iterative solver
+      self.coeff_matrix = CoeffArray
+      self.readyCoeff() # See if this is a sparse or something that needs to be loaded
+      coeffArraySizeCheck() # Make sure that array size is all right
+      # if so, let everyone know
+      print "LOADING COEFFICIENT ARRAY"
+      print "Elastic thickness maps will not be used for the solution."
+
+    # [Numerical]
+    elif value_key == 'Solver':
+      self.solver = value # Direct or iterative
+    elif value_key == 'ConvergenceTolerance':
+      self.iterative_ConvergenceTolerance = value
+    # None of the above?
+    else:
+      sys.exit('Error setting value: "'+value_key+'"')
+    # Inherit from higher-level setter, if not one of these
+    # Currently not inheriting from the whichModel() setter, as I
+    # figure that has to be done right away or not at all
+    super(Flexure, self).set_value(value_key, value)
+    
+  def readyCoeff(self):
+    from scipy import sparse
+    if sparse.issparse(self.coeff_matrix):
+      pass # Good type
+    # Otherwise, try to load from file
+    elif type(self.coeff_matrix) is types.StringType:
+      pass
+      print "Loading sparse coefficient arrays is not yet implemented."
+      print "This must be done soon."
+      print "Exiting."
+      sys.exit()
+    else:
+      try:
+        self.coeff_matrix = sparse.dia_matrix(self.coeff_matrix)
+      except:
+        "Failed to make a sparse array or load a sparse matrix from the input."
   
   # UNIVERSAL GETTER
   def get_value(self, val_string):
@@ -401,6 +474,8 @@ class WhichModel(Utility):
 class Isostasy(BMI, Utility, Plotting):
 
   def __init__(self, filename=None):
+    # 17 Nov 2014: Splitting out initialize from __init__ to allow space
+    # to use getters and setters to define values
   
     print "" # Blank line at start of run
     print "*********************************************"
@@ -410,11 +485,21 @@ class Isostasy(BMI, Utility, Plotting):
     print "Open-source licensed under GNU GPL v3"
     print ""
 
-    # Values from input file
-
     # Use standard routine to pull out values
     # If no filename provided, will not initialize input file.
     self.filename = filename
+
+  def initialize(self, filename=None):
+    # Values from input file
+    
+    # If a filename is provided here, overwrite any prior value
+    if filename:
+      if self.filename:
+        if self.Debug:
+          print "Overwriting filename from '__init__' step with that from\n"+\
+                "initialize step."
+      self.filename = filename
+
     if self.filename:
       self.config = ConfigParser.ConfigParser()
       try:
@@ -502,36 +587,36 @@ class Isostasy(BMI, Utility, Plotting):
 
     # If a q0 hasn't been set already
     if type(self.q0) != np.ndarray:
-      try:
-        # First see if it is a full path or directly links from the current
-        # working directory
+      print type(self.q0)
+      if type(self.q0) != None: # if is None type, just be patient
+        pass
+      else:
         try:
-          self.q0 = load(q0path)
-          if self.Verbose: print "Loading q0 from numpy binary"
-        except:
-          self.q0 = np.loadtxt(q0path)
-          if self.Verbose: print "Loading q0 ASCII"
-      except:
-        try:
-          # Then see if it is relative to the location of the input file
+          # First see if it is a full path or directly links from the current
+          # working directory
           try:
-            self.q0 = load(self.inpath + q0path)
+            self.q0 = load(q0path)
             if self.Verbose: print "Loading q0 from numpy binary"
           except:
-            self.q0 = np.loadtxt(self.inpath + q0path)
+            self.q0 = np.loadtxt(q0path)
             if self.Verbose: print "Loading q0 ASCII"
         except:
-          print "Cannot find q0 file"
-          print "q0path = " + q0path
-          print "Looked relative to model python files."
-          print "Also looked relative to input file path, " + self.inpath
-          print "Exiting."
-          sys.exit()
+          try:
+            # Then see if it is relative to the location of the input file
+            try:
+              self.q0 = load(self.inpath + q0path)
+              if self.Verbose: print "Loading q0 from numpy binary"
+            except:
+              self.q0 = np.loadtxt(self.inpath + q0path)
+              if self.Verbose: print "Loading q0 ASCII"
+          except:
+            print "Cannot find q0 file"
+            print "q0path = " + q0path
+            print "Looked relative to model python files."
+            print "Also looked relative to input file path, " + self.inpath
+            print "Exiting."
+            sys.exit()
       
-    # q0 may be changed for b.c.'s (if array), so holding onto original version 
-    # here
-    self.q0_orig = self.q0.copy()
-
     # Check consistency of dimensions
     if self.q0.ndim != self.dimension:
       print "Number of dimensions in loads file is inconsistent with"
@@ -783,74 +868,6 @@ class Flexure(Isostasy):
       self.Te = self.configGet("float", "parameter", "ElasticThickness")
       if self.dimension == 2:
         from scipy.special import kei
-
-    
-  # UNIVERSAL SETTER: LITHOSPHERIC ELASTIC PROPERTIES AND SOLUTION METHOD
-  # FOR FLEXURAL ISOSTASY -- EXISTS ATOP THE MORE GENERAL FUNCTION
-  def set_value(self, value_key, value):
-
-    # [Mode]
-    # The lowercase version is here from earlier work; should phase it out
-    if value_key == 'method' or value_key == 'Method':
-      self.method = value
-      print "method set"
-    elif value_key == 'PlateSolutionType':
-      self.PlateSolutionType = value
-
-    # [Parameters]
-    elif value_key == 'YoungsModulus':
-      self.E  = value
-    elif value_key == 'PoissonsRatio':
-      self.nu = value
-    elif value_key == 'ElasticThickness':
-      self.Te = value # How to dynamically type for scalar or array?
-                      # Python is smart enough to handle it.
-      if type(self.q0) == np.ndarray:
-        if self.q0.any(): # Check for this on both q0 and Te
-          self.readyElasticThickness() # But need a program to handle converting 
-                                       # scalars and arrays, as well as potentially 
-                                       # needing to load a Te file
-
-    # [Input]
-    elif value_key == 'CoeffArray':
-      # This coefficient array is what is used with the UMFPACK direct solver
-      # or the iterative solver
-      self.coeff_matrix = CoeffArray
-      self.readyCoeff() # See if this is a sparse or something that needs to be loaded
-      coeffArraySizeCheck() # Make sure that array size is all right
-      # if so, let everyone know
-      print "LOADING COEFFICIENT ARRAY"
-      print "Elastic thickness maps will not be used for the solution."
-
-    # [Numerical]
-    elif value_key == 'Solver':
-      self.solver = value # Direct or iterative
-    elif value_key == 'ConvergenceTolerance':
-      self.iterative_ConvergenceTolerance = value
-    # None of the above?
-    else:
-      sys.exit('Error setting, '+value_key)
-    # Inherit from higher-level setter, if not one of these
-    # Currently not inheriting from the whichModel() setter, as I
-    # figure that has to be done right away or not at all
-    super(Flexure, self).set_value(value_key, value)
-    
-  def readyCoeff(self):
-    from scipy import sparse
-    if sparse.issparse(self.coeff_matrix):
-      pass # Good type
-    # Otherwise, try to load from file
-    elif type(self.coeff_matrix) is types.StringType:
-      pass
-      print "Loading sparse coefficient arrays is not yet implemented."
-      print "This must be done soon."
-      print "Exiting."
-      sys.exit()
-    else:
-      try:
-        self.coeff_matrix = sparse.dia_matrix(self.coeff_matrix)
-      except:
-        "Failed to make a sparse array or load a sparse matrix from the input."
     
   def readyElasticThickness(self):
     """
