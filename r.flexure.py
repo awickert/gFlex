@@ -232,10 +232,14 @@ def main():
   if grass.region_env()[6] == '3':
     if latlon_override:
       print "Latitude/longitude grid."
-      print "Setting y-resolution [m] to 111,320 * [degrees]"
-      obj.set_value('GridSpacing_x', grass.region()['ewres']*111000.)
-      print "Setting y-resolution [m] to 111,320 * [degrees]"
-      obj.set_value('GridSpacing_y', grass.region()['nsres']*111000.)
+      if obj.get_value('Verbosity'):
+        print "Based on r_Earth = 6371 km"
+        print "Setting y-resolution [m] to 111,195 * [degrees]"
+      obj.set_value('GridSpacing_y', grass.region()['ewres']*111195.)
+      NSmid = (grass.region()['n'] + grass.region()['s'])/2.
+      dx_at_mid_latitude = (3.14159/180.) * 6371000. * np.cos(np.deg2rad(NSmid))
+      print "Setting x-resolution [m] to "+"%.2f" %dx_at_mid_latitude+" * [degrees]"
+      obj.set_value('GridSpacing_y', grass.region()['nsres']*dx_at_mid_latitude)
     else:
       sys.exit("Need projected coordinates, or the '-l' flag to approximate.")
   else:
