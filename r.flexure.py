@@ -99,6 +99,34 @@
 #%  answer: NoOutsideLoads
 #%  required : no
 #%end
+#%option
+#%  key: g
+#%  type: double
+#%  description: gravitational acceleration at surface [m/s^2]
+#%  answer: 9.8
+#%  required : no
+#%end
+#%option
+#%  key: E
+#%  type: double
+#%  description: Young's Modulus [Pa]
+#%  answer: 65E9
+#%  required : no
+#%end
+#%option
+#%  key: nu
+#%  type: double
+#%  description: Poisson's ratio
+#%  answer: 0.25
+#%  required : no
+#%end
+#%option
+#%  key: g
+#%  type: double
+#%  description: Mantle density [kg/m^3]
+#%  answer: 3300
+#%  required : no
+#%end
 
 
 # PATH
@@ -128,10 +156,16 @@ def main():
   # Inputs
   # Solution selection
   method = options['method']
-  # Parameters
+  # Parameters that are often changed for the solution
   q = options['q']
   Te = options['te']
   rho_fill = float(options['rho_fill'])
+  # Parameters that often stay at their default values
+  GravAccel = float(options['g'])
+  YoungsModulus = float(options['E'])
+  PoissonsRatio = float(options['nu'])
+  MantleDensity = float(options['rho_m'])
+  # Boundary conditions
   bcn = options['n']
   bcs = options['s']
   bcw = options['w']
@@ -151,7 +185,7 @@ def main():
   obj.set_value('model', 'flexure')
   obj.set_value('dimension', 2)
   
-  obj.set_value('GravAccel', 9.8)
+  obj.set_value('GravAccel', 9.8) # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if method == SAs:
     obj.set_value('method', 'SAS')
   if method == SAS:
@@ -162,15 +196,15 @@ def main():
     obj.set_value('PlateSolutionType', 'vWC1994')
 
   # No filename: getter/setter interface isn't totally worked out
-  # FIX THIS!!!!
+  # FIX THIS!!!! # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   obj.filename = None
 
   # Make a bunch of standard selections
   # CHANGE THESE INTO PARAMETERS THAT CAN BE CHOSEN!
-  obj.set_value('YoungsModulus', 65E9)#70E6/(600/3300.))#
-  obj.set_value('PoissonsRatio', 0.25)
-  obj.set_value('GravAccel', 9.8)
-  obj.set_value('MantleDensity', 3300)
+  obj.set_value('GravAccel', GravAccel) # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  obj.set_value('YoungsModulus', YoungsModulus)#70E6/(600/3300.))#
+  obj.set_value('PoissonsRatio', PoissonsRatio)
+  obj.set_value('MantleDensity', MantleDensity)
 
   # Set all boundary conditions
   obj.set_value('BoundaryCondition_East', bce)
