@@ -9,7 +9,7 @@ from scipy.special import kei
 class F2D(Flexure):
   def initialize(self, filename=None):
     self.dimension = 2 # Set it here in case it wasn't set for selection before
-    super(F2D, self).initialize(filename)
+    super(F2D, self).initialize()
     if self.Verbose: print 'F2D initialized'
 
   def run(self):

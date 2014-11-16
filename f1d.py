@@ -6,7 +6,7 @@ from scipy.sparse.linalg import spsolve, isolve
 class F1D(Flexure):
   def initialize(self, filename=None):
     self.dimension = 1 # Set it here in case it wasn't set for selection before
-    super(F1D, self).initialize(filename)
+    super(F1D, self).initialize()
     if self.Verbose: print 'F1D initialized'
 
   def run(self):
