@@ -43,14 +43,14 @@
 #%  key: q
 #%  type: string
 #%  gisprompt: old,cell,raster
-#%  description: Raster map of loads (thickness * density * g)
+#%  description: Raster map of loads (thickness * density * g) [Pa]
 #%  required : yes
 #%end
 #%option
 #%  key: te
 #%  type: string
 #%  gisprompt: old,cell,raster
-#%  description: Elastic thicnkess: constant value or raster map (~constant ) name [km]
+#%  description: Elastic thicnkess: constant value or raster map (~constant ) name [km or m: see "units" option]
 #%  required : yes
 #%end
 #%option
@@ -66,6 +66,13 @@
 #%  description: Density of material that fills flexural depressions [kg/m^3]
 #%  answer: 0
 #%  required : no
+#%end
+#%option
+#%  key: te_units
+#%  type: string
+#%  description: Units for elastic thickness
+#%  options: m, km
+#%  required : yes
 #%end
 #%option
 #%  key: n
@@ -159,6 +166,7 @@ def main():
   # Parameters that are often changed for the solution
   q = options['q']
   Te = options['te']
+  Te_units = options['te_units']
   rho_fill = float(options['rho_fill'])
   # Parameters that often stay at their default values
   GravAccel = float(options['g'])
@@ -188,12 +196,13 @@ def main():
   obj.set_value('GravAccel', 9.8) # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if method == SAs:
     obj.set_value('method', 'SAS')
-  if method == SAS:
+  elif method == FD:
     obj.set_value('method', 'FD')
     obj.set_value('Solver', 'direct')
     # Always use the van Wees and Cloetingh (1994) solution type.
     # It is the best.
     obj.set_value('PlateSolutionType', 'vWC1994')
+    # will this automatically fail if the param is something else via parser?!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   # No filename: getter/setter interface isn't totally worked out
   # FIX THIS!!!! # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -227,13 +236,19 @@ def main():
     obj.set_value('GridSpacing_x', grass.region()['ewres'])
     obj.set_value('GridSpacing_y', grass.region()['nsres'])
 
-
-  # Get raster grids from GRASS
+  # Get loads from GRASS
   q0rast = garray.array()
-  q0rast.read('q0resamp')
+  q0rast.read(q)
+  
+  # Get elastic thickness from GRASS if it is not a scalar value
   if TeIsRast:
     FlexureTe = garray.array() # FlexureTe is the one that is used by Flexure
     FlexureTe.read('Teresamp')
+    
+  # Adjust elastic thickness if given in km
+  if Te_units == 'km':
+    FlexureTe * 1000 # for km --> m
+    # meters are the only other option, so just do nothing otherwise
 
   # Change these grids into basic numpy arrays for easier use with Flexure
   q0rast = np.array(q0rast)
@@ -243,7 +258,7 @@ def main():
     FlexureTe = Te * 1000 # km --> m (scalar)
 
   # Values set by user
-  obj.set_value('Loads', q0rast[1:-1,1:-1]) # Te needs to be 1 cell bigger on each edge
+  obj.set_value('Loads', q0rast) # Te needs to be 1 cell bigger on each edge
   obj.set_value('ElasticThickness', FlexureTe)# np.ones(Te.shape)*20000)#
   obj.set_value('InfillMaterialDensity', rho_fill) # defaults to 0
 
