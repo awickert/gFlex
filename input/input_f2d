@@ -3,7 +3,7 @@
 [mode]
 model=flexure ; "flexure" or "PrattAiry"
 dimension=2 ; 1 or 2 dimensions
-method=FD ; Solution method: FD, FFT, SPA, SPA_NG
+method=SAS ; Solution method: FD, FFT, SAS, SAS_NG
 PlateSolutionType=vWC1994
 # Plate solutions can be vWC1994 (best), LinearTeVariationsOnly (not good, but for testing), or G2009 (not bad, but not as robust as vWC1994)
 
@@ -15,6 +15,7 @@ MantleDensity=3300
 InfillMaterialDensity=0
 ; Scalar constant Te usable for any solution type
 ElasticThickness=40000
+; 40000
 ; 25000
 
 [input]
@@ -37,9 +38,9 @@ DeflectionOut=
 Plot=both
 
 [numerical]
-GridSpacing_x=5000 ; dx
-BoundaryCondition_West=Periodic
-BoundaryCondition_East=Dirichlet0
+GridSpacing_x=4000 ; dx
+BoundaryCondition_West=Mirror
+BoundaryCondition_East=0Moment0Shear
 ; Solver can be direct or iterative
 Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
@@ -50,9 +51,9 @@ CoeffArray=
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
-GridSpacing_y=5000 ; dy
-BoundaryCondition_North=Periodic
-BoundaryCondition_South=Periodic
+GridSpacing_y=4000 ; dy
+BoundaryCondition_North=0Moment0Shear
+BoundaryCondition_South=Mirror
 
 [verbosity]
 Verbose=False

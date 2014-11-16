@@ -17,7 +17,7 @@ from prattairy import *
 from matplotlib import pyplot as plt
 
 # Looks like it wants to be an input file!
-filename = 'input/input_f1d' # it works for usage (1) and (2)
+filename = 'input/input_f2d' # it works for usage (1) and (2)
 obj = WhichModel(filename)
 
 ## SET MODEL TYPE AND DIMENSIONS HERE ##
@@ -32,6 +32,7 @@ elif obj.model == 'PrattAiry':
 
 self = obj # easier interaction
 obj.initialize(filename)
+
 ## SET ALL OTHER MODEL PARAMETERS HERE ##
 # obj.set_value('method','FD')
 #########################################
