@@ -137,18 +137,6 @@ class Utility(object):
     # Loading grid
     elif value_key == 'Loads':
       self.q0 = value
-      # Te setting
-      try:
-        # If self.q0 == None, then we know we have tried to make Te first and  
-        # need a grid for some reason
-        # "Try" b/c self.q0 might be undefined
-        if self.q0 == None:
-          self.readyElasticThickness() # Elastic thickness may need to be modified
-      except:
-        self.readyElasticThickness() # Check this anyway, esp. array size 
-                                     # compatability check if Te defined first
-        #pass # If this doesn't succeed, everything should be fine.
-             # And if it does, program will try to make everything work
 
     # [numerical]
     # Grid spacing
@@ -854,72 +842,6 @@ class Flexure(Isostasy):
       self.Te = self.configGet("float", "parameter", "ElasticThickness")
       if self.dimension == 2:
         from scipy.special import kei
-    
-  def readyElasticThickness(self):
-    """
-    Is run at the right time to either import elastic thickness values from 
-    an array, format them as a grid, or keep them as a scalar
-    """
-    # Need method to know whether you need a scalar or grid
-    try:
-      self.method
-    except:
-      self.method = None
-    
-    # If method is defined as something real
-    if self.method:
-      if self.method == 'FD':
-        if type(self.Te) is np.ndarray:
-          if np.prod(self.Te.shape) == 1:
-            # 0D array only works for a constant Te value
-            self.coeff_matrix = self.coeff_matrix[0]
-          else:
-            # Make sure array is proper size
-            # Check requires self.q0 to be defined
-            try:
-              self.q0
-            except:
-              self.q0 = None
-            # Checks that coeff array is of a workable size
-            self.TeArraySizeCheck()
-        # Is it a scalar?
-        elif np.isscalar(self.Te):
-          # Nothing to be done: I have written FD solution methods for scalar 
-          # Te
-          pass
-        # Otherwise, check if it is a string to a file path
-        elif type(self.Te) == types.StringType:
-          if self.Te[-4:] == '.npy':
-            # Load binary array
-            self.Te = np.load(self.Te)
-          else:
-            # Otherwise, assume ASCII with nothing special
-            self.Te = np.genfromtxt(self.Te)
-        else:
-          print "Can't recognize the input Te type as being able to be imported"
-          print "into code or read as a filename."
-          print "Exiting."
-          sys.exit()
-      else:
-        # Any other method requires a scalar Te
-        if type(self.Te) is np.ndarray:
-          print "Converting numpy array to scalar elastic thickness for your solution method."
-          # Check if array is really a scalar
-          if np.prod(self.Te.shape) == 1:
-            self.Te = self.Te[0]
-          # Or if array is uniform
-          elif (self.Te == self.Te.mean()).all():
-            self.Te = self.Te.mean() # Should find out how to take the mean only once
-          else:
-            print "Cannot figure out how to make your elastic thickness into a scalar."
-            print "Exiting."
-            sys.exit()
-          print "Te format conversion complete."
-        elif np.isscalar(self.Te):
-          # All good here
-          pass
-    else:
-      pass # Will just try again next time, when self.method becomes defined (hopefully)
     
 class PrattAiry(Isostasy):
   pass
