@@ -1,15 +1,23 @@
 #! /usr/bin/python
 
 """
-Started 11 March 2012 as a GRASS interface for Flexure
+Started 11 March 2012 as a GRASS interface for Flexure (now gFlex)
+Revised 15 November 2014 after significantly improving the model
+by Andy Wickert
 """
 
 #%module
 #%  description: Lithospheric flexure
 #%end
 #%flag
-#%  key: l
-#%  description: Allows running in lat/lon, equatorial assumption of 1deg = 111km
+#%  description: Allows running in lat/lon, assumes 1deg lat = 111.32 km, 1 deg lon is f(lat) at grid N-S midpoint
+#%end
+#%option
+#%  key: method
+#%  type: string
+#%  description: Solution method: FD (finite difference) or SAS (superposition of analytical solutions)
+#%  options: FD, SAS
+#%  required : yes
 #%end
 #%option
 #%  key: q
@@ -43,7 +51,7 @@ Started 11 March 2012 as a GRASS interface for Flexure
 #%  key: n
 #%  type: string
 #%  description: Northern boundary condition
-#%  options: NoOutsideLoads, Mirror, Periodic
+#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
 #%  answer: NoOutsideLoads
 #%  required : no
 #%end
@@ -51,7 +59,7 @@ Started 11 March 2012 as a GRASS interface for Flexure
 #%  key: s
 #%  type: string
 #%  description: Southern boundary condition
-#%  options: NoOutsideLoads, Mirror, Periodic
+#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
 #%  answer: NoOutsideLoads
 #%  required : no
 #%end
@@ -59,7 +67,7 @@ Started 11 March 2012 as a GRASS interface for Flexure
 #%  key: w
 #%  type: string
 #%  description: Western boundary condition
-#%  options: NoOutsideLoads, Mirror, Periodic
+#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
 #%  answer: NoOutsideLoads
 #%  required : no
 #%end
@@ -67,7 +75,7 @@ Started 11 March 2012 as a GRASS interface for Flexure
 #%  key: e
 #%  type: string
 #%  description: Eastern boundary condition
-#%  options: NoOutsideLoads, Mirror, Periodic
+#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
 #%  answer: NoOutsideLoads
 #%  required : no
 #%end
@@ -94,18 +102,22 @@ import time
 
 def main():
 
-  # Parser is now grass.parser()
-
+  # Flags
   latlon_override = flags['l']
+  
+  # Inputs
+  # Solution selection
+  method = options['method']
+  # Parameters
   q = options['q']
   Te = options['te']
-  output = options['output']
   rho_fill = float(options['rho_fill'])
-  #resolution = options['resolution']
   bcn = options['n']
   bcs = options['s']
   bcw = options['w']
   bce = options['e']
+  # Output
+  output = options['output']
   
   # Is Te raster or scalar?
   TeIsRast = False
@@ -114,20 +126,27 @@ def main():
   except:
     TeIsRast = True
 
-  # Automatically decide that we are doing 2D finite difference flexural isostasy
-  # with a direct(?) solution method
+  # This code is for 2D flexural isostasy
   obj = F2D()
   obj.set_value('model', 'flexure')
   obj.set_value('dimension', 2)
+  
   obj.set_value('GravAccel', 9.8)
-  obj.set_value('method', 'SPA')
-  #obj.set_value('method', 'FD')
-  #obj.set_value('Solver', 'direct')
+  if method == SAs:
+    obj.set_value('method', 'SAS')
+  if method == SAS:
+    obj.set_value('method', 'FD')
+    obj.set_value('Solver', 'direct')
+    # Always use the van Wees and Cloetingh (1994) solution type.
+    # It is the best.
+    obj.set_value('PlateSolutionType', 'vWC1994')
 
   # No filename: getter/setter interface isn't totally worked out
+  # FIX THIS!!!!
   obj.filename = None
 
   # Make a bunch of standard selections
+  # CHANGE THESE INTO PARAMETERS THAT CAN BE CHOSEN!
   obj.set_value('YoungsModulus', 65E9)#70E6/(600/3300.))#
   obj.set_value('PoissonsRatio', 0.25)
   obj.set_value('GravAccel', 9.8)
@@ -143,8 +162,10 @@ def main():
   # Check if lat/lon
   if grass.region_env()[6] == '3':
     if latlon_override:
-      print "Setting resolution [m] to 111,000 * [degrees]"
+      print "Latitude/longitude grid."
+      print "Setting y-resolution [m] to 111,320 * [degrees]"
       obj.set_value('GridSpacing_x', grass.region()['ewres']*111000.)
+      print "Setting y-resolution [m] to 111,320 * [degrees]"
       obj.set_value('GridSpacing_y', grass.region()['nsres']*111000.)
     else:
       sys.exit("Need projected coordinates, or the '-l' flag to approximate.")
