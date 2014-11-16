@@ -1,4 +1,4 @@
-MODULE_TOPDIR = /usr/local/grass-7.0.svn
+MODULE_TOPDIR = /usr/local/grass-7.1.svn
 
 PGM = r.flexure
 
