@@ -235,7 +235,6 @@ class Utility(object):
     # Inherit from higher-level setter, if not one of these
     # Currently not inheriting from the whichModel() setter, as I
     # figure that has to be done right away or not at all
-    super(Flexure, self).set_value(value_key, value)
     
   def readyCoeff(self):
     from scipy import sparse
@@ -276,6 +275,8 @@ class Utility(object):
     if val_string=='ElasticThickness':
       # This is the model input
       return self.Te
+    if val_string=='Verbosity':
+      return self.Verbose
 
 
 
@@ -626,11 +627,6 @@ class Isostasy(BMI, Utility, Plotting):
 
     # Plotting selection
     self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
-
-  def initialize(self, filename=None):
-    # This is all taken care of in __init__
-    # But this function is here to satisfy CSDMS, if nencesssary
-    pass
 
   # Finalize
   def finalize(self):
