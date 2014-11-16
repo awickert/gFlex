@@ -8,6 +8,7 @@ from scipy.special import kei
 # to its own type of simulation.
 class F2D(Flexure):
   def initialize(self, filename):
+    self.dimension = 2 # Set it here in case it wasn't set for selection before
     super(F2D, self).initialize(filename)
     if self.Verbose: print 'F2D initialized'
 
