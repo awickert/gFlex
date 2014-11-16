@@ -1,10 +1,30 @@
 #! /usr/bin/python
-
-"""
-Started 11 March 2012 as a GRASS interface for Flexure (now gFlex)
-Revised 15 November 2014 after significantly improving the model
-by Andy Wickert
-"""
+############################################################################
+#
+# MODULE:       r.flexure
+#
+# AUTHOR(S):    Andrew Wickert
+#
+# PURPOSE:      Calculate flexure of the lithosphere under a specified
+#               set of loads and with a given elastic thickness (scalar 
+#               or array)
+#
+# COPYRIGHT:    (c) 2012, 2014 Andrew Wickert
+#
+#               This program is free software under the GNU General Public
+#               License (>=v2). Read the file COPYING that comes with GRASS
+#               for details.
+#
+#############################################################################
+#
+# REQUIREMENTS:
+#      -  gFlex: http://csdms.colorado.edu/wiki/Flexure)
+#         (should be downloaded automatically along with the module)
+ 
+# More information
+# Started 11 March 2012 as a GRASS interface for Flexure (now gFlex)
+# Revised 15--?? November 2014 after significantly improving the model
+# by Andy Wickert
 
 #%module
 #%  description: Lithospheric flexure
