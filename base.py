@@ -544,7 +544,7 @@ class Isostasy(BMI, Utility, Plotting):
       # Check that boundary conditions are acceptable with code implementation
       # Acceptable b.c.'s
       self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-      self.bc2D = np.array(['Dirichlet', 'Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+      self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
       for bc in self.bclist:
         if self.dimension == 1:
           if (bc == self.bc1D).any():
