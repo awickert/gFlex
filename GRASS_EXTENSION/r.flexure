@@ -70,13 +70,6 @@
 #%  required : yes
 #%end
 #%option
-#%  key: rho_fill
-#%  type: double
-#%  description: Density of material that fills flexural depressions [kg/m^3]
-#%  answer: 0
-#%  required : no
-#%end
-#%option
 #%  key: solver
 #%  type: string
 #%  description: Solver type
@@ -142,6 +135,13 @@
 #%  type: double
 #%  description: Poisson's ratio
 #%  answer: 0.25
+#%  required : no
+#%end
+#%option
+#%  key: rho_fill
+#%  type: double
+#%  description: Density of material that fills flexural depressions [kg/m^3]
+#%  answer: 0
 #%  required : no
 #%end
 #%option
