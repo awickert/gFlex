@@ -412,7 +412,7 @@ class WhichModel(Utility):
 # class Isostasy inherits IRF interface, and it determines the simulation type
 # by reading three parameters from input file, but it does not set up other
 # parameters, which is the responsibility of derived concrete classes.
-class Isostasy(Utility, Plotting):
+class Isostasy(BMI,Utility, Plotting):
 
   def __init__(self, filename=None):
     # 17 Nov 2014: Splitting out initialize from __init__ to allow space
