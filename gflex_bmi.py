@@ -5,7 +5,7 @@ import types
 import numpy as np
 from bmi import Bmi, BmiGridType
 
-# Imports for flexure 
+# Imports for gFlex 
 from base import *
 from f1d import *
 from f2d import *

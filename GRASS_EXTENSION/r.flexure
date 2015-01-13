@@ -160,7 +160,7 @@ sys.path.append("/home/awickert/models/flexure") # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # OTHER POSSIBLE PROBLEM -- MAKEFILE NEEDS SPECIAL DIR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # made "scriptstrings" b/c I had to in "locale", may be a problem in general in the future !!!!!!!!!!!!!!!
 
-# FLEXURE
+# GFLEX
 from base import *
 from f1d import *
 from f2d import *
