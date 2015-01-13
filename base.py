@@ -2,66 +2,6 @@ import sys, ConfigParser, os
 import numpy as np
 import time # For efficiency counting
 import types # For flow control
-#import CSDMS_base
-
-# BMI Interface
-# edited by Andy
-class BMI (object):
-  # Replaced "file" with "filename", since "file" should be reserved for
-  # the Python object
-  def initialize (self, filename):
-      pass
-  def update (self):
-    self.run()
-  def finalize (self):
-    pass
-  def run_model (self):
-    self.run()
-  def run (self):
-    # Added by Andy: self.update() isn't so meaningful becasue this is a
-    # 1-time-step sort of model... unless I add some sort of mantle 
-    # response code
-    pass
-
-  # NONE OF THESE ARE IMPLEMENTED
-  def get_var_type (self, var):
-      pass
-  def get_var_units (self, var):
-      pass
-  def get_var_rank (self, var):
-      pass
-  def get_var_name (self, var):
-      pass
-
-  """
-  # JUST CAUSING PROBLEMS BY PREVENTING CODE FROM RUNNING NORMALLY
-  # EVEN IF TEMPLATE SEEMED LIKE A GOOD IDEA WHEN BEICHUAN INTRODUCED IT TO ME
-  def get_value (self, long_var_name):
-      pass
-  # replaced "src" with "value" to match my code as it stands
-  def set_value (self, long_var_name, value):
-      pass
-  """
-
-  # NONE OF THESE ARE IMPLEMENTED
-  def get_component_name (self):
-      pass
-  def get_input_var_names (self):
-      pass
-  def get_output_var_names (self):
-      pass
-
-  # NONE OF THESE ARE IMPLEMENTED
-  def get_grid_dimen (self, long_var_name):
-      pass
-  def get_grid_res (self, long_var_name):
-      pass
-  def get_grid_corner (self, long_var_name):
-      pass
-
-  # NOT IMPLEMENTED
-  def is_raster_grid (self, long_var_name):
-      pass
 
 class Utility(object):
   """
@@ -472,7 +412,7 @@ class WhichModel(Utility):
 # class Isostasy inherits IRF interface, and it determines the simulation type
 # by reading three parameters from input file, but it does not set up other
 # parameters, which is the responsibility of derived concrete classes.
-class Isostasy(BMI, Utility, Plotting):
+class Isostasy(Utility, Plotting):
 
   def __init__(self, filename=None):
     # 17 Nov 2014: Splitting out initialize from __init__ to allow space
