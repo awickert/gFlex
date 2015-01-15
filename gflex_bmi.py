@@ -1,75 +1,30 @@
 #! /usr/bin/env python
-
-# Imports for BMI
-import types
 import numpy as np
-from bmi import Bmi, BmiGridType
 
 # Imports for gFlex 
-from base import *
-from f1d import *
-from f2d import *
-from prattairy import *
-import time
+from base import WhichModel
+from f1d import F1D
+from f2d import F2D
+from prattairy import PrattAiry
 
 
-class BmiHeat(Bmi):
+class BmiGflex(object):
   _name = 'Isostasy and Lithospheric Flexure'
-  ##############################
-  # Not sure if I should include non-physical input variables that tell
-  # the model how to behave.
-  # I haven't included variables to set varbosity...
-  ##############################
-  _input_var_names = ['model__solution_type',
-                      'model__dimensions',
-                      'model__solution_method',
-                      'model__elastic_plate_solution_type',
-                      'lithosphere__young_modulus',
-                      'lithosphere__poisson_ratio',
-                      'standard_gravity_constant',
-                      'mantle__mass-per-volume_density',
-                      'infill_earth_material__mass-per-volume_density',
-                      'lithosphere__elastic_thickness',
-                      'earth_material_load__mass',
-                      'model__plot_output',
-                      'model_grid_cell__x_length',
-                      'model_grid_cell__y_length',
-                      'model__solver_type',
-                      'model__iterative_convergence_tolerance',
-                      'model__finite_difference_coefficient_array',
-                      'model__boundary_condition_west',
-                      'model__boundary_condition_east',
-                      'model__boundary_condition_north',
-                      'model__boundary_condition_south',
-                      'model__output_file_name']
-  _output_var_names = ['lithosphere__vertical_displacement']
-  _var_units = {'model__solution_type' : '',
-                'model__dimensions' : '',
-                'model__solution_method' : '',
-                'model__elastic_plate_solution_type' : '',
-                'lithosphere__young_modulus' : 'Pa',
-                'lithosphere__poisson_ratio' : '',
-                'standard_gravity_constant' : 'm s**(-2)',
-                'mantle__mass-per-volume_density' : 'kg m**3',
-                'infill_earth_material__mass-per-volume_density' : 'kg m**3',
-                'lithosphere__elastic_thickness' : 'm',
-                'earth_material_load__mass' : 'kg',
-                'model__plot_output' : '',
-                'model_grid_cell__x_length' : 'm',
-                'model_grid_cell__y_length' : 'm',
-                'model__solver_type' : '',
-                'model__iterative_convergence_tolerance' : 'm',
-                'model__finite_difference_coefficient_array' : '',
-                'model__boundary_condition_west' : '',
-                'model__boundary_condition_east' : '',
-                'model__boundary_condition_north' : '',
-                'model__boundary_condition_south' : '',
-                'lithosphere__vertical_displacement' : 'm',
-                'model__output_file_name' : ''}
+  _input_var_names = ('earth_material_load__mass', )
+  _output_var_names = ('lithosphere__vertical_displacement',
+                       'earth_material_load__mass', )
+  _var_units = {
+      'earth_material_load__mass' : 'kg',
+      'lithosphere__vertical_displacement' : 'm',
+  }
 
   def __init__(self):
     self._model = None
     self._values = {}
+    self._shape = ()
+    self._spacing = ()
+    self._origin = ()
+    self._coords = ()
 
   def initialize(self, config_file=None):
     ##############################
@@ -81,58 +36,48 @@ class BmiHeat(Bmi):
       pass
     else:
       self._model = WhichModel(config_file) # This line should work outside if-statement as well.
-      if self._model.model == 'flexure': # Really need to rename self.model!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if self._model.model == 'flexure': # Really need to rename self.model!!!
         if self._model.dimension == 1:
           self._model = F1D(config_file)
-        elif obj.dimension == 2:
+        elif self._model.dimension == 2:
           self._model = F2D(config_file)
-      elif obj.model == 'PrattAiry':
+      elif self._model.model == 'PrattAiry':
         self._model = PrattAiry(config_file)
 
-    obj.initialize(config_file) # Does nothing
+    self._model.initialize(config_file) # Does nothing
 
+    if self._model.dimension == 1:
+        self._spacing = (self._model.dx, )
+        self._coords = (np.arange(self._model.q0.shape[0]) * self._model.dx, )
+    elif self._model.dimension == 2:
+        self._spacing = (self._model.dy, self._model.dx)
+        self._coords = (np.arange(self._model.q0.shape[0]) * self._model.dy,
+                        np.arange(self._model.q0.shape[1]) * self._model.dx)
+    self._shape = self._model.q0.shape
+    self._origin = (0., ) * self._model.dimension
+
+    self._w = np.empty_like(self._model.q0)
+
+    # PROBABLY SHOULD RENAME "self.model"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # can remove plotting and file output options -- not meant to be part of
+    # BMI interface!!!!!!!!!
     self._values = {
-        'plate_surface__temperature': self._model.z,
+        'earth_material_load__mass' : self._model.q0,
+        'lithosphere__vertical_displacement' : self._w,
     }
-    
-    # PROBABLY SHOULD RENAME "self.model"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # can remove plotting and file output options -- not meant to be part of BMI interface!!!!!!!!!
-    self._values = {'model__solution_type' : self.model,
-                    'model__dimensions' : self.dimension,
-                    'model__solution_method' : self.method,
-                    'model__elastic_plate_solution_type' : self.PlateSolutionType,
-                    'lithosphere__young_modulus' : self.E,
-                    'lithosphere__poisson_ratio' : self.nu,
-                    'standard_gravity_constant' : self.g,
-                    'mantle__mass-per-volume_density' : self.rho_m,
-                    'infill_earth_material__mass-per-volume_density' : self.rho_fill,
-                    'lithosphere__elastic_thickness' : self.Te,
-                    'earth_material_load__mass' : self.q0,
-                    'model__plot_output' : self.plotChoice,
-                    'model_grid_cell__x_length' : self.dx,
-                    'model_grid_cell__y_length' : self.dy,
-                    'model__solver_type' : self.solver,
-                    'model__iterative_convergence_tolerance' : 'm',
-                    'model__finite_difference_coefficient_array' : '',
-                    'model__boundary_condition_west' : self.BC_W,
-                    'model__boundary_condition_east' : self.BC_E,
-                    'model__boundary_condition_north' : self.BC_N,
-                    'model__boundary_condition_south' : self.BC_S,
-                    'lithosphere__vertical_displacement' : self.w,
-                    'model__output_file_name' : self.wOutFile}
 
   def update(self):
-    # NOT TIME-STEPPING!!! ONLY DOES THIS ONCE!
-    self.run()
+    self._model.run()
+    self._w[:] = self._model.w
 
   def update_frac(self, time_frac):
-    sys.exit("Non-time-evolving")
+    self.update()
 
   def update_until(self, then):
-    sys.exit("Non-time-evolving")
+    self.update()
 
   def finalize(self):
-    obj.finalize()
+    self._model.finalize()
     self._model = None
 
   def get_var_type (self, var_name):
@@ -181,30 +126,38 @@ class BmiHeat(Bmi):
 
   def get_grid_spacing(self, var_name):
     if var_name in self._values:
-      return self._model.spacing
+      return self._spacing
 
   def get_grid_origin(self, var_name):
     if var_name in self._values:
-      return self._model.origin
+      return self._origin
 
-  #################################
-  # HOW DO I DO RECTILINEAR??????????????????????????????????????????????????????????
-  #######################
   def get_grid_type(self, var_name):
     if var_name in self._values:
-      return BmiGridType.UNIFORM
+      return 'uniform_rectilinear'
     else:
-      return BmiGridType.UNKNOWN
+      raise KeyError(var_name)
+
+  def get_grid_x(self, var_name):
+    if var_name in self._values:
+      return self._coords[-1]
+    else:
+      raise KeyError(var_name)
+
+  def get_grid_y(self, var_name):
+    if var_name in self._values:
+      return self._coords[-2]
+    else:
+      raise KeyError(var_name)
 
   def get_start_time (self):
-    sys.exit("Non-time-evolving")
+      raise NotImplementedError('get_start_time')
 
   def get_end_time (self):
-    sys.exit("Non-time-evolving")
+      raise NotImplementedError('get_end_time')
 
   def get_current_time (self):
-    sys.exit("Non-time-evolving")
+      raise NotImplementedError('get_current_time')
 
   def get_time_step (self):
-    sys.exit("Non-time-evolving")
-
+      raise NotImplementedError('get_time_step')
