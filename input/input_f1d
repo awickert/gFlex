@@ -6,37 +6,29 @@ dimension=1 ; 1 or 2 dimensions
 method=FD ; Solution method: FD, FFT, SPA, SPA_NG
 
 [parameter]
-YoungsModulus=1.0E11
+YoungsModulus=6.5E11
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
 InfillMaterialDensity=0
-ElasticThickness=15000
-; 30000
-; 50000 ; Used for FFT, SPA, and SPA_NG solutions 
+ElasticThickness=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
 
 [input]
-Loads=q0_sample/1D/central_block.txt ; q0_sample/1D/l_block.txt ; lr_blocks_100m_500cell.txt ; 
-ElasticThickness=
-;Te_sample/1D/8km_20km_ramp.txt ; Te_sample/1D/10km_const.txt ; 
+Loads=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
+ElasticThickness=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!> # hm, and maybe find a way to better do this on the fly.
 
 [output]
-DeflectionOut=
-; tmpout.txt
+DeflectionOut=<!!!!!!!!!!!!! ADD THIS IF YOU WANT OUTPUT TO BE SAVED !!!!!!!!!!!!!>
 ; Plot choices are q0, w, both, or (for 1D) combo
-Plot=combo
+Plot=<!!!!!!!!!!!!! ADD THIS IF YOU WANT A PLOT MADE AND DISPLAYED !!!!!!!!!!!!!>
 
 [numerical]
-GridSpacing_x=6000
-BoundaryCondition_West=0Moment0Shear
-BoundaryCondition_East=Mirror
+GridSpacing_x=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
+BoundaryCondition_West=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
+BoundaryCondition_East=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
 ; Solver can be direct or iterative
-Solver=iterative
-; Iterates until this is the difference between two subsequent iterations
-; (here given in meters)
-; Function defaults will not be chosen, but are 1E-5, if you wish to set
-; that here.
-ConvergenceTolerance=0.001
+Solver=direct
+ConvergenceTolerance=<!!!!!!!!!!!!! ADD THIS (METERS DIFFERENCE BETWEEN ITERATIONS) !!!!!!!!!!!!!>
 
 [verbosity]
 Verbose=False
