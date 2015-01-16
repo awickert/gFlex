@@ -214,8 +214,7 @@ def main():
 
   # This code is for 2D flexural isostasy
   obj = F2D()
-  obj.set_value('model', 'flexure')
-  obj.set_value('dimension', 2)
+  obj.set_value('model', 'flexure') # Maybe this will change? If PrattAiry is removed...
    
   # Set verbosity
   if grass.verbosity() >= 2:
