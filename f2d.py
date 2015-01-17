@@ -507,11 +507,14 @@ class F2D(Flexure):
     #self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
     if np.isscalar(self.Te):
       self.D *= np.ones(self.q0.shape) # And leave Te as a scalar for checks
-    self.Te_unpadded = self.Te.copy()
-    self.Te = np.hstack(( np.nan*np.zeros((self.Te.shape[0], 1)), self.Te, np.nan*np.zeros((self.Te.shape[0], 1)) ))
-    self.Te = np.vstack(( np.nan*np.zeros(self.Te.shape[1]), self.Te, np.nan*np.zeros(self.Te.shape[1]) ))
-    self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
-    self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
+    
+    # RECENT CHANGE: CHECK IN FUTURE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # MAYBE DON'T NEED TO DO THIS ANYMORE NOW THAT BC'S ARE IMPLEMENTED IN NEW WAY???!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #self.Te_unpadded = self.Te.copy()
+    #self.Te = np.hstack(( np.nan*np.zeros((self.Te.shape[0], 1)), self.Te, np.nan*np.zeros((self.Te.shape[0], 1)) ))
+    #self.Te = np.vstack(( np.nan*np.zeros(self.Te.shape[1]), self.Te, np.nan*np.zeros(self.Te.shape[1]) ))
+    #self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
+    #self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
 
     ###############################################################
     # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
