@@ -13,6 +13,10 @@ class F2D(Flexure):
     if self.Verbose: print 'F2D initialized'
 
   def run(self):
+    self.solver_start_time = time.time()
+    if self.Verbose:
+      print 'Solver start time [Unix epoch]:', self.solver_start_time
+      
     if self.method == 'FD':
       # Finite difference
       super(F2D, self).FD()
@@ -37,8 +41,13 @@ class F2D(Flexure):
     self.method_func()
     #self.imshow(self.w) # debugging
 
+    self.time_to_solve = time.time() - self.solver_start_time
+    if self.Quiet == False:
+      print 'Time to solve [s]:', self.time_to_solve
+
   def finalize(self):
     if self.Verbose: print 'F2D finalized'
+
     super(F2D, self).finalize()
     
   ########################################
@@ -1544,8 +1553,6 @@ class F2D(Flexure):
     Requires the coefficient matrix from "2D.coeff_matrix"
     """
     
-    self.solver_start_time = time.time()
-
     if self.Debug:
       try:
         # Will fail if scalar
@@ -1577,7 +1584,4 @@ class F2D(Flexure):
     self.w = -wvector.reshape(self.q0.shape)
     self.w_padded = self.w.copy() # for troubleshooting
 
-    self.time_to_solve = time.time() - self.solver_start_time
-    if self.Quiet == False:
-      print 'Time to solve [s]:', self.time_to_solve
-
+    # Time to solve used to be here
