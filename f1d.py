@@ -205,19 +205,19 @@ class F1D(Flexure):
       print "Boundary condition, West:", self.BC_W, type(self.BC_W)
       print "Boundary condition, East:", self.BC_E, type(self.BC_E)
 
-    if self.BC_E == 'Dirichlet' or self.BC_W == 'Dirichlet':
-      self.BC_Dirichlet()
+    if self.BC_E == 'Dirichlet0' or self.BC_W == 'Dirichlet0':
+      self.BC_Dirichlet0()
+    if self.BC_E == '0Slope0Shear' or self.BC_W == '0Slope0Shear':
+      self.BC_0Slope0Shear()
+    if self.BC_E == '0Moment0Shear' or self.BC_W == '0Moment0Shear':
+      self.BC_0Moment0Shear()
+    if self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
+      self.BC_Mirror()
+    if self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
+      self.BC_Periodic()
     if self.BC_E == 'Sandbox' or self.BC_W == 'Sandbox':
       # Sandbox is the developer's testing ground
       sys.exit("Sandbox Closed")
-    if self.BC_E == '0Moment0Shear' or self.BC_W == '0Moment0Shear':
-      self.BC_0Moment0Shear()
-    if self.BC_E == 'Neumann' or self.BC_W == 'Neumann':
-      self.BC_Neumann()
-    if self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
-      self.BC_Mirror()
-    if self.BC_E == '0Slope0Shear' or self.BC_W == '0Slope0Shear':
-      self.BC_0Slope0Shear()
 
     ##########################################################
     # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
