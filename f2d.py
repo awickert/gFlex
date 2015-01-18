@@ -139,7 +139,7 @@ class F2D(Flexure):
       self.y = self.q0[:,1]
       self.q0 = self.q0[:,2]
     else:
-      sys.exit("For 2D ungridded SPA, need [x,y,z] array. Your dimensions are: "+str(self.q0.shape))
+      sys.exit("For 2D (ungridded) SAS_NG, need [x,y,z] array. Your dimensions are: "+str(self.q0.shape))
     
     self.w = np.zeros(self.x.shape)
     if self.Debug:
@@ -162,9 +162,11 @@ class F2D(Flexure):
     Defines the variables that are required to create the 2D finite 
     difference solution coefficient matrix
     """
-    self.dx4 = self.dx**4
-    self.dy4 = self.dy**4
-    self.dx2dy2 = self.dx**2 * self.dy**2
+    
+    if self.method != 'SAS_NG':
+      self.dx4 = self.dx**4
+      self.dy4 = self.dy**4
+      self.dx2dy2 = self.dx**2 * self.dy**2
     self.D = self.E*self.Te**3/(12*(1-self.nu**2))
   
   def coeff_matrix_creator(self):
