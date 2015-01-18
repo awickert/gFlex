@@ -225,36 +225,39 @@ class Plotting(object):
     #   self.plotChoice
     # except:
     #   self.plotChoice = None
-    if self.plotChoice:
-      if self.Verbose: print "Starting to plot " + self.plotChoice
-      if self.dimension==1:
-        if self.plotChoice == 'q0':
-          self.lineplot(self.q0/(self.rho_m*self.g),
-            'Load thickness, mantle equivalent [m]')
-        elif self.plotChoice == 'w':
-          self.lineplot(self.w,'Deflection [m]')
-        elif self.plotChoice == 'both':
-          self.linesubplots()
-        elif self.plotChoice == 'combo':
-          self.plotTogether()
-        else:
-          if self.Quiet == False:
-            print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
-            print "Possible input strings are: q0, w, both, and (for 1D) combo"
-            print "Unable to produce plot."
-      elif self.dimension==2:
-        if self.plotChoice == 'q0':
-          self.surfplot(self.q0/(self.rho_m*self.g),
-            'Load thickness, mantle equivalent [m]')
-        elif self.plotChoice == 'w':
-          self.surfplot(self.w,'Deflection [m]')
-        elif self.plotChoice == 'both':
-          self.surfsubplots()
-        else:
-          if self.Quiet == False:
-            print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
-            print "Possible input strings are: q0, w, both, and (for 1D) combo"
-            print "Unable to produce plot."
+    if self.method == 'SAS_NG':
+      print "We're sorry: plotting is not yet available for the ungridded data.\nWould you like to help? This is open-source!"
+    else:
+      if self.plotChoice:
+        if self.Verbose: print "Starting to plot " + self.plotChoice
+        if self.dimension==1:
+          if self.plotChoice == 'q0':
+            self.lineplot(self.q0/(self.rho_m*self.g),
+              'Load thickness, mantle equivalent [m]')
+          elif self.plotChoice == 'w':
+            self.lineplot(self.w,'Deflection [m]')
+          elif self.plotChoice == 'both':
+            self.linesubplots()
+          elif self.plotChoice == 'combo':
+            self.plotTogether()
+          else:
+            if self.Quiet == False:
+              print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
+              print "Possible input strings are: q0, w, both, and (for 1D) combo"
+              print "Unable to produce plot."
+        elif self.dimension==2:
+          if self.plotChoice == 'q0':
+            self.surfplot(self.q0/(self.rho_m*self.g),
+              'Load thickness, mantle equivalent [m]')
+          elif self.plotChoice == 'w':
+            self.surfplot(self.w,'Deflection [m]')
+          elif self.plotChoice == 'both':
+            self.surfsubplots()
+          else:
+            if self.Quiet == False:
+              print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
+              print "Possible input strings are: q0, w, both, and (for 1D) combo"
+              print "Unable to produce plot."
 
   def linesubplots(self,figNum=1):
     from matplotlib.pyplot import plot, show, figure, subplot, xlabel, \
