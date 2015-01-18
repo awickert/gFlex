@@ -472,37 +472,39 @@ class Isostasy(Utility, Plotting):
       self.coeff_creation_time = None
       self.time_to_solve = None
       
-      # Boundary conditions
-      # Not optional: flexural solutions can be very sensitive to b.c.'s
-      self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=False)
-      self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=False)
-      self.bclist = [self.BC_E, self.BC_W]
-      if self.dimension == 2:
-        self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=False)
-        self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=False)
-        self.bclist += [self.BC_N, self.BC_S]
-      # Check that boundary conditions are acceptable with code implementation
-      # Acceptable b.c.'s
-      self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-      self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-      for bc in self.bclist:
-        if self.dimension == 1:
-          if (bc == self.bc1D).any():
-            pass
+      self.method = self.configGet("string", "mode", "method")
+      if self.method == 'FD':
+        # Boundary conditions
+        # Not optional: flexural solutions can be very sensitive to b.c.'s
+        self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=False)
+        self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=False)
+        self.bclist = [self.BC_E, self.BC_W]
+        if self.dimension == 2:
+          self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=False)
+          self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=False)
+          self.bclist += [self.BC_N, self.BC_S]
+        # Check that boundary conditions are acceptable with code implementation
+        # Acceptable b.c.'s
+        self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+        self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+        for bc in self.bclist:
+          if self.dimension == 1:
+            if (bc == self.bc1D).any():
+              pass
+            else:
+              sys.exit("'"+bc+"'"+ " is not an acceptable 1D boundary condition and/or\n"\
+                       +"is not yet implement in the code. Acceptable boundary conditions\n"\
+                       +"are:\n"\
+                       +str(self.bc1D)+"\n"\
+                       +"Exiting.")
+          elif self.dimension == 2:
+            if (bc == self.bc2D).any():
+              pass
+            else:
+              sys.exit("'"+bc+"'"+ " is not an acceptable 2D boundary condition and/or\n"\
+                       +"is not yet implement in the code. Exiting.")
           else:
-            sys.exit("'"+bc+"'"+ " is not an acceptable 1D boundary condition and/or\n"\
-                     +"is not yet implement in the code. Acceptable boundary conditions\n"\
-                     +"are:\n"\
-                     +str(self.bc1D)+"\n"\
-                     +"Exiting.")
-        elif self.dimension == 2:
-          if (bc == self.bc2D).any():
-            pass
-          else:
-            sys.exit("'"+bc+"'"+ " is not an acceptable 2D boundary condition and/or\n"\
-                     +"is not yet implement in the code. Exiting.")
-        else:
-          sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
+            sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
 
       # Parameters
       self.g = self.configGet('float', "parameter", "GravAccel")
