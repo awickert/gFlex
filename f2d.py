@@ -131,22 +131,26 @@ class F2D(Flexure):
   # NO GRID
 
   def spatialDomainNoGrid(self):
-  
+
     # Reassign q0 for consistency
-    #self.x = self.q0[:,0]
-    #self.y = self.q0[:,1]
-    #self.q0 = self.q0[:,2]
+    #self.q0_with_locs = self.q0 # nah, will recombine later
+    if self.q0.shape[1] == 3:
+      self.x = self.q0[:,0]
+      self.y = self.q0[:,1]
+      self.q0 = self.q0[:,2]
+    else:
+      sys.exit("For 2D ungridded SPA, need [x,y,z] array. Your dimensions are: "+str(self.q0.shape))
     
-    self.w = np.zeros(self.q0.shape)
+    self.w = np.zeros(self.x.shape)
+    if self.Debug:
+      print "w = "
+      print self.w.shape
+    
     for i in range(len(self.x)):
-      # Get the point
-      x0 = self.x[i]
-      y0 = self.y[i]
       # Create array of distances from point of load
-      r = np.sqrt((self.x - x0)**2 + (self.y - y0)**2)
+      r = ( (self.x - self.x[i])**2 + (self.y - self.y[i])**2 )**.5
       # Compute and sum deflection
       self.w += self.q0[i] * self.coeff * kei(r/self.alpha)
-
 
   ## FINITE DIFFERENCE
   ######################
