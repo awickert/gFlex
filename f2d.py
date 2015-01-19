@@ -55,11 +55,11 @@ class F2D(Flexure):
   ########################################
 
   def FD(self):
-    self.elasprep()
     # Only generate coefficient matrix if it is not already provided
-    try:
-      self.coeff_matrix
-    except:
+    if self.coeff_matrix is not None:
+      pass
+    else:
+      self.elasprep()
       self.coeff_matrix_creator()
     self.fd_solve()
 

@@ -152,9 +152,8 @@ class Utility(object):
     elif value_key == 'CoeffArray':
       # This coefficient array is what is used with the UMFPACK direct solver
       # or the iterative solver
-      self.coeff_matrix = CoeffArray
+      self.coeff_matrix = value
       self.readyCoeff() # See if this is a sparse or something that needs to be loaded
-      coeffArraySizeCheck() # Make sure that array size is all right
       # if so, let everyone know
       if self.Verbose:
         print "LOADING COEFFICIENT ARRAY"
@@ -196,14 +195,6 @@ class Utility(object):
     if val_string=='Deflection':
       # This is the primary model output
       return self.w
-    elif val_string=='CoeffMatrix':
-      # This is to hold onto the coefficient matrix in memory so it doesn't 
-      # need to be reloaded or recreated
-      return self.coeff_matrix
-    # Times to calculate efficiency of solution method
-    elif val_string=='CoeffMatrixCreationTime':
-      # Time to generate the sparse coefficient / operator matrix
-      return self.coeff_creation_time
     elif val_string=='SolverTime':
       # Amount of time taken by the solver (direct or iterative)
       return self.time_to_solve
@@ -317,16 +308,20 @@ class Plotting(object):
           # Y axis label
           plt.ylim((-yabsmax,yabsmax))
           # Plot title selector -- be infomrative
-          if self.method == "FD":
-            if type(self.Te) is np.ndarray:
-              if (self.Te != (self.Te).mean()).any():
-                plt.title(titletext,fontsize=16)       
+          try:
+            self.Te
+            if self.method == "FD":
+              if type(self.Te) is np.ndarray:
+                if (self.Te != (self.Te).mean()).any():
+                  plt.title(titletext,fontsize=16)       
+                else:
+                  plt.title(titletext + ', $T_e$ = ' + str((self.Te / 1000).mean()) + " km", fontsize=16)
               else:
-                plt.title(titletext + ', $T_e$ = ' + str((self.Te / 1000).mean()) + " km", fontsize=16)
+                plt.title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km", fontsize=16)
             else:
               plt.title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km", fontsize=16)
-          else:
-            plt.title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km", fontsize=16)
+          except:
+            plt.title(titletext,fontsize=16)       
           # x and y labels
           plt.ylabel('Loads and flexural response [m]',fontsize=16)
           plt.xlabel('Distance along profile [km]',fontsize=16)
@@ -756,6 +751,9 @@ class Flexure(Isostasy):
   ### no matter it is 1D or 2D; but if it can't be that way, we can set up a
   ### variable-length arguments, which is the way how Python overloads functions.
   def FD(self):
+    """
+    Handles set-up for the finite difference solution method
+    """
     if self.Verbose:
       print "Finite Difference Solution Technique"
     # Define a stress-based qs = q0
@@ -763,11 +761,24 @@ class Flexure(Isostasy):
     # Remove self.q0 to avoid issues with multiply-defined inputs
     # q0 is the parsable input to either a qs grid or contains (x,(y),q)
     del self.q0
-    # Find the solver
+    # Is there a slver defined?
     try:
       self.solver # See if it exists already
     except:
-      self.solver = self.configGet("string", "numerical", "Solver")
+      # Well, will fail if it doesn't see this, maybe not the most reasonable
+      # error message.
+      if self.filename:
+        self.solver = self.configGet("string", "numerical", "Solver")
+      else:
+        sys.exit("No solver defined!")
+    # Check if a coefficient array has been defined
+    # It would only be by a getter or setter;
+    # no way to do I/O with this with present input files
+    try:
+      self.coeff_matrix
+    except:
+      self.coeff_matrix = None
+    # Check consistency of size if coeff array was loaded
     if self.filename:
       # In the case that it is iterative, find the convergence criterion
       self.iterative_ConvergenceTolerance = self.configGet("float", "numerical", "ConvergenceTolerance")    
@@ -778,18 +789,19 @@ class Flexure(Isostasy):
       except:
         Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
       if self.Te is None:
-        # Have to bring this out here in case it was discovered in the 
-        # try statement that there is no value given
-        sys.exit("No input elastic thickness supplied.")
-      print Tepath
-      # See if there is a pre-made coefficient matrix to import
-      coeffPath = self.configGet("string", "input", "CoeffMatrix", optional=True)
-      # If there is, import it.
+        if self.coeff_matrix is not None:
+          pass
+        else:
+          # Have to bring this out here in case it was discovered in the 
+          # try statement that there is no value given
+          sys.exit("No input elastic thickness supplied.")
     # or if getter/setter
-    if type(self.Te) == str: # Not super stable here either
+    if type(self.Te) == str: 
       # Try to import Te grid or scalar for the finite difference solution
       Tepath = self.Te
-      # If there is, import it.
+    # If there is a Tepath, import Te
+    # Assume that even if a coeff_matrix is defined
+    # That the user wants Te if they gave the path
     if Tepath:
       try:
         # First see if it is a full path or directly links from the current
@@ -808,39 +820,18 @@ class Flexure(Isostasy):
             print "Requested Te file is provided but cannot be located."
             print "No scalar elastic thickness is provided in input file"
             print "(Typo in path to input Te grid?)"
-            print "Exiting."
-          sys.exit()
-    # Load a premade coefficient array if it exists
-    try:
-      coeffPath
-      if coeffPath:
-        try:
-          self.coeff_matrix = np.load(coeffPath)
-          if self.Verbose: print "Loading coefficient array as numpy array binary"
-        except:
-          try:
-            self.coeff_matrix = np.loadtxt(coeffPath)
-            if self.Verbose: print "Loading coefficient array as ASCII grid"
-          except:
-            print "Could not load coefficient array; check filename provided"
-            print "Exiting."
+          if self.coeff_matrix is not None:
+            if quiet == False:
+              print "But a coefficient matrix has been found."
+              print "Calculations will be carried forward using it."
+          else:
+            if quiet == False:
+              print "Exiting."
             sys.exit()
-        print "Any coefficient matrix provided in input file has been ignored,"
-        print "as a pre-provided coefficient matrix array is available"
 
-      # Check consistency of size if coeff array was loaded
-      coeffArraySizeCheck()
       # Check that Te is the proper size if it was loaded
-      TeArraySizeCheck()
-
-    except:
-      coeffPath = None
-      
-    try:
-      Tepath
-    except:
-      Tepath = None
-
+      if self.Te:
+        self.TeArraySizeCheck()
     
   ### need work
   def FFT(self):

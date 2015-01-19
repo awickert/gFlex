@@ -50,9 +50,9 @@ class F1D(Flexure):
     if self.plotChoice:
       self.gridded_x()
     # Only generate coefficient matrix if it is not already provided
-    try:
-      self.coeff
-    except:
+    if self.coeff_matrix is not None:
+      pass
+    else:
       self.elasprep() # define dx4 and D within self
       self.coeff_matrix_creator() # And define self.coeff
     self.fd_solve() # Get the deflection, "w"
@@ -231,7 +231,9 @@ class F1D(Flexure):
     self.r2 = np.roll(self.r2, 2)
     # Then assemble these rows: this is where the periodic boundary condition 
     # can matter.
-    if self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
+    if self.coeff_matrix:
+      pass
+    elif self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
       self.BC_Periodic()
     # If not periodic, standard assembly (see BC_Periodic fcn for the assembly 
     # of that set of coefficient rows
@@ -239,12 +241,12 @@ class F1D(Flexure):
       self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
       self.offsets = np.array([-2,-1,0,1,2])
 
-    # Everybody now (including periodic b.c. cases)
-    self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
+      # Everybody now (including periodic b.c. cases)
+      self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
 
-    self.coeff_creation_time = time.time() - self.coeff_start_time
-    # Always print this!
-    print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
+      self.coeff_creation_time = time.time() - self.coeff_start_time
+      # Always print this!
+      print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
   
   def build_diagonals(self):
     """
