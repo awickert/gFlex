@@ -20,7 +20,6 @@ import sys
 from base import *
 from f1d import *
 from f2d import *
-from prattairy import *
 
 def displayUsage():
   print ""
@@ -71,13 +70,10 @@ def main():
   
   ## SET MODEL TYPE AND DIMENSIONS HERE ##
   ########################################
-  if obj.model == 'flexure':
-    if obj.dimension == 1:
-      obj = F1D(filename)
-    elif obj.dimension == 2:
-      obj = F2D(filename)
-  elif obj.model == 'PrattAiry':
-    obj = PrattAiry(filename)
+  if obj.dimension == 1:
+    obj = F1D(filename)
+  elif obj.dimension == 2:
+    obj = F2D(filename)
 
   obj.initialize(filename) # Does nothing
   

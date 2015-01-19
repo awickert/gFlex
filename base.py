@@ -67,10 +67,8 @@ class Utility(object):
     # FIRST, VALUES THAT EVERYONE NEEDS::   
     
     # [mode]
-    # Model type
-    if value_key == 'model':
-      self.model = value
-    elif value_key =='dimension':
+    # Dimensions -- 1D or 2D solution.
+    if value_key =='dimension':
       self.dimension = value
 
     # [parameter]
@@ -139,7 +137,7 @@ class Utility(object):
 
     # [Mode]
     # The lowercase version is here from earlier work; should phase it out
-    elif value_key == 'method' or value_key == 'Method':
+    elif value_key == value_key == 'Method':
       self.method = value
     elif value_key == 'PlateSolutionType':
       self.PlateSolutionType = value
@@ -472,7 +470,6 @@ class WhichModel(Utility):
           self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
           # Need to have these guys inside "try" to make sure it is set up OK
           # (at least for them)
-          self.model     = self.configGet("string", "mode", "model")
           self.dimension = self.configGet("integer", "mode", "dimension")
           self.whichModel_AlreadyRun = True
         except:
@@ -529,7 +526,6 @@ class Isostasy(Utility, Plotting):
         self.inpath = os.path.dirname(os.path.realpath(self.filename)) + '/'
         # Need to have these guys inside "try" to make sure it is set up OK
         # (at least for them)
-        self.model     = self.configGet("string", "mode", "model")
         self.dimension = self.configGet("integer", "mode", "dimension")
         self.whichModel_AlreadyRun = True
       except:
@@ -936,5 +932,3 @@ class Flexure(Isostasy):
     # q0 is the parsable input to either a qs grid or contains (x,(y),q)
     del self.q0
     
-class PrattAiry(Isostasy):
-  pass
