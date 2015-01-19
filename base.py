@@ -2,6 +2,7 @@ import sys, ConfigParser, os
 import numpy as np
 import time # For efficiency counting
 import types # For flow control
+from matplotlib import pyplot as plt
 
 class Utility(object):
   """
@@ -234,135 +235,119 @@ class Utility(object):
 class Plotting(object):
   # Plot, if desired
   def plotting(self):
-    # try:
-    #   self.plotChoice
-    # except:
-    #   self.plotChoice = None
-    if self.method == 'SAS_NG':
-      print "We're sorry: plotting is not yet available for 2D ungridded data.\nWould you like to help? This is open-source!"
-    else:
-      if self.plotChoice:
-        if self.Verbose: print "Starting to plot " + self.plotChoice
-        if self.dimension==1:
-          if self.plotChoice == 'q0':
-            self.lineplot(self.q0/(self.rho_m*self.g),
-              'Load thickness, mantle equivalent [m]')
-          elif self.plotChoice == 'w':
-            self.lineplot(self.w,'Deflection [m]')
-          elif self.plotChoice == 'both':
-            self.linesubplots()
-          elif self.plotChoice == 'combo':
-            self.plotTogether()
+    #try:
+    #  self.plotChoice
+    #except:
+    #  self.plotChoice = None
+    if self.plotChoice:
+      if self.Verbose: print "Starting to plot " + self.plotChoice
+      if self.dimension==1:
+        if self.plotChoice == 'q':
+          plt.figure(1)
+          if self.method == 'SAS_NG':
+            plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko')
+            plt.ylabel('Load volume, mantle equivalent [m^3]',fontsize=16)
           else:
-            if self.Quiet == False:
-              print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
-              print "Possible input strings are: q0, w, both, and (for 1D) combo"
-              print "Unable to produce plot."
-        elif self.dimension==2:
-          if self.plotChoice == 'q0':
-            self.surfplot(self.q0/(self.rho_m*self.g),
-              'Load thickness, mantle equivalent [m]')
-          elif self.plotChoice == 'w':
-            self.surfplot(self.w,'Deflection [m]')
-          elif self.plotChoice == 'both':
-            self.surfsubplots()
+            plt.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'k-')
+            plt.ylabel('Load thickness, mantle equivalent [km]',fontsize=16)
+          plt.xlabel('Distance along profile [km]',fontsize=16)
+          plt.show()
+        elif self.plotChoice == 'w':
+          plt.figure(1)
+          if self.method == 'SAS_NG':
+            plt.plot(self.x/1000., self.w, 'ko')
           else:
-            if self.Quiet == False:
-              print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
-              print "Possible input strings are: q0, w, both, and (for 1D) combo"
-              print "Unable to produce plot."
-
-  def linesubplots(self,figNum=1):
-    from matplotlib.pyplot import plot, show, figure, subplot, xlabel, \
-                                  ylabel, title
-    
-    figure(figNum)
-
-    subplot(211)
-    title('Loads and Lithospheric Deflections',fontsize=20)
-    if self.method == "SAS_NG":
-      plot(self.x,self.q0/(self.rho_m*self.g),'o')
-    else:
-      plot(self.x,self.q0/(self.rho_m*self.g))
-    ylabel('Load thickness, mantle equivalent [m]')
-
-    subplot(212)
-    if self.method == "SAS_NG":
-      plot(self.x,self.w,'o')
-    else:
-      plot(self.x,self.w)
-    xlabel('Distance along profile [m]',fontsize=16)
-    ylabel('Deflection [m]')
-
-    show()
-
-  def lineplot(self,data,ytext,xtext='Distance along profile [m]',titletext='',
-      fontsize=16,figNum=1):
-    """
-    Plot if you want to - for troubleshooting
-    """
-    from matplotlib.pyplot import plot, show, figure, xlabel, ylabel, title
-    
-    figure(figNum)
-
-    plot(self.x,data)
-
-    xlabel(xtext,fontsize=16)
-    ylabel(ytext,fontsize=16)
-    title(titletext,fontsize=16)
-    
-    show()
-
-  def plotTogether(self,figNum=1,titletext='Loads and Lithospheric Deflections'):
-    from matplotlib.pyplot import plot, show, figure, xlabel, \
-                                  ylabel, title, axis, ylim, legend
-    
-    fig = figure(figNum,figsize=(10,6))
-    ax = fig.add_subplot(1,1,1)
-    
-    xkm = self.x/1000
-
-    # Plot undeflected load
-    if self.method == "SAS_NG":
-      ax.plot(xkm,self.q0/(self.rho_m*self.g),'go',linewidth=2,label="Load thickness [m mantle equivalent]")
-    else:
-      ax.plot(xkm,self.q0/(self.rho_m*self.g),'g--',linewidth=2,label="Load thickness [m mantle equivalent]")
-    
-    # Plot deflected load
-    if self.method == "SAS_NG":
-      ax.plot(xkm,self.q0/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load thickness [m mantle equivalent]")
-    else:
-      ax.plot(xkm,self.q0/(self.rho_m*self.g) + self.w,'g',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
-
-    # Plot deflection
-    if self.method == "SAS_NG":
-      ax.plot(xkm,self.w,'ko-',linewidth=2,label="Deflection [m mantle equivalent]")
-    else:
-      ax.plot(xkm,self.w,'k',linewidth=2,label="Deflection [m mantle equivalent]")
-    
-    # Set y min to equal to the absolute value maximum of y max and y min
-    # (and therefore show isostasy better)
-    yabsmax = max(abs(np.array(ylim())))
-    ylim((-yabsmax,yabsmax))
-
-    if self.method == "FD":
-      if type(self.Te) is np.ndarray:
-        if (self.Te != (self.Te).mean()).any():
-          title(titletext,fontsize=20)       
+            plt.plot(self.x/1000., self.w, 'k-')
+          plt.ylabel('Deflection [m]',fontsize=16)
+          plt.xlabel('Distance along profile [km]',fontsize=16)
+          plt.show()
+        elif self.plotChoice == 'both':
+          plt.figure(1,figsize=(8,12))
+          plt.subplot(211)
+          plt.title('Loads and Lithospheric Deflections',fontsize=20)
+          if self.method == 'SAS_NG':
+            plt.plot(self.x, self.q/(self.rho_m*self.g), 'ko')
+            plt.ylabel('Load volume, mantle equivalent [m^3]',fontsize=16)
+          else:
+            plt.plot(self.x, self.qs/(self.rho_m*self.g), 'k-')
+            plt.ylabel('Load thickness, mantle equivalent [m]',fontsize=16)
+          plt.xlabel('Distance along profile [m]',fontsize=16)
+          plt.subplot(212)
+          if self.method == "SAS_NG":
+            plt.plot(self.x, self.w, 'ko')
+          else:
+            plot.plot(self.x, self.w, 'k-')
+          plt.ylabel('Deflection [m]')
+          plt.xlabel('Distance along profile [m]',fontsize=16)
+          plt.show()
+        elif self.plotChoice == 'combo':
+          fig = plt.figure(1,figsize=(10,6))
+          titletext='Loads and Lithospheric Deflections'
+          xkm = self.x/1000
+          ax = fig.add_subplot(1,1,1)
+          # Plot undeflected load
+          if self.method == "SAS_NG":
+            ax.plot(xkm, self.q/(self.rho_m*self.g),'go',linewidth=2,label="Load volume [m^3 mantle equivalent]") # MUST FIX!!!! Turn into m mantle equivalent
+          else:
+            ax.plot(xkm,self.qs/(self.rho_m*self.g),'g--',linewidth=2,label="Load thickness [m mantle equivalent]")
+          # Plot deflected load
+          if self.method == "SAS_NG":
+            ax.plot(xkm,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
+          else:
+            ax.plot(xkm,self.qs/(self.rho_m*self.g) + self.w,'g-',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
+          # Plot deflection
+          if self.method == "SAS_NG":
+            ax.plot(xkm, self.w, 'ko-', linewidth=2, label="Deflection [m mantle equivalent]")
+          else:
+            ax.plot(xkm,self.w, 'k-', linewidth=2, label="Deflection [m mantle equivalent]")
+          # Set y min to equal to the absolute value maximum of y max and y min
+          # (and therefore show isostasy better)
+          yabsmax = max(abs(np.array(plt.ylim())))
+          # Y axis label
+          plt.ylim((-yabsmax,yabsmax))
+          # Plot title selector -- be infomrative
+          if self.method == "FD":
+            if type(self.Te) is np.ndarray:
+              if (self.Te != (self.Te).mean()).any():
+                plt.title(titletext,fontsize=20)       
+              else:
+                plt.title(titletext + ', $T_e$ = ' + str((self.Te / 1000).mean()) + " km",fontsize=20)
+            else:
+              plt.title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km",fontsize=20)
+          else:
+            plt.title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km",fontsize=20)
+          # x and y labels
+          plt.ylabel('Loads and flexural response [m]',fontsize=16)
+          plt.xlabel('Distance along profile [km]',fontsize=16)
+          # legend -- based on lables
+          plt.legend(loc=0,numpoints=1,fancybox=True)
+          plt.show()
         else:
-          title(titletext + ', $T_e$ = ' + str((self.Te / 1000).mean()) + " km",fontsize=20)
-      else:
-        title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km",fontsize=20)
-    else:
-      title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km",fontsize=20)
-      
-    ylabel('Loads and flexural response [m]',fontsize=16)
-    xlabel('Distance along profile [km]',fontsize=16)
-    
-    legend(loc=0,numpoints=1,fancybox=True)
-    
-    show()
-
+          if self.Quiet == False:
+            print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
+            print "Possible input strings are: q, w, both, and (for 1D) combo"
+            print "Unable to produce plot."
+      elif self.dimension==2:
+        if self.method == 'SAS_NG':
+          print "We're sorry: plotting is not yet available for 2D ungridded data.\nWould you like to help? This is open-source!"
+        elif self.plotChoice == 'q':
+          if self.method != 'SAS_NG':
+            self.surfplot(self.qs/(self.rho_m*self.g),
+              'Load thickness, mantle equivalent [m]')
+          else:
+            print "We're sorry: there is currently no automated code to find load\nthicknesses for the ungridded case."
+        elif self.plotChoice == 'w':
+          if self.method != 'SAS_NG':
+            self.surfplot(self.w,'Deflection [m]')
+          else:
+            print "We're sorry: deflection plotting in the ungridded case is still in the works."
+        elif self.plotChoice == 'both':
+          self.surfsubplots()
+        else:
+          if self.Quiet == False:
+            print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
+            print "Possible input strings are: q, w, both, and (for 1D) combo"
+            print "Unable to produce plot."
 
   def surfplot(self,data,titletext,figNum=1):
     """
@@ -378,8 +363,6 @@ class Plotting(object):
     colorbar()
 
     title(titletext,fontsize=16)
-    
-    show()
 
   def surfsubplots(self,figNum=1):
     from matplotlib.pyplot import imshow, show, figure, subplot, xlabel, \
@@ -400,8 +383,6 @@ class Plotting(object):
     xlabel('x [km]')
     ylabel('y [km]')
     colorbar()
-
-    show()
 
 
 class WhichModel(Utility):
@@ -711,6 +692,9 @@ class Flexure(Isostasy):
       print "Finite Difference Solution Technique"
     # Define a stress-based qs = q0
     self.qs = self.q0.copy()
+    # Remove self.q0 to avoid issues with multiply-defined inputs
+    # q0 is the parsable input to either a qs grid or contains (x,(y),q)
+    del self.q0
     # Find the solver
     try:
       self.solver # See if it exists already
@@ -839,6 +823,9 @@ class Flexure(Isostasy):
         from scipy.special import kei
     # Define a stress-based qs = q0
     self.qs = self.q0.copy()
+    # Remove self.q0 to avoid issues with multiply-defined inputs
+    # q0 is the parsable input to either a qs grid or contains (x,(y),q)
+    del self.q0
 
   def SAS_NG(self):
     if self.filename:
@@ -873,6 +860,9 @@ class Flexure(Isostasy):
           self.q = self.q0[:,2]
         else:
           sys.exit("For 2D (ungridded) SAS_NG input file, need [x,y,w] array. Your dimensions are: "+str(self.q0.shape))
+    # Remove self.q0 to avoid issues with multiply-defined inputs
+    # q0 is the parsable input to either a qs grid or contains (x,(y),q)
+    del self.q0
     
 class PrattAiry(Isostasy):
   pass
