@@ -209,8 +209,21 @@ class Utility(object):
       # Amount of time taken by the solver (direct or iterative)
       return self.time_to_solve
     if val_string=='Loads':
-      # This is the model input
+      # This is the model input for the gridded case
       return self.q0
+    if val_string=='xPositions':
+      # This is a component of the ungridded model input
+      # It is also produced during the gridded model run
+      # But will be overwritten in those cases
+      return self.x
+    if val_string=='yPositions':
+      # This is a component of the ungridded model input
+      # It is also produced during the gridded model run
+      # But will be overwritten in those cases
+      return self.y
+    if val_string=='LoadVerticalNormalForces':
+      # This is a component of the ungridded model input
+      return self.q
     if val_string=='ElasticThickness':
       # This is the model input
       return self.Te
@@ -226,7 +239,7 @@ class Plotting(object):
     # except:
     #   self.plotChoice = None
     if self.method == 'SAS_NG':
-      print "We're sorry: plotting is not yet available for the ungridded data.\nWould you like to help? This is open-source!"
+      print "We're sorry: plotting is not yet available for 2D ungridded data.\nWould you like to help? This is open-source!"
     else:
       if self.plotChoice:
         if self.Verbose: print "Starting to plot " + self.plotChoice
@@ -515,14 +528,20 @@ class Isostasy(Utility, Plotting):
       self.rho_fill = self.configGet('float', "parameter", "InfillMaterialDensity")
 
       # Grid spacing
-      # Unnecessary for PrattAiry, but good to keep along, I think, for use 
-      # in model output and plotting.
-      # No meaning for ungridded superimposed analytical solutions
-      # From input file
-      self.dx = self.configGet("float", "numerical", "GridSpacing_x")
-      if self.dimension == 2:
-        self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
+      if self.method != 'SAS_NG':
+        # No meaning for ungridded superimposed analytical solutions
+        # From input file
+        self.dx = self.configGet("float", "numerical", "GridSpacing_x")
+        if self.dimension == 2:
+          self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
+
       # Loading grid
+      # q0 is either a load array or an x,y,q array.
+      # Therefore q_0, initial q, before figuring out what it really is
+      # for grid, q0 could also be written as $q_\sigma$ or q/(dx*(dy))
+      # it is a surface normal stress that is h_load * rho_load * g
+      # it later is combined with dx and (if 2D) dy for FD cases
+      # for point loads, need mass: q0 should be written as [x, (y), force])
       self.q0 = self.configGet('string', "input", "Loads")
       
       # Verbosity
@@ -571,14 +590,15 @@ class Isostasy(Utility, Plotting):
               sys.exit()
     
     # Check consistency of dimensions
-    if self.q0.ndim != self.dimension:
-      print "Number of dimensions in loads file is inconsistent with"
-      print "number of dimensions in solution technique."
-      print "Loads", self.q0.ndim
-      print "Dimensions", self.dimension
-      print self.q0
-      print "Exiting."
-      sys.exit()
+    if self.method != 'SAS_NG':
+      if self.q0.ndim != self.dimension:
+        print "Number of dimensions in loads file is inconsistent with"
+        print "number of dimensions in solution technique."
+        print "Loads", self.q0.ndim
+        print "Dimensions", self.dimension
+        print self.q0
+        print "Exiting."
+        sys.exit()
 
     # Plotting selection
     self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
@@ -640,32 +660,6 @@ class Isostasy(Utility, Plotting):
 # define three different solution methods, which are implemented by its subclass.
 class Flexure(Isostasy):
   
-  def coeffArraySizeCheck(self):
-    """
-    Make sure that q0 and coefficient array are the right size compared to 
-    each other; otherwise, exit.
-    """
-    if prod(self.coeff_matrix.shape) != long(prod(np.array(self.q0.shape,dtype=int64)+2)**2):
-      print "Inconsistent size of q0 array and coefficient mattrix"
-      print "Exiting."
-      sys.exit()
-      
-  def TeArraySizeCheck(self):
-    """
-    Checks that Te and q0 array sizes are compatible
-    """
-    # Only if they are both defined and are arrays
-    # Both being arrays is a possible bug in this check routine that I have 
-    # intentionally introduced
-    if type(self.Te) == np.ndarray and type(self.q0) == np.ndarray:
-      if self.Te.any() and self.q0.any():
-        # Doesn't touch non-arrays or 1D arrays
-        if type(self.Te) is np.ndarray:
-          if (np.array(self.Te.shape) - 2 != np.array(self.q0.shape)).any():
-            sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
-        else:
-          if self.Debug: print "Te and q0 array sizes pass consistency check"
-
   def initialize(self, filename=None):
     super(Flexure, self).initialize(filename)
 
@@ -681,12 +675,42 @@ class Flexure(Isostasy):
       self.E  = self.configGet("float", "parameter", "YoungsModulus")
       self.nu = self.configGet("float", "parameter", "PoissonsRatio")
     
+  def coeffArraySizeCheck(self):
+    """
+    Make sure that q0 and coefficient array are the right size compared to 
+    each other (for finite difference if loading a pre-build coefficient
+    array). Otherwise, exit.
+    """
+    if prod(self.coeff_matrix.shape) != long(prod(np.array(self.qs.shape,dtype=int64)+2)**2):
+      print "Inconsistent size of q0 array and coefficient mattrix"
+      print "Exiting."
+      sys.exit()
+      
+  def TeArraySizeCheck(self):
+    """
+    Checks that Te and q0 array sizes are compatible
+    For finite difference solution.
+    """
+    # Only if they are both defined and are arrays
+    # Both being arrays is a possible bug in this check routine that I have 
+    # intentionally introduced
+    if type(self.Te) == np.ndarray and type(self.q0) == np.ndarray:
+      if self.Te.any() and self.qs.any():
+        # Doesn't touch non-arrays or 1D arrays
+        if type(self.Te) is np.ndarray:
+          if (np.array(self.Te.shape) - 2 != np.array(self.q0.shape)).any():
+            sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
+        else:
+          if self.Debug: print "Te and qs array sizes pass consistency check"
+
   ### need to determine its interface, it is best to have a uniform interface
   ### no matter it is 1D or 2D; but if it can't be that way, we can set up a
   ### variable-length arguments, which is the way how Python overloads functions.
   def FD(self):
     if self.Verbose:
       print "Finite Difference Solution Technique"
+    # Define a stress-based qs = q0
+    self.qs = self.q0.copy()
     # Find the solver
     try:
       self.solver # See if it exists already
@@ -724,6 +748,8 @@ class Flexure(Isostasy):
 
       # Check consistency of size if coeff array was loaded
       coeffArraySizeCheck()
+      # Check that Te is the proper size if it was loaded
+      TeArraySizeCheck()
 
     except:
       coeffPath = None
@@ -811,6 +837,8 @@ class Flexure(Isostasy):
       self.Te = self.configGet("float", "parameter", "ElasticThickness")
       if self.dimension == 2:
         from scipy.special import kei
+    # Define a stress-based qs = q0
+    self.qs = self.q0.copy()
 
   def SAS_NG(self):
     if self.filename:
@@ -818,6 +846,20 @@ class Flexure(Isostasy):
       self.Te = self.configGet("float", "parameter", "ElasticThickness")
       if self.dimension == 2:
         from scipy.special import kei
+    # Parse out input q0 into variables of imoprtance for solution
+    try:
+      # If these have already been set, e.g., by getters/setters, great!
+      self.x
+      self.y
+      self.q
+    except:
+      # Using [x, y, w] input file
+      if self.q0.shape[1] == 3:
+        self.x = self.q0[:,0]
+        self.y = self.q0[:,1]
+        self.q = self.q0[:,2]
+      else:
+        sys.exit("For 2D (ungridded) SAS_NG input file, need [x,y,w] array. Your dimensions are: "+str(self.q0.shape))
     
 class PrattAiry(Isostasy):
   pass
