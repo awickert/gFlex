@@ -115,8 +115,12 @@ class F1D(Flexure):
   # NONUNIFORM DX (NO GRID): ARBITRARILY-SPACED POINT LOADS
   # So essentially a sum of Green's functions for flexural response
 
-  def spatialDomainNoGrid(self):    
-    self.w = np.zeros(self.x.shape)
+  def spatialDomainNoGrid(self):
+    try:
+      # SAS_NG
+      self.w = np.zeros(self.q.shape)
+    except:
+      self.w = np.zeros(self.qs.shape)
     if self.Debug:
       print "w = "
       print self.w.shape
@@ -124,7 +128,7 @@ class F1D(Flexure):
     i=0 # counter
     for x0 in self.x:
       dist = abs(self.x-x0)
-      self.w -= self.q[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
+      self.w -= self.q[i] * self.coeff * np.exp(-dist/self.alpha) * \
         (np.cos(dist/self.alpha) + np.sin(dist/self.alpha))
       if i==10:
         if self.Debug:
