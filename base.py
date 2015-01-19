@@ -252,11 +252,11 @@ class Plotting(object):
           plt.figure(1)
           if self.method == 'SAS_NG':
             plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
-            plt.ylabel('Load volume, mantle equivalent [m$^3$]',fontsize=16)
+            plt.ylabel('Load volume, mantle equivalent [m$^3$]', fontsize=12, fontweight='bold')
           else:
             plt.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'k-')
-            plt.ylabel('Load thickness, mantle equivalent [km]',fontsize=16)
-          plt.xlabel('Distance along profile [km]',fontsize=16)
+            plt.ylabel('Load thickness, mantle equivalent [km]', fontsize=12, fontweight='bold')
+          plt.xlabel('Distance along profile [km]', fontsize=12, fontweight='bold')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'w':
@@ -265,28 +265,28 @@ class Plotting(object):
             plt.plot(self.x/1000., self.w, 'ko-')
           else:
             plt.plot(self.x/1000., self.w, 'k-')
-          plt.ylabel('Deflection [m]',fontsize=16)
-          plt.xlabel('Distance along profile [km]',fontsize=16)
+          plt.ylabel('Deflection [m]', fontsize=12, fontweight='bold')
+          plt.xlabel('Distance along profile [km]', fontsize=12, fontweight='bold')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'both':
           plt.figure(1,figsize=(6,9))
           plt.subplot(211)
-          plt.title('Loads and Lithospheric Deflections',fontsize=20)
+          plt.title('Loads and Lithospheric Deflections', fontsize=16)
           if self.method == 'SAS_NG':
             plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
-            plt.ylabel('Load volume, mantle equivalent [m$^3$]',fontsize=16)
+            plt.ylabel('Load volume, mantle equivalent [m$^3$]', fontsize=12, fontweight='bold')
           else:
             plt.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'k-')
-            plt.ylabel('Load thickness, mantle equivalent [m]',fontsize=16)
-          plt.xlabel('Distance along profile [km]',fontsize=16)
+            plt.ylabel('Load thickness, mantle equivalent [m]', fontsize=12, fontweight='bold')
+          plt.xlabel('Distance along profile [km]', fontsize=12, fontweight='bold')
           plt.subplot(212)
           if self.method == "SAS_NG":
             plt.plot(self.x, self.w, 'ko-')
           else:
             plt.plot(self.x, self.w, 'k-')
-          plt.ylabel('Deflection [m]',fontsize=16)
-          plt.xlabel('Distance along profile [m]',fontsize=16)
+          plt.ylabel('Deflection [m]', fontsize=12, fontweight='bold')
+          plt.xlabel('Distance along profile [m]', fontsize=12, fontweight='bold')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'combo':
@@ -322,13 +322,13 @@ class Plotting(object):
           if self.method == "FD":
             if type(self.Te) is np.ndarray:
               if (self.Te != (self.Te).mean()).any():
-                plt.title(titletext,fontsize=20)       
+                plt.title(titletext,fontsize=16)       
               else:
-                plt.title(titletext + ', $T_e$ = ' + str((self.Te / 1000).mean()) + " km",fontsize=20)
+                plt.title(titletext + ', $T_e$ = ' + str((self.Te / 1000).mean()) + " km", fontsize=16)
             else:
-              plt.title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km",fontsize=20)
+              plt.title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km", fontsize=16)
           else:
-            plt.title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km",fontsize=20)
+            plt.title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km", fontsize=16)
           # x and y labels
           plt.ylabel('Loads and flexural response [m]',fontsize=16)
           plt.xlabel('Distance along profile [km]',fontsize=16)
@@ -345,8 +345,8 @@ class Plotting(object):
         if self.plotChoice == 'q':
           fig = plt.figure(1, figsize=(8,6))
           if self.method != 'SAS_NG':
-            self.surfplot(self.qs/(self.rho_m*self.g),
-              'Load thickness, mantle equivalent [m]')
+            self.surfplot(self.qs/(self.rho_m*self.g), 'Load thickness, mantle equivalent [m]')
+            plt.show()
           else:
             self.xyzinterp(self.q, 'Load volume, mantle equivalent [m$^3$]')
           plt.tight_layout()
@@ -355,6 +355,7 @@ class Plotting(object):
           fig = plt.figure(1, figsize=(8,6))
           if self.method != 'SAS_NG':
             self.surfplot(self.w, 'Deflection [m]')
+            plt.show()
           else:
             self.xyzinterp(self.w, 'Deflection [m]')
           plt.tight_layout()
@@ -363,6 +364,7 @@ class Plotting(object):
           plt.figure(1,figsize=(6,9))
           if self.method != 'SAS_NG':
             self.twoSurfplots()
+            plt.show()
           else:
             plt.subplot(211)
             self.xyzinterp(self.q, 'Load volume, mantle equivalent [m$^3$]')
@@ -381,11 +383,11 @@ class Plotting(object):
     Plot if you want to - for troubleshooting - 1 figure
     """
     plt.imshow(z, extent=(0, self.dx/1000.*z.shape[0], self.dy/1000.*z.shape[1], 0)) #,interpolation='nearest'
-    plt.xlabel('x [km]')
-    plt.ylabel('y [km]')
+    plt.xlabel('x [km]', fontsize=12)
+    plt.ylabel('y [km]', fontsize=12)
     plt.colorbar()
 
-    title(titletext,fontsize=16)
+    plt.title(titletext,fontsize=16)
 
   def twoSurfplots(self):
     """
@@ -398,15 +400,15 @@ class Plotting(object):
     plt.subplot(211)
     plt.title('Load thickness, mantle equivalent [m]',fontsize=16)
     plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.qs.shape[0], self.dy/1000.*self.qs.shape[1], 0))
-    plt.xlabel('x [km]')
-    plt.ylabel('y [km]')
+    plt.xlabel('x [km]', fontsize=12, fontweight='bold')
+    plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
 
     plt.subplot(212)
     plt.title('Deflection [m]')
     plt.imshow(self.w, extent=(0, self.dx/1000.*self.w.shape[0], self.dy/1000.*self.w.shape[1], 0))
-    plt.xlabel('x [km]')
-    plt.ylabel('y [km]')
+    plt.xlabel('x [km]', fontsize=12, fontweight='bold')
+    plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
   
   def xyzinterp(self, z, titletext):
@@ -452,6 +454,8 @@ class Plotting(object):
     # Limits -- to not get messed up by points (view wants to be wider so whole point visible)
     plt.xlim( (xi[0]/1000., xi[-1]/1000.) )
     plt.ylim( (yi[0]/1000., yi[-1]/1000.) )
+    # Title
+    plt.title(titletext, fontsize=16)
 
 class WhichModel(Utility):
   def __init__(self, filename=None):
