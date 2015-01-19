@@ -147,8 +147,6 @@ class Utility(object):
       self.E  = value
     elif value_key == 'PoissonsRatio':
       self.nu = value
-    elif value_key == 'ElasticThickness':
-      self.Te = value
       
     # [Input]
     elif value_key == 'CoeffArray':
@@ -161,6 +159,8 @@ class Utility(object):
       if self.Verbose:
         print "LOADING COEFFICIENT ARRAY"
         print "Elastic thickness maps will not be used for the solution."
+    elif value_key == 'ElasticThickness':
+      self.Te = value
 
     # [Numerical]
     elif value_key == 'Solver':
@@ -772,15 +772,45 @@ class Flexure(Isostasy):
       # In the case that it is iterative, find the convergence criterion
       self.iterative_ConvergenceTolerance = self.configGet("float", "numerical", "ConvergenceTolerance")    
       # Try to import Te grid or scalar for the finite difference solution
-      Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
+      try:
+        self.Te = self.configGet("float", "input", "ElasticThickness", optional=True)
+        Tepath = None
+      except:
+        Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
+      if self.Te is None:
+        # Have to bring this out here in case it was discovered in the 
+        # try statement that there is no value given
+        sys.exit("No input elastic thickness supplied.")
+      print Tepath
       # See if there is a pre-made coefficient matrix to import
       coeffPath = self.configGet("string", "input", "CoeffMatrix", optional=True)
       # If there is, import it.
     # or if getter/setter
-    elif type(self.Te) == str: # Not super stable here either
+    if type(self.Te) == str: # Not super stable here either
       # Try to import Te grid or scalar for the finite difference solution
       Tepath = self.Te
       # If there is, import it.
+    if Tepath:
+      try:
+        # First see if it is a full path or directly links from the current
+        # working directory
+        self.Te = np.loadtxt(Tepath)
+        if self.Verbose:
+          print "Loading elastic thickness array from provided file path"
+      except:
+        try:
+          # Then see if it is relative to the location of the input file
+            self.Te = np.loadtxt(self.inpath + Tepath)
+            if self.Verbose:
+                print "Elastic thickness array loaded from provided filename"
+        except:
+          if quiet == False:
+            print "Requested Te file is provided but cannot be located."
+            print "No scalar elastic thickness is provided in input file"
+            print "(Typo in path to input Te grid?)"
+            print "Exiting."
+          sys.exit()
+    # Load a premade coefficient array if it exists
     try:
       coeffPath
       if coeffPath:
@@ -811,70 +841,6 @@ class Flexure(Isostasy):
     except:
       Tepath = None
 
-    # Only get Te if you aren't loading a pre-made coefficient matrix
-    if coeffPath == None:
-      # No grid?
-      if Tepath == None or Tepath == '':
-        # Go through this only if using an input file
-        if self.filename:
-          if self.Verbose: print "Trying to use the scalar elastic thickness"
-          # Is there are scalar file?
-          try:
-            # No Te grid path defined, so going for scalar Te
-            self.Te = self.config.getfloat("parameter", "ElasticThickness")
-          except:
-            try:
-              self.Te = float(self.Te)
-            except:
-              # No Te input provided - scalar or array path
-              print "Requested Te file cannot be found, and no scalar elastic"
-              print "thickness is provided in input file"
-              print "You should add one or the other to the input file."
-              print "Exiting."
-              sys.exit()
-      else:
-        # In this case, Tepath has been defined as something by the input file
-        try:
-          # First see if it is a full path or directly links from the current
-          # working directory
-          self.Te = np.loadtxt(Tepath)
-          print "Loading elastic thickness array from provided file"
-        except:
-          try:
-            # Then see if it is relative to the location of the input file
-            self.Te = np.loadtxt(self.inpath + Tepath)
-          except:
-            # At this point, a Tepath has been provided, but has failed.
-            # No unambiguous way to find what input is desired
-            # 2 options: (1) Te scalar exists, (2) nothing exists
-            # Either way, need to exit
-            try:
-              TeScalar = self.config.getfloat("parameter", "ElasticThickness")
-              print "Requested Te file cannot be found, but a scalar elastic"
-              print "thickness is provided in input file."
-              print "Ambiguous as to whether a Te grid or a scalar Te value was"
-              print "desired."
-              print "(Typo in path to input Te grid?)"
-            except:
-              # No Te input provided - scalar or array path
-              print "Requested Te file is provided but cannot be located."
-              print "No scalar elastic thickness is provided in input file"
-              print "(Typo in path to input Te grid?)"
-            print "Exiting."
-            sys.exit()
-        # At this point, Te from a grid has been successfully loaded.
-        # See if there is an ambiguity with a scalar Te also defined
-        try:
-          TeScalar = self.config.getfloat("parameter", "ElasticThickness")
-        except:
-          TeScalar = None
-        if TeScalar:
-          # If this works, need to exit - ambiguous
-          print "Both an elastic thickness array and a scalar elastic thickness"
-          print "have been loaded - ambiguity; cannot continue"
-          print "Exiting."
-          sys.exit()
-    # Otherwise, all set!
     
   ### need work
   def FFT(self):
@@ -886,7 +852,7 @@ class Flexure(Isostasy):
   def SAS(self):
     if self.filename:
       # Define the (scalar) elastic thickness
-      self.Te = self.configGet("float", "parameter", "ElasticThickness")
+      self.Te = self.configGet("float", "input", "ElasticThickness")
       if self.dimension == 2:
         from scipy.special import kei
     # Define a stress-based qs = q0
@@ -898,7 +864,7 @@ class Flexure(Isostasy):
   def SAS_NG(self):
     if self.filename:
       # Define the (scalar) elastic thickness
-      self.Te = self.configGet("float", "parameter", "ElasticThickness")
+      self.Te = self.configGet("float", "input", "ElasticThickness")
       if self.dimension == 2:
         from scipy.special import kei
     # Parse out input q0 into variables of imoprtance for solution
