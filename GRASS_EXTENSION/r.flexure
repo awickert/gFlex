@@ -42,7 +42,7 @@
 #%  required : yes
 #%end
 #%option
-#%  key: q
+#%  key: q0
 #%  type: string
 #%  gisprompt: old,cell,raster
 #%  description: Raster map of loads (thickness * density * g) [Pa]
@@ -185,7 +185,7 @@ def main():
   # Solution selection
   method = options['method']
   # Parameters that are often changed for the solution
-  q = options['q']
+  q0 = options['q0']
   Te = options['te']
   Te_units = options['te_units']
   rho_fill = float(options['rho_fill'])
