@@ -81,7 +81,7 @@ class F1D(Flexure):
   ############
 
   def gridded_x(self):
-    self.nx = self.q0.shape[0]
+    self.nx = self.qs.shape[0]
     self.x = np.arange(0,self.dx*self.nx,self.dx)
     
   
@@ -104,24 +104,18 @@ class F1D(Flexure):
     
     for i in range(self.nx):
       # Loop over locations that have loads, and sum
-      if self.q0[i]:
+      if self.qs[i]:
         dist = abs(self.x[i]-self.x)
         # -= b/c pos load leads to neg (downward) deflection
-        self.w -= self.q0[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
+        self.w -= self.qs[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
           (np.cos(dist/self.alpha) + np.sin(dist/self.alpha))
     # No need to return: w already belongs to "self"
     
 
-  # NONUNIFORM DX (NO "GRID"): ARBITRARILY-SPACED POINT LOADS
+  # NONUNIFORM DX (NO GRID): ARBITRARILY-SPACED POINT LOADS
   # So essentially a sum of Green's functions for flexural response
 
-  def spatialDomainNoGrid(self):
-  
-    # Reassign q0 for consistency
-    #self.q0_with_locs = self.q0 # nah, will recombine later
-    self.x = self.q0[:,0]
-    self.q0 = self.q0[:,1]
-    
+  def spatialDomainNoGrid(self):    
     self.w = np.zeros(self.x.shape)
     if self.Debug:
       print "w = "
@@ -130,12 +124,12 @@ class F1D(Flexure):
     i=0 # counter
     for x0 in self.x:
       dist = abs(self.x-x0)
-      self.w -= self.q0[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
+      self.w -= self.q[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
         (np.cos(dist/self.alpha) + np.sin(dist/self.alpha))
       if i==10:
         if self.Debug:
           print dist
-          print self.q0
+          print self.q
       i+=1 # counter
 
   ## FINITE DIFFERENCE
@@ -299,11 +293,11 @@ class F1D(Flexure):
       self.r1 = -4 * self.D/self.dx4
       self.r2 = 1 * self.D/self.dx4
       # Make them into arrays
-      self.l2 *= np.ones(self.q0.shape)
-      self.l1 *= np.ones(self.q0.shape)
-      self.c0 *= np.ones(self.q0.shape)
-      self.r1 *= np.ones(self.q0.shape)
-      self.r2 *= np.ones(self.q0.shape)
+      self.l2 *= np.ones(self.qs.shape)
+      self.l1 *= np.ones(self.qs.shape)
+      self.c0 *= np.ones(self.qs.shape)
+      self.r1 *= np.ones(self.qs.shape)
+      self.r2 *= np.ones(self.qs.shape)
 
     elif type(self.Te) == np.ndarray:
       ###################################################################
@@ -499,7 +493,7 @@ class F1D(Flexure):
     # 0 moment and 0 shear
     if np.isscalar(self.Te):
     
-      #self.q0[:] = np.max(self.q0)
+      #self.qs[:] = np.max(self.qs)
     
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
       if self.BC_W == '0Moment0Shear':
@@ -639,7 +633,7 @@ class F1D(Flexure):
     """
     
     if self.Debug:
-      print 'q0', self.q0.shape
+      print 'q0', self.qs.shape
       print 'Te', self.Te.shape
       self.calc_max_flexural_wavelength()
       print 'maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells
@@ -653,7 +647,7 @@ class F1D(Flexure):
         print "Converging to a tolerance of", self.iterative_ConvergenceTolerance, "m between iterations"
       # q0 negative so bends down with positive load, bends up with neative load 
       # (i.e. material removed)
-      w = isolve.lgmres(self.coeff_matrix, -self.q0, tol=self.iterative_ConvergenceTolerance)  
+      w = isolve.lgmres(self.coeff_matrix, -self.qs, tol=self.iterative_ConvergenceTolerance)  
       self.w = w[0] # Reach into tuple to get my array back
     else:
       if self.solver == "direct" or self.solver == "Direct":
@@ -666,7 +660,7 @@ class F1D(Flexure):
       # anything changes
       # q0 negative so bends down with positive load, bends up with neative load 
       # (i.e. material removed)
-      self.w = spsolve(self.coeff_matrix, -self.q0, use_umfpack=True)
+      self.w = spsolve(self.coeff_matrix, -self.qs, use_umfpack=True)
     
     self.time_to_solve = time.time() - self.solver_start_time
     # Always print this!
