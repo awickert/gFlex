@@ -10,13 +10,29 @@ from prattairy import PrattAiry
 
 class BmiGflex(object):
   _name = 'Isostasy and Lithospheric Flexure'
-  _input_var_names = ('earth_material_load__magnitude_of_stress',
-                      'lithosphere__elastic_thickness' )
-  _output_var_names = ('lithosphere__vertical_displacement',
-                      'earth_material_load__magnitude_of_stress',
-                      'lithosphere__elastic_thickness' )
+  # magnitude_of_stress used for gridded data
+  # x,y,force used for ungridded
+  _input_var_names = (
+      'earth_material_load__magnitude_of_stress',
+      'earth_material_load__x_positions',
+      'earth_material_load__y_positions',
+      'earth_material_load__force',
+      'lithosphere__elastic_thickness'
+  )
+  _output_var_names = (
+      'lithosphere__vertical_displacement',
+      'earth_material_load__magnitude_of_stress',
+      'earth_material_load__x_positions',
+      'earth_material_load__y_positions',
+      'earth_material_load__force',
+      'lithosphere__elastic_thickness'
+  )
+                       # magnitude_of_stress or __z_z_component_of_stress? They are equivalent
   _var_units = {
       'earth_material_load__magnitude_of_stress' : 'Pa',
+      'earth_material_load__x_positions' : 'm',
+      'earth_material_load__y_positions' : 'm',
+      'earth_material_load__force' : 'N',
       'lithosphere__elastic_thickness' : 'm',
       'lithosphere__vertical_displacement' : 'm',
   }
@@ -30,11 +46,7 @@ class BmiGflex(object):
     self._coords = ()
 
   def initialize(self, config_file=None):
-    ##############################
-    # Deleted some of Eric's stuff here b/c I internally manage an input file.
-    # Eric -- could you tell me if you have a better way for consistent
-    # input files you would like to see CSDMS-compliant models employ?
-    ##############################
+    # THIS IS ALL ASSUMING THAT WITOUT A CONFIG_FILE, EVERYTHING WILL BE SET ALREADY... BUT HOW?????????????
     if config_file is None:
       pass
     else:
@@ -49,24 +61,36 @@ class BmiGflex(object):
 
     self._model.initialize(config_file) # Does nothing
 
-    if self._model.dimension == 1:
-        self._spacing = (self._model.dx, )
-        self._coords = (np.arange(self._model.q0.shape[0]) * self._model.dx, )
-    elif self._model.dimension == 2:
-        self._spacing = (self._model.dy, self._model.dx)
-        self._coords = (np.arange(self._model.q0.shape[0]) * self._model.dy,
-                        np.arange(self._model.q0.shape[1]) * self._model.dx)
-    self._shape = self._model.q0.shape
-    self._origin = (0., ) * self._model.dimension
+    if self._model.method != 'SAS_NG':
+      if self._model.dimension == 1:
+          self._spacing = (self._model.dx, )
+          self._coords = (np.arange(self._model.q0.shape[0]) * self._model.dx, )
+      elif self._model.dimension == 2:
+          self._spacing = (self._model.dy, self._model.dx)
+          self._coords = (np.arange(self._model.q0.shape[0]) * self._model.dy,
+                          np.arange(self._model.q0.shape[1]) * self._model.dx)
+      self._shape = self._model.q0.shape
+    else:
+      if self._model.dimension == 1:
+        self.model.qA_NG = np.vstack((self._model.x, self._model.q0) # Is this poor form? should I use setters?
+      elif self._model.dimension == 2:
+        self.model.qA_NG = np.vstack((self._model.x, self._model.y, self._model.q0) # Is this poor form? should I use setters?
+        self._coords = np
+      self._shape = self._model.q.shape
 
+    self._origin = (0., ) * self._model.dimension
     self._w = np.empty_like(self._model.q0)
 
-    # PROBABLY SHOULD RENAME "self.model"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # PROBABLY SHOULD RENAME "self.model"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # can remove plotting and file output options -- not meant to be part of
     # BMI interface!!!!!!!!!
     self._values = {
-        'earth_material_load__mass' : self._model.q0,
-        'lithosphere__vertical_displacement' : self._w,
+        'lithosphere__vertical_displacement', : self.w,
+        'earth_material_load__magnitude_of_stress' : self._model.qs,
+        'earth_material_load__x_positions' : self._model.x,
+        'earth_material_load__y_positions' : self._model.y,
+        'earth_material_load__force' : self._model.q,
+        'lithosphere__elastic_thickness' : self.Te
     }
 
   def update(self):
