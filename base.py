@@ -847,19 +847,32 @@ class Flexure(Isostasy):
       if self.dimension == 2:
         from scipy.special import kei
     # Parse out input q0 into variables of imoprtance for solution
-    try:
-      # If these have already been set, e.g., by getters/setters, great!
-      self.x
-      self.y
-      self.q
-    except:
-      # Using [x, y, w] input file
-      if self.q0.shape[1] == 3:
-        self.x = self.q0[:,0]
-        self.y = self.q0[:,1]
-        self.q = self.q0[:,2]
+    if self.dimension == 1:
+      try:
+        # If these have already been set, e.g., by getters/setters, great!
+        self.x
+        self.q
+      except:
+        # Using [x, y, w] input file
+        if self.q0.shape[1] == 3:
+          self.x = self.q0[:,0]
+          self.q = self.q0[:,2]
       else:
-        sys.exit("For 2D (ungridded) SAS_NG input file, need [x,y,w] array. Your dimensions are: "+str(self.q0.shape))
+        sys.exit("For 1D (ungridded) SAS_NG input file, need [x,w] array. Your dimensions are: "+str(self.q0.shape))
+    else:
+      try:
+        # If these have already been set, e.g., by getters/setters, great!
+        self.x
+        self.y
+        self.q
+      except:
+        # Using [x, y, w] input file
+        if self.q0.shape[1] == 3:
+          self.x = self.q0[:,0]
+          self.y = self.q0[:,1]
+          self.q = self.q0[:,2]
+        else:
+          sys.exit("For 2D (ungridded) SAS_NG input file, need [x,y,w] array. Your dimensions are: "+str(self.q0.shape))
     
 class PrattAiry(Isostasy):
   pass
