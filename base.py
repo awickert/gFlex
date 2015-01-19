@@ -370,7 +370,7 @@ class Plotting(object):
 
     plt.subplot(211)
     plt.title('Load thickness, mantle equivalent [m]',fontsize=16)
-    plt.imshow(self.q0/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.q0.shape[0], self.dy/1000.*self.q0.shape[1], 0))
+    plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.qs.shape[0], self.dy/1000.*self.qs.shape[1], 0))
     plt.xlabel('x [km]')
     plt.ylabel('y [km]')
     plt.colorbar()
