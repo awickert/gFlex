@@ -234,6 +234,12 @@ class Utility(object):
 
 class Plotting(object):
   # Plot, if desired
+  # 1D all here, 2D in functions
+  # Just because there is often more code in 2D plotting functions
+  # Also, yes, this portion of the code is NOT efficient or elegant in how it
+  # handles functions. But it's just a simple way to visualize results 
+  # easily! And not too hard to improve with a bit of time. Anyway, the main
+  # goal here is the visualization, not the beauty of the code : )
   def plotting(self):
     #try:
     #  self.plotChoice
@@ -262,7 +268,7 @@ class Plotting(object):
           plt.xlabel('Distance along profile [km]',fontsize=16)
           plt.show()
         elif self.plotChoice == 'both':
-          plt.figure(1,figsize=(8,12))
+          plt.figure(1,figsize=(6,9))
           plt.subplot(211)
           plt.title('Loads and Lithospheric Deflections',fontsize=20)
           if self.method == 'SAS_NG':
@@ -287,12 +293,16 @@ class Plotting(object):
           ax = fig.add_subplot(1,1,1)
           # Plot undeflected load
           if self.method == "SAS_NG":
-            ax.plot(xkm, self.q/(self.rho_m*self.g),'go',linewidth=2,label="Load volume [m^3 mantle equivalent]") # MUST FIX!!!! Turn into m mantle equivalent
+            if self.Quiet == False:
+              print "Combo plot can't work with SAS_NG! Don't have mechanism in place to calculate load width."
+              print "Big probelm -- what is the area represented by the loads at the extreme ends of the array?"
+            #ax.plot(xkm, self.q/(self.rho_m*self.g),'go',linewidth=2,label="Load volume [m^3 mantle equivalent]") # MUST FIX!!!! Turn into m mantle equivalent
           else:
             ax.plot(xkm,self.qs/(self.rho_m*self.g),'g--',linewidth=2,label="Load thickness [m mantle equivalent]")
           # Plot deflected load
           if self.method == "SAS_NG":
-            ax.plot(xkm,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
+            pass
+            #ax.plot(xkm,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
           else:
             ax.plot(xkm,self.qs/(self.rho_m*self.g) + self.w,'g-',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
           # Plot deflection
@@ -328,45 +338,55 @@ class Plotting(object):
             print "Possible input strings are: q, w, both, and (for 1D) combo"
             print "Unable to produce plot."
       elif self.dimension==2:
-        if self.method == 'SAS_NG':
-          print "We're sorry: plotting is not yet available for 2D ungridded data.\nWould you like to help? This is open-source!"
-        elif self.plotChoice == 'q':
+        if self.plotChoice == 'q':
+          fig = plt.figure(1, figsize=(8,6))
           if self.method != 'SAS_NG':
             self.surfplot(self.qs/(self.rho_m*self.g),
               'Load thickness, mantle equivalent [m]')
           else:
-            print "We're sorry: there is currently no automated code to find load\nthicknesses for the ungridded case."
+            self.xyzinterp(self.q, 'Load volume, mantle equivalent [m^3]')
+          plt.show()
         elif self.plotChoice == 'w':
+          fig = plt.figure(1, figsize=(8,6))
           if self.method != 'SAS_NG':
-            self.surfplot(self.w,'Deflection [m]')
+            self.surfplot(self.w, 'Deflection [m]')
           else:
-            print "We're sorry: deflection plotting in the ungridded case is still in the works."
+            self.xyzinterp(self.w, 'Deflection [m]')
+          plt.show()
         elif self.plotChoice == 'both':
-          self.surfsubplots()
+          plt.figure(1,figsize=(6,9))
+          if self.method != 'SAS_NG':
+            self.twoSurfplots()
+          else:
+            plt.subplot(211)
+            self.xyzinterp(self.q, 'Load volume, mantle equivalent [m^3]')
+            plt.subplot(212)
+            self.xyzinterp(self.w, 'Deflection [m]')
+            plt.show()
         else:
           if self.Quiet == False:
             print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
             print "Possible input strings are: q, w, both, and (for 1D) combo"
             print "Unable to produce plot."
 
-  def surfplot(self,data,titletext,figNum=1):
+  def surfplot(self, z, titletext):
     """
     Plot if you want to - for troubleshooting - 1 figure
     """
-    figure(figNum)
-
-    plt.imshow(data, extent=(0, self.dx/1000.*data.shape[0], self.dy/1000.*data.shape[1], 0)) #,interpolation='nearest'
+    plt.imshow(z, extent=(0, self.dx/1000.*z.shape[0], self.dy/1000.*z.shape[1], 0)) #,interpolation='nearest'
     plt.xlabel('x [km]')
     plt.ylabel('y [km]')
     plt.colorbar()
 
     title(titletext,fontsize=16)
 
-  def surfsubplots(self,figNum=1):
+  def twoSurfplots(self):
     """
     Plot multiple subplot figure for 2D array
     """
-    plt.figure(figNum,figsize=(6,9))
+    # Could more elegantly just call surfplot twice
+    # And also could include xyzinterp as an option inside surfplot.
+    # Noted here in case anyone wants to take that on in the future...
 
     plt.subplot(211)
     plt.title('Load thickness, mantle equivalent [m]',fontsize=16)
@@ -381,7 +401,50 @@ class Plotting(object):
     plt.xlabel('x [km]')
     plt.ylabel('y [km]')
     plt.colorbar()
-
+  
+  def xyzinterp(self, z, titletext):
+    """
+    Interpolates and plots ungridded model outputs from SAS_NG solution
+    """
+    # Help from http://wiki.scipy.org/Cookbook/Matplotlib/Gridding_irregularly_spaced_data
+    
+    if self.Verbose:
+      print "Starting to interpolate grid -- can be a slow process!"
+    
+    from scipy.interpolate import griddata
+    import numpy.ma as ma
+    
+    # define grid.
+    xmin = np.min(self.x)
+    xmean = np.mean(self.x) # not used right now
+    xmax = np.max(self.x)
+    ymin = np.min(self.y)
+    ymean = np.mean(self.y) # not used right now
+    ymax = np.max(self.y)
+    x_range = xmax - xmin
+    y_range = ymax - ymin
+    
+    # x and y grids
+    # 100 cells on each side -- just for plotting, not so important
+    # to optimize with how many points are plotted
+    #xi = np.linspace(xmin-.05*x_range, xmax+.05*x_range, 200)
+    #yi = np.linspace(ymin-.05*y_range, ymax+.05*y_range, 200)
+    xi = np.linspace(xmin, xmax, 200)
+    yi = np.linspace(ymin, ymax, 200)
+    # grid the z-axis
+    zi = griddata((self.x, self.y), z, (xi[None,:], yi[:,None]), method='cubic')
+    # contour the gridded outputs, plotting dots at the randomly spaced data points.
+    #CS = plt.contour(xi,yi,zi,15,linewidths=0.5,colors='k') -- don't need lines
+    CS = plt.contourf(xi/1000.,yi/1000.,zi,100,cmap=plt.cm.jet)
+    plt.colorbar() # draw colorbar
+    # plot model points.
+    plt.scatter(self.x/1000., self.y/1000., marker='.', c='k', s=1)
+    #plt.hexbin(self.x, self.y, C=self.w) -- show colors on points -- harder to see
+    plt.xlabel('x [km]')
+    plt.ylabel('y [km]')
+    # Limits -- to not get messed up by points (view wants to be wider so whole point visible)
+    plt.xlim( (xi[0]/1000., xi[-1]/1000.) )
+    plt.ylim( (yi[0]/1000., yi[-1]/1000.) )
 
 class WhichModel(Utility):
   def __init__(self, filename=None):
