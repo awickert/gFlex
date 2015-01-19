@@ -251,40 +251,43 @@ class Plotting(object):
         if self.plotChoice == 'q':
           plt.figure(1)
           if self.method == 'SAS_NG':
-            plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko')
-            plt.ylabel('Load volume, mantle equivalent [m^3]',fontsize=16)
+            plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
+            plt.ylabel('Load volume, mantle equivalent [m$^3$]',fontsize=16)
           else:
             plt.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'k-')
             plt.ylabel('Load thickness, mantle equivalent [km]',fontsize=16)
           plt.xlabel('Distance along profile [km]',fontsize=16)
+          plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'w':
           plt.figure(1)
           if self.method == 'SAS_NG':
-            plt.plot(self.x/1000., self.w, 'ko')
+            plt.plot(self.x/1000., self.w, 'ko-')
           else:
             plt.plot(self.x/1000., self.w, 'k-')
           plt.ylabel('Deflection [m]',fontsize=16)
           plt.xlabel('Distance along profile [km]',fontsize=16)
+          plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'both':
           plt.figure(1,figsize=(6,9))
           plt.subplot(211)
           plt.title('Loads and Lithospheric Deflections',fontsize=20)
           if self.method == 'SAS_NG':
-            plt.plot(self.x, self.q/(self.rho_m*self.g), 'ko')
-            plt.ylabel('Load volume, mantle equivalent [m^3]',fontsize=16)
+            plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
+            plt.ylabel('Load volume, mantle equivalent [m$^3$]',fontsize=16)
           else:
-            plt.plot(self.x, self.qs/(self.rho_m*self.g), 'k-')
+            plt.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'k-')
             plt.ylabel('Load thickness, mantle equivalent [m]',fontsize=16)
-          plt.xlabel('Distance along profile [m]',fontsize=16)
+          plt.xlabel('Distance along profile [km]',fontsize=16)
           plt.subplot(212)
           if self.method == "SAS_NG":
-            plt.plot(self.x, self.w, 'ko')
+            plt.plot(self.x, self.w, 'ko-')
           else:
-            plot.plot(self.x, self.w, 'k-')
-          plt.ylabel('Deflection [m]')
+            plt.plot(self.x, self.w, 'k-')
+          plt.ylabel('Deflection [m]',fontsize=16)
           plt.xlabel('Distance along profile [m]',fontsize=16)
+          plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'combo':
           fig = plt.figure(1,figsize=(10,6))
@@ -294,8 +297,8 @@ class Plotting(object):
           # Plot undeflected load
           if self.method == "SAS_NG":
             if self.Quiet == False:
-              print "Combo plot can't work with SAS_NG! Don't have mechanism in place to calculate load width."
-              print "Big probelm -- what is the area represented by the loads at the extreme ends of the array?"
+              print "Combo plot can't work with SAS_NG! Don't have mechanism in place\nto calculate load width."
+              print "Big problem -- what is the area represented by the loads at the\nextreme ends of the array?"
             #ax.plot(xkm, self.q/(self.rho_m*self.g),'go',linewidth=2,label="Load volume [m^3 mantle equivalent]") # MUST FIX!!!! Turn into m mantle equivalent
           else:
             ax.plot(xkm,self.qs/(self.rho_m*self.g),'g--',linewidth=2,label="Load thickness [m mantle equivalent]")
@@ -331,6 +334,7 @@ class Plotting(object):
           plt.xlabel('Distance along profile [km]',fontsize=16)
           # legend -- based on lables
           plt.legend(loc=0,numpoints=1,fancybox=True)
+          plt.tight_layout()
           plt.show()
         else:
           if self.Quiet == False:
@@ -344,7 +348,8 @@ class Plotting(object):
             self.surfplot(self.qs/(self.rho_m*self.g),
               'Load thickness, mantle equivalent [m]')
           else:
-            self.xyzinterp(self.q, 'Load volume, mantle equivalent [m^3]')
+            self.xyzinterp(self.q, 'Load volume, mantle equivalent [m$^3$]')
+          plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'w':
           fig = plt.figure(1, figsize=(8,6))
@@ -352,6 +357,7 @@ class Plotting(object):
             self.surfplot(self.w, 'Deflection [m]')
           else:
             self.xyzinterp(self.w, 'Deflection [m]')
+          plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'both':
           plt.figure(1,figsize=(6,9))
@@ -359,9 +365,10 @@ class Plotting(object):
             self.twoSurfplots()
           else:
             plt.subplot(211)
-            self.xyzinterp(self.q, 'Load volume, mantle equivalent [m^3]')
+            self.xyzinterp(self.q, 'Load volume, mantle equivalent [m$^3$]')
             plt.subplot(212)
             self.xyzinterp(self.w, 'Deflection [m]')
+            plt.tight_layout()
             plt.show()
         else:
           if self.Quiet == False:
@@ -902,9 +909,9 @@ class Flexure(Isostasy):
         self.q
       except:
         # Using [x, y, w] input file
-        if self.q0.shape[1] == 3:
+        if self.q0.shape[1] == 2:
           self.x = self.q0[:,0]
-          self.q = self.q0[:,2]
+          self.q = self.q0[:,1]
       else:
         sys.exit("For 1D (ungridded) SAS_NG input file, need [x,w] array. Your dimensions are: "+str(self.q0.shape))
     else:
