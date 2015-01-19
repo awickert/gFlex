@@ -351,38 +351,36 @@ class Plotting(object):
 
   def surfplot(self,data,titletext,figNum=1):
     """
-    Plot if you want to - for troubleshooting
+    Plot if you want to - for troubleshooting - 1 figure
     """
-    from matplotlib.pyplot import imshow, show, figure, colorbar, title
-    
     figure(figNum)
 
-    imshow(data, extent=(0, self.dx/1000.*data.shape[0], self.dy/1000.*data.shape[1], 0)) #,interpolation='nearest'
-    xlabel('x [km]')
-    ylabel('y [km]')
-    colorbar()
+    plt.imshow(data, extent=(0, self.dx/1000.*data.shape[0], self.dy/1000.*data.shape[1], 0)) #,interpolation='nearest'
+    plt.xlabel('x [km]')
+    plt.ylabel('y [km]')
+    plt.colorbar()
 
     title(titletext,fontsize=16)
 
   def surfsubplots(self,figNum=1):
-    from matplotlib.pyplot import imshow, show, figure, subplot, xlabel, \
-                                  ylabel, title, colorbar
-    
-    figure(figNum,figsize=(6,9))
+    """
+    Plot multiple subplot figure for 2D array
+    """
+    plt.figure(figNum,figsize=(6,9))
 
-    subplot(211)
-    title('Load thickness, mantle equivalent [m]',fontsize=16)
-    imshow(self.q0/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.q0.shape[0], self.dy/1000.*self.q0.shape[1], 0))
-    xlabel('x [km]')
-    ylabel('y [km]')
-    colorbar()
+    plt.subplot(211)
+    plt.title('Load thickness, mantle equivalent [m]',fontsize=16)
+    plt.imshow(self.q0/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.q0.shape[0], self.dy/1000.*self.q0.shape[1], 0))
+    plt.xlabel('x [km]')
+    plt.ylabel('y [km]')
+    plt.colorbar()
 
-    subplot(212)
-    title('Deflection [m]')
-    imshow(self.w, extent=(0, self.dx/1000.*self.w.shape[0], self.dy/1000.*self.w.shape[1], 0))
-    xlabel('x [km]')
-    ylabel('y [km]')
-    colorbar()
+    plt.subplot(212)
+    plt.title('Deflection [m]')
+    plt.imshow(self.w, extent=(0, self.dx/1000.*self.w.shape[0], self.dy/1000.*self.w.shape[1], 0))
+    plt.xlabel('x [km]')
+    plt.ylabel('y [km]')
+    plt.colorbar()
 
 
 class WhichModel(Utility):
