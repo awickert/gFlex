@@ -5,6 +5,11 @@ use_setuptools()
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
+import os
+
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
 setup(
     name = "gFlex",
     version = "dev",
@@ -25,5 +30,5 @@ setup(
     keywords = "geophysics geology geodynamics lithosphere",
     url = "http://csdms.colorado.edu/wiki/Model:GFlex",
     download_url = "https://github.com/awickert/gFlex",
-    #long_description=read('README.md'),
+    long_description=read('README.md'),
 )
