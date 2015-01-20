@@ -18,8 +18,9 @@
 #############################################################################
 #
 # REQUIREMENTS:
-#      -  gFlex: http://csdms.colorado.edu/wiki/gFlex)
+#      -  gFlex: http://csdms.colorado.edu/wiki/gFlex
 #         (should be downloaded automatically along with the module)
+#         github repository: https://github.com/awickert/gFlex
  
 # More information
 # Started 11 March 2012 as a GRASS interface for Flexure (now gFlex)
@@ -88,7 +89,7 @@
 #%  key: northbc
 #%  type: string
 #%  description: Northern boundary condition
-#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
+#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic, NoOutsideLoads
 #%  answer: NoOutsideLoads
 #%  required : no
 #%end
@@ -96,7 +97,7 @@
 #%  key: southbc
 #%  type: string
 #%  description: Southern boundary condition
-#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
+#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic, NoOutsideLoads
 #%  answer: NoOutsideLoads
 #%  required : no
 #%end
@@ -104,7 +105,7 @@
 #%  key: westbc
 #%  type: string
 #%  description: Western boundary condition
-#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
+#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic, NoOutsideLoads
 #%  answer: NoOutsideLoads
 #%  required : no
 #%end
@@ -112,7 +113,7 @@
 #%  key: eastbc
 #%  type: string
 #%  description: Eastern boundary condition
-#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
+#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic, NoOutsideLoads
 #%  answer: NoOutsideLoads
 #%  required : no
 #%end
@@ -155,15 +156,9 @@
 
 # PATH
 import sys
-# Path to Flexure model - hard-coded here
-sys.path.append("/home/awickert/models/flexure") # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# OTHER POSSIBLE PROBLEM -- MAKEFILE NEEDS SPECIAL DIR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# made "scriptstrings" b/c I had to in "locale", may be a problem in general in the future !!!!!!!!!!!!!!!
 
 # GFLEX
-from base import *
-from f1d import *
-from f2d import *
+import gflex
 
 # PYTHON
 import numpy as np
@@ -212,7 +207,7 @@ def main():
     TeIsRast = True
 
   # This code is for 2D flexural isostasy
-  obj = F2D()
+  obj = gflex.F2D()
    
   # Set verbosity
   if grass.verbosity() >= 2:
@@ -223,10 +218,10 @@ def main():
     obj.set_value('Quiet', True)
   
   if method == 'SAS':
-    obj.set_value('method', 'SAS')
+    obj.set_value('Method', 'SAS')
   elif method == 'FD':
-    obj.set_value('method', 'FD')
-    obj.set_value('Solver', 'direct')
+    obj.set_value('Method', 'FD')
+    obj.set_value('Solver', Solver)
     # Always use the van Wees and Cloetingh (1994) solution type.
     # It is the best.
     obj.set_value('PlateSolutionType', 'vWC1994')
@@ -235,7 +230,7 @@ def main():
 
   # Make a bunch of standard selections
   obj.set_value('GravAccel', GravAccel)
-  obj.set_value('YoungsModulus', YoungsModulus)#70E6/(600/3300.))#
+  obj.set_value('YoungsModulus', YoungsModulus)
   obj.set_value('PoissonsRatio', PoissonsRatio)
   obj.set_value('MantleDensity', MantleDensity)
   
@@ -270,8 +265,12 @@ def main():
     obj.set_value('GridSpacing_y', grass.region()['nsres'])
 
   # Get loads from GRASS
-  q0rast = garray.array()
-  q0rast.read(q)
+  # Calling it "qs" because these are stresses and q0 is the path to the input
+  # (so similar to usage in main code)
+  # Not deleting q0 because we need to keep the array name to re-set the region 
+  # at the end
+  qsrast = garray.array()
+  qsrast.read(q0)
   
   # Get elastic thickness from GRASS if it is not a scalar value
   if TeIsRast:
@@ -286,7 +285,7 @@ def main():
     # meters are the only other option, so just do nothing otherwise
 
   # Values set by user -- set to np.array for flow control in main code
-  obj.set_value('Loads', np.array(q0rast))
+  obj.set_value('Loads', np.array(qsrast))
   if type(FlexureTe) == type(garray.array()):
     obj.set_value('ElasticThickness', np.array(FlexureTe))
   else:
@@ -309,7 +308,7 @@ def main():
   grass.run_command('r.colors', map=output, color='differences', quiet=True)
 
   # Finally, return to original resolution (overwrites previous region selection)
-  grass.run_command('g.region', rast=q)
+  grass.run_command('g.region', rast=q0)
   
   # Reinstate this with a flag or output filename
   #grass.run_command('r.resamp.interp', input=output, output=output + '_interp', method='lanczos', overwrite=True, quiet=True)
