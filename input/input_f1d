@@ -1,7 +1,6 @@
 ; All units are SI
 
 [mode]
-model=flexure ; "flexure" or "PrattAiry"
 dimension=1 ; 1 or 2 dimensions
 method=FD ; Solution method: FD, FFT, SPA, SPA_NG
 
@@ -11,15 +10,14 @@ PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
 InfillMaterialDensity=0
-ElasticThickness=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
 
 [input]
 Loads=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
-ElasticThickness=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!> # hm, and maybe find a way to better do this on the fly.
+ElasticThickness=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
 
 [output]
 DeflectionOut=<!!!!!!!!!!!!! ADD THIS IF YOU WANT OUTPUT TO BE SAVED !!!!!!!!!!!!!>
-; Plot choices are q0, w, both, or (for 1D) combo
+; Plot choices are q, w, both, or (for 1D) combo
 Plot=<!!!!!!!!!!!!! ADD THIS IF YOU WANT A PLOT MADE AND DISPLAYED !!!!!!!!!!!!!>
 
 [numerical]

@@ -56,8 +56,10 @@ i = 0
 
 # load length
 for l in [200E3, 100E3, 200E3, 500E3, 1000E3]:
+#for l in [200E3]:
   #for Te in [25000, GRID]:
   for Te in [25000]:
+    Te0 = Te
     #for bc in ["0Slope0Shear", 'Dirichlet0', 'Mirror', '0Slope0Shear']:
     #for bc in ['Periodic']:
     for bc in ['NoOutsideLoads']:
@@ -68,10 +70,11 @@ for l in [200E3, 100E3, 200E3, 500E3, 1000E3]:
       #nloadelements = []
       #solvetime = []
       #for method in ['SAS', 'SAS_NG', 'FD']:
-      for method in ['SAS']:
+      #for method in ['FD']:
+      for method in ['SAS_NG']:
         #for dx in [100, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000]:
-        #for dx in [2000, 2500, 4000, 5000, 10000, 20000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000, 5000, 10000, 
-        for dx in [10000, 20000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000, 5000, 10000, 
+        for dx in [5000, 10000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000,
+        #for dx in [10000]: #, 20000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000, 5000, 10000, 
 
             obj.set_value('method', method)
             # Grid size and spacing
@@ -87,7 +90,28 @@ for l in [200E3, 100E3, 200E3, 500E3, 1000E3]:
               print dx 
               q = np.zeros((L/dx, L/dx))
               q[(L/2-l/2)/dx : (L/2+l/2)/dx+.0001, (L/2-l/2)/dx : (L/2+l/2)/dx+.0001] = q_load
-              obj.set_value('Loads', q)
+              #obj.set_value('Loads', q)
+
+              # SAS_NG
+              x = np.linspace(dx/2, L-dx/2, q.shape[1])
+              y = np.linspace(dx/2, L-dx/2, q.shape[0])
+              X,Y = np.meshgrid(x,y)
+              
+              q0 = np.vstack((np.reshape(X,-1), np.reshape(Y,-1), np.reshape(q,-1))).transpose()
+              
+              obj.set_value('Loads', q0)
+              
+              """
+              Te *= np.ones(q.shape)
+              
+              # Make sinusoid
+              x = np.linspace(dx/2, L-dx/2, q.shape[1])
+              y = np.linspace(dx/2, L-dx/2, q.shape[0])
+              X,Y = np.meshgrid(x,y)
+              sineadd = 15000 * (np.sin(4*np.pi*X/L) + np.sin(4*np.pi*Y/L))
+
+              Te += sineadd
+              """
               
               #plt.imshow(obj.q0); plt.show()
 
@@ -119,6 +143,9 @@ for l in [200E3, 100E3, 200E3, 500E3, 1000E3]:
               #ne.append(np.prod(q.shape))
               #nle.append(np.sum(q > 0))
               #st.append(obj.time_to_solve)
+              Te = Te0
+              
+              
               
       #nelements.append(ne)
       #nloadelements.append(nle)
@@ -170,7 +197,11 @@ outarray = np.vstack((nelements, nloadelements, nelements*nloadelements, solveti
 #np.savetxt('benchmark/FD_Periodic_variable_load_constant_Te.csv.csv', outarray, delimiter=',',)
 #np.savetxt('benchmark/FD_not_Periodic_200km_load_constant_Te.csv', outarray, delimiter=',',)
 
-#np.savetxt('benchmark/SAS_NG.csv', outarray, delimiter=',',)
-#np.savetxt('benchmark/SAS_NG.csv', outarray, delimiter=',',)
+#np.savetxt('benchmark/FD_Periodic_variable_load_variable_Te.csv.csv', outarray, delimiter=',',)
+#np.savetxt('benchmark/FD_not_Periodic_200km_load_variable_Te.csv', outarray, delimiter=',',)
+
+
+#np.savetxt('benchmark/SAS.csv', outarray, delimiter=',',)
+np.savetxt('benchmark/SAS_NG.csv', outarray, delimiter=',',)
 
 

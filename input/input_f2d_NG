@@ -2,9 +2,8 @@
 
 [mode]
 dimension=2 ; 1 or 2 dimensions
-method=FD ; Solution method: FD, FFT, SAS, SAS_NG
+method=SAS_NG ; Solution method: FD, FFT, SAS, SAS_NG
 PlateSolutionType=vWC1994
-# Plate solutions can be vWC1994 (best), LinearTeVariationsOnly (not good, but for testing), or G2009 (not bad, but not as robust as vWC1994)
 
 [parameter]
 YoungsModulus=1.0E11
@@ -15,10 +14,8 @@ InfillMaterialDensity=0
 
 [input]
 ; Path to input load array
-Loads=q0_sample/2D/central_square_load.txt ; central_square_load.txt ; q0_sample/2D/global1degDEM.txt ; q0_sample/2D/diag.txt ; 
-; Elastic thickness grid goes here; cannot coexist with a constant Te
-; defined above
-ElasticThickness=15000
+Loads=q0_sample/2D/xyq_grid_SAS_NG.txt
+ElasticThickness=25000
 
 [output]
 ; DeflectionOut is a file path for an ASCII grid of w
@@ -28,8 +25,8 @@ Plot=both
 
 [numerical]
 GridSpacing_x=4000 ; dx
-BoundaryCondition_West=Mirror
-BoundaryCondition_East=0Moment0Shear
+BoundaryCondition_West=NoOutsideLoads
+BoundaryCondition_East=NoOutsideLoads
 ; Solver can be direct or iterative
 Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
