@@ -8,10 +8,7 @@ that are then manually re-combined, plotted, and interpreted.
 """
 
 # GFLEX
-from base import *
-from f1d import *
-from f2d import *
-from prattairy import *
+import gflex
 
 # PYTHON
 import numpy as np
@@ -21,10 +18,7 @@ import time
 from matplotlib import pyplot as plt
 
 # This code is for 2D flexural isostasy (and instantiate)
-obj = F2D()
-obj.set_value('dimension', 2) # MEMO WAS NOT RECEIVED BY THE REST OF THE PROGRAM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-obj.set_value('model', 'flexure')
-# Set verbosity
+obj = gflex.F2D()
 obj.set_value('Quiet', True)
 # Always use the van Wees and Cloetingh (1994) solution type.
 # It is the best.
@@ -76,7 +70,7 @@ for l in [200E3, 100E3, 200E3, 500E3, 1000E3]:
         for dx in [5000, 10000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000,
         #for dx in [10000]: #, 20000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000, 5000, 10000, 
 
-            obj.set_value('method', method)
+            obj.set_value('Method', method)
             # Grid size and spacing
             # SIZE -- MAINTAIN BLOCKS INSIDE, TOO -- START WORK HERE
             obj.set_value('GridSpacing_x', dx)
