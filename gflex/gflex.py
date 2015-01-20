@@ -15,7 +15,6 @@ and numerically (for either variable or constant flexural rigidity); the former
 uses Green's functions and the latter uses a direct sparse matrix solution.
 """
 
-from socket import gethostname
 import sys
 from base import *
 from f1d import *
@@ -29,43 +28,44 @@ def displayUsage():
   print ""
   print "Open-source licensed under GNU GPL v3"
   print ""
-  print 'Usage: gflex.py path_to_input_file'
-  print 'Other arguments: --help or -h: this menu'
-  print '     Other options for running gflex include:'
-  print '      * Typing "import gflex" in a Python script to run with getters and setters'
-  print '      * Using the GRASS GIS interfaces, r.flexure and v.flexure'
+  print 'Usage: gflex.py <<path_to_input_file>> [-h OR --help for more information]'
+  print ""
+  
+def displayScriptInclusionInstructions():
+  print ""
+  print "USAGE NOTE FOR NO INPUT FILE"
+  print "--------------------------------------------------------------------"
+  print "No input file: to run entirely with getters and setters, it is not"
+  print "posslible to simply run 'gflex.py'. Instead one must write a script"
+  print "in Python or a compatible language that includes 'import gflex' and"
+  print "then defines a flexure object (F1D or F2D), like:"
+  print ""
+  print "import gflex"
+  print "model_object = gflex.F1D()"
+  print "model_object.set_value(VALUE_KEY, VALUE)"
+  print "#...more..."
+  print ""
 
 def main():
   # Choose how to instantiate
   if len(sys.argv) == 2:
     if sys.argv[1] == '--help' or sys.argv[1] == '-h':
       displayUsage()
+      displayScriptInclusionInstructions()
       return
-    elif sys.argv[1] == '--getset':
-      print ""
-      print "No input file: running entirely with getters and setters."
-      filename = None
     else:
       # Looks like it wants to be an input file!
       filename = sys.argv[1] # it works for usage (1) and (2)
-      obj = WhichModel(filename)
+      try:
+        obj = WhichModel(filename)
+      except:
+        displayUsage()
+        print ">>>> Error: can't locate specified input file. <<<<"
+        print ""
   elif len(sys.argv) == 1:
-    print ""
-    print "No input file: running entirely with getters and setters."
-    filename = None
-    print ""
-    if gethostname()=='beach':
-      print ""
-      print "Welcome to Beach!"
-      print ""
-    else:
-      print "You are not running on Beach; are you sure you want to do this?"
-      print 'Add "--getset" as an argument (python isostasy.py --getset)'
-      print 'when you run isostasy to confirm that you did not just forget'
-      print 'to set an input file'
-      displayUsage()
-      print ""
-      sys.exit()
+    displayUsage()
+    displayScriptInclusionInstructions()
+    sys.exit()
   else:
     print "Too many input parameters provided; exiting."
     displayUsage()
