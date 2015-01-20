@@ -167,22 +167,75 @@ def main():
   elif grass.verbosity() == 0:
     obj.set_value('Quiet', True)
   
-
   # Make a bunch of standard selections
   obj.set_value('GravAccel', GravAccel)
   obj.set_value('YoungsModulus', YoungsModulus)
   obj.set_value('PoissonsRatio', PoissonsRatio)
   obj.set_value('MantleDensity', MantleDensity)
   
-  # And solver / iterations (if needed)
-  obj.set_value('Solver', Solver)
-  obj.set_value('ConvergenceTolerance', ConvergenceTolerance)
+  # IF RASTER OUTPUT -- HAVE VECTOR OUTPUT OPTION AVAILABLE TOO
+  # WAIT, RASTER OUTPUT NOT POSSIBLE IN MY CODE!
+  # WELL, IS VERY EASY TO CODE
+  # But will have to update plotting steps with regular grid, add an option 
+  # to have grid outputs, have new xout, yout for the grid, ...but should
+  # be possible.
+  # THEN to assign a solution grid
+  
+  # Create region
+  
+  # Create grid in that region
+  # Resolution either imposed or automatically calculated based on 
+  # flexural wavelength
+  
+  # Convert that grid to vector points array
 
-  # Set all boundary conditions
-  obj.set_value('BoundaryCondition_East', bce)
-  obj.set_value('BoundaryCondition_West', bcw)
-  obj.set_value('BoundaryCondition_North', bcn)
-  obj.set_value('BoundaryCondition_South', bcs)
+  # Find a way to pass the lat/lon converted distancces into the formula -- 
+  # -- perhaps by including a lat/lon input possiblity -- in fact, may have to 
+  # calculate it over there because of the structure of the code
+  
+  """
+  # To help start:
+  # From 
+  # 
+  def distance_on_unit_sphere(lat1, long1, lat2, long2):
+   
+      # Convert latitude and longitude to
+      # spherical coordinates in radians.
+      degrees_to_radians = math.pi/180.0
+           
+      # phi = 90 - latitude
+      phi1 = (90.0 - lat1)*degrees_to_radians
+      phi2 = (90.0 - lat2)*degrees_to_radians
+           
+      # theta = longitude
+      theta1 = long1*degrees_to_radians
+      theta2 = long2*degrees_to_radians
+           
+      # Compute spherical distance from spherical coordinates.
+           
+      # For two locations in spherical coordinates
+      # (1, theta, phi) and (1, theta, phi)
+      # cosine( arc length ) =
+      #    sin phi sin phi' cos(theta-theta') + cos phi cos phi'
+      # distance = rho * arc length
+       
+      cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) +
+             math.cos(phi1)*math.cos(phi2))
+      arc = math.acos( cos )
+   
+      # Remember to multiply arc by the radius of the earth
+      # in your favorite set of units to get length.
+      return arc
+  """
+  
+  #   
+  
+  # 
+  
+  
+  
+  # Next steps will be to 
+
 
   # Get grid spacing from GRASS
   # Check if lat/lon
