@@ -6,7 +6,7 @@ method=SAS_NG ; Solution method: FD, FFT, SAS, SAS_NG
 PlateSolutionType=vWC1994
 
 [parameter]
-YoungsModulus=1.0E11
+YoungsModulus=6.5E10
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300

@@ -6,7 +6,7 @@ dimension=1 ; 1 or 2 dimensions
 method=FD ; Solution method: FD, FFT, SPA, SPA_NG
 
 [parameter]
-YoungsModulus=1.0E11
+YoungsModulus=6.5E10
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
