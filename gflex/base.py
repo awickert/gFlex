@@ -89,10 +89,9 @@ class Utility(object):
     elif value_key == 'GridSpacing_x':
       self.dx = value
     elif value_key == 'GridSpacing_y':
-      if self.dimension == 1:
-        print "No dy in 1D problems; doing nothing"
-      else:
-        self.dy = value
+      if self.Debug:
+        print "Setting y-value; should be done only for 2D problems"
+      self.dy = value
     # Boundary conditions
     # "Dirichlet0" - 0-displacement at edges) # TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # "0Slope0Shear" - First and third derivatives are 0: not so physical, but basically means that dw/dx_i at boundaries is flat and at a value that is not externally imposed
@@ -799,6 +798,8 @@ class Flexure(Isostasy):
     if type(self.Te) == str: 
       # Try to import Te grid or scalar for the finite difference solution
       Tepath = self.Te
+    else:
+      Tepath = None # in case no self.filename present (like for GRASS GIS)
     # If there is a Tepath, import Te
     # Assume that even if a coeff_matrix is defined
     # That the user wants Te if they gave the path
