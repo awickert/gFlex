@@ -600,8 +600,14 @@ class Isostasy(Utility, Plotting):
         sys.exit("Must define non-None-type q0 by this stage in the initialization step\n"+\
                  "from either input file (string) or direct array import")
     except:
-      sys.exit("Must define q0 by this stage in the initialization step\n"+\
-               "from either input file (string) or direct array import")
+      try:
+        self.q
+      except:
+        try:
+          self.qs
+        except:
+          sys.exit("Must define q0, q, or qs by this stage in the initialization step\n"+\
+                   "from either input file (string) or direct array import")
 
     # If a q0 is a string (i.e. we need to load something)
     if type(self.q0) == str:
