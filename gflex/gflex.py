@@ -23,14 +23,17 @@ from f2d import *
 
 def displayUsage():
   print ""
-  print "Command line usage help:"
-  print 'Usage: (1) python isostasy.py path_to_input_file'
-  print '       (2) ./isostasy.py path_to_input_file'
-  print 'Other arguments: (3) --help or -h: this menu'
-  print '                 (4) --getset: force to run with only getters and setters'
-  print 'If no arguments are provided:'
-  print '     If on Beach, will run with getters and setters'
-  print '     Otherwise, this menu will appear'
+  print "***********************************************"
+  print "*** WELCOME to the gFlex development branch ***"
+  print "***********************************************"
+  print ""
+  print "Open-source licensed under GNU GPL v3"
+  print ""
+  print 'Usage: gflex.py path_to_input_file'
+  print 'Other arguments: --help or -h: this menu'
+  print '     Other options for running gflex include:'
+  print '      * Typing "import gflex" in a Python script to run with getters and setters'
+  print '      * Using the GRASS GIS interfaces, r.flexure and v.flexure'
 
 def main():
   # Choose how to instantiate
@@ -95,26 +98,6 @@ def main():
   ##   (if desired)  ##
   ##################### 
   #wout = obj.get_value('Deflection') # for example
-
-
-def supercomputer_or_standalone():
-# Not used right now; holding onto this if it is useful for the BMI/CMI
-# implementation
-  """
-  Find if the program is running on Beach (and therefore we need to load the 
-  CSDMS utility modules)
-  """
-  if gethostname()=='beach':
-    import os.system
-    if obj.Verbose: print "Running on Beach; loading CSDMS utilities"
-    os.system("module load internal")
-    # CSDMS_base used to manage getters/setters to avoid typing issues w/ bocca
-    from csdms_utils.CSDMS_base import CSDMS_component as cc
-  else:
-    if obj.Verbose: print "Running in standalone mode"
-    from CSDMS_base import CSDMS_component as cc
-
-
 
 if __name__ == '__main__':
   main()
