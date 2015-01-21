@@ -13,6 +13,11 @@ class F2D(Flexure):
     if self.Verbose: print 'F2D initialized'
 
   def run(self):
+    self.bc_check()
+    self.solver_start_time = time.time()
+    if self.Verbose:
+      print 'Solver start time [Unix epoch]:', self.solver_start_time
+      
     if self.method == 'FD':
       # Finite difference
       super(F2D, self).FD()
@@ -37,8 +42,13 @@ class F2D(Flexure):
     self.method_func()
     #self.imshow(self.w) # debugging
 
+    self.time_to_solve = time.time() - self.solver_start_time
+    if self.Quiet == False:
+      print 'Time to solve [s]:', self.time_to_solve
+
   def finalize(self):
     if self.Verbose: print 'F2D finalized'
+
     super(F2D, self).finalize()
     
   ########################################
@@ -46,11 +56,11 @@ class F2D(Flexure):
   ########################################
 
   def FD(self):
-    self.elasprep()
     # Only generate coefficient matrix if it is not already provided
-    try:
-      self.coeff_matrix
-    except:
+    if self.coeff_matrix is not None:
+      pass
+    else:
+      self.elasprep()
       self.coeff_matrix_creator()
     self.fd_solve()
 
@@ -85,10 +95,10 @@ class F2D(Flexure):
 
   def spatialDomainGridded(self):
   
-    self.nx = self.q0.shape[1]
+    self.nx = self.qs.shape[1]
     self.x = np.arange(0,self.dx*self.nx,self.dx)
     
-    self.ny = self.q0.shape[0]
+    self.ny = self.qs.shape[0]
     self.y = np.arange(0,self.dx*self.nx,self.dx)
     
     # Prepare a large grid of solutions beforehand, so we don't have to
@@ -111,34 +121,32 @@ class F2D(Flexure):
     for i in range(self.nx):
       for j in range(self.ny):
         # Loop over locations that have loads, and sum
-        if self.q0[j,i]:
+        if self.qs[j,i]:
           # Solve by summing portions of "biggrid" while moving origin
           # to location of current cell
           # Load must be multiplied by grid cell size
-          self.w += self.q0[j,i] * self.dx * self.dy \
+          self.w += self.qs[j,i] * self.dx * self.dy \
              * biggrid[self.ny-j:2*self.ny-j,self.nx-i:2*self.nx-i]
       # No need to return: w already belongs to "self"
 
   # NO GRID
 
   def spatialDomainNoGrid(self):
-  
-    # Reassign q0 for consistency
-    #self.x = self.q0[:,0]
-    #self.y = self.q0[:,1]
-    #self.q0 = self.q0[:,2]
+
+    self.w = np.zeros(self.x.shape)
+    if self.Debug:
+      print "w = "
+      print self.w.shape
     
-    self.w = np.zeros(self.q0.shape)
     for i in range(len(self.x)):
-      # Get the point
-      x0 = self.x[i]
-      y0 = self.y[i]
-      # Create array of distances from point of load
-      r = np.sqrt((self.x - x0)**2 + (self.y - y0)**2)
-      # Compute and sum deflection
-      self.w += self.q0[i] * self.coeff * kei(r/self.alpha)
-
-
+      # More efficient if we have created some 0-load points
+      # (e.g., for where we want output)
+      if self.q[i] != 0:
+        # Create array of distances from point of load
+        r = ( (self.x - self.x[i])**2 + (self.y - self.y[i])**2 )**.5
+        # Compute and sum deflection
+        self.w += self.q[i] * self.coeff * kei(r/self.alpha)
+    
   ## FINITE DIFFERENCE
   ######################
   
@@ -149,9 +157,11 @@ class F2D(Flexure):
     Defines the variables that are required to create the 2D finite 
     difference solution coefficient matrix
     """
-    self.dx4 = self.dx**4
-    self.dy4 = self.dy**4
-    self.dx2dy2 = self.dx**2 * self.dy**2
+    
+    if self.method != 'SAS_NG':
+      self.dx4 = self.dx**4
+      self.dy4 = self.dy**4
+      self.dx2dy2 = self.dx**2 * self.dy**2
     self.D = self.E*self.Te**3/(12*(1-self.nu**2))
   
   def coeff_matrix_creator(self):
@@ -225,19 +235,19 @@ class F2D(Flexure):
       self.cj_1i1 = 2*D/dx2dy2 # Symmetry
       self.cj_2i0 = D/dy4 # Symmetry
       # Bring up to size
-      self.cj2i0 *= np.ones(self.q0.shape)
-      self.cj1i_1 *= np.ones(self.q0.shape)
-      self.cj1i0 *= np.ones(self.q0.shape)
-      self.cj1i1 *= np.ones(self.q0.shape)
-      self.cj0i_2 *= np.ones(self.q0.shape)
-      self.cj0i_1 *= np.ones(self.q0.shape)
-      self.cj0i0 *= np.ones(self.q0.shape)
-      self.cj0i1 *= np.ones(self.q0.shape)
-      self.cj0i2 *= np.ones(self.q0.shape)
-      self.cj_1i_1 *= np.ones(self.q0.shape)
-      self.cj_1i0 *= np.ones(self.q0.shape)
-      self.cj_1i1 *= np.ones(self.q0.shape)
-      self.cj_2i0 *= np.ones(self.q0.shape)
+      self.cj2i0 *= np.ones(self.qs.shape)
+      self.cj1i_1 *= np.ones(self.qs.shape)
+      self.cj1i0 *= np.ones(self.qs.shape)
+      self.cj1i1 *= np.ones(self.qs.shape)
+      self.cj0i_2 *= np.ones(self.qs.shape)
+      self.cj0i_1 *= np.ones(self.qs.shape)
+      self.cj0i0 *= np.ones(self.qs.shape)
+      self.cj0i1 *= np.ones(self.qs.shape)
+      self.cj0i2 *= np.ones(self.qs.shape)
+      self.cj_1i_1 *= np.ones(self.qs.shape)
+      self.cj_1i0 *= np.ones(self.qs.shape)
+      self.cj_1i1 *= np.ones(self.qs.shape)
+      self.cj_2i0 *= np.ones(self.qs.shape)
       # Create coefficient arrays to manage boundary conditions
       self.cj2i0_coeff_ij = self.cj2i0.copy()
       self.cj1i_1_coeff_ij = self.cj1i_1.copy()
@@ -506,12 +516,13 @@ class F2D(Flexure):
     #self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
     #self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
     if np.isscalar(self.Te):
-      self.D *= np.ones(self.q0.shape) # And leave Te as a scalar for checks
-    self.Te_unpadded = self.Te.copy()
-    self.Te = np.hstack(( np.nan*np.zeros((self.Te.shape[0], 1)), self.Te, np.nan*np.zeros((self.Te.shape[0], 1)) ))
-    self.Te = np.vstack(( np.nan*np.zeros(self.Te.shape[1]), self.Te, np.nan*np.zeros(self.Te.shape[1]) ))
-    self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
-    self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
+      self.D *= np.ones(self.qs.shape) # And leave Te as a scalar for checks
+    else:
+      self.Te_unpadded = self.Te.copy()
+      self.Te = np.hstack(( np.nan*np.zeros((self.Te.shape[0], 1)), self.Te, np.nan*np.zeros((self.Te.shape[0], 1)) ))
+      self.Te = np.vstack(( np.nan*np.zeros(self.Te.shape[1]), self.Te, np.nan*np.zeros(self.Te.shape[1]) ))
+      self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
+      self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
 
     ###############################################################
     # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
@@ -572,8 +583,8 @@ class F2D(Flexure):
         # One of the two values here, that from the y -/+ 1, x +/- 1 (E/W)
         # boundary condition, will be in the same location that will be 
         # overwritten in the initiating grid by the next perioidic b.c. over
-        self.cj_1i1_Periodic_right = np.zeros(self.q0.shape)
-        self.cj_2i0_Periodic_right = np.zeros(self.q0.shape)
+        self.cj_1i1_Periodic_right = np.zeros(self.qs.shape)
+        self.cj_2i0_Periodic_right = np.zeros(self.qs.shape)
         j = 0
         self.cj_1i1_Periodic_right[:,j] = self.cj_1i_1[:,j]
         self.cj_2i0_Periodic_right[:,j] = self.cj_2i0[:,j]
@@ -733,8 +744,8 @@ class F2D(Flexure):
       if self.BC_W == 'Periodic':
         # New arrays -- new diagonals, but mostly empty. Just corners of blocks
         # (boxes) in block-diagonal matrix
-        self.cj1i_1_Periodic_left = np.zeros(self.q0.shape)
-        self.cj2i0_Periodic_left = np.zeros(self.q0.shape)
+        self.cj1i_1_Periodic_left = np.zeros(self.qs.shape)
+        self.cj2i0_Periodic_left = np.zeros(self.qs.shape)
         j = -1
         self.cj1i_1_Periodic_left[:,j] = self.cj1i_1[:,j]
         self.cj2i0_Periodic_left[:,j] = self.cj2i0[:,j]
@@ -1541,18 +1552,17 @@ class F2D(Flexure):
     Requires the coefficient matrix from "2D.coeff_matrix"
     """
     
-    self.solver_start_time = time.time()
-
     if self.Debug:
       try:
         # Will fail if scalar
         print 'self.Te', self.Te.shape
       except:
         pass
-      print 'self.q0', self.q0.shape
+      print 'self.qs', self.qs.shape
+      self.calc_max_flexural_wavelength()
       print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
     
-    q0vector = self.q0.reshape(-1, order='C')
+    q0vector = self.qs.reshape(-1, order='C')
     if self.solver == "iterative" or self.solver == "Iterative":
       if self.Debug:
         print "Using generalized minimal residual method for iterative solution"
@@ -1571,10 +1581,7 @@ class F2D(Flexure):
       wvector = scipy.sparse.linalg.spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
 
     # Reshape into grid
-    self.w = -wvector.reshape(self.q0.shape)
+    self.w = -wvector.reshape(self.qs.shape)
     self.w_padded = self.w.copy() # for troubleshooting
 
-    self.time_to_solve = time.time() - self.solver_start_time
-    if self.Quiet == False:
-      print 'Time to solve [s]:', self.time_to_solve
-
+    # Time to solve used to be here

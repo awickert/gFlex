@@ -10,6 +10,7 @@ class F1D(Flexure):
     if self.Verbose: print 'F1D initialized'
 
   def run(self):
+    self.bc_check()
     if self.method == 'FD':
       # Finite difference
       super(F1D, self).FD()
@@ -43,16 +44,11 @@ class F1D(Flexure):
   ########################################
   
   def FD(self):
-    #try:
-    #  self.plotChoice
-    #except:
-    #  self.plotChoice = None
-    if self.plotChoice:
-      self.gridded_x()
+    self.gridded_x()
     # Only generate coefficient matrix if it is not already provided
-    try:
-      self.coeff
-    except:
+    if self.coeff_matrix is not None:
+      pass
+    else:
       self.elasprep() # define dx4 and D within self
       self.coeff_matrix_creator() # And define self.coeff
     self.fd_solve() # Get the deflection, "w"
@@ -71,7 +67,6 @@ class F1D(Flexure):
     self.spatialDomainVars()
     self.spatialDomainNoGrid()
 
-  
   ######################################
   ## FUNCTIONS TO SOLVE THE EQUATIONS ##
   ######################################
@@ -81,7 +76,7 @@ class F1D(Flexure):
   ############
 
   def gridded_x(self):
-    self.nx = self.q0.shape[0]
+    self.nx = self.qs.shape[0]
     self.x = np.arange(0,self.dx*self.nx,self.dx)
     
   
@@ -104,39 +99,34 @@ class F1D(Flexure):
     
     for i in range(self.nx):
       # Loop over locations that have loads, and sum
-      if self.q0[i]:
+      if self.qs[i]:
         dist = abs(self.x[i]-self.x)
         # -= b/c pos load leads to neg (downward) deflection
-        self.w -= self.q0[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
+        self.w -= self.qs[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
           (np.cos(dist/self.alpha) + np.sin(dist/self.alpha))
     # No need to return: w already belongs to "self"
     
 
-  # NONUNIFORM DX (NO "GRID"): ARBITRARILY-SPACED POINT LOADS
+  # NONUNIFORM DX (NO GRID): ARBITRARILY-SPACED POINT LOADS
   # So essentially a sum of Green's functions for flexural response
 
   def spatialDomainNoGrid(self):
-  
-    # Reassign q0 for consistency
-    #self.q0_with_locs = self.q0 # nah, will recombine later
-    self.x = self.q0[:,0]
-    self.q0 = self.q0[:,1]
-    
-    self.w = np.zeros(self.x.shape)
+    """
+    Superposition of analytical solutions without a gridded domain
+    """
+    self.w = np.zeros(self.q.shape)
+
     if self.Debug:
       print "w = "
       print self.w.shape
     
-    i=0 # counter
-    for x0 in self.x:
-      dist = abs(self.x-x0)
-      self.w -= self.q0[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
-        (np.cos(dist/self.alpha) + np.sin(dist/self.alpha))
-      if i==10:
-        if self.Debug:
-          print dist
-          print self.q0
-      i+=1 # counter
+    for i in range(len(self.q)):
+      # More efficient if we have created some 0-load points
+      # (e.g., for where we want output)
+      if self.q[i] != 0:
+        dist = np.abs(self.x - self.x[i])
+        self.w -= self.q[i] * self.coeff * np.exp(-dist/self.alpha) * \
+          ( np.cos(dist/self.alpha) + np.sin(dist/self.alpha) )
 
   ## FINITE DIFFERENCE
   ######################
@@ -205,19 +195,19 @@ class F1D(Flexure):
       print "Boundary condition, West:", self.BC_W, type(self.BC_W)
       print "Boundary condition, East:", self.BC_E, type(self.BC_E)
 
-    if self.BC_E == 'Dirichlet' or self.BC_W == 'Dirichlet':
-      self.BC_Dirichlet()
+    if self.BC_E == 'Dirichlet0' or self.BC_W == 'Dirichlet0':
+      self.BC_Dirichlet0()
+    if self.BC_E == '0Slope0Shear' or self.BC_W == '0Slope0Shear':
+      self.BC_0Slope0Shear()
+    if self.BC_E == '0Moment0Shear' or self.BC_W == '0Moment0Shear':
+      self.BC_0Moment0Shear()
+    if self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
+      self.BC_Mirror()
+    if self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
+      self.BC_Periodic()
     if self.BC_E == 'Sandbox' or self.BC_W == 'Sandbox':
       # Sandbox is the developer's testing ground
       sys.exit("Sandbox Closed")
-    if self.BC_E == '0Moment0Shear' or self.BC_W == '0Moment0Shear':
-      self.BC_0Moment0Shear()
-    if self.BC_E == 'Neumann' or self.BC_W == 'Neumann':
-      self.BC_Neumann()
-    if self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
-      self.BC_Mirror()
-    if self.BC_E == '0Slope0Shear' or self.BC_W == '0Slope0Shear':
-      self.BC_0Slope0Shear()
 
     ##########################################################
     # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
@@ -233,7 +223,9 @@ class F1D(Flexure):
     self.r2 = np.roll(self.r2, 2)
     # Then assemble these rows: this is where the periodic boundary condition 
     # can matter.
-    if self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
+    if self.coeff_matrix:
+      pass
+    elif self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
       self.BC_Periodic()
     # If not periodic, standard assembly (see BC_Periodic fcn for the assembly 
     # of that set of coefficient rows
@@ -241,12 +233,12 @@ class F1D(Flexure):
       self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
       self.offsets = np.array([-2,-1,0,1,2])
 
-    # Everybody now (including periodic b.c. cases)
-    self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
+      # Everybody now (including periodic b.c. cases)
+      self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
 
-    self.coeff_creation_time = time.time() - self.coeff_start_time
-    # Always print this!
-    print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
+      self.coeff_creation_time = time.time() - self.coeff_start_time
+      # Always print this!
+      print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
   
   def build_diagonals(self):
     """
@@ -299,11 +291,11 @@ class F1D(Flexure):
       self.r1 = -4 * self.D/self.dx4
       self.r2 = 1 * self.D/self.dx4
       # Make them into arrays
-      self.l2 *= np.ones(self.q0.shape)
-      self.l1 *= np.ones(self.q0.shape)
-      self.c0 *= np.ones(self.q0.shape)
-      self.r1 *= np.ones(self.q0.shape)
-      self.r2 *= np.ones(self.q0.shape)
+      self.l2 *= np.ones(self.qs.shape)
+      self.l1 *= np.ones(self.qs.shape)
+      self.c0 *= np.ones(self.qs.shape)
+      self.r1 *= np.ones(self.qs.shape)
+      self.r2 *= np.ones(self.qs.shape)
 
     elif type(self.Te) == np.ndarray:
       ###################################################################
@@ -406,11 +398,36 @@ class F1D(Flexure):
     Dirichlet boundary condition for 0 deflection.
     This requires that nothing be done to the edges of the solution array, 
     because the lack of the off-grid terms implies that they go to 0
+    Here we just turn the cells outside the array into nan, to ensure that 
+    we are not accidentally including the wrong cells here (and for consistency 
+    with the other solution types -- this takes negligible time)
     """
     if self.BC_W == 'Dirichlet0':
-      pass
+      i=0
+      self.l2[i] = np.nan
+      self.l1[i] = np.nan
+      self.c0[i] += 0
+      self.r1[i] += 0
+      self.r2[i] += 0
+      i=1
+      self.l2[i] = np.nan
+      self.l1[i] += 0
+      self.c0[i] += 0
+      self.r1[i] += 0
+      self.r2[i] += 0
     if self.BC_E == 'Dirichlet0':
-      pass
+      i=-2
+      self.l2[i] += 0
+      self.l1[i] += 0
+      self.c0[i] += 0
+      self.r1[i] += 0
+      self.r2[i] = np.nan
+      i=-1
+      self.l2[i] += 0
+      self.l1[i] += 0
+      self.c0[i] += 0
+      self.r1[i] = np.nan
+      self.r2[i] = np.nan
 
   def BC_0Slope0Shear(self):
     i=0
@@ -499,7 +516,7 @@ class F1D(Flexure):
     # 0 moment and 0 shear
     if np.isscalar(self.Te):
     
-      #self.q0[:] = np.max(self.q0)
+      #self.qs[:] = np.max(self.qs)
     
       # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
       if self.BC_W == '0Moment0Shear':
@@ -524,14 +541,14 @@ class F1D(Flexure):
         i=-1
         self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
         self.r1[i] = np.nan # OFF GRID
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.l1[i] = -8 * self.D/self.dx4
+        self.c0[i] = 2 * self.D/self.dx4 + self.drho*self.g
+        self.l1[i] = -4 * self.D/self.dx4
         self.l2[i] = 2 * self.D/self.dx4
         i=-2
         self.r2[i] = np.nan # OFF GRID
-        self.r1[i] = -4 * self.D/self.dx4
+        self.r1[i] = -2 * self.D/self.dx4
         self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.l1[i] = -4 * self.D/self.dx4
+        self.l1[i] = -6 * self.D/self.dx4
         self.l2[i] = 2 * self.D/self.dx4
     else:
       # Variable Te
@@ -565,12 +582,12 @@ class F1D(Flexure):
         self.l2[i] += self.r2_coeff_i
         self.l1[i] += -2*self.r2_coeff_i
         self.c0[i] += 0
-        self.r1[i] += self.r1_coeff_i + 2*self.r2_coeff_i
+        self.r1[i] += 2*self.r2_coeff_i
         self.r2[i] += np.nan
         i=-1
         self.l2[i] += self.r2_coeff_i
         self.l1[i] += -4*self.r2_coeff_i - self.r1_coeff_i
-        self.c0[i] += 4*self.r2_coeff_i + 2*self.r1_coeff_i
+        self.c0[i] += 4*self.r2_coeff_i + + 2*self.r1_coeff_i
         self.r1[i] += np.nan
         self.r2[i] += np.nan
 
@@ -639,7 +656,7 @@ class F1D(Flexure):
     """
     
     if self.Debug:
-      print 'q0', self.q0.shape
+      print 'q0', self.qs.shape
       print 'Te', self.Te.shape
       self.calc_max_flexural_wavelength()
       print 'maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells
@@ -653,7 +670,7 @@ class F1D(Flexure):
         print "Converging to a tolerance of", self.iterative_ConvergenceTolerance, "m between iterations"
       # q0 negative so bends down with positive load, bends up with neative load 
       # (i.e. material removed)
-      w = isolve.lgmres(self.coeff_matrix, -self.q0, tol=self.iterative_ConvergenceTolerance)  
+      w = isolve.lgmres(self.coeff_matrix, -self.qs, tol=self.iterative_ConvergenceTolerance)  
       self.w = w[0] # Reach into tuple to get my array back
     else:
       if self.solver == "direct" or self.solver == "Direct":
@@ -666,7 +683,7 @@ class F1D(Flexure):
       # anything changes
       # q0 negative so bends down with positive load, bends up with neative load 
       # (i.e. material removed)
-      self.w = spsolve(self.coeff_matrix, -self.q0, use_umfpack=True)
+      self.w = spsolve(self.coeff_matrix, -self.qs, use_umfpack=True)
     
     self.time_to_solve = time.time() - self.solver_start_time
     # Always print this!

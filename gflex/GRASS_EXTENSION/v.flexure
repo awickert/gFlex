@@ -1,15 +1,14 @@
 #! /usr/bin/python
 ############################################################################
 #
-# MODULE:       r.flexure
+# MODULE:       v.flexure
 #
 # AUTHOR(S):    Andrew Wickert
 #
 # PURPOSE:      Calculate flexure of the lithosphere under a specified
-#               set of loads and with a given elastic thickness (scalar 
-#               or array)
+#               set of loads and with a given elastic thickness (scalar)
 #
-# COPYRIGHT:    (c) 2012, 2014 Andrew Wickert
+# COPYRIGHT:    (c) 2014 Andrew Wickert
 #
 #               This program is free software under the GNU General Public
 #               License (>=v2). Read the file COPYING that comes with GRASS
@@ -18,41 +17,37 @@
 #############################################################################
 #
 # REQUIREMENTS:
-#      -  gFlex: http://csdms.colorado.edu/wiki/Flexure)
+#      -  gFlex: http://csdms.colorado.edu/wiki/gFlex
 #         (should be downloaded automatically along with the module)
+#         github repository: https://github.com/awickert/gFlex
  
 # More information
-# Started 11 March 2012 as a GRASS interface for Flexure (now gFlex)
-# Revised 15--?? November 2014 after significantly improving the model
-# by Andy Wickert
+# Started 20 Jan 2015 to add GRASS GIS support for distributed point loads
+# and their effects on lithospheric flexure
 
 #%module
 #%  description: Lithospheric flexure
-#% keywords: raster
+#% keywords: vector
 #%end
 #%flag
 #%  key: l
-#%  description: Allows running in lat/lon: dx is f(lat) at grid N-S midpoint
+#%  description: Allows running in lat/lon: distances from great circles
 #%end
-#%option
-#%  key: method
-#%  type: string
-#%  description: Solution method: Finite Diff. or Superpos. of analytical sol'ns
-#%  options: FD, SAS
-#%  required : yes
+#%flag
+#%  key: r
+#%  description: Use user-specified resolution (otherwise internally computed)
 #%end
 #%option
 #%  key: q
 #%  type: string
-#%  gisprompt: old,cell,raster
-#%  description: Raster map of loads (thickness * density * g) [Pa]
+#%  gisprompt: old,vector,vector
+#%  description: Vector map of loads (thickness * area * density * g) [N]
 #%  required : yes
 #%end
 #%option
 #%  key: te
 #%  type: string
-#%  gisprompt: old,cell,raster
-#%  description: Elastic thicnkess: scalar or raster; unis chosen in "te_units"
+#%  description: Elastic thicnkess: scalar; unis chosen in "te_units"
 #%  required : yes
 #%end
 #%option
@@ -70,60 +65,6 @@
 #%  required : yes
 #%end
 #%option
-#%  key: rho_fill
-#%  type: double
-#%  description: Density of material that fills flexural depressions [kg/m^3]
-#%  answer: 0
-#%  required : no
-#%end
-#%option
-#%  key: solver
-#%  type: string
-#%  description: Solver type
-#%  options: direct, iterative
-#%  answer: direct
-#%  required : no
-#%end
-#%option
-#%  key: tolerance
-#%  type: double
-#%  description: Convergence tolerance (between iterations) for iterative solver
-#%  answer: 1E-3
-#%  required : no
-#%end
-#%option
-#%  key: northbc
-#%  type: string
-#%  description: Northern boundary condition
-#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
-#%  answer: NoOutsideLoads
-#%  required : no
-#%end
-#%option
-#%  key: southbc
-#%  type: string
-#%  description: Southern boundary condition
-#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
-#%  answer: NoOutsideLoads
-#%  required : no
-#%end
-#%option
-#%  key: westbc
-#%  type: string
-#%  description: Western boundary condition
-#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
-#%  answer: NoOutsideLoads
-#%  required : no
-#%end
-#%option
-#%  key: eastbc
-#%  type: string
-#%  description: Eastern boundary condition
-#%  options: Dirichlet0, 0Moment0Shear, 0Slope0Shear, Mirror, Periodic
-#%  answer: NoOutsideLoads
-#%  required : no
-#%end
-#%option
 #%  key: g
 #%  type: double
 #%  description: gravitational acceleration at surface [m/s^2]
@@ -134,7 +75,7 @@
 #%  key: ym
 #%  type: double
 #%  description: Young's Modulus [Pa]
-#%  answer: 65E9
+#%  answer: 65E10
 #%  required : no
 #%end
 #%option
@@ -142,6 +83,13 @@
 #%  type: double
 #%  description: Poisson's ratio
 #%  answer: 0.25
+#%  required : no
+#%end
+#%option
+#%  key: rho_fill
+#%  type: double
+#%  description: Density of material that fills flexural depressions [kg/m^3]
+#%  answer: 0
 #%  required : no
 #%end
 #%option
@@ -155,16 +103,9 @@
 
 # PATH
 import sys
-# Path to Flexure model - hard-coded here
-sys.path.append("/home/awickert/models/flexure") # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# OTHER POSSIBLE PROBLEM -- MAKEFILE NEEDS SPECIAL DIR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# made "scriptstrings" b/c I had to in "locale", may be a problem in general in the future !!!!!!!!!!!!!!!
 
-# FLEXURE
-from base import *
-from f1d import *
-from f2d import *
-from prattairy import *
+# GFLEX
+import gflex
 
 # PYTHON
 import numpy as np
@@ -180,12 +121,13 @@ def main():
 
   # Flags
   latlon_override = flags['l']
+  user_resolution_override = flags['r']
   
   # Inputs
   # Solution selection
   method = options['method']
   # Parameters that are often changed for the solution
-  q = options['q']
+  q0 = options['q0']
   Te = options['te']
   Te_units = options['te_units']
   rho_fill = float(options['rho_fill'])
@@ -213,9 +155,9 @@ def main():
     TeIsRast = True
 
   # This code is for 2D flexural isostasy
-  obj = F2D()
-  obj.set_value('model', 'flexure')
-  obj.set_value('dimension', 2)
+  obj = gflex.F2D()
+  # And it is for the nongridded superposition of analytical solutions
+  obj.set_value('Method', 'SAS_NG')
    
   # Set verbosity
   if grass.verbosity() >= 2:
@@ -225,32 +167,75 @@ def main():
   elif grass.verbosity() == 0:
     obj.set_value('Quiet', True)
   
-  if method == 'SAS':
-    obj.set_value('method', 'SAS')
-  elif method == 'FD':
-    obj.set_value('method', 'FD')
-    obj.set_value('Solver', 'direct')
-    # Always use the van Wees and Cloetingh (1994) solution type.
-    # It is the best.
-    obj.set_value('PlateSolutionType', 'vWC1994')
-  # No need for "else" here:
-  # Will automatically fail via parser if value is out of range
-
   # Make a bunch of standard selections
   obj.set_value('GravAccel', GravAccel)
-  obj.set_value('YoungsModulus', YoungsModulus)#70E6/(600/3300.))#
+  obj.set_value('YoungsModulus', YoungsModulus)
   obj.set_value('PoissonsRatio', PoissonsRatio)
   obj.set_value('MantleDensity', MantleDensity)
   
-  # And solver / iterations (if needed)
-  obj.set_value('Solver', Solver)
-  obj.set_value('ConvergenceTolerance', ConvergenceTolerance)
+  # IF RASTER OUTPUT -- HAVE VECTOR OUTPUT OPTION AVAILABLE TOO
+  # WAIT, RASTER OUTPUT NOT POSSIBLE IN MY CODE!
+  # WELL, IS VERY EASY TO CODE
+  # But will have to update plotting steps with regular grid, add an option 
+  # to have grid outputs, have new xout, yout for the grid, ...but should
+  # be possible.
+  # THEN to assign a solution grid
+  
+  # Create region
+  
+  # Create grid in that region
+  # Resolution either imposed or automatically calculated based on 
+  # flexural wavelength
+  
+  # Convert that grid to vector points array
 
-  # Set all boundary conditions
-  obj.set_value('BoundaryCondition_East', bce)
-  obj.set_value('BoundaryCondition_West', bcw)
-  obj.set_value('BoundaryCondition_North', bcn)
-  obj.set_value('BoundaryCondition_South', bcs)
+  # Find a way to pass the lat/lon converted distancces into the formula -- 
+  # -- perhaps by including a lat/lon input possiblity -- in fact, may have to 
+  # calculate it over there because of the structure of the code
+  
+  """
+  # To help start:
+  # From 
+  # 
+  def distance_on_unit_sphere(lat1, long1, lat2, long2):
+   
+      # Convert latitude and longitude to
+      # spherical coordinates in radians.
+      degrees_to_radians = math.pi/180.0
+           
+      # phi = 90 - latitude
+      phi1 = (90.0 - lat1)*degrees_to_radians
+      phi2 = (90.0 - lat2)*degrees_to_radians
+           
+      # theta = longitude
+      theta1 = long1*degrees_to_radians
+      theta2 = long2*degrees_to_radians
+           
+      # Compute spherical distance from spherical coordinates.
+           
+      # For two locations in spherical coordinates
+      # (1, theta, phi) and (1, theta, phi)
+      # cosine( arc length ) =
+      #    sin phi sin phi' cos(theta-theta') + cos phi cos phi'
+      # distance = rho * arc length
+       
+      cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) +
+             math.cos(phi1)*math.cos(phi2))
+      arc = math.acos( cos )
+   
+      # Remember to multiply arc by the radius of the earth
+      # in your favorite set of units to get length.
+      return arc
+  """
+  
+  #   
+  
+  # 
+  
+  
+  
+  # Next steps will be to 
+
 
   # Get grid spacing from GRASS
   # Check if lat/lon
@@ -273,8 +258,12 @@ def main():
     obj.set_value('GridSpacing_y', grass.region()['nsres'])
 
   # Get loads from GRASS
-  q0rast = garray.array()
-  q0rast.read(q)
+  # Calling it "qs" because these are stresses and q0 is the path to the input
+  # (so similar to usage in main code)
+  # Not deleting q0 because we need to keep the array name to re-set the region 
+  # at the end
+  qsrast = garray.array()
+  qsrast.read(q0)
   
   # Get elastic thickness from GRASS if it is not a scalar value
   if TeIsRast:
@@ -289,7 +278,7 @@ def main():
     # meters are the only other option, so just do nothing otherwise
 
   # Values set by user -- set to np.array for flow control in main code
-  obj.set_value('Loads', np.array(q0rast))
+  obj.set_value('Loads', np.array(qsrast))
   if type(FlexureTe) == type(garray.array()):
     obj.set_value('ElasticThickness', np.array(FlexureTe))
   else:
@@ -312,7 +301,7 @@ def main():
   grass.run_command('r.colors', map=output, color='differences', quiet=True)
 
   # Finally, return to original resolution (overwrites previous region selection)
-  grass.run_command('g.region', rast=q)
+  grass.run_command('g.region', rast=q0)
   
   # Reinstate this with a flag or output filename
   #grass.run_command('r.resamp.interp', input=output, output=output + '_interp', method='lanczos', overwrite=True, quiet=True)
