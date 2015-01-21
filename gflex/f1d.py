@@ -125,16 +125,13 @@ class F1D(Flexure):
       print "w = "
       print self.w.shape
     
-    i=0 # counter
-    for x0 in self.x:
-      dist = abs(self.x-x0)
-      self.w -= self.q[i] * self.coeff * np.exp(-dist/self.alpha) * \
-        (np.cos(dist/self.alpha) + np.sin(dist/self.alpha))
-      if i==10:
-        if self.Debug:
-          print dist
-          print self.q
-      i+=1 # counter
+    for i in range(len(self.q)):
+      # More efficient if we have created some 0-load points
+      # (e.g., for where we want output)
+      if self.q[i] != 0:
+        dist = np.abs(self.x - self.x[i])
+        self.w -= self.q[i] * self.coeff * np.exp(-dist/self.alpha) * \
+          ( np.cos(dist/self.alpha) + np.sin(dist/self.alpha) )
 
   ## FINITE DIFFERENCE
   ######################
