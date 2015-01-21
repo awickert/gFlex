@@ -16,7 +16,7 @@ Loads=q0_sample/1D/irregular_grid_test1.txt
 ElasticThickness=7000
 
 [output]
-DeflectionOut=tmpout.txt
+DeflectionOut=
 Plot=both
 
 [numerical]
