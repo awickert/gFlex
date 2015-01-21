@@ -580,11 +580,9 @@ class Isostasy(Utility, Plotting):
       # Not optional: flexural solutions can be very sensitive to b.c.'s
       self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=False)
       self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=False)
-      self.bclist = [self.BC_E, self.BC_W]
       if self.dimension == 2:
         self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=False)
         self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=False)
-        self.bclist += [self.BC_N, self.BC_S]
 
       # Parameters
       self.g = self.configGet('float', "parameter", "GravAccel")
@@ -630,7 +628,7 @@ class Isostasy(Utility, Plotting):
       self.q0
     except:
       self.q0 = None
-    if self.q0:
+    if self.q0 is not None:
       # If a q0 is a string (i.e. we need to load something)
       if type(self.q0) == str:
         try:
@@ -728,12 +726,17 @@ class Isostasy(Utility, Plotting):
           print 'Not writing any deflection output to file'
 
   def bc_check(self):
-
     # Check that boundary conditions are acceptable with code implementation
     # Acceptable b.c.'s
     if self.method == 'FD':
       self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
       self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+      # Boundary conditions should be defined by this point -- whether via 
+      # the configuration file or the getters and setters
+      self.bclist = [self.BC_E, self.BC_W]
+      if self.dimension == 2:
+        self.bclist += [self.BC_N, self.BC_S]
+      # Now check that these are valid boundary conditions
       for bc in self.bclist:
         if self.dimension == 1:
           if (bc == self.bc1D).any():
