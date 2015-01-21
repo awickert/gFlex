@@ -33,10 +33,10 @@ def displayUsage():
   
 def displayScriptInclusionInstructions():
   print ""
-  print "USAGE NOTE FOR NO INPUT FILE"
+  print "USAGE NOTE FOR NO CONFIGURATION FILE"
   print "--------------------------------------------------------------------"
-  print "No input file: to run entirely with getters and setters, it is not"
-  print "posslible to simply run 'gflex.py'. Instead one must write a script"
+  print "No configuration file: to run entirely with getters and setters, it is"
+  print "not posslible to simply run 'gflex.py'. Instead one must write a script"
   print "in Python or a compatible language that includes 'import gflex' and"
   print "then defines a flexure object (F1D or F2D), like:"
   print ""
@@ -54,13 +54,13 @@ def main():
       displayScriptInclusionInstructions()
       return
     else:
-      # Looks like it wants to be an input file!
+      # Looks like it wants to be an configuration file!
       filename = sys.argv[1] # it works for usage (1) and (2)
       try:
         obj = WhichModel(filename)
       except:
         displayUsage()
-        print ">>>> Error: can't locate specified input file. <<<<"
+        print ">>>> Error: can't locate specified configuration file. <<<<"
         print ""
         sys.exit()
   elif len(sys.argv) == 1:
@@ -83,10 +83,10 @@ def main():
   
   if obj.Debug: print 'Command line:', sys.argv
 
-  ####################################
-  ##   SET MODEL PARAMETERS HERE    ##
-  ## (if not defined in input file) ##
-  #################################### 
+  ############################################
+  ##       SET MODEL PARAMETERS HERE        ##
+  ## (if not defined in configuration file) ##
+  ############################################
   # obj.set_value('method','FD') # for example
 
   obj.run()

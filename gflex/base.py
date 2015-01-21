@@ -11,9 +11,9 @@ class Utility(object):
   def configGet(self, vartype, category, name, optional=False, specialReturnMessage=None):
     """
     Wraps a try / except and a check for self.filename around ConfigParser
-    as it talks to the input file.
-    Also, checks for existence of input file so this won't execute (and fail) 
-    when no input file is provided (e.g., running in coupled mode with CSDMS 
+    as it talks to the configuration file.
+    Also, checks for existence of configuration file so this won't execute (and fail) 
+    when no configuration file is provided (e.g., running in coupled mode with CSDMS 
     entirely with getters and setters)
 
     vartype can be 'float', 'str' or 'string' (str and string are the same),
@@ -58,7 +58,7 @@ class Utility(object):
           print 'No action related to this optional parameter will be taken.'
           print ""
       else:
-        print 'Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from input file.'
+        print 'Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from configuration file.'
         if specialReturnMessage:
           print specialReturnMessage
         sys.exit("Exiting.")
@@ -86,7 +86,7 @@ class Utility(object):
     # Loading grid
     elif value_key == 'Loads':
       self.q0 = value
-    # NOT IN INPUT FILE
+    # NOT IN CONFIGURATION FILE
     elif value_key == 'Loads_grid_stress':
       self.qs = value
     elif value_key == 'Loads_force':
@@ -114,7 +114,7 @@ class Utility(object):
       self.BC_N = value
     elif value_key == 'BoundaryCondition_South':
       self.BC_S = value
-    # NOT IN INPUT FILE -- FOR POINT LOADS
+    # NOT IN CONFIGURATION FILE -- FOR POINT LOADS
     # vectors of x and y values
     elif value_key == 'x':
       self.x = value
@@ -481,10 +481,10 @@ class WhichModel(Utility):
           self.dimension = self.configGet("integer", "mode", "dimension")
           self.whichModel_AlreadyRun = True
         except:
-          sys.exit("No input file at specified path, or input file configured incorrectly")
+          sys.exit("No configuration file at specified path, or configuration file configured incorrectly")
 
 # class Isostasy inherits IRF interface, and it determines the simulation type
-# by reading three parameters from input file, but it does not set up other
+# by reading three parameters from configuration file, but it does not set up other
 # parameters, which is the responsibility of derived concrete classes.
 class Isostasy(Utility, Plotting):
 
@@ -493,19 +493,19 @@ class Isostasy(Utility, Plotting):
     # to use getters and setters to define values
     
     # Use standard routine to pull out values
-    # If no filename provided, will not initialize input file.
+    # If no filename provided, will not initialize configuration file.
     self.filename = filename
     
     # DEFAULT VERBOSITY
     # Set default "quiet" to False, unless set by setter or overwritten by 
-    # the input file.
+    # the configuration file.
     self.Quiet = False
     # And also set default verbosity
     self.Verbose = True
     self.Debug = False
 
   def initialize(self, filename=None):
-    # Values from input file
+    # Values from configuration file
 
     # If a filename is provided here, overwrite any prior value
     if filename:
@@ -530,7 +530,7 @@ class Isostasy(Utility, Plotting):
         self.dimension = self.configGet("integer", "mode", "dimension")
         self.whichModel_AlreadyRun = True
       except:
-        sys.exit("No input file at specified path, or input file configured incorrectly")
+        sys.exit("No configuration file at specified path, or configuration file configured incorrectly")
 
       # Set verbosity for model run
       # Default is "verbose" with no debug or quiet
@@ -555,7 +555,7 @@ class Isostasy(Utility, Plotting):
         self.Verbose = False
     
     # Introduce model
-    # After input file can define "Quiet", and getter/setter should be done
+    # After configuration file can define "Quiet", and getter/setter should be done
     # by this point if we are going that way.
     if self.Quiet == False:
       print "" # Blank line at start of run
@@ -594,7 +594,7 @@ class Isostasy(Utility, Plotting):
       # Grid spacing
       if self.method != 'SAS_NG':
         # No meaning for ungridded superimposed analytical solutions
-        # From input file
+        # From configuration file
         self.dx = self.configGet("float", "numerical", "GridSpacing_x")
         if self.dimension == 2:
           self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
@@ -614,7 +614,7 @@ class Isostasy(Utility, Plotting):
       # Stop program if q0 is None-type
       if type(self.q0) == None: # if is None type, just be patient
         sys.exit("Must define non-None-type q0 by this stage in the initialization step\n"+\
-                 "from either input file (string) or direct array import")
+                 "from either configuration file (string) or direct array import")
     except:
       try:
         self.q
@@ -623,7 +623,7 @@ class Isostasy(Utility, Plotting):
           self.qs
         except:
           sys.exit("Must define q0, q, or qs by this stage in the initialization step\n"+\
-                   "from either input file (string) or direct array import")
+                   "from either configuration file (string) or direct array import")
 
     # Ignore this if no q0 set
     try:
@@ -643,7 +643,7 @@ class Isostasy(Utility, Plotting):
             self.q0 = np.loadtxt(self.q0)
             if self.Verbose: print "Loading q0 ASCII"
           except:
-            # Then see if it is relative to the location of the input file
+            # Then see if it is relative to the location of the configuration file
             try:
               self.q0 = load(self.inpath + self.q0)
               if self.Verbose: print "Loading q0 from numpy binary"
@@ -656,7 +656,7 @@ class Isostasy(Utility, Plotting):
                 print "Cannot find q0 file"
                 print "q0path = " + self.q0
                 print "Looked relative to model python files."
-                print "Also looked relative to input file path, " + self.inpath
+                print "Also looked relative to configuration file path, " + self.inpath
                 print "Exiting."
                 sys.exit()
       
@@ -693,9 +693,9 @@ class Isostasy(Utility, Plotting):
   def outputDeflections(self):
     """
     Outputs a grid of deflections if an output directory is defined in the 
-    input file
+    configuration file
     
-    If the filename given in the input file ends in ".npy", then a binary 
+    If the filename given in the configuration file ends in ".npy", then a binary 
     numpy grid will be exported.
     
     Otherwise, an ASCII grid will be exported.
@@ -707,7 +707,7 @@ class Isostasy(Utility, Plotting):
         print "Output filename provided by setter"
         print "Not saving file with this code; that should be handled by the driver"
         
-    # Otherwise, it needs to be set by an input file
+    # Otherwise, it needs to be set by an configuration file
     except:
       try:
         self.wOutFile = self.configGet("string", "output", "DeflectionOut", optional=True)
@@ -854,7 +854,7 @@ class Flexure(Isostasy):
         sys.exit("No solver defined!")
     # Check if a coefficient array has been defined
     # It would only be by a getter or setter;
-    # no way to do I/O with this with present input files
+    # no way to do I/O with this with present configuration files
     try:
       self.coeff_matrix
     except:
@@ -894,14 +894,14 @@ class Flexure(Isostasy):
           print "Loading elastic thickness array from provided file path"
       except:
         try:
-          # Then see if it is relative to the location of the input file
+          # Then see if it is relative to the location of the configuration file
             self.Te = np.loadtxt(self.inpath + Tepath)
             if self.Verbose:
                 print "Elastic thickness array loaded from provided filename"
         except:
           if quiet == False:
             print "Requested Te file is provided but cannot be located."
-            print "No scalar elastic thickness is provided in input file"
+            print "No scalar elastic thickness is provided in configuration file"
             print "(Typo in path to input Te grid?)"
           if self.coeff_matrix is not None:
             if quiet == False:
@@ -948,12 +948,12 @@ class Flexure(Isostasy):
         self.x
         self.q
       except:
-        # Using [x, y, w] input file
+        # Using [x, y, w] configuration file
         if self.q0.shape[1] == 2:
           self.x = self.q0[:,0]
           self.q = self.q0[:,1]
       else:
-        sys.exit("For 1D (ungridded) SAS_NG input file, need [x,w] array. Your dimensions are: "+str(self.q0.shape))
+        sys.exit("For 1D (ungridded) SAS_NG configuration file, need [x,w] array. Your dimensions are: "+str(self.q0.shape))
     else:
       try:
         # If these have already been set, e.g., by getters/setters, great!
@@ -961,13 +961,13 @@ class Flexure(Isostasy):
         self.y
         self.q
       except:
-        # Using [x, y, w] input file
+        # Using [x, y, w] configuration file
         if self.q0.shape[1] == 3:
           self.x = self.q0[:,0]
           self.y = self.q0[:,1]
           self.q = self.q0[:,2]
         else:
-          sys.exit("For 2D (ungridded) SAS_NG input file, need [x,y,w] array. Your dimensions are: "+str(self.q0.shape))
+          sys.exit("For 2D (ungridded) SAS_NG configuration file, need [x,y,w] array. Your dimensions are: "+str(self.q0.shape))
     # Remove self.q0 to avoid issues with multiply-defined inputs
     # q0 is the parsable input to either a qs grid or contains (x,(y),q)
     del self.q0
