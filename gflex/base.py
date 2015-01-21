@@ -496,6 +496,7 @@ class Isostasy(Utility, Plotting):
     # If no filename provided, will not initialize input file.
     self.filename = filename
     
+    # DEFAULT VERBOSITY
     # Set default "quiet" to False, unless set by setter or overwritten by 
     # the input file.
     self.Quiet = False
@@ -532,12 +533,22 @@ class Isostasy(Utility, Plotting):
         sys.exit("No input file at specified path, or input file configured incorrectly")
 
       # Set verbosity for model run
-      # Verbosity
-      self.Verbose = self.configGet("bool", "verbosity", "Verbose")
+      # Default is "verbose" with no debug or quiet
+      # Verbose
+      try:
+        self.Verbose = self.configGet("bool", "verbosity", "Verbose", optional=False)
+      except:
+        pass
       # Deebug means that whole arrays, etc., can be printed
-      self.Debug = self.configGet("bool", "verbosity", "Debug")
+      try:
+        self.Debug = self.configGet("bool", "verbosity", "Debug", optional=False)
+      except:
+        pass
       # Deebug means that whole arrays, etc., can be printed
-      self.Quiet = self.configGet("bool", "verbosity", "Quiet")
+      try:
+        self.Quiet = self.configGet("bool", "verbosity", "Quiet", optional=False)
+      except:
+        pass
       # Quiet overrides all others
       if self.Quiet:
         self.Debug = False
