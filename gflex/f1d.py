@@ -116,11 +116,11 @@ class F1D(Flexure):
   # So essentially a sum of Green's functions for flexural response
 
   def spatialDomainNoGrid(self):
-    try:
-      # SAS_NG
-      self.w = np.zeros(self.q.shape)
-    except:
-      self.w = np.zeros(self.qs.shape)
+    """
+    Superposition of analytical solutions without a gridded domain
+    """
+    self.w = np.zeros(self.q.shape)
+
     if self.Debug:
       print "w = "
       print self.w.shape
