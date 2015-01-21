@@ -44,12 +44,7 @@ class F1D(Flexure):
   ########################################
   
   def FD(self):
-    #try:
-    #  self.plotChoice
-    #except:
-    #  self.plotChoice = None
-    if self.plotChoice:
-      self.gridded_x()
+    self.gridded_x()
     # Only generate coefficient matrix if it is not already provided
     if self.coeff_matrix is not None:
       pass
