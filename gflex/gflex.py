@@ -62,6 +62,7 @@ def main():
         displayUsage()
         print ">>>> Error: can't locate specified input file. <<<<"
         print ""
+        sys.exit()
   elif len(sys.argv) == 1:
     displayUsage()
     displayScriptInclusionInstructions()
