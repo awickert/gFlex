@@ -86,6 +86,11 @@ class Utility(object):
     # Loading grid
     elif value_key == 'Loads':
       self.q0 = value
+    # NOT IN INPUT FILE
+    elif value_key == 'Loads_grid_stress':
+      self.qs = value
+    elif value_key == 'Loads_force':
+      self.q = value
 
     # [numerical]
     # Grid spacing
@@ -109,6 +114,12 @@ class Utility(object):
       self.BC_N = value
     elif value_key == 'BoundaryCondition_South':
       self.BC_S = value
+    # NOT IN INPUT FILE -- FOR POINT LOADS
+    # vectors of x and y values
+    elif value_key == 'x':
+      self.x = value
+    elif value_key == 'y':
+      self.y = value
 
     # [verbosity]
     elif value_key == 'Verbosity' or value_key == 'Verbose':
@@ -203,12 +214,12 @@ class Utility(object):
     if val_string=='Loads':
       # This is the model input for the gridded case
       return self.q0
-    if val_string=='xPositions':
+    if val_string=='x':
       # This is a component of the ungridded model input
       # It is also produced during the gridded model run
       # But will be overwritten in those cases
       return self.x
-    if val_string=='yPositions':
+    if val_string=='y':
       # This is a component of the ungridded model input
       # It is also produced during the gridded model run
       # But will be overwritten in those cases
@@ -484,8 +495,9 @@ class Isostasy(Utility, Plotting):
     # Use standard routine to pull out values
     # If no filename provided, will not initialize input file.
     self.filename = filename
-    # Set default "quiet" to False, unless set by setter
-    # This will not work with input file; is designed for GRASS GIS
+    
+    # Set default "quiet" to False, unless set by setter or overwritten by 
+    # the input file.
     self.Quiet = False
     # And also set default verbosity
     self.Verbose = True
@@ -493,7 +505,7 @@ class Isostasy(Utility, Plotting):
 
   def initialize(self, filename=None):
     # Values from input file
-    
+
     # Introduce model
     if self.Quiet == False:
       print "" # Blank line at start of run
@@ -570,11 +582,11 @@ class Isostasy(Utility, Plotting):
       # for point loads, need mass: q0 should be written as [x, (y), force])
       self.q0 = self.configGet('string', "input", "Loads")
       
-      # Verbosity
+    # Verbosity
+    if self.filename:
       self.Verbose = self.configGet("bool", "verbosity", "Verbose")
       # Deebug means that whole arrays, etc., can be printed
       self.Debug = self.configGet("bool", "verbosity", "Debug")
-
     # Stop program if there is no q0 defined or if it is None-type
     try:
       self.q0
@@ -592,45 +604,51 @@ class Isostasy(Utility, Plotting):
           sys.exit("Must define q0, q, or qs by this stage in the initialization step\n"+\
                    "from either input file (string) or direct array import")
 
-    # If a q0 is a string (i.e. we need to load something)
-    if type(self.q0) == str:
-      try:
-        # First see if it is a full path or directly links from the current
-        # working directory
-        self.q0 = np.load(self.q0)
-        if self.Verbose: print "Loading q0 from numpy binary"
-      except:
+    # Ignore this if no q0 set
+    try:
+      self.q0
+    except:
+      self.q0 = None
+    if self.q0:
+      # If a q0 is a string (i.e. we need to load something)
+      if type(self.q0) == str:
         try:
-          self.q0 = np.loadtxt(self.q0)
-          if self.Verbose: print "Loading q0 ASCII"
+          # First see if it is a full path or directly links from the current
+          # working directory
+          self.q0 = np.load(self.q0)
+          if self.Verbose: print "Loading q0 from numpy binary"
         except:
-          # Then see if it is relative to the location of the input file
           try:
-            self.q0 = load(self.inpath + self.q0)
-            if self.Verbose: print "Loading q0 from numpy binary"
+            self.q0 = np.loadtxt(self.q0)
+            if self.Verbose: print "Loading q0 ASCII"
           except:
+            # Then see if it is relative to the location of the input file
             try:
-              self.q0 = np.loadtxt(self.inpath + self.q0)
-              if self.Verbose: print "Loading q0 ASCII"
-            # If failure
+              self.q0 = load(self.inpath + self.q0)
+              if self.Verbose: print "Loading q0 from numpy binary"
             except:
-              print "Cannot find q0 file"
-              print "q0path = " + self.q0
-              print "Looked relative to model python files."
-              print "Also looked relative to input file path, " + self.inpath
-              print "Exiting."
-              sys.exit()
-    
-    # Check consistency of dimensions
-    if self.method != 'SAS_NG':
-      if self.q0.ndim != self.dimension:
-        print "Number of dimensions in loads file is inconsistent with"
-        print "number of dimensions in solution technique."
-        print "Loads", self.q0.ndim
-        print "Dimensions", self.dimension
-        print self.q0
-        print "Exiting."
-        sys.exit()
+              try:
+                self.q0 = np.loadtxt(self.inpath + self.q0)
+                if self.Verbose: print "Loading q0 ASCII"
+              # If failure
+              except:
+                print "Cannot find q0 file"
+                print "q0path = " + self.q0
+                print "Looked relative to model python files."
+                print "Also looked relative to input file path, " + self.inpath
+                print "Exiting."
+                sys.exit()
+      
+      # Check consistency of dimensions
+      if self.method != 'SAS_NG':
+        if self.q0.ndim != self.dimension:
+          print "Number of dimensions in loads file is inconsistent with"
+          print "number of dimensions in solution technique."
+          print "Loads", self.q0.ndim
+          print "Dimensions", self.dimension
+          print self.q0
+          print "Exiting."
+          sys.exit()
 
     # Plotting selection
     self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
