@@ -1559,6 +1559,7 @@ class F2D(Flexure):
       except:
         pass
       print 'self.qs', self.qs.shape
+      self.calc_max_flexural_wavelength()
       print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
     
     q0vector = self.qs.reshape(-1, order='C')
