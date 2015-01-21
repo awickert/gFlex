@@ -11,6 +11,7 @@ from prattairy import PrattAiry
 class BmiGflex(object):
   _name = 'Isostasy and Lithospheric Flexure'
   # magnitude_of_stress used for gridded data
+  # (magnitude_of_stress or __z_z_component_of_stress? They are equivalent)
   # x,y,force used for ungridded
   _input_var_names = (
       'earth_material_load__magnitude_of_stress',
@@ -27,7 +28,6 @@ class BmiGflex(object):
       'earth_material_load__force',
       'lithosphere__elastic_thickness'
   )
-                       # magnitude_of_stress or __z_z_component_of_stress? They are equivalent
   _var_units = {
       'earth_material_load__magnitude_of_stress' : 'Pa',
       'earth_material_load__x_positions' : 'm',
@@ -81,9 +81,6 @@ class BmiGflex(object):
     self._origin = (0., ) * self._model.dimension
     self._w = np.empty_like(self._model.q0)
 
-    # PROBABLY SHOULD RENAME "self.model"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # can remove plotting and file output options -- not meant to be part of
-    # BMI interface!!!!!!!!!
     self._values = {
         'lithosphere__vertical_displacement', : self.w,
         'earth_material_load__magnitude_of_stress' : self._model.qs,
