@@ -101,7 +101,7 @@ class Utility(object):
         print "Setting y-value; should be done only for 2D problems"
       self.dy = value
     # Boundary conditions
-    # "Dirichlet0" - 0-displacement at edges) # TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # "Dirichlet0" - 0-displacement at edges)
     # "0Slope0Shear" - First and third derivatives are 0: not so physical, but basically means that dw/dx_i at boundaries is flat and at a value that is not externally imposed
     # "0Moment0Shear" - second and third derivatives are 0: free cantilever edge (same as Stewart and Watts (1997) used, and standard in CivE)
     # "Periodic" - wraparound on edges

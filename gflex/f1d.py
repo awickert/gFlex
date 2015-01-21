@@ -403,11 +403,36 @@ class F1D(Flexure):
     Dirichlet boundary condition for 0 deflection.
     This requires that nothing be done to the edges of the solution array, 
     because the lack of the off-grid terms implies that they go to 0
+    Here we just turn the cells outside the array into nan, to ensure that 
+    we are not accidentally including the wrong cells here (and for consistency 
+    with the other solution types -- this takes negligible time)
     """
     if self.BC_W == 'Dirichlet0':
-      pass
+      i=0
+      self.l2[i] = np.nan
+      self.l1[i] = np.nan
+      self.c0[i] += 0
+      self.r1[i] += 0
+      self.r2[i] += 0
+      i=1
+      self.l2[i] = np.nan
+      self.l1[i] += 0
+      self.c0[i] += 0
+      self.r1[i] += 0
+      self.r2[i] += 0
     if self.BC_E == 'Dirichlet0':
-      pass
+      i=-2
+      self.l2[i] += 0
+      self.l1[i] += 0
+      self.c0[i] += 0
+      self.r1[i] += 0
+      self.r2[i] = np.nan
+      i=-1
+      self.l2[i] += 0
+      self.l1[i] += 0
+      self.c0[i] += 0
+      self.r1[i] = np.nan
+      self.r2[i] = np.nan
 
   def BC_0Slope0Shear(self):
     i=0
