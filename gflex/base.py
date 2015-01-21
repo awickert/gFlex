@@ -8,7 +8,7 @@ class Utility(object):
   """
   Generic utility functions
   """
-  def configGet(self,vartype,category,name,optional=False,specialReturnMessage=None):
+  def configGet(self, vartype, category, name, optional=False, specialReturnMessage=None):
     """
     Wraps a try / except and a check for self.filename around ConfigParser
     as it talks to the input file.
@@ -29,13 +29,16 @@ class Utility(object):
     
     try:
       if vartype == 'float':
-        var = self.config.getfloat(category,name)
+        var = self.config.getfloat(category, name)
       elif vartype == 'string' or vartype == 'str':
-        var = self.config.get(category,name)
+        var = self.config.get(category, name)
         if var == ""  and optional == False:
-          print "Input strings cannot be empty unless they are optional."
-          print name, "is not optional."
-          print "Program crash likely to occur."
+          # but "" is acceptable for boundary conditions
+          if name[:17] != 'BoundaryCondition':
+            if self.Quiet != True:
+              print "An empty input string here is not an acceptable option."
+              print name, "is not optional."
+              print "Program crash likely to occur."
       elif vartype == 'integer' or vartype == 'int':
         var = self.config.getint(category,name)
       elif vartype == 'boolean' or vartype == 'bool':
@@ -532,38 +535,18 @@ class Isostasy(Utility, Plotting):
       self.time_to_solve = None
       
       self.method = self.configGet("string", "mode", "method")
-      if self.method == 'FD':
-        # Boundary conditions
-        # Not optional: flexural solutions can be very sensitive to b.c.'s
-        self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=False)
-        self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=False)
-        self.bclist = [self.BC_E, self.BC_W]
-        if self.dimension == 2:
-          self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=False)
-          self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=False)
-          self.bclist += [self.BC_N, self.BC_S]
-        # Check that boundary conditions are acceptable with code implementation
-        # Acceptable b.c.'s
-        self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-        self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-        for bc in self.bclist:
-          if self.dimension == 1:
-            if (bc == self.bc1D).any():
-              pass
-            else:
-              sys.exit("'"+bc+"'"+ " is not an acceptable 1D boundary condition and/or\n"\
-                       +"is not yet implement in the code. Acceptable boundary conditions\n"\
-                       +"are:\n"\
-                       +str(self.bc1D)+"\n"\
-                       +"Exiting.")
-          elif self.dimension == 2:
-            if (bc == self.bc2D).any():
-              pass
-            else:
-              sys.exit("'"+bc+"'"+ " is not an acceptable 2D boundary condition and/or\n"\
-                       +"is not yet implement in the code. Exiting.")
-          else:
-            sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
+      # Boundary conditions
+      # This used to be nested inside an "if self.method == 'FD'", but it seems 
+      # better to define these to ensure there aren't mistaken impressions
+      # about what they do for the SAS case
+      # Not optional: flexural solutions can be very sensitive to b.c.'s
+      self.BC_E = self.configGet('string', 'numerical', 'BoundaryCondition_East', optional=False)
+      self.BC_W = self.configGet('string', 'numerical', 'BoundaryCondition_West', optional=False)
+      self.bclist = [self.BC_E, self.BC_W]
+      if self.dimension == 2:
+        self.BC_N = self.configGet('string', 'numerical2D', 'BoundaryCondition_North', optional=False)
+        self.BC_S = self.configGet('string', 'numerical2D', 'BoundaryCondition_South', optional=False)
+        self.bclist += [self.BC_N, self.BC_S]
 
       # Parameters
       self.g = self.configGet('float', "parameter", "GravAccel")
@@ -705,6 +688,60 @@ class Isostasy(Utility, Plotting):
         if self.Debug:
           print 'Not writing any deflection output to file'
 
+  def bc_check(self):
+
+    # Check that boundary conditions are acceptable with code implementation
+    # Acceptable b.c.'s
+    if self.method == 'FD':
+      self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+      self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+      for bc in self.bclist:
+        if self.dimension == 1:
+          if (bc == self.bc1D).any():
+            pass
+          else:
+            sys.exit("'"+bc+"'"+ " is not an acceptable 1D finite difference boundary condition\n"\
+                     +"and/or is not yet implement in the code. Acceptable boundary conditions\n"\
+                     +"are:\n"\
+                     +str(self.bc1D)+"\n"\
+                     +"Exiting.")
+        elif self.dimension == 2:
+          if (bc == self.bc2D).any():
+            pass
+          else:
+            sys.exit("'"+bc+"'"+ " is not an acceptable 2D finite difference boundary condition\n"\
+                     +"and/or is not yet implement in the code. Acceptable boundary conditions\n"\
+                     +"are:\n"\
+                     +str(self.bc2D)+"\n"\
+                     +"Exiting.")
+        else:
+          sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
+    else:
+      if self.BC_E == 'NoOutsideLoads' or self.BC_E == '' \
+         and self.BC_W == 'NoOutsideLoads' or self.BC_W == '':
+        if self.BC_E == '' or self.BC_W == '':
+          if self.Verbose:
+            print "Assuming NoOutsideLoads boundary condition, as this is implicit in the " 
+            print "  superposition-based analytical solution"
+      else:
+        if self.Quiet == False:
+          print ""
+          print ">>> BOUNDARY CONDITIONS IMPROPERLY DEFINED <<<"
+          print ""
+          print "For analytical solutions the boundaries must be either:"
+          print ""
+          print "* NoOutsideLoads (explicitly)"
+          print "* <left blank>"
+          print ""
+          print "The latter is to implictly indicate a desire to use the only"
+          print "boundary condition available for the superposition-based"
+          print "analytical solutions."
+          print "This check is in place to ensure that the user does not apply"
+          print "boundary conditions for finite difference solutions to the"
+          print "analytical solutions and expect them to work."
+          print ""
+          sys.exit()
+  
 # class Flexure inherits Isostay and it overrides the __init__ method. It also
 # define three different solution methods, which are implemented by its subclass.
 class Flexure(Isostasy):

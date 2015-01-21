@@ -10,6 +10,7 @@ class F1D(Flexure):
     if self.Verbose: print 'F1D initialized'
 
   def run(self):
+    self.bc_check()
     if self.method == 'FD':
       # Finite difference
       super(F1D, self).FD()
@@ -71,7 +72,6 @@ class F1D(Flexure):
     self.spatialDomainVars()
     self.spatialDomainNoGrid()
 
-  
   ######################################
   ## FUNCTIONS TO SOLVE THE EQUATIONS ##
   ######################################

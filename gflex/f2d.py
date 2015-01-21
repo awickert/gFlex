@@ -13,6 +13,7 @@ class F2D(Flexure):
     if self.Verbose: print 'F2D initialized'
 
   def run(self):
+    self.bc_check()
     self.solver_start_time = time.time()
     if self.Verbose:
       print 'Solver start time [Unix epoch]:', self.solver_start_time
