@@ -139,11 +139,14 @@ class F2D(Flexure):
       print self.w.shape
     
     for i in range(len(self.x)):
-      # Create array of distances from point of load
-      r = ( (self.x - self.x[i])**2 + (self.y - self.y[i])**2 )**.5
-      # Compute and sum deflection
-      self.w += self.q[i] * self.coeff * kei(r/self.alpha)
-
+      # More efficient if we have created some 0-load points
+      # (e.g., for where we want output)
+      if self.q[i] != 0:
+        # Create array of distances from point of load
+        r = ( (self.x - self.x[i])**2 + (self.y - self.y[i])**2 )**.5
+        # Compute and sum deflection
+        self.w += self.q[i] * self.coeff * kei(r/self.alpha)
+    
   ## FINITE DIFFERENCE
   ######################
   
