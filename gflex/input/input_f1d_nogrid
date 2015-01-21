@@ -31,5 +31,5 @@ Solver=
 convergence=
 
 [verbosity]
-Verbose=False
-Debug=False
+Verbose=false
+Debug=false

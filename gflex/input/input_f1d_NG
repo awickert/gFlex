@@ -39,5 +39,5 @@ Solver=direct
 ConvergenceTolerance=0.001
 
 [verbosity]
-Verbose=False
-Debug=False
+Verbose=false
+Debug=false

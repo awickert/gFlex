@@ -18,7 +18,7 @@ import time
 from matplotlib import pyplot as plt
 
 # This code is for 2D flexural isostasy (and instantiate)
-obj = gflex.F2D()
+obj = gflex.F1D()
 obj.set_value('Quiet', True)
 # Always use the van Wees and Cloetingh (1994) solution type.
 # It is the best.
@@ -49,7 +49,7 @@ solvetime = []
 i = 0
 
 # load length
-for l in [200E3, 100E3, 200E3, 500E3, 1000E3]:
+for l in [100E3, 200E3, 500E3, 1000E3]:
 #for l in [200E3]:
   #for Te in [25000, GRID]:
   for Te in [25000]:
@@ -67,7 +67,8 @@ for l in [200E3, 100E3, 200E3, 500E3, 1000E3]:
       #for method in ['FD']:
       for method in ['SAS_NG']:
         #for dx in [100, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000]:
-        for dx in [5000, 10000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000,
+        #for dx in [5000, 10000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000,
+        for dx in [10000, 25000, 40000, 50000]:
         #for dx in [10000]: #, 20000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000, 5000, 10000, 
 
             obj.set_value('Method', method)
@@ -91,9 +92,11 @@ for l in [200E3, 100E3, 200E3, 500E3, 1000E3]:
               y = np.linspace(dx/2, L-dx/2, q.shape[0])
               X,Y = np.meshgrid(x,y)
               
-              q0 = np.vstack((np.reshape(X,-1), np.reshape(Y,-1), np.reshape(q,-1))).transpose()
+              #q0 = np.vstack((np.reshape(X,-1), np.reshape(Y,-1), np.reshape(q,-1))).transpose()
               
-              obj.set_value('Loads', q0)
+              obj.set_value('x', np.reshape(X,-1))
+              obj.set_value('y', np.reshape(Y,-1))
+              obj.set_value('Loads_force', np.reshape(q,-1))
               
               """
               Te *= np.ones(q.shape)
@@ -131,6 +134,8 @@ for l in [200E3, 100E3, 200E3, 500E3, 1000E3]:
               nelements.append(np.prod(q.shape))
               nloadelements.append(np.sum(q > 0))
               solvetime.append(obj.time_to_solve)
+              
+              print len(obj.q)
               
               print 'Time to solve [s]:', obj.get_value('SolverTime')
               

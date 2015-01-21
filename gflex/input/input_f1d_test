@@ -19,12 +19,14 @@ ElasticThickness=15000
 DeflectionOut=
 ; tmpout.txt
 ; Plot choices are q, w, both, or (for 1D) combo
-Plot=combo
+Plot=
+;combo
 
 [numerical]
 GridSpacing_x=6000
+GridSpacing_y=6000
 BoundaryCondition_West=0Moment0Shear
-BoundaryCondition_East=0Slope0Shear
+BoundaryCondition_East=Dirichlet0
 ; Solver can be direct or iterative
 Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
@@ -34,5 +36,6 @@ Solver=direct
 ConvergenceTolerance=0.001
 
 [verbosity]
-Verbose=False
-Debug=False
+Verbose=false
+Debug=false
+Quiet=True

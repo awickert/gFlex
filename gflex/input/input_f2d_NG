@@ -41,6 +41,6 @@ BoundaryCondition_North=0Moment0Shear
 BoundaryCondition_South=Mirror
 
 [verbosity]
-Verbose=False
-Debug=False
+Verbose=false
+Debug=false
 
