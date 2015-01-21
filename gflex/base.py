@@ -40,9 +40,9 @@ class Utility(object):
               print name, "is not optional."
               print "Program crash likely to occur."
       elif vartype == 'integer' or vartype == 'int':
-        var = self.config.getint(category,name)
+        var = self.config.getint(category, name)
       elif vartype == 'boolean' or vartype == 'bool':
-        var = self.config.getboolean(category,name)
+        var = self.config.getboolean(category, name)
       else:
         print "Please enter 'float', 'string' (or 'str'), 'integer' (or 'int'), or 'boolean (or 'bool') for vartype"
         sys.exit() # Won't exit, but will lead to exception
@@ -54,7 +54,7 @@ class Utility(object):
         if self.Verbose or self.Debug:
           print ""
           print 'No value entered for optional parameter "' + name + '"'
-          print 'in category "' + category + '" in input file.'
+          print 'in category "' + category + '" in configuration file.'
           print 'No action related to this optional parameter will be taken.'
           print ""
       else:
@@ -506,16 +506,6 @@ class Isostasy(Utility, Plotting):
   def initialize(self, filename=None):
     # Values from input file
 
-    # Introduce model
-    if self.Quiet == False:
-      print "" # Blank line at start of run
-      print "*********************************************"
-      print "*** Initializing gFlex development branch ***"
-      print "*********************************************"
-      print ""
-      print "Open-source licensed under GNU GPL v3"
-      print ""
-
     # If a filename is provided here, overwrite any prior value
     if filename:
       if self.filename:
@@ -529,6 +519,7 @@ class Isostasy(Utility, Plotting):
         self.filename = filename
 
     if self.filename:
+      # Set up ConfigParser
       self.config = ConfigParser.ConfigParser()
       try:
         self.config.read(self.filename)
@@ -539,6 +530,30 @@ class Isostasy(Utility, Plotting):
         self.whichModel_AlreadyRun = True
       except:
         sys.exit("No input file at specified path, or input file configured incorrectly")
+
+      # Set verbosity for model run
+      # Verbosity
+      self.Verbose = self.configGet("bool", "verbosity", "Verbose")
+      # Deebug means that whole arrays, etc., can be printed
+      self.Debug = self.configGet("bool", "verbosity", "Debug")
+      # Deebug means that whole arrays, etc., can be printed
+      self.Quiet = self.configGet("bool", "verbosity", "Quiet")
+      # Quiet overrides all others
+      if self.Quiet:
+        self.Debug = False
+        self.Verbose = False
+    
+    # Introduce model
+    # After input file can define "Quiet", and getter/setter should be done
+    # by this point if we are going that way.
+    if self.Quiet == False:
+      print "" # Blank line at start of run
+      print "*********************************************"
+      print "*** Initializing gFlex development branch ***"
+      print "*********************************************"
+      print ""
+      print "Open-source licensed under GNU GPL v3"
+      print ""
 
     if self.filename:
       # Set clocks to None so if they are called by the getter before the 
@@ -582,11 +597,6 @@ class Isostasy(Utility, Plotting):
       # for point loads, need mass: q0 should be written as [x, (y), force])
       self.q0 = self.configGet('string', "input", "Loads")
       
-    # Verbosity
-    if self.filename:
-      self.Verbose = self.configGet("bool", "verbosity", "Verbose")
-      # Deebug means that whole arrays, etc., can be printed
-      self.Debug = self.configGet("bool", "verbosity", "Debug")
     # Stop program if there is no q0 defined or if it is None-type
     try:
       self.q0
