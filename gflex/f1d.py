@@ -241,8 +241,8 @@ class F1D(Flexure):
       self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
 
       self.coeff_creation_time = time.time() - self.coeff_start_time
-      # Always print this!
-      print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
+      if self.Quiet == False:
+        print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
   
   def build_diagonals(self):
     """
