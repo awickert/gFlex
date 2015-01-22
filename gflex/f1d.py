@@ -11,6 +11,7 @@ class F1D(Flexure):
 
   def run(self):
     self.bc_check()
+    self.solver_start_time = time.time()
     if self.method == 'FD':
       # Finite difference
       super(F1D, self).FD()
@@ -32,8 +33,11 @@ class F1D(Flexure):
       sys.exit('Error: method must be "FD", "FFT", "SAS", or "SAS_NG"')
 
     if self.Verbose: print 'F1D run'
-    self.method_func ()
-    # self.plot() # in here temporarily
+    self.method_func()
+
+    self.time_to_solve = time.time() - self.solver_start_time
+    if self.Quiet == False:
+      print 'Time to solve [s]:', self.time_to_solve
 
   def finalize(self):
     if self.Verbose: print 'F1D finalized'
@@ -661,8 +665,6 @@ class F1D(Flexure):
       self.calc_max_flexural_wavelength()
       print 'maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells
     
-    self.solver_start_time = time.time()
-    
     if self.solver == "iterative" or self.solver == "Iterative":
       if self.Debug:
         print "Using generalized minimal residual method for iterative solution"
@@ -685,10 +687,6 @@ class F1D(Flexure):
       # (i.e. material removed)
       self.w = spsolve(self.coeff_matrix, -self.qs, use_umfpack=True)
     
-    self.time_to_solve = time.time() - self.solver_start_time
-    # Always print this!
-    print 'Time to solve [s]:', self.time_to_solve
-
     if self.Debug:
       print "w.shape:"
       print self.w.shape
