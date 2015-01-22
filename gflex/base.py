@@ -841,11 +841,16 @@ class Flexure(Isostasy):
     if self.Verbose:
       print "Finite Difference Solution Technique"
     # Define a stress-based qs = q0
-    self.qs = self.q0.copy()
-    # Remove self.q0 to avoid issues with multiply-defined inputs
-    # q0 is the parsable input to either a qs grid or contains (x,(y),q)
-    del self.q0
-    # Is there a slver defined?
+    # But only if the latter has not already been defined
+    # (e.g., by the getters and setters)
+    try:
+      self.qs
+    except:
+      self.qs = self.q0.copy()
+      # Remove self.q0 to avoid issues with multiply-defined inputs
+      # q0 is the parsable input to either a qs grid or contains (x,(y),q)
+      del self.q0
+    # Is there a solver defined?
     try:
       self.solver # See if it exists already
     except:
@@ -955,8 +960,8 @@ class Flexure(Isostasy):
         if self.q0.shape[1] == 2:
           self.x = self.q0[:,0]
           self.q = self.q0[:,1]
-      else:
-        sys.exit("For 1D (ungridded) SAS_NG configuration file, need [x,w] array. Your dimensions are: "+str(self.q0.shape))
+        else:
+          sys.exit("For 1D (ungridded) SAS_NG configuration file, need [x,w] array. Your dimensions are: "+str(self.q0.shape))
     else:
       try:
         # If these have already been set, e.g., by getters/setters, great!
