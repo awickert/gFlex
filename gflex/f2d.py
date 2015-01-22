@@ -40,7 +40,6 @@ class F2D(Flexure):
 
     if self.Verbose: print 'F2D run'
     self.method_func()
-    #self.imshow(self.w) # debugging
 
     self.time_to_solve = time.time() - self.solver_start_time
     if self.Quiet == False:
