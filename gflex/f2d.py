@@ -462,7 +462,7 @@ class F2D(Flexure):
     
     # Fourth, construct the sparse diagonal array
     self.build_diagonals()
-
+    
   def BC_Rigidity(self):
     """
     Utility function to help implement boundary conditions by specifying 

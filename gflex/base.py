@@ -301,7 +301,6 @@ class Plotting(object):
             if self.Quiet == False:
               print "Combo plot can't work with SAS_NG! Don't have mechanism in place\nto calculate load width."
               print "Big problem -- what is the area represented by the loads at the\nextreme ends of the array?"
-            #ax.plot(xkm, self.q/(self.rho_m*self.g),'go',linewidth=2,label="Load volume [m^3 mantle equivalent]") # MUST FIX!!!! Turn into m mantle equivalent
           else:
             ax.plot(xkm,self.qs/(self.rho_m*self.g),'g--',linewidth=2,label="Load thickness [m mantle equivalent]")
           # Plot deflected load
@@ -481,7 +480,7 @@ class WhichModel(Utility):
           self.dimension = self.configGet("integer", "mode", "dimension")
           self.whichModel_AlreadyRun = True
         except:
-          sys.exit("No configuration file at specified path, or configuration file configured incorrectly")
+          sys.exit()
 
 # class Isostasy inherits IRF interface, and it determines the simulation type
 # by reading three parameters from configuration file, but it does not set up other
@@ -822,14 +821,13 @@ class Flexure(Isostasy):
     # Only if they are both defined and are arrays
     # Both being arrays is a possible bug in this check routine that I have 
     # intentionally introduced
-    if type(self.Te) == np.ndarray and type(self.q0) == np.ndarray:
-      if self.Te.any() and self.qs.any():
-        # Doesn't touch non-arrays or 1D arrays
-        if type(self.Te) is np.ndarray:
-          if (np.array(self.Te.shape) - 2 != np.array(self.q0.shape)).any():
-            sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
-        else:
-          if self.Debug: print "Te and qs array sizes pass consistency check"
+    if type(self.Te) == np.ndarray and type(self.qs) == np.ndarray:
+      # Doesn't touch non-arrays or 1D arrays
+      if type(self.Te) is np.ndarray:
+        if (np.array(self.Te.shape) != np.array(self.qs.shape)).any():
+          sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
+      else:
+        if self.Debug: print "Te and qs array sizes pass consistency check"
 
   ### need to determine its interface, it is best to have a uniform interface
   ### no matter it is 1D or 2D; but if it can't be that way, we can set up a
@@ -874,16 +872,21 @@ class Flexure(Isostasy):
       # Try to import Te grid or scalar for the finite difference solution
       try:
         self.Te = self.configGet("float", "input", "ElasticThickness", optional=True)
-        Tepath = None
+        if self.Te is None:
+          Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
+          self.Te = Tepath
+        else:
+          Tepath = None
       except:
         Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
+        self.Te = Tepath
       if self.Te is None:
         if self.coeff_matrix is not None:
           pass
         else:
           # Have to bring this out here in case it was discovered in the 
           # try statement that there is no value given
-          sys.exit("No input elastic thickness supplied.")
+          sys.exit("No input elastic thickness or coefficient matrix supplied.")
     # or if getter/setter
     if type(self.Te) == str: 
       # Try to import Te grid or scalar for the finite difference solution
@@ -907,21 +910,22 @@ class Flexure(Isostasy):
             if self.Verbose:
                 print "Elastic thickness array loaded from provided filename"
         except:
-          if quiet == False:
+          if self.Quiet == False:
             print "Requested Te file is provided but cannot be located."
             print "No scalar elastic thickness is provided in configuration file"
             print "(Typo in path to input Te grid?)"
           if self.coeff_matrix is not None:
-            if quiet == False:
+            if self.Quiet == False:
               print "But a coefficient matrix has been found."
               print "Calculations will be carried forward using it."
           else:
-            if quiet == False:
+            if self.Quiet == False:
               print "Exiting."
             sys.exit()
 
       # Check that Te is the proper size if it was loaded
-      if self.Te:
+      # Will be array if it was loaded
+      if self.Te.any():
         self.TeArraySizeCheck()
     
   ### need work

@@ -221,7 +221,15 @@ class F1D(Flexure):
     #############
     # PAD ARRAY #
     #############
-    self.Te_unpadded = self.Te.copy()
+    if np.isscalar(self.Te):
+      self.D *= np.ones(self.qs.shape) # And leave Te as a scalar for checks
+    else:
+      self.Te_unpadded = self.Te.copy()
+    # F2D keeps this inside the "else" and handles this differently, 
+    # largely because it has different ways of computing the flexural
+    # response with variable Te. We'll keep everything simpler here and 
+    # just pad this array so it can be sent through the same process
+    # to create the coefficient arrays.
     self.D = np.hstack([np.nan, self.D, np.nan])
 
     ###############################################################
@@ -253,12 +261,9 @@ class F1D(Flexure):
     ###################################################
     # DEFINE SUB-ARRAYS FOR DERIVATIVE DISCRETIZATION #
     ###################################################
-    if np.isscalar(self.Te):
-      Dm1 = D0 = Dp1 = self.D
-    else:
-      Dm1 = self.D[:-2]
-      D0  = self.D[1:-1]
-      Dp1 = self.D[2:]
+    Dm1 = self.D[:-2]
+    D0  = self.D[1:-1]
+    Dp1 = self.D[2:]
 
     ###########################################################
     # DEFINE COEFFICIENTS TO W_-2 -- W_+2 WITH B.C.'S APPLIED #
@@ -268,10 +273,7 @@ class F1D(Flexure):
     self.c0_coeff_i = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + self.drho*self.g
     self.r1_coeff_i = ( 2.*Dm1 - 6.*D0 ) / self.dx4
     self.r2_coeff_i = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
-    # These will be just the 1, -4, 6, -4, 1 for constant Te, but are used in 
-    # some solution methods, so will be calculated no matter what.
-
-    # WILL FAIL IF NOT ARRAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # These will be just the 1, -4, 6, -4, 1 for constant Te
 
     ###################################################################
     # START DIAGONALS AS SIMPLY THE BASE COEFFICIENTS, WITH NO B.C.'S #
@@ -343,8 +345,6 @@ class F1D(Flexure):
     self.l1 = np.roll(self.l1, -1)
     self.r1 = np.roll(self.r1, 1)
     self.r2 = np.roll(self.r2, 2)
-    
-    print self.l2
 
     # Then assemble these rows: this is where the periodic boundary condition 
     # can matter.
@@ -436,63 +436,32 @@ class F1D(Flexure):
     that extends outside of the computational domain.
     """
     
-    if np.isscalar(self.Te):
-      if self.BC_W == '0Slope0Shear':
-        i = 0
-        self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-        self.l1[i] = np.nan # OFF GRID
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -8 * self.D/self.dx4
-        self.r2[i] = 2 * self.D/self.dx4
-        i = 1
-        self.l2[i] = np.nan # OFF GRID
-        self.l1[i] = -4 * self.D/self.dx4
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -4 * self.D/self.dx4
-        self.r2[i] = 2 * self.D/self.dx4
-      if self.BC_E == '0Slope0Shear':
-        i = -2
-        self.l2[i] = 2 * self.D/self.dx4
-        self.l1[i] = -4 * self.D/self.dx4
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -4 * self.D/self.dx4
-        self.r2[i] = np.nan # OFF GRID
-        i = -1
-        self.l2[i] = 2 * self.D/self.dx4
-        self.l1[i] = -8 * self.D/self.dx4
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = np.nan # OFF GRID
-        self.r2[i] = np.nan # OFF GRID
-    else:
-      # More general solution for variable Te: makes above solution 
-      # redundant with this. See comment in 0Moment0Shear for more 
-      # thoughts on this.
-      if self.BC_W == '0Slope0Shear':
-        i=0
-        self.l2[i] = np.nan
-        self.l1[i] = np.nan
-        self.c0[i] += 0
-        self.r1[i] += self.l1_coeff_i[i]
-        self.r2[i] += self.l2_coeff_i[i]
-        i=1
-        self.l2[i] = np.nan
-        self.l1[i] += 0
-        self.c0[i] += 0
-        self.r1[i] += 0
-        self.r2[i] += self.l2_coeff_i[i]
-      if self.BC_E == '0Slope0Shear':
-        i=-2
-        self.l2[i] += self.r2_coeff_i[i]
-        self.l1[i] += 0
-        self.c0[i] += 0
-        self.r1[i] += 0
-        self.r2[i] = np.nan
-        i=-1
-        self.l2[i] += self.r2_coeff_i[i]
-        self.l1[i] += self.r1_coeff_i[i]
-        self.c0[i] += 0
-        self.r1[i] = np.nan
-        self.r2[i] = np.nan
+    if self.BC_W == '0Slope0Shear':
+      i=0
+      self.l2[i] = np.nan
+      self.l1[i] = np.nan
+      self.c0[i] += 0
+      self.r1[i] += self.l1_coeff_i[i]
+      self.r2[i] += self.l2_coeff_i[i]
+      i=1
+      self.l2[i] = np.nan
+      self.l1[i] += 0
+      self.c0[i] += 0
+      self.r1[i] += 0
+      self.r2[i] += self.l2_coeff_i[i]
+    if self.BC_E == '0Slope0Shear':
+      i=-2
+      self.l2[i] += self.r2_coeff_i[i]
+      self.l1[i] += 0
+      self.c0[i] += 0
+      self.r1[i] += 0
+      self.r2[i] = np.nan
+      i=-1
+      self.l2[i] += self.r2_coeff_i[i]
+      self.l1[i] += self.r1_coeff_i[i]
+      self.c0[i] += 0
+      self.r1[i] = np.nan
+      self.r2[i] = np.nan
 
   def BC_0Moment0Shear(self):
     """
@@ -504,83 +473,41 @@ class F1D(Flexure):
     (look up how to do this, thought Wikipdia has some info, but can't find
     it... what I read said something about generalizing)
     """
-    # 0 moment and 0 shear
-    if np.isscalar(self.Te):
-    
-      #self.qs[:] = np.max(self.qs)
-    
-      # SET BOUNDARY CONDITION ON WEST (LEFT) SIDE
-      if self.BC_W == '0Moment0Shear':
-        i=0
-        self.l2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-        self.l1[i] = np.nan # OFF GRID
-        self.c0[i] = 2 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -4 * self.D/self.dx4
-        self.r2[i] = 2 * self.D/self.dx4
-        i=1
-        self.l2[i] = np.nan # OFF GRID
-        self.l1[i] = -2 * self.D/self.dx4
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.r1[i] = -6 * self.D/self.dx4
-        self.r2[i] = 2 * self.D/self.dx4
-        
-      # SET BOUNDARY CONDITION ON EAST (RIGHT) SIDE
-      if self.BC_E == '0Moment0Shear':
-        # Here, directly calculated new coefficients instead of just adding
-        # them in like I did to save some time (for me) in the variable Te
-        # case, below.
-        i=-1
-        self.r2[i] = np.nan # OFF GRID: using np.nan to throw a clear error if this is included
-        self.r1[i] = np.nan # OFF GRID
-        self.c0[i] = 2 * self.D/self.dx4 + self.drho*self.g
-        self.l1[i] = -4 * self.D/self.dx4
-        self.l2[i] = 2 * self.D/self.dx4
-        i=-2
-        self.r2[i] = np.nan # OFF GRID
-        self.r1[i] = -2 * self.D/self.dx4
-        self.c0[i] = 6 * self.D/self.dx4 + self.drho*self.g
-        self.l1[i] = -6 * self.D/self.dx4
-        self.l2[i] = 2 * self.D/self.dx4
-    else:
-      # Variable Te
-      # But this is really the more general solution, so we don't need the 
-      # constant Te case... but I just keep it because I already wrote it
-      # and it probably calculates the solution negligibly faster.
-      # 
-      # First, just define coefficients for each of the positions in the array
-      # These will be added in code instead of being directly combined by 
-      # the programmer (as I did above for constant Te), which might add 
-      # rather negligibly to the compute time but save a bunch of possibility 
-      # for unfortunate typos!
 
-      # Also using 0-curvature boundary condition for D (i.e. Te)
-      if self.BC_W == '0Moment0Shear':
-        i=0
-        self.l2[i] += np.nan
-        self.l1[i] += np.nan
-        self.c0[i] += 4*self.l2_coeff_i[i] + 2*self.l1_coeff_i[i]
-        self.r1[i] += -4*self.l2_coeff_i[i] - self.l1_coeff_i[i]
-        self.r2[i] += self.l2_coeff_i[i]
-        i=1
-        self.l2[i] += np.nan
-        self.l1[i] += 2*self.l2_coeff_i[i]
-        self.c0[i] += 0
-        self.r1[i] += -2*self.l2_coeff_i[i]
-        self.r2[i] += self.l2_coeff_i[i]
-      
-      if self.BC_E == '0Moment0Shear':
-        i=-2
-        self.l2[i] += self.r2_coeff_i[i]
-        self.l1[i] += -2*self.r2_coeff_i[i]
-        self.c0[i] += 0
-        self.r1[i] += 2*self.r2_coeff_i[i]
-        self.r2[i] += np.nan
-        i=-1
-        self.l2[i] += self.r2_coeff_i[i]
-        self.l1[i] += -4*self.r2_coeff_i[i] - self.r1_coeff_i[i]
-        self.c0[i] += 4*self.r2_coeff_i[i] + + 2*self.r1_coeff_i[i]
-        self.r1[i] += np.nan
-        self.r2[i] += np.nan
+    # First, just define coefficients for each of the positions in the array
+    # These will be added in code instead of being directly combined by 
+    # the programmer (as I did above (now deleted) for constant Te), which might add 
+    # rather negligibly to the compute time but save a bunch of possibility 
+    # for unfortunate typos!
+
+    # Also using 0-curvature boundary condition for D (i.e. Te)
+    if self.BC_W == '0Moment0Shear':
+      i=0
+      self.l2[i] += np.nan
+      self.l1[i] += np.nan
+      self.c0[i] += 4*self.l2_coeff_i[i] + 2*self.l1_coeff_i[i]
+      self.r1[i] += -4*self.l2_coeff_i[i] - self.l1_coeff_i[i]
+      self.r2[i] += self.l2_coeff_i[i]
+      i=1
+      self.l2[i] += np.nan
+      self.l1[i] += 2*self.l2_coeff_i[i]
+      self.c0[i] += 0
+      self.r1[i] += -2*self.l2_coeff_i[i]
+      self.r2[i] += self.l2_coeff_i[i]
+    
+    if self.BC_E == '0Moment0Shear':
+      i=-2
+      self.l2[i] += self.r2_coeff_i[i]
+      self.l1[i] += -2*self.r2_coeff_i[i]
+      self.c0[i] += 0
+      self.r1[i] += 2*self.r2_coeff_i[i]
+      self.r2[i] += np.nan
+      i=-1
+      self.l2[i] += self.r2_coeff_i[i]
+      self.l1[i] += -4*self.r2_coeff_i[i] - self.r1_coeff_i[i]
+      self.c0[i] += 4*self.r2_coeff_i[i] + + 2*self.r1_coeff_i[i]
+      self.r1[i] += np.nan
+      self.r2[i] += np.nan
 
   def BC_Mirror(self):
     """
