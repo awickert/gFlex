@@ -461,7 +461,7 @@ class F2D(Flexure):
     self.BC_Flexure()
     
     # Fourth, construct the sparse diagonal array
-    self.build_diags()
+    self.build_diagonals()
 
   def BC_Rigidity(self):
     """
@@ -469,9 +469,9 @@ class F2D(Flexure):
     them for and applying them to the elastic thickness grid
     """
 
-    ##############################################################
-    # AUTOMATICALLY SELECT FLEXURAL RIGIDITY BOUNDARY CONDITIONS #
-    ##############################################################
+    #########################################
+    # FLEXURAL RIGIDITY BOUNDARY CONDITIONS #
+    #########################################
     # West
     if self.BC_W == 'Periodic':
       self.BC_Rigidity_W = 'periodic'
@@ -512,8 +512,6 @@ class F2D(Flexure):
     #############
     # PAD ARRAY #
     #############
-    #self.D = np.hstack(( np.nan*np.zeros((self.D.shape[0], 1)), self.D, np.nan*np.zeros((self.D.shape[0], 1)) ))
-    #self.D = np.vstack(( np.nan*np.zeros(self.D.shape[1]), self.D, np.nan*np.zeros(self.D.shape[1]) ))
     if np.isscalar(self.Te):
       self.D *= np.ones(self.qs.shape) # And leave Te as a scalar for checks
     else:
@@ -1290,7 +1288,7 @@ class F2D(Flexure):
         self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
         self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
 
-  def build_diags(self):
+  def build_diagonals(self):
 
     ##########################################################
     # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
