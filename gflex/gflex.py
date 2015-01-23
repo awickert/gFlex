@@ -15,6 +15,7 @@ and numerically (for either variable or constant flexural rigidity); the former
 uses Green's functions and the latter uses a direct sparse matrix solution.
 """
 
+import os.path
 import sys
 from base import *
 from f1d import *
@@ -56,13 +57,18 @@ def main():
     else:
       # Looks like it wants to be an configuration file!
       filename = sys.argv[1] # it works for usage (1) and (2)
+      # Let's see if there is a file there
       try:
         obj = WhichModel(filename)
       except:
         displayUsage()
-        print ">>>> Error: can't locate specified configuration file. <<<<"
-        print ""
-        sys.exit()
+        if os.path.isfile(filename):
+          print ">>>> Error: configuration file contains an error <<<<"
+          sys.exit("")
+        else:
+          print ">>>> Error: can't locate specified configuration file. <<<<"
+          sys.exit("")
+
   elif len(sys.argv) == 1:
     displayUsage()
     displayScriptInclusionInstructions()
