@@ -159,95 +159,89 @@ class F1D(Flexure):
     1D pentadiagonal matrix to solve 1D flexure with variable elastic 
     thickness.
     """
-    
     self.coeff_start_time = time.time()
+    self.BC_selector_and_coeff_matrix_creator()
+    self.coeff_creation_time = time.time() - self.coeff_start_time
+    if self.Quiet == False:
+      print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
+
+  def BC_selector_and_coeff_matrix_creator(self):
+    """
+    Selects the boundary conditions
+    Then calls the function to build the diagonal matrix
+    """
     
-    ########################################################
-    # APPLY BOUNDARY CONDITIONS TO FLEXURAL RIGIDITY ARRAY #
-    ########################################################
-
-    self.BC_Rigidity()
-
-    ##########################
-    # CONSTRUCT SPARSE ARRAY #
-    ##########################
-
-    self.build_diagonals()
-
-    ##################################################
-    # APPLY BOUNDARY CONDITIONS TO COEFFICIENT ARRAY #
-    ##################################################
-
-    # Some links that helped me teach myself how to set up the boundary conditions
-    # in the matrix for the flexure problem:
-    # 
-    # Good explanation of and examples of boundary conditions
-    # https://en.wikipedia.org/wiki/Euler%E2%80%93Bernoulli_beam_theory#Boundary_considerations
-    # 
-    # Copy of Fornberg table:
-    # https://en.wikipedia.org/wiki/Finite_difference_coefficient
-    # 
-    # Implementing b.c.'s:
-    # http://scicomp.stackexchange.com/questions/5355/writing-the-poisson-equation-finite-difference-matrix-with-neumann-boundary-cond
-    # http://scicomp.stackexchange.com/questions/7175/trouble-implementing-neumann-boundary-conditions-because-the-ghost-points-cannot
-    
+    # Zeroth, print the boundary conditions to the screen
     if self.Verbose:
       print "Boundary condition, West:", self.BC_W, type(self.BC_W)
       print "Boundary condition, East:", self.BC_E, type(self.BC_E)
 
-    if self.BC_E == 'Dirichlet0' or self.BC_W == 'Dirichlet0':
-      self.BC_Dirichlet0()
-    if self.BC_E == '0Slope0Shear' or self.BC_W == '0Slope0Shear':
-      self.BC_0Slope0Shear()
-    if self.BC_E == '0Moment0Shear' or self.BC_W == '0Moment0Shear':
-      self.BC_0Moment0Shear()
-    if self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
-      self.BC_Mirror()
-    if self.BC_E == 'Periodic' or self.BC_W == 'Periodic':
-      self.BC_Periodic()
-    if self.BC_E == 'Sandbox' or self.BC_W == 'Sandbox':
-      # Sandbox is the developer's testing ground
-      sys.exit("Sandbox Closed")
-
-    ##########################################################
-    # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
-    ##########################################################
-
-    # Roll to keep the proper coefficients at the proper places in the
-    # arrays: Python will naturally just do vertical shifts instead of 
-    # diagonal shifts, so this takes into account the horizontal compoent 
-    # to ensure that boundary values are at the right place.
-    self.l2 = np.roll(self.l2, -2)
-    self.l1 = np.roll(self.l1, -1)
-    self.r1 = np.roll(self.r1, 1)
-    self.r2 = np.roll(self.r2, 2)
+    # First, set flexural rigidity boundary conditions to flesh out this padded
+    # array
+    self.BC_Rigidity()
     
-    print self.l2
+    # Second, build the coefficient arrays -- with the rigidity b.c.'s
+    self.get_coeff_values()
 
-    # Then assemble these rows: this is where the periodic boundary condition 
-    # can matter.
-    if self.coeff_matrix:
-      pass
-    # If not periodic, standard assembly (see BC_Periodic fcn for the assembly 
-    # of that set of coefficient rows
-    elif self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
-      self.BC_Periodic()
+    # Third, apply boundary conditions to the coeff_arrays to create the 
+    # flexural solution
+    self.BC_Flexure()
+    
+    # Fourth, construct the sparse diagonal array
+    self.build_diagonals()
+    
+  def BC_Rigidity(self):
+    """
+    Utility function to help implement boundary conditions by specifying 
+    them for and applying them to the elastic thickness grid
+    """
+
+    #########################################
+    # FLEXURAL RIGIDITY BOUNDARY CONDITIONS #
+    #########################################
+    # West
+    if self.BC_W == 'Periodic':
+      self.BC_Rigidity_W = 'periodic'
+    elif (self.BC_W == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+      self.BC_Rigidity_W = '0 curvature'
+    elif self.BC_W == 'Mirror':
+      self.BC_Rigidity_W = 'mirror symmetry'
     else:
-      self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
-      self.offsets = np.array([-2,-1,0,1,2])
+      sys.exit("Invalid Te B.C. case")
+    # East
+    if self.BC_E == 'Periodic':
+      self.BC_Rigidity_E = 'periodic'
+    elif (self.BC_E == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+      self.BC_Rigidity_E = '0 curvature'
+    elif self.BC_E == 'Mirror':
+      self.BC_Rigidity_E = 'mirror symmetry'
+    else:
+      sys.exit("Invalid Te B.C. case")
+    
+    #############
+    # PAD ARRAY #
+    #############
+    self.Te_unpadded = self.Te.copy()
+    self.D = np.hstack([np.nan, self.D, np.nan])
 
-    # Everybody now (including periodic b.c. cases)
-    self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
-
-    self.coeff_creation_time = time.time() - self.coeff_start_time
-    if self.Quiet == False:
-      print 'Time to construct coefficient (operator) array [s]:', self.coeff_creation_time
+    ###############################################################
+    # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
+    ###############################################################
+    if self.BC_Rigidity_W == "0 curvature":
+      self.D[0] = 2*self.D[1] - self.D[2]
+    if self.BC_Rigidity_E == "0 curvature":
+      self.D[-1] = 2*self.D[-2] - self.D[-3]
+    if self.BC_Rigidity_W == "mirror symmetry":
+      self.D[0] = self.D[2]
+    if self.BC_Rigidity_E == "mirror symmetry":
+      self.D[-1] = self.D[-3]
+    if self.BC_Rigidity_W == "periodic":
+      self.D[0] = self.D[-2]
+    if self.BC_Rigidity_E == "periodic":
+      self.D[-1] = self.D[-3]
+    
+  def get_coeff_values(self):
   
-  def build_diagonals(self):
-    """
-    Builds the diagonals for the coefficient array
-    """
-
     ##############################
     # BUILD GENERAL COEFFICIENTS #
     ##############################
@@ -276,41 +270,17 @@ class F1D(Flexure):
     self.r2_coeff_i = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
     # These will be just the 1, -4, 6, -4, 1 for constant Te, but are used in 
     # some solution methods, so will be calculated no matter what.
-    
-    """
-    # Template For Coefficient Combination
-    self.l2[i] = self.l2_coeff_i
-    self.l1[i] = self.l1_coeff_i
-    self.c0[i] = self.c0_coeff_i
-    self.r1[i] = self.r1_coeff_i
-    self.r2[i] = self.r2_coeff_i
-    """
 
-    # CHANGE THIS TOO IF I MAKE IT AN ARRAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # FIRST ONE NOT NEEDED ANY LONGER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if np.isscalar(self.Te):
-      # Diagonals, from left to right, for all but the boundaries 
-      self.l2 = 1 * self.D/self.dx4
-      self.l1 = -4 * self.D/self.dx4
-      self.c0 = 6 * self.D/self.dx4 + self.drho*self.g
-      self.r1 = -4 * self.D/self.dx4
-      self.r2 = 1 * self.D/self.dx4
-      # Make them into arrays
-      self.l2 *= np.ones(self.qs.shape)
-      self.l1 *= np.ones(self.qs.shape)
-      self.c0 *= np.ones(self.qs.shape)
-      self.r1 *= np.ones(self.qs.shape)
-      self.r2 *= np.ones(self.qs.shape)
+    # WILL FAIL IF NOT ARRAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    elif type(self.Te) == np.ndarray:
-      ###################################################################
-      # START DIAGONALS AS SIMPLY THE BASE COEFFICIENTS, WITH NO B.C.'S #
-      ###################################################################
-      self.l2 = self.l2_coeff_i.copy()
-      self.l1 = self.l1_coeff_i.copy()
-      self.c0 = self.c0_coeff_i.copy()
-      self.r1 = self.r1_coeff_i.copy()
-      self.r2 = self.r2_coeff_i.copy()
+    ###################################################################
+    # START DIAGONALS AS SIMPLY THE BASE COEFFICIENTS, WITH NO B.C.'S #
+    ###################################################################
+    self.l2 = self.l2_coeff_i.copy()
+    self.l1 = self.l1_coeff_i.copy()
+    self.c0 = self.c0_coeff_i.copy()
+    self.r1 = self.r1_coeff_i.copy()
+    self.r2 = self.r2_coeff_i.copy()
 
     # Number of columns; equals number of rows too - square coeff matrix
     self.ncolsx = self.c0.shape[0]
@@ -318,68 +288,81 @@ class F1D(Flexure):
     # Either way, the way that Scipy stacks is not the same way that I calculate
     # the rows. It runs offsets down the column instead of across the row. So
     # to simulate this, I need to re-zero everything. To do so, I use 
-    # numpy.roll.
+    # numpy.roll. (See self.build_diagonals.)
+    
+  def BC_Flexure(self):
 
-  def BC_Rigidity(self):
+    # Some links that helped me teach myself how to set up the boundary conditions
+    # in the matrix for the flexure problem:
+    # 
+    # Good explanation of and examples of boundary conditions
+    # https://en.wikipedia.org/wiki/Euler%E2%80%93Bernoulli_beam_theory#Boundary_considerations
+    # 
+    # Copy of Fornberg table:
+    # https://en.wikipedia.org/wiki/Finite_difference_coefficient
+    # 
+    # Implementing b.c.'s:
+    # http://scicomp.stackexchange.com/questions/5355/writing-the-poisson-equation-finite-difference-matrix-with-neumann-boundary-cond
+    # http://scicomp.stackexchange.com/questions/7175/trouble-implementing-neumann-boundary-conditions-because-the-ghost-points-cannot
+    
+    if self.Verbose:
+      print "Boundary condition, West:", self.BC_W, type(self.BC_W)
+      print "Boundary condition, East:", self.BC_E, type(self.BC_E)
+
+    # In 2D, these are handled inside the function; in 1D, there are separate
+    # defined functions. Keeping these due to inertia and fear of cut/paste
+    # mistakes
+    if self.BC_E == 'Dirichlet0' or self.BC_W == 'Dirichlet0':
+      self.BC_Dirichlet0()
+    if self.BC_E == '0Slope0Shear' or self.BC_W == '0Slope0Shear':
+      self.BC_0Slope0Shear()
+    if self.BC_E == '0Moment0Shear' or self.BC_W == '0Moment0Shear':
+      self.BC_0Moment0Shear()
+    if self.BC_E == 'Mirror' or self.BC_W == 'Mirror':
+      self.BC_Mirror()
+    if self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
+      self.BC_Periodic()
+    if self.BC_E == 'Sandbox' or self.BC_W == 'Sandbox':
+      # Sandbox is the developer's testing ground
+      sys.exit("Sandbox Closed")
+
+  def build_diagonals(self):
     """
-    Utility function to help implement boundary conditions by specifying 
-    them for and applying them to the elastic thickness grid
+    Builds the diagonals for the coefficient array
     """
 
-    if np.isscalar(self.Te):
-      # I think it should be an array to better handle boundary conditions
-      # in functions where I have not created a separate 1D solution that
-      # works with a scalar
-      self.D *= np.ones(self.qs.shape) # And leave Te as a scalar for checks
-      # THIS WILL MAKE IT FAIL ON THE CONSTANT D FUNCTIONS BECAUSE IT IS AN ARRAY NOW!!!!!!!!!!!!!!
-      #if self.Debug:
-      #  print("Scalar Te: no need to modify boundaries.")
+    ##########################################################
+    # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
+    ##########################################################
+
+    # Roll to keep the proper coefficients at the proper places in the
+    # arrays: Python will naturally just do vertical shifts instead of 
+    # diagonal shifts, so this takes into account the horizontal compoent 
+    # to ensure that boundary values are at the right place.
+    self.l2 = np.roll(self.l2, -2)
+    self.l1 = np.roll(self.l1, -1)
+    self.r1 = np.roll(self.r1, 1)
+    self.r2 = np.roll(self.r2, 2)
+    
+    print self.l2
+
+    # Then assemble these rows: this is where the periodic boundary condition 
+    # can matter.
+    if self.coeff_matrix:
+      pass
+    elif self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
+      # In this case, the boundary-condition-related stacking has already 
+      # happened inside b.c.-handling function. This is because periodic
+      # boundary conditions require extra diagonals to exist on the edges of 
+      # the solution array
+      pass
     else:
+      self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
+      self.offsets = np.array([-2,-1,0,1,2])
 
-      ##############################################################
-      # AUTOMATICALLY SELECT FLEXURAL RIGIDITY BOUNDARY CONDITIONS #
-      ##############################################################
-      # West
-      if self.BC_W == 'Periodic':
-        self.BC_Rigidity_W = 'periodic'
-      elif (self.BC_W == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
-        self.BC_Rigidity_W = '0 curvature'
-      elif self.BC_W == 'Mirror':
-        self.BC_Rigidity_W = 'mirror symmetry'
-      else:
-        sys.exit("Invalid Te B.C. case")
-      # East
-      if self.BC_E == 'Periodic':
-        self.BC_Rigidity_E = 'periodic'
-      elif (self.BC_E == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
-        self.BC_Rigidity_E = '0 curvature'
-      elif self.BC_E == 'Mirror':
-        self.BC_Rigidity_E = 'mirror symmetry'
-      else:
-        sys.exit("Invalid Te B.C. case")
-      
-      #############
-      # PAD ARRAY #
-      #############
-      self.Te_unpadded = self.Te.copy()
-      self.D = np.hstack([np.nan, self.D, np.nan])
-
-      ###############################################################
-      # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
-      ###############################################################
-      if self.BC_Rigidity_W == "0 curvature":
-        self.D[0] = 2*self.D[1] - self.D[2]
-      if self.BC_Rigidity_E == "0 curvature":
-        self.D[-1] = 2*self.D[-2] - self.D[-3]
-      if self.BC_Rigidity_W == "mirror symmetry":
-        self.D[0] = self.D[2]
-      if self.BC_Rigidity_E == "mirror symmetry":
-        self.D[-1] = self.D[-3]
-      if self.BC_Rigidity_W == "periodic":
-        self.D[0] = self.D[-2]
-      if self.BC_Rigidity_E == "periodic":
-        self.D[-1] = self.D[-3]
-      
+    # Everybody now (including periodic b.c. cases)
+    self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
+  
   def BC_Periodic(self):
     """
     Periodic boundary conditions: wraparound to the other side.
