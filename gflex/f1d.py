@@ -162,18 +162,17 @@ class F1D(Flexure):
     
     self.coeff_start_time = time.time()
     
-    ##########################
-    # CONSTRUCT SPARSE ARRAY #
-    ##########################
-
-    self.build_diagonals()
-
-    
     ########################################################
     # APPLY BOUNDARY CONDITIONS TO FLEXURAL RIGIDITY ARRAY #
     ########################################################
 
     self.BC_Rigidity()
+
+    ##########################
+    # CONSTRUCT SPARSE ARRAY #
+    ##########################
+
+    self.build_diagonals()
 
     ##################################################
     # APPLY BOUNDARY CONDITIONS TO COEFFICIENT ARRAY #
@@ -222,14 +221,17 @@ class F1D(Flexure):
     self.l1 = np.roll(self.l1, -1)
     self.r1 = np.roll(self.r1, 1)
     self.r2 = np.roll(self.r2, 2)
+    
+    print self.l2
+
     # Then assemble these rows: this is where the periodic boundary condition 
     # can matter.
     if self.coeff_matrix:
       pass
-    elif self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
-      self.BC_Periodic()
     # If not periodic, standard assembly (see BC_Periodic fcn for the assembly 
     # of that set of coefficient rows
+    elif self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
+      self.BC_Periodic()
     else:
       self.diags = np.vstack((self.l2,self.l1,self.c0,self.r1,self.r2))
       self.offsets = np.array([-2,-1,0,1,2])
@@ -284,6 +286,8 @@ class F1D(Flexure):
     self.r2[i] = self.r2_coeff_i
     """
 
+    # CHANGE THIS TOO IF I MAKE IT AN ARRAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # FIRST ONE NOT NEEDED ANY LONGER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if np.isscalar(self.Te):
       # Diagonals, from left to right, for all but the boundaries 
       self.l2 = 1 * self.D/self.dx4
@@ -323,8 +327,13 @@ class F1D(Flexure):
     """
 
     if np.isscalar(self.Te):
-      if self.Debug:
-        print("Scalar Te: no need to modify boundaries.")
+      # I think it should be an array to better handle boundary conditions
+      # in functions where I have not created a separate 1D solution that
+      # works with a scalar
+      self.D *= np.ones(self.qs.shape) # And leave Te as a scalar for checks
+      # THIS WILL MAKE IT FAIL ON THE CONSTANT D FUNCTIONS BECAUSE IT IS AN ARRAY NOW!!!!!!!!!!!!!!
+      #if self.Debug:
+      #  print("Scalar Te: no need to modify boundaries.")
     else:
 
       ##############################################################
@@ -352,10 +361,8 @@ class F1D(Flexure):
       #############
       # PAD ARRAY #
       #############
-      # self.D = np.hstack([np.nan, self.D, np.nan])
-      # Temporarily:
-      self.D[0] = np.nan
-      self.D[-1] = np.nan
+      self.Te_unpadded = self.Te.copy()
+      self.D = np.hstack([np.nan, self.D, np.nan])
 
       ###############################################################
       # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
@@ -482,24 +489,24 @@ class F1D(Flexure):
         self.l2[i] = np.nan
         self.l1[i] = np.nan
         self.c0[i] += 0
-        self.r1[i] += self.l1_coeff_i
-        self.r2[i] += self.l2_coeff_i
+        self.r1[i] += self.l1_coeff_i[i]
+        self.r2[i] += self.l2_coeff_i[i]
         i=1
         self.l2[i] = np.nan
         self.l1[i] += 0
         self.c0[i] += 0
         self.r1[i] += 0
-        self.r2[i] += self.l2_coeff_i
+        self.r2[i] += self.l2_coeff_i[i]
       if self.BC_E == '0Slope0Shear':
         i=-2
-        self.l2[i] += self.r2_coeff_i
+        self.l2[i] += self.r2_coeff_i[i]
         self.l1[i] += 0
         self.c0[i] += 0
         self.r1[i] += 0
         self.r2[i] = np.nan
         i=-1
-        self.l2[i] += self.r2_coeff_i
-        self.l1[i] += self.r1_coeff_i
+        self.l2[i] += self.r2_coeff_i[i]
+        self.l1[i] += self.r1_coeff_i[i]
         self.c0[i] += 0
         self.r1[i] = np.nan
         self.r2[i] = np.nan
@@ -568,27 +575,27 @@ class F1D(Flexure):
         i=0
         self.l2[i] += np.nan
         self.l1[i] += np.nan
-        self.c0[i] += 4*self.l2_coeff_i + 2*self.l1_coeff_i
-        self.r1[i] += -4*self.l2_coeff_i - self.l1_coeff_i
-        self.r2[i] += self.l2_coeff_i
+        self.c0[i] += 4*self.l2_coeff_i[i] + 2*self.l1_coeff_i[i]
+        self.r1[i] += -4*self.l2_coeff_i[i] - self.l1_coeff_i[i]
+        self.r2[i] += self.l2_coeff_i[i]
         i=1
         self.l2[i] += np.nan
-        self.l1[i] += 2*self.l2_coeff_i
+        self.l1[i] += 2*self.l2_coeff_i[i]
         self.c0[i] += 0
-        self.r1[i] += -2*self.l2_coeff_i
-        self.r2[i] += self.l2_coeff_i
+        self.r1[i] += -2*self.l2_coeff_i[i]
+        self.r2[i] += self.l2_coeff_i[i]
       
       if self.BC_E == '0Moment0Shear':
         i=-2
-        self.l2[i] += self.r2_coeff_i
-        self.l1[i] += -2*self.r2_coeff_i
+        self.l2[i] += self.r2_coeff_i[i]
+        self.l1[i] += -2*self.r2_coeff_i[i]
         self.c0[i] += 0
-        self.r1[i] += 2*self.r2_coeff_i
+        self.r1[i] += 2*self.r2_coeff_i[i]
         self.r2[i] += np.nan
         i=-1
-        self.l2[i] += self.r2_coeff_i
-        self.l1[i] += -4*self.r2_coeff_i - self.r1_coeff_i
-        self.c0[i] += 4*self.r2_coeff_i + + 2*self.r1_coeff_i
+        self.l2[i] += self.r2_coeff_i[i]
+        self.l1[i] += -4*self.r2_coeff_i[i] - self.r1_coeff_i[i]
+        self.c0[i] += 4*self.r2_coeff_i[i] + + 2*self.r1_coeff_i[i]
         self.r1[i] += np.nan
         self.r2[i] += np.nan
 
@@ -603,15 +610,15 @@ class F1D(Flexure):
     """
     if self.BC_W == 'Mirror':
       i=0
-      self.l2[i] += np.nan
-      self.l1[i] += np.nan
+      #self.l2[i] += np.nan
+      #self.l1[i] += np.nan
       self.c0[i] += 0
-      self.r1[i] += self.l1_coeff_i
-      self.r2[i] += self.l2_coeff_i
+      self.r1[i] += self.l1_coeff_i[i]
+      self.r2[i] += self.l2_coeff_i[i]
       i=1
-      self.l2[i] += np.nan
+      #self.l2[i] += np.nan
       self.l1[i] += 0
-      self.c0[i] += self.l2_coeff_i
+      self.c0[i] += self.l2_coeff_i[i]
       self.r1[i] += 0
       self.r2[i] += 0
     
@@ -619,15 +626,15 @@ class F1D(Flexure):
       i=-2
       self.l2[i] += 0
       self.l1[i] += 0
-      self.c0[i] += self.r2_coeff_i
+      self.c0[i] += self.r2_coeff_i[i]
       self.r1[i] += 0
-      self.r2[i] += np.nan
+      #self.r2[i] += np.nan
       i=-1
-      self.l2[i] += self.r2_coeff_i
-      self.l1[i] += self.r1_coeff_i
+      self.l2[i] += self.r2_coeff_i[i]
+      self.l1[i] += self.r1_coeff_i[i]
       self.c0[i] += 0
-      self.r1[i] += np.nan
-      self.r2[i] += np.nan
+      #self.r1[i] += np.nan
+      #self.r2[i] += np.nan
     
   def calc_max_flexural_wavelength(self):
     """
