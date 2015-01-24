@@ -939,13 +939,13 @@ class Flexure(Isostasy):
     if self.filename:
       # Define the (scalar) elastic thickness
       self.Te = self.configGet("float", "input", "ElasticThickness")
-      if self.dimension == 2:
-        from scipy.special import kei
-    # Define a stress-based qs = q0
-    self.qs = self.q0.copy()
-    # Remove self.q0 to avoid issues with multiply-defined inputs
-    # q0 is the parsable input to either a qs grid or contains (x,(y),q)
-    del self.q0
+      # Define a stress-based qs = q0
+      self.qs = self.q0.copy()
+      # Remove self.q0 to avoid issues with multiply-defined inputs
+      # q0 is the parsable input to either a qs grid or contains (x,(y),q)
+      del self.q0
+    if self.dimension == 2:
+      from scipy.special import kei
 
   def SAS_NG(self):
     if self.filename:
