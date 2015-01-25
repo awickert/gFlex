@@ -199,6 +199,11 @@ def main():
   # Output
   output = options['output']
   
+  # First check if output exists
+  if len(grass.parse_command('g.list', type='rast', pattern=output)):
+    if not grass.overwrite():
+      grass.fatal(_("Raster map '" + output + "' already exists. Use '--o' to overwrite."))
+  
   # Is Te raster or scalar?
   TeIsRast = False
   try:
@@ -303,7 +308,7 @@ def main():
   # Create a new garray buffer and write to it
   outbuffer = garray.array() # Instantiate output buffer
   outbuffer[...] = obj.w
-  outbuffer.write(output, overwrite=True) # Write it with the desired name
+  outbuffer.write(output, overwrite=grass.overwrite) # Write it with the desired name
   # And create a nice colormap!
   grass.run_command('r.colors', map=output, color='differences', quiet=True)
 
