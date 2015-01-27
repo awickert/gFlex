@@ -226,6 +226,41 @@ class Utility(object):
     if val_string=='Verbosity' or val_string=='Verbose':
       return self.Verbose
 
+  def greatCircleDistance(lat1, long1, lat2, long2, radius):
+    """
+    Returns the great circle distance between two points.
+    Useful when using the SAS_NG solution in lat/lon coordinates
+    Modified from http://www.johndcook.com/blog/python_longitude_latitude/
+    """
+ 
+    # Convert latitude and longitude to
+    # spherical coordinates in radians.
+    degrees_to_radians = np.pi/180.0
+         
+    # theta = colatitude = 90 - latitude
+    theta1rad = (90.0 - lat1)*degrees_to_radians
+    theta2rad = (90.0 - lat2)*degrees_to_radians
+         
+    # lambda = longitude
+    lambda1rad = long1*degrees_to_radians
+    lambda2rad = long2*degrees_to_radians
+         
+    # Compute spherical distance from spherical coordinates.
+         
+    # For two locations in spherical coordinates
+    # (1, theta, phi) and (1, theta, phi)
+    # cosine( arc length ) =
+    #    sin(theta) * sin(theta') * cos(theta-theta') + cos(phi) * cos(phi')
+    # distance = radius * arc length
+     
+    cos_arc_length = np.sin(theta1rad) * np.sin(theta2rad) * 
+                     math.cos(lambda1rad - lambda2rad) +
+                     np.cos(theta1rad)*math.cos(theta2rad)
+    arc = np.acos( cos )
+ 
+    great_circle_distance = radius * arc
+    
+    return great_circle_distance
 
 class Plotting(object):
   # Plot, if desired
