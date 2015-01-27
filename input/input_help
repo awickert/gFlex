@@ -45,6 +45,13 @@ Loads=q0_sample/2D/central_square_load.txt
 ; scalar value or space-delimited array of elastic thickness(es)
 ; array used for finite difference solutions
 ElasticThickness=Te_sample/2D/10km_const.txt
+;
+; xw and yw are vectors of desired output points for the SAS_NG method.
+; If they are not specified and a SAS_NG solution is run, the solution will be 
+; calculated at the points with the loads.
+; they are ignored if a different solution method is chosen.
+xw=
+yw=
 
 [output]
 ; DeflectionOut is for writing an output file. 

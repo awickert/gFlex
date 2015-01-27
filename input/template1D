@@ -14,6 +14,9 @@ InfillMaterialDensity=0
 [input]
 Loads=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
 ElasticThickness=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
+; xw is a vectors of desired output points for the SAS_NG method.
+; it is ignored if a different solution method is chosen.
+xw=
 
 [output]
 DeflectionOut=<!!!!!!!!!!!!! ADD THIS IF YOU WANT OUTPUT TO BE SAVED !!!!!!!!!!!!!>

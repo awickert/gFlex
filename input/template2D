@@ -18,6 +18,10 @@ InfillMaterialDensity=0
 Loads=
 ; Elastic thickness grid or scalar value goes here
 ElasticThickness=
+; xw and yw are vectors of desired output points for the SAS_NG method.
+; they are ignored if a different solution method is chosen.
+xw=
+yw=
 
 [output]
 ; DeflectionOut is a file path for an ASCII grid of w that the model will write (optional

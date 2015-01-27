@@ -14,6 +14,7 @@ InfillMaterialDensity=0
 [input]
 Loads=q0_sample/1D/irregular_grid_test.txt
 ElasticThickness=20000
+xw=
 
 [output]
 DeflectionOut=
@@ -23,7 +24,7 @@ Plot=w
 GridSpacing_x=6000
 BoundaryCondition_West=
 BoundaryCondition_East=
-Solver=direct
+Solver=
 ConvergenceTolerance=
 
 [verbosity]

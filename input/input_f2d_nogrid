@@ -2,7 +2,7 @@
 
 [mode]
 dimension=2 ; 1 or 2 dimensions
-method=SAS_NG ; Solution method: FD, FFT, SAS, SAS_NG
+method=SAS_NG ; Solution method: FD, FFT (not yet included), SAS, SAS_NG
 PlateSolutionType=vWC1994
 
 [parameter]
@@ -16,6 +16,10 @@ InfillMaterialDensity=0
 ; Path to input load array
 Loads=q0_sample/2D/xyq_grid_SAS_NG.txt
 ElasticThickness=25000
+; xw and yw are vectors of desired output points for the SAS_NG method.
+; they are ignored if a different solution method is chosen.
+xw=
+yw=
 
 [output]
 ; DeflectionOut is a file path for an ASCII grid of w
