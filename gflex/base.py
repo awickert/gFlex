@@ -311,6 +311,47 @@ class Utility(object):
       print "output points are chosen, the end user should do this."
       sys.exit()
     
+        
+  def loadFile(self, var, close_on_fail = True):
+    """
+    A special function to replate a variable name that is a string file path
+    with the loaded file.
+    var is a string on input, will be an array on output
+    """
+    out = None
+    if type(var) == str:
+      try:
+        # First see if it is a full path or directly links from the current
+        # working directory
+        out = np.load(var)
+        if self.Verbose: print "Loading "+var+" from numpy binary"
+      except:
+        try:
+          out = np.loadtxt(var)
+          if self.Verbose: print "Loading "+var+" ASCII"
+        except:
+          # Then see if it is relative to the location of the configuration file
+          try:
+            out = load(self.inpath + var)
+            if self.Verbose: print "Loading "+var+" from numpy binary"
+          except:
+            try:
+              out = np.loadtxt(self.inpath + var)
+              if self.Verbose: print "Loading "+var+" ASCII"
+            # If failure
+            except:
+              if close_on_fail:
+                print "Cannot find "+var+" file"
+                print ""+var+" path = " + var
+                print "Looked relative to model python files."
+                print "Also looked relative to configuration file path,"
+                print "  ", self.inpath
+                print "Exiting."
+                sys.exit()
+              else:
+                pass
+    return out
+
 class Plotting(object):
   # Plot, if desired
   # 1D all here, 2D in functions
@@ -704,37 +745,10 @@ class Isostasy(Utility, Plotting):
       self.q0
     except:
       self.q0 = None
+    self.q0 = self.loadFile(self.q0) # Won't do this if q0 is None
+          
+    # Check consistency of dimensions
     if self.q0 is not None:
-      # If a q0 is a string (i.e. we need to load something)
-      if type(self.q0) == str:
-        try:
-          # First see if it is a full path or directly links from the current
-          # working directory
-          self.q0 = np.load(self.q0)
-          if self.Verbose: print "Loading q0 from numpy binary"
-        except:
-          try:
-            self.q0 = np.loadtxt(self.q0)
-            if self.Verbose: print "Loading q0 ASCII"
-          except:
-            # Then see if it is relative to the location of the configuration file
-            try:
-              self.q0 = load(self.inpath + self.q0)
-              if self.Verbose: print "Loading q0 from numpy binary"
-            except:
-              try:
-                self.q0 = np.loadtxt(self.inpath + self.q0)
-                if self.Verbose: print "Loading q0 ASCII"
-              # If failure
-              except:
-                print "Cannot find q0 file"
-                print "q0path = " + self.q0
-                print "Looked relative to model python files."
-                print "Also looked relative to configuration file path, " + self.inpath
-                print "Exiting."
-                sys.exit()
-      
-      # Check consistency of dimensions
       if self.method != 'SAS_NG':
         if self.q0.ndim != self.dimension:
           print "Number of dimensions in loads file is inconsistent with"
@@ -981,31 +995,20 @@ class Flexure(Isostasy):
     # Assume that even if a coeff_matrix is defined
     # That the user wants Te if they gave the path
     if Tepath:
-      try:
-        # First see if it is a full path or directly links from the current
-        # working directory
-        self.Te = np.loadtxt(Tepath)
-        if self.Verbose:
-          print "Loading elastic thickness array from provided file path"
-      except:
-        try:
-          # Then see if it is relative to the location of the configuration file
-            self.Te = np.loadtxt(self.inpath + Tepath)
-            if self.Verbose:
-                print "Elastic thickness array loaded from provided filename"
-        except:
+      self.Te = self.loadFile(self.Te, close_on_fail = False)
+      if self.Te is None:
+        if self.Quiet == False:
+          print "Requested Te file is provided but cannot be located."
+          print "No scalar elastic thickness is provided in configuration file"
+          print "(Typo in path to input Te grid?)"
+        if self.coeff_matrix is not None:
           if self.Quiet == False:
-            print "Requested Te file is provided but cannot be located."
-            print "No scalar elastic thickness is provided in configuration file"
-            print "(Typo in path to input Te grid?)"
-          if self.coeff_matrix is not None:
-            if self.Quiet == False:
-              print "But a coefficient matrix has been found."
-              print "Calculations will be carried forward using it."
-          else:
-            if self.Quiet == False:
-              print "Exiting."
-            sys.exit()
+            print "But a coefficient matrix has been found."
+            print "Calculations will be carried forward using it."
+        else:
+          if self.Quiet == False:
+            print "Exiting."
+          sys.exit()
 
       # Check that Te is the proper size if it was loaded
       # Will be array if it was loaded
@@ -1077,18 +1080,28 @@ class Flexure(Isostasy):
     del self.q0
     # Check if a seperate output set of x,y points has been defined
     # otherwise, set those values to None
+    # First, try to load the arrays
     try:
+      # already set by setter?
       self.xw
     except:
-      self.xw = None
+      try:
+        self.xw = self.configGet('string', "input", "xw")
+      except:
+        self.xw = None
+    if self.dimension == 2:
+      try:
+        self.yw
+      except:
+        try:
+          self.yw = self.configGet('string', "input", "yw")
+        except:
+          self.yw = None
+
     if self.dimension == 1:
       if self.xw is None:
         self.xw = self.x.copy()
     elif self.dimension == 2:
-      try:
-        self.yw
-      except:
-        self.yw = None
       if (self.xw is not None and self.yw is None) \
         or (self.xw is None and self.yw is not None):
         sys.exit("SAS_NG output at specified points requires both xw and yw to be defined")
@@ -1096,3 +1109,4 @@ class Flexure(Isostasy):
       elif self.xw is None and self.yw is None:
         self.xw = self.x.copy()
         self.yw = self.y.copy()
+
