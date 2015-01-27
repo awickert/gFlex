@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 # Looks like it wants to be an input file!
-filename = '../gflex/input/input_f1d_test' # it works for usage (1) and (2)
+filename = '../input/input_f2d' # it works for usage (1) and (2)
 obj = gflex.WhichModel(filename)
 
 ## SET MODEL TYPE AND DIMENSIONS HERE ##
@@ -20,9 +20,16 @@ elif obj.dimension == 2:
 
 self = obj # easier interaction
 
-obj.set_value('GridSpacing_y', 50000)
+#cm = np.load('coeffs.npy')
+#cm = obj.coeff_matrix.copy()
+
+#import scipy
+#obj.set_value('CoeffArray', scipy.sparse.csr.csr_matrix(cm))
+#obj.set_value('CoeffArray', cm)
 
 obj.initialize(filename)
+
+#obj.set_value('GridSpacing_x', 50000)
 
 ## SET ALL OTHER MODEL PARAMETERS HERE ##
 # obj.set_value('method','FD')

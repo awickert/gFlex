@@ -27,8 +27,6 @@ BoundaryCondition_East=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
 ; Solver can be direct or iterative
 Solver=direct
 ConvergenceTolerance=<!!!!!!!!!!!!! ADD THIS (METERS DIFFERENCE BETWEEN ITERATIONS) !!!!!!!!!!!!!>
-CoeffArray= ; Load this coefficient array (FD) instead of making a new one.
-;           ; (don't need Te, and probably not b.c.'s)
 
 [verbosity]
 Verbose=False

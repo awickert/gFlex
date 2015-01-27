@@ -190,18 +190,11 @@ class Utility(object):
     from scipy import sparse
     if sparse.issparse(self.coeff_matrix):
       pass # Good type
-    # Otherwise, try to load from file
-    elif type(self.coeff_matrix) is types.StringType:
-      pass
-      print "Loading sparse coefficient arrays is not yet implemented."
-      print "This must be done soon."
-      print "Exiting."
-      sys.exit()
     else:
       try:
         self.coeff_matrix = sparse.dia_matrix(self.coeff_matrix)
       except:
-        "Failed to make a sparse array or load a sparse matrix from the input."
+        sys.exit("Failed to make a sparse array or load a sparse matrix from the input.")
   
   # UNIVERSAL GETTER
   def get_value(self, val_string):
