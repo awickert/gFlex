@@ -2,7 +2,7 @@
 
 [mode]
 dimension=2 ; 1 or 2 dimensions
-method=SAS ; Solution method: FD, FFT, SAS, SAS_NG
+method=FD ; Solution method: FD, FFT, SAS, SAS_NG
 PlateSolutionType=vWC1994
 # Plate solutions can be vWC1994 (best), LinearTeVariationsOnly (not good, but for testing), or G2009 (not bad, but not as robust as vWC1994)
 
@@ -18,7 +18,7 @@ InfillMaterialDensity=0
 Loads=q0_sample/2D/central_square_load.txt ; central_square_load.txt ; q0_sample/2D/global1degDEM.txt ; q0_sample/2D/diag.txt ; 
 ; Elastic thickness grid goes here; cannot coexist with a constant Te
 ; defined above
-ElasticThickness=15000
+ElasticThickness=/home/awickert/models/flexure/gflex/input/Te_sample/2D/fault_24-30.txt
 
 [output]
 ; DeflectionOut is a file path for an ASCII grid of w
@@ -28,8 +28,8 @@ Plot=both
 
 [numerical]
 GridSpacing_x=4000 ; dx
-BoundaryCondition_West=
-BoundaryCondition_East=
+BoundaryCondition_West=0Moment0Shear
+BoundaryCondition_East=Dirichlet0
 ; Solver can be direct or iterative
 Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
@@ -40,8 +40,8 @@ CoeffArray=
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
 GridSpacing_y=4000 ; dy
-BoundaryCondition_North=
-BoundaryCondition_South=
+BoundaryCondition_North=Mirror
+BoundaryCondition_South=0Slope0Shear
 
 [verbosity]
 Verbose=false

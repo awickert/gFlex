@@ -12,21 +12,21 @@ MantleDensity=3300
 InfillMaterialDensity=0
 
 [input]
-Loads=q0_sample/1D/central_block.txt ; q0_sample/1D/l_block.txt ; lr_blocks_100m_500cell.txt ; 
-ElasticThickness=15000
+Loads=/home/awickert/models/flexure/gflex/input/q0_sample/1D/central_block.txt
+ElasticThickness=/home/awickert/models/flexure/gflex/input/Te_sample/1D/8km_20km_ramp.txt
 
 [output]
 DeflectionOut=
 ; tmpout.txt
 ; Plot choices are q, w, both, or (for 1D) combo
-Plot=
+Plot=combo
 ;combo
 
 [numerical]
 GridSpacing_x=6000
-GridSpacing_y=6000
-BoundaryCondition_West=0Moment0Shear
-BoundaryCondition_East=Dirichlet0
+GridSpacing_y=
+BoundaryCondition_West=Periodic
+BoundaryCondition_East=Periodic
 ; Solver can be direct or iterative
 Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
@@ -38,4 +38,4 @@ ConvergenceTolerance=0.001
 [verbosity]
 Verbose=false
 Debug=false
-Quiet=True
+Quiet=false
