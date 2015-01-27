@@ -86,11 +86,15 @@ class Utility(object):
     # Loading grid
     elif value_key == 'Loads':
       self.q0 = value
-    # NOT IN CONFIGURATION FILE
+    # QS NOT IN CONFIGURATION FILE
     elif value_key == 'Loads_grid_stress':
       self.qs = value
     elif value_key == 'Loads_force':
       self.q = value
+    elif value_key == 'xw':
+      self.xw = value
+    elif value_key == 'yw':
+      self.yw = value
 
     # [numerical]
     # Grid spacing
@@ -114,7 +118,7 @@ class Utility(object):
       self.BC_N = value
     elif value_key == 'BoundaryCondition_South':
       self.BC_S = value
-    # NOT IN CONFIGURATION FILE -- FOR POINT LOADS
+    # x, y NOT IN CONFIGURATION FILE -- FOR POINT LOADS
     # vectors of x and y values
     elif value_key == 'x':
       self.x = value
@@ -163,6 +167,7 @@ class Utility(object):
       
     # [Input]
     elif value_key == 'CoeffArray':
+      # coeff_matrix NOT IN CONFIGURATION FILE -- just for getter/setter
       # This coefficient array is what is used with the UMFPACK direct solver
       # or the iterative solver
       self.coeff_matrix = value
@@ -316,40 +321,40 @@ class Utility(object):
     """
     A special function to replate a variable name that is a string file path
     with the loaded file.
-    var is a string on input, will be an array on output
+    var is a string on input
+    output is a numpy array or a None-type object (success vs. failure)
     """
     out = None
-    if type(var) == str:
+    try:
+      # First see if it is a full path or directly links from the current
+      # working directory
+      out = np.load(var)
+      if self.Verbose: print "Loading "+var+" from numpy binary"
+    except:
       try:
-        # First see if it is a full path or directly links from the current
-        # working directory
-        out = np.load(var)
-        if self.Verbose: print "Loading "+var+" from numpy binary"
+        out = np.loadtxt(var)
+        if self.Verbose: print "Loading "+var+" ASCII"
       except:
+        # Then see if it is relative to the location of the configuration file
         try:
-          out = np.loadtxt(var)
-          if self.Verbose: print "Loading "+var+" ASCII"
+          out = load(self.inpath + var)
+          if self.Verbose: print "Loading "+var+" from numpy binary"
         except:
-          # Then see if it is relative to the location of the configuration file
           try:
-            out = load(self.inpath + var)
-            if self.Verbose: print "Loading "+var+" from numpy binary"
+            out = np.loadtxt(self.inpath + var)
+            if self.Verbose: print "Loading "+var+" ASCII"
+          # If failure
           except:
-            try:
-              out = np.loadtxt(self.inpath + var)
-              if self.Verbose: print "Loading "+var+" ASCII"
-            # If failure
-            except:
-              if close_on_fail:
-                print "Cannot find "+var+" file"
-                print ""+var+" path = " + var
-                print "Looked relative to model python files."
-                print "Also looked relative to configuration file path,"
-                print "  ", self.inpath
-                print "Exiting."
-                sys.exit()
-              else:
-                pass
+            if close_on_fail:
+              print "Cannot find "+var+" file"
+              print ""+var+" path = " + var
+              print "Looked relative to model python files."
+              print "Also looked relative to configuration file path,"
+              print "  ", self.inpath
+              print "Exiting."
+              sys.exit()
+            else:
+              pass
     return out
 
 class Plotting(object):
@@ -745,6 +750,8 @@ class Isostasy(Utility, Plotting):
       self.q0
     except:
       self.q0 = None
+    if self.q0 == '':
+      self.q0 = None
     self.q0 = self.loadFile(self.q0) # Won't do this if q0 is None
           
     # Check consistency of dimensions
@@ -1078,35 +1085,42 @@ class Flexure(Isostasy):
     # Remove self.q0 to avoid issues with multiply-defined inputs
     # q0 is the parsable input to either a qs grid or contains (x,(y),q)
     del self.q0
+    
     # Check if a seperate output set of x,y points has been defined
     # otherwise, set those values to None
     # First, try to load the arrays
     try:
-      # already set by setter?
       self.xw
     except:
       try:
-        self.xw = self.configGet('string', "input", "xw")
+        self.xw = self.configGet('string', "input", "xw", optional=True)
+        if self.xw == '':
+          self.xw = None
       except:
         self.xw = None
+    # If strings, load arrays
+    if type(self.xw) == str:
+      self.xw = self.loadFile(self.xw)
     if self.dimension == 2:
       try:
+        # already set by setter?
         self.yw
       except:
         try:
-          self.yw = self.configGet('string', "input", "yw")
+          self.yw = self.configGet('string', "input", "yw", optional=True)
+          if self.yw == '':
+            self.yw = None
         except:
           self.yw = None
-
-    if self.dimension == 1:
-      if self.xw is None:
-        self.xw = self.x.copy()
-    elif self.dimension == 2:
+      # At this point, can check if we have both None or both defined
       if (self.xw is not None and self.yw is None) \
         or (self.xw is None and self.yw is not None):
         sys.exit("SAS_NG output at specified points requires both xw and yw to be defined")
-      # If they are None, now (post-check) define them to be x and y
-      elif self.xw is None and self.yw is None:
+      # All right, now just finish defining
+      if type(self.xw) == str:
+        self.yw = self.loadFile(self.yw)
+      elif self.yw is None:
+          self.yw = self.y.copy()
+    if self.xw is None:
         self.xw = self.x.copy()
-        self.yw = self.y.copy()
 
