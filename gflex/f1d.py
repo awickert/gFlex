@@ -335,7 +335,7 @@ class F1D(Flexure):
 
     # Then assemble these rows: this is where the periodic boundary condition 
     # can matter.
-    if self.coeff_matrix:
+    if self.coeff_matrix is not None:
       pass
     elif self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
       # In this case, the boundary-condition-related stacking has already 

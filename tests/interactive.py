@@ -20,12 +20,8 @@ elif obj.dimension == 2:
 
 self = obj # easier interaction
 
-#cm = np.load('coeffs.npy')
 #cm = obj.coeff_matrix.copy()
-
-#import scipy
-#obj.set_value('CoeffArray', scipy.sparse.csr.csr_matrix(cm))
-#obj.set_value('CoeffArray', cm)
+obj.set_value('CoeffArray', cm)
 
 obj.initialize(filename)
 

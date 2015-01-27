@@ -721,35 +721,46 @@ class Isostasy(Utility, Plotting):
     # Check that boundary conditions are acceptable with code implementation
     # Acceptable b.c.'s
     if self.method == 'FD':
-      self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-      self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-      # Boundary conditions should be defined by this point -- whether via 
-      # the configuration file or the getters and setters
-      self.bclist = [self.BC_E, self.BC_W]
-      if self.dimension == 2:
-        self.bclist += [self.BC_N, self.BC_S]
-      # Now check that these are valid boundary conditions
-      for bc in self.bclist:
-        if self.dimension == 1:
-          if (bc == self.bc1D).any():
-            pass
+      # Check if a coefficient array has been defined
+      # It would only be by a getter or setter;
+      # no way to do I/O with this with present configuration files
+      # Define as None for use later.
+      try:
+        self.coeff_matrix
+      except:
+        self.coeff_matrix = None
+      # No need to create a coeff_matrix if one already exists
+      if self.coeff_matrix is None:
+        # Acceptable boundary conditions
+        self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+        self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+        # Boundary conditions should be defined by this point -- whether via 
+        # the configuration file or the getters and setters
+        self.bclist = [self.BC_E, self.BC_W]
+        if self.dimension == 2:
+          self.bclist += [self.BC_N, self.BC_S]
+        # Now check that these are valid boundary conditions
+        for bc in self.bclist:
+          if self.dimension == 1:
+            if (bc == self.bc1D).any():
+              pass
+            else:
+              sys.exit("'"+bc+"'"+ " is not an acceptable 1D finite difference boundary condition\n"\
+                       +"and/or is not yet implement in the code. Acceptable boundary conditions\n"\
+                       +"are:\n"\
+                       +str(self.bc1D)+"\n"\
+                       +"Exiting.")
+          elif self.dimension == 2:
+            if (bc == self.bc2D).any():
+              pass
+            else:
+              sys.exit("'"+bc+"'"+ " is not an acceptable 2D finite difference boundary condition\n"\
+                       +"and/or is not yet implement in the code. Acceptable boundary conditions\n"\
+                       +"are:\n"\
+                       +str(self.bc2D)+"\n"\
+                       +"Exiting.")
           else:
-            sys.exit("'"+bc+"'"+ " is not an acceptable 1D finite difference boundary condition\n"\
-                     +"and/or is not yet implement in the code. Acceptable boundary conditions\n"\
-                     +"are:\n"\
-                     +str(self.bc1D)+"\n"\
-                     +"Exiting.")
-        elif self.dimension == 2:
-          if (bc == self.bc2D).any():
-            pass
-          else:
-            sys.exit("'"+bc+"'"+ " is not an acceptable 2D finite difference boundary condition\n"\
-                     +"and/or is not yet implement in the code. Acceptable boundary conditions\n"\
-                     +"are:\n"\
-                     +str(self.bc2D)+"\n"\
-                     +"Exiting.")
-        else:
-          sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
+            sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
     else:
       if self.BC_E == 'NoOutsideLoads' or self.BC_E == '' \
          and self.BC_W == 'NoOutsideLoads' or self.BC_W == '':
@@ -831,6 +842,9 @@ class Flexure(Isostasy):
     """
     if self.Verbose:
       print "Finite Difference Solution Technique"
+    # Used to check for coeff_matrix here, but now doing so in self.bc_check()
+    # called by f1d and f2d at the start
+    # 
     # Define a stress-based qs = q0
     # But only if the latter has not already been defined
     # (e.g., by the getters and setters)
@@ -851,13 +865,6 @@ class Flexure(Isostasy):
         self.solver = self.configGet("string", "numerical", "Solver")
       else:
         sys.exit("No solver defined!")
-    # Check if a coefficient array has been defined
-    # It would only be by a getter or setter;
-    # no way to do I/O with this with present configuration files
-    try:
-      self.coeff_matrix
-    except:
-      self.coeff_matrix = None
     # Check consistency of size if coeff array was loaded
     if self.filename:
       # In the case that it is iterative, find the convergence criterion
