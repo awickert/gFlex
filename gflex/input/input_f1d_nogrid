@@ -1,34 +1,42 @@
 ; All units are SI
 
 [mode]
+model=flexure ; "flexure" or "PrattAiry"
 dimension=1 ; 1 or 2 dimensions
-method=SAS_NG ; Solution method: FD, FFT, SPA, SPA_NG
+method=FD ; Solution method: FD, FFT, SPA, SPA_NG
 
 [parameter]
-YoungsModulus=65E10
+YoungsModulus=6.5E10
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
 InfillMaterialDensity=0
+ElasticThickness=15000
+; 30000
+; 50000 ; Used for FFT, SPA, and SPA_NG solutions 
 
 [input]
-Loads=q0_sample/1D/irregular_grid_test1.txt
-ElasticThickness=7000
+Loads=q0_sample/1D/xy
+ElasticThickness=
+;Te_sample/1D/8km_20km_ramp.txt ; Te_sample/1D/10km_const.txt ; 
 
 [output]
 DeflectionOut=
-Plot=both
+; tmpout.txt
+; Plot choices are q0, w, both, or (for 1D) combo
+Plot=combo
 
 [numerical]
-GridSpacing_x=
-; NoOutsideLoads is implicit for SAS and SAS_NG
-BoundaryCondition_West=
-BoundaryCondition_East=
+GridSpacing_x=6000
+BoundaryCondition_West=0Moment0Shear
+BoundaryCondition_East=0Slope0Shear
 ; Solver can be direct or iterative
-Solver=
+Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
-; Set as 0 if you don't want to iterate
-convergence=
+; (here given in meters)
+; Function defaults will not be chosen, but are 1E-5, if you wish to set
+; that here.
+ConvergenceTolerance=0.001
 
 [verbosity]
 Verbose=false

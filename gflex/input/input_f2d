@@ -15,7 +15,7 @@ InfillMaterialDensity=0
 
 [input]
 ; Path to input load array
-Loads=q0_sample/2D/central_square_load.txt ; central_square_load.txt ; q0_sample/2D/global1degDEM.txt ; q0_sample/2D/diag.txt ; 
+Loads=/home/awickert/models/flexure/gflex/input/q0_sample/2D/diag.txt
 ; Elastic thickness grid goes here; cannot coexist with a constant Te
 ; defined above
 ElasticThickness=/home/awickert/models/flexure/gflex/input/Te_sample/2D/fault_24-30.txt

@@ -20,7 +20,7 @@ To run gFlex inside of GRASS GIS, you may copy **r.flexure** to the **scripts** 
 
 To run gFlex within the CSDMS environment, see **gflex_bmi.py**.
 
-To run gFlex from other Python programs, simply add code like you will find in **gflex_copy_paste.py**:
+To run gFlex from other Python programs, simply add code like you will find in **gflex_copy_paste.py**, and see **gflex/input/run_in_script** as an example:
 
 ```
 import gflex

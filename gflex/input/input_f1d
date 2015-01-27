@@ -12,22 +12,30 @@ MantleDensity=3300
 InfillMaterialDensity=0
 
 [input]
-Loads=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
-ElasticThickness=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
+Loads=/home/awickert/models/flexure/gflex/input/q0_sample/1D/central_block.txt
+ElasticThickness=/home/awickert/models/flexure/gflex/input/Te_sample/1D/8km_20km_ramp.txt
 
 [output]
-DeflectionOut=<!!!!!!!!!!!!! ADD THIS IF YOU WANT OUTPUT TO BE SAVED !!!!!!!!!!!!!>
+DeflectionOut=
+; tmpout.txt
 ; Plot choices are q, w, both, or (for 1D) combo
-Plot=<!!!!!!!!!!!!! ADD THIS IF YOU WANT A PLOT MADE AND DISPLAYED !!!!!!!!!!!!!>
+Plot=combo
+;combo
 
 [numerical]
-GridSpacing_x=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
-BoundaryCondition_West=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
-BoundaryCondition_East=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
+GridSpacing_x=6000
+GridSpacing_y=
+BoundaryCondition_West=Periodic
+BoundaryCondition_East=Periodic
 ; Solver can be direct or iterative
 Solver=direct
-ConvergenceTolerance=<!!!!!!!!!!!!! ADD THIS (METERS DIFFERENCE BETWEEN ITERATIONS) !!!!!!!!!!!!!>
+; Iterates until this is the difference between two subsequent iterations
+; (here given in meters)
+; Function defaults will not be chosen, but are 1E-5, if you wish to set
+; that here.
+ConvergenceTolerance=0.001
 
 [verbosity]
-Verbose=False
-Debug=False
+Verbose=false
+Debug=false
+Quiet=false

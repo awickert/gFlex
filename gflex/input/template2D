@@ -1,0 +1,51 @@
+; All units are SI
+
+[mode]
+dimension= ; 1 or 2 dimensions
+method= ; Solution method: FD, SAS, SAS_NG
+; Plate solutions can be vWC1994 (best), LinearTeVariationsOnly (not good, but for testing),
+; or G2009 (not bad, but not as robust as vWC1994)
+PlateSolutionType=vWC1994
+
+[parameter]
+YoungsModulus=6.5E10
+PoissonsRatio=0.25
+GravAccel=9.8
+MantleDensity=3300
+InfillMaterialDensity=0
+
+[input]
+Loads=
+; Elastic thickness grid or scalar value goes here
+ElasticThickness=
+
+[output]
+; DeflectionOut is a file path for an ASCII grid of w that the model will write (optional
+DeflectionOut=
+; Plot choices are q, w, both, or (for 1D) combo (optional)
+Plot=
+
+; Boundary conditions can be:
+; (FD): 0Slope0Shear, 0Moment0Shear, Dirichlet0, Mirror, or Periodic
+; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
+
+[numerical]
+GridSpacing_x= ; dx [m]
+BoundaryCondition_West=
+BoundaryCondition_East=
+; Solver can be direct or iterative
+Solver=
+; Tolerance between iterations [m]
+ConvergenceTolerance=1E-3
+CoeffArray=
+
+[numerical2D]
+GridSpacing_y= ; dy [m]
+BoundaryCondition_North=
+BoundaryCondition_South=
+
+[verbosity]
+Verbose= ; true/false
+Debug= ; true/false
+Quiet= ; true/false
+
