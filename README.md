@@ -9,7 +9,7 @@ To run gflex, first install the program at the command prompt using setuptools.
 sudo python setup.py install
 ```
 
-Then you can generate a configuration file (see examples in the **gflex/input** directory) and input data and run gFlex. It can produce plots and ASCII files with model outputs.
+Then you can generate a configuration file (see examples in the **gflex/input** directory) and input data and run gFlex. It can produce plots and ASCII files with model outputs. Good files to look up include **gflex/input/template1D**, **gflex/input/template2D**, and **gflex/input/input_help**. The last of these, **input_help**, provides a longer explanation of what the parameters are.
 
 ```
 # run like this:
