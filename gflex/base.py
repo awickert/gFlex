@@ -873,7 +873,7 @@ class Flexure(Isostasy):
   ### variable-length arguments, which is the way how Python overloads functions.
   def FD(self):
     """
-    Handles set-up for the finite difference solution method
+    Set-up for the finite difference solution method
     """
     if self.Verbose:
       print "Finite Difference Solution Technique"
@@ -971,6 +971,10 @@ class Flexure(Isostasy):
   # with other functions
 
   def SAS(self):
+    """
+    Set-up for the rectangularly-gridded superposition of analytical solutions 
+    method for solving flexure
+    """
     if self.filename:
       # Define the (scalar) elastic thickness
       self.Te = self.configGet("float", "input", "ElasticThickness")
@@ -983,6 +987,10 @@ class Flexure(Isostasy):
       from scipy.special import kei
 
   def SAS_NG(self):
+    """
+    Set-up for the ungridded superposition of analytical solutions 
+    method for solving flexure
+    """
     if self.filename:
       # Define the (scalar) elastic thickness
       self.Te = self.configGet("float", "input", "ElasticThickness")
@@ -1018,4 +1026,20 @@ class Flexure(Isostasy):
     # Remove self.q0 to avoid issues with multiply-defined inputs
     # q0 is the parsable input to either a qs grid or contains (x,(y),q)
     del self.q0
-    
+    # Check if a seperate output set of x,y points has been defined
+    # otherwise, set those values to None
+    try:
+      self.xw
+    except:
+      self.xw = None
+    try:
+      self.yw:
+    except:
+      self.xw = None
+    if (self.xw is not None and self.yw is None) \
+      or (self.xw is None and self.yw is not None):
+      sys.exit("SAS_NG output at specified points requires both xw and yw to be defined")
+    # If they are None, now (post-check) define them to be x and y
+    elif self.xw is None and self.yw is None
+      self.xw = self.x.copy()
+      self.yw = self.y.copy()
