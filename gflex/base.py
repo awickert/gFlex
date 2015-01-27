@@ -124,6 +124,12 @@ class Utility(object):
       self.x = value
     elif value_key == 'y':
       self.y = value
+    # If you desire latitude/longitude input for 2D solutions
+    # Flag for latitude/longitude
+    elif value_key == 'latlon':
+      self.latlon = value
+    elif value_key == 'planetaryRadius':
+      self.planetaryRadius = value
 
     # [verbosity]
     elif value_key == 'Verbosity' or value_key == 'Verbose':
@@ -236,6 +242,7 @@ class Utility(object):
     Returns the great circle distance between two points.
     Useful when using the SAS_NG solution in lat/lon coordinates
     Modified from http://www.johndcook.com/blog/python_longitude_latitude/
+    It should be able to take numpy arrays.
     """
  
     # Convert latitude and longitude to
