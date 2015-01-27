@@ -268,7 +268,7 @@ class Utility(object):
     cos_arc_length = np.sin(theta1rad) * np.sin(theta2rad) * \
                      math.cos(lambda1rad - lambda2rad) + \
                      np.cos(theta1rad)*math.cos(theta2rad)
-    arc = np.acos( cos )
+    arc = np.acos( cos_arc_length )
  
     great_circle_distance = radius * arc
     
