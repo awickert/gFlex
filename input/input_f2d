@@ -35,7 +35,6 @@ Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
 ; Set as 0 if you don't want to iterate
 ConvergenceTolerance=1E-3
-CoeffArray=../tests/coeffs.npy
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
