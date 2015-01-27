@@ -3,8 +3,8 @@
 [mode]
 dimension= ; 1 or 2 dimensions
 method= ; Solution method: FD, SAS, SAS_NG
-; Plate solutions can be vWC1994 (best), LinearTeVariationsOnly (not good, but for testing),
-; or G2009 (not bad, but not as robust as vWC1994)
+; Plate solutions can be vWC1994 (best) or G2009 (not bad, but not as robust 
+; as vWC1994)
 PlateSolutionType=vWC1994
 
 [parameter]

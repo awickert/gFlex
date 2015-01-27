@@ -437,45 +437,6 @@ class F2D(Flexure):
                      + (8.*D0 - 2.*nu*Dxx - 2.*nu*Dyy)/dx2dy2 \
                      + drho*g
                      
-      elif self.PlateSolutionType == 'LinearTeVariationsOnly':
-        sys.exit("CHECK LATER PARTS OF SOLUTION: NOT SURE IF THEY ARE RIGHT")
-        # So check starting with self.c_j1i0
-        # These were flipped around in x and y
-        # And need a good look over
-        # before I will feel OK using them
-        # More info here!!!!!!!!!
-        # SIMPLER STENCIL: just del**2(D del**2(w)): only linear variations
-        # in Te are allowed.
-        # x = -2, y = 0
-        self.cj_2i0_coeff_ij = D0 / dx4
-        # x = 0, y = -2
-        self.cj0i_2_coeff_ij = D0 / dy4
-        # x = 0, y = 2
-        self.cj0i2_coeff_ij = D0 / dy4
-        # x = 2, y = 0
-        self.cj2i0_coeff_ij = D0 / dx4
-        # x = -1, y = -1
-        self.cj_1i_1_coeff_ij = 2.*D0 / dx2dy2
-        # x = -1, y = 1
-        self.cj_1i1_coeff_ij = 2.*D0 / dx2dy2
-        # x = 1, y = -1
-        self.cj1i_1_coeff_ij = 2.*D0 / dx2dy2
-        # x = 1, y = 1
-        self.cj1i1_coeff_ij = 2.*D0 / dx2dy2
-        # x = -1, y = 0
-        self.cj_1i0_coeff_ij = (-4.*D0 + Dxx)/dx4 + (-4.*D0 + Dyy)/dx2dy2
-        # x = 0, y = -1
-        self.cj0i_1_coeff_ij = (-4.*D0 + Dyy)/dx4 + (-4.*D0 + Dxx)/dx2dy2
-        # x = 0, y = 1
-        self.cj0i1_coeff_ij = (-4.*D0 + Dyy)/dx4 + (-4.*D0 + Dxx)/dx2dy2
-        # x = 1, y = 0
-        self.cj1i0_coeff_ij = (-4.*D0 + Dxx)/dx4 + (-4.*D0 + Dyy)/dx2dy2
-        # x = 0, y = 0
-        self.cj0i0_coeff_ij = (6.*D0 - 2.*Dxx)/dx4 \
-                     + (6.*D0 - 2.*Dyy)/dy4 \
-                     + (8.*D0 - 2.*Dxx - 2.*Dyy)/dx2dy2 \
-                     + drho*g
-
       elif self.PlateSolutionType == 'G2009':
         # STENCIL FROM GOVERS ET AL. 2009 -- first-order differences
         # x is j and y is i b/c matrix row/column notation
@@ -510,11 +471,9 @@ class F2D(Flexure):
       else:
         sys.exit("Not an acceptable plate solution type. Please choose from:\n"+
                   "* vWC1994\n"+
-                  "* LinearTeVariationsOnly\n"+
                   "* G2009\n"+
                   "")
                   
-
       ################################################################
       # CREATE COEFFICIENT ARRAYS: PLAIN, WITH NO B.C.'S YET APPLIED #
       ################################################################
