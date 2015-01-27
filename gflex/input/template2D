@@ -37,7 +37,8 @@ BoundaryCondition_East=
 Solver=
 ; Tolerance between iterations [m]
 ConvergenceTolerance=1E-3
-CoeffArray=
+CoeffArray= ; Load this coefficient array (FD) instead of making a new one.
+;           ; (don't need Te, and probably not b.c.'s)
 
 [numerical2D]
 GridSpacing_y= ; dy [m]
