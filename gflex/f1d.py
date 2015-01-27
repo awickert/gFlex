@@ -118,7 +118,7 @@ class F1D(Flexure):
     """
     Superposition of analytical solutions without a gridded domain
     """
-    self.w = np.zeros(self.q.shape)
+    self.w = np.zeros(self.xw.shape)
 
     if self.Debug:
       print "w = "

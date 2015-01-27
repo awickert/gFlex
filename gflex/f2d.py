@@ -132,7 +132,7 @@ class F2D(Flexure):
 
   def spatialDomainNoGrid(self):
 
-    self.w = np.zeros(self.x.shape)
+    self.w = np.zeros(self.xw.shape)
     if self.Debug:
       print "w = "
       print self.w.shape
