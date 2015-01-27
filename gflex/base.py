@@ -387,7 +387,7 @@ class Plotting(object):
         elif self.plotChoice == 'w':
           plt.figure(1)
           if self.method == 'SAS_NG':
-            plt.plot(self.x/1000., self.w, 'ko-')
+            plt.plot(self.xw/1000., self.w, 'k-')
           else:
             plt.plot(self.x/1000., self.w, 'k-')
           plt.ylabel('Deflection [m]', fontsize=12, fontweight='bold')
@@ -396,28 +396,28 @@ class Plotting(object):
           plt.show()
         elif self.plotChoice == 'both':
           plt.figure(1,figsize=(6,9))
+          ax = plt.subplot(212)
+          if self.method == "SAS_NG":
+            ax.plot(self.xw/1000., self.w, 'k-')
+          else:
+            ax.plot(self.x/1000., self.w, 'k-')
+          ax.set_ylabel('Deflection [m]', fontsize=12, fontweight='bold')
+          ax.set_xlabel('Distance along profile [m]', fontsize=12, fontweight='bold')
           plt.subplot(211)
           plt.title('Loads and Lithospheric Deflections', fontsize=16)
           if self.method == 'SAS_NG':
             plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
             plt.ylabel('Load volume, mantle equivalent [m$^3$]', fontsize=12, fontweight='bold')
+            plt.xlim(ax.get_xlim())
           else:
             plt.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'k-')
             plt.ylabel('Load thickness, mantle equivalent [m]', fontsize=12, fontweight='bold')
           plt.xlabel('Distance along profile [km]', fontsize=12, fontweight='bold')
-          plt.subplot(212)
-          if self.method == "SAS_NG":
-            plt.plot(self.x, self.w, 'ko-')
-          else:
-            plt.plot(self.x, self.w, 'k-')
-          plt.ylabel('Deflection [m]', fontsize=12, fontweight='bold')
-          plt.xlabel('Distance along profile [m]', fontsize=12, fontweight='bold')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'combo':
           fig = plt.figure(1,figsize=(10,6))
           titletext='Loads and Lithospheric Deflections'
-          xkm = self.x/1000
           ax = fig.add_subplot(1,1,1)
           # Plot undeflected load
           if self.method == "SAS_NG":
@@ -425,13 +425,13 @@ class Plotting(object):
               print "Combo plot can't work with SAS_NG! Don't have mechanism in place\nto calculate load width."
               print "Big problem -- what is the area represented by the loads at the\nextreme ends of the array?"
           else:
-            ax.plot(xkm,self.qs/(self.rho_m*self.g),'g--',linewidth=2,label="Load thickness [m mantle equivalent]")
+            ax.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'g--', linewidth=2, label="Load thickness [m mantle equivalent]")
           # Plot deflected load
           if self.method == "SAS_NG":
             pass
-            #ax.plot(xkm,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
+            #ax.plot(self.x/1000.,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
           else:
-            ax.plot(xkm,self.qs/(self.rho_m*self.g) + self.w,'g-',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
+            ax.plot(self.x/1000., self.qs/(self.rho_m*self.g) + self.w,'g-',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
           # Plot deflection
           if self.method == "SAS_NG":
             ax.plot(xkm, self.w, 'ko-', linewidth=2, label="Deflection [m mantle equivalent]")
@@ -476,7 +476,7 @@ class Plotting(object):
             self.surfplot(self.qs/(self.rho_m*self.g), 'Load thickness, mantle equivalent [m]')
             plt.show()
           else:
-            self.xyzinterp(self.q, 'Load volume, mantle equivalent [m$^3$]')
+            self.xyzinterp(self.x, self.y, self.q, 'Load volume, mantle equivalent [m$^3$]')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'w':
@@ -485,7 +485,7 @@ class Plotting(object):
             self.surfplot(self.w, 'Deflection [m]')
             plt.show()
           else:
-            self.xyzinterp(self.w, 'Deflection [m]')
+            self.xyzinterp(self.xw, self.yw, self.w, 'Deflection [m]')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'both':
@@ -495,9 +495,9 @@ class Plotting(object):
             plt.show()
           else:
             plt.subplot(211)
-            self.xyzinterp(self.q, 'Load volume, mantle equivalent [m$^3$]')
+            self.xyzinterp(self.x, self.y, self.q, 'Load volume, mantle equivalent [m$^3$]')
             plt.subplot(212)
-            self.xyzinterp(self.w, 'Deflection [m]')
+            self.xyzinterp(self.xw, self.yw, self.w, 'Deflection [m]')
             plt.tight_layout()
             plt.show()
         else:
@@ -539,7 +539,7 @@ class Plotting(object):
     plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
   
-  def xyzinterp(self, z, titletext):
+  def xyzinterp(self, x, y, z, titletext):
     """
     Interpolates and plots ungridded model outputs from SAS_NG solution
     """
@@ -552,12 +552,12 @@ class Plotting(object):
     import numpy.ma as ma
     
     # define grid.
-    xmin = np.min(self.x)
-    xmean = np.mean(self.x) # not used right now
-    xmax = np.max(self.x)
-    ymin = np.min(self.y)
-    ymean = np.mean(self.y) # not used right now
-    ymax = np.max(self.y)
+    xmin = np.min(self.xw)
+    xmean = np.mean(self.xw) # not used right now
+    xmax = np.max(self.xw)
+    ymin = np.min(self.yw)
+    ymean = np.mean(self.yw) # not used right now
+    ymax = np.max(self.yw)
     x_range = xmax - xmin
     y_range = ymax - ymin
     
@@ -569,13 +569,18 @@ class Plotting(object):
     xi = np.linspace(xmin, xmax, 200)
     yi = np.linspace(ymin, ymax, 200)
     # grid the z-axis
-    zi = griddata((self.x, self.y), z, (xi[None,:], yi[:,None]), method='cubic')
+    zi = griddata((x, y), z, (xi[None,:], yi[:,None]), method='cubic')
+    # turn nan into 0 -- this will just be outside computation area for q
+    zi[np.isnan(zi)] = 0
     # contour the gridded outputs, plotting dots at the randomly spaced data points.
     #CS = plt.contour(xi,yi,zi,15,linewidths=0.5,colors='k') -- don't need lines
-    CS = plt.contourf(xi/1000.,yi/1000.,zi,100,cmap=plt.cm.jet)
+    CS = plt.contourf(xi/1000., yi/1000., zi, 100, cmap=plt.cm.jet)
     plt.colorbar() # draw colorbar
     # plot model points.
-    plt.scatter(self.x/1000., self.y/1000., marker='.', c='k', s=1)
+    # Computed at
+    plt.plot(x/1000., y/1000., 'o', markerfacecolor='.6', markeredgecolor='.6', markersize=1)
+    # Load sources (overlay computed at)
+    plt.plot(self.x/1000., self.y/1000., 'o', markerfacecolor='.2', markeredgecolor='.2', markersize=1)
     #plt.hexbin(self.x, self.y, C=self.w) -- show colors on points -- harder to see
     plt.xlabel('x [km]')
     plt.ylabel('y [km]')
@@ -584,6 +589,7 @@ class Plotting(object):
     plt.ylim( (yi[0]/1000., yi[-1]/1000.) )
     # Title
     plt.title(titletext, fontsize=16)
+
 
 class WhichModel(Utility):
   def __init__(self, filename=None):
@@ -1107,7 +1113,7 @@ class Flexure(Isostasy):
         self.yw
       except:
         try:
-          self.yw = self.configGet('string', "input", "yw", optional=True)
+          self.yw = self.configGet('string', "input", "yw", optional=True )
           if self.yw == '':
             self.yw = None
         except:
