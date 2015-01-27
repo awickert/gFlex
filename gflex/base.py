@@ -253,8 +253,8 @@ class Utility(object):
     #    sin(theta) * sin(theta') * cos(theta-theta') + cos(phi) * cos(phi')
     # distance = radius * arc length
      
-    cos_arc_length = np.sin(theta1rad) * np.sin(theta2rad) * 
-                     math.cos(lambda1rad - lambda2rad) +
+    cos_arc_length = np.sin(theta1rad) * np.sin(theta2rad) * \
+                     math.cos(lambda1rad - lambda2rad) + \
                      np.cos(theta1rad)*math.cos(theta2rad)
     arc = np.acos( cos )
  
@@ -262,6 +262,55 @@ class Utility(object):
     
     return great_circle_distance
 
+  def define_points_grid(self):
+    """
+    This is experimental code that could be used in the spatialDomainNoGrid
+    section to build a grid of points on which to generate the solution.
+    However, the current development plan (as of 27 Jan 2015) is to have the 
+    end user supply the list of points where they want a solution (and/or for 
+    it to be provided in a more automated way by GRASS GIS). But because this 
+    (untested) code may still be useful, it will remain as its own function 
+    here.
+    It used to be in f2d.py.
+    """
+    # Grid making step
+    # In this case, an output at different (x,y), e.g., on a grid, is desired
+    # First, see if there is a need for a grid, and then make it
+    # latlon arrays must have a pre-set grid
+    if self.latlon == False:
+      # Warn that any existing grid will be overwritten
+      try:
+        self.dx
+        if self.Quiet == False:
+          print "dx and dy being overwritten -- supply a full grid"
+      except:
+        try:
+          self.dy
+          if self.Quiet == False:
+            print "dx and dy being overwritten -- supply a full grid"
+        except:
+          pass
+      # Boundaries
+      n = np.max(self.y) + self.alpha
+      s = np.min(self.y) - self.alpha
+      w = np.min(self.x) + self.alpha
+      e = np.max(self.y) - self.alpha
+      # Grid spacing
+      dxprelim = self.alpha/50. # x or y
+      nx = np.ceil((e-w)/dxprelim)
+      ny = np.ceil((n-s)/dxprelim)
+      dx = (e-w) / nx
+      dy = (n-s) / ny
+      self.dx = self.dy = (dx+dy)/2. # Average of these to create a 
+                                     # square grid for more compatibility
+      self.xw = np.linspace(w, e, nx)
+      self.yw = np.linspace(s, n, ny)
+    else:
+      print "Lat/lon xw and yw must be pre-set: grid will not be square"
+      print "and may run into issues with poles, so to ensure the proper"
+      print "output points are chosen, the end user should do this."
+      sys.exit()
+    
 class Plotting(object):
   # Plot, if desired
   # 1D all here, 2D in functions
@@ -1032,14 +1081,18 @@ class Flexure(Isostasy):
       self.xw
     except:
       self.xw = None
-    try:
-      self.yw:
-    except:
-      self.xw = None
-    if (self.xw is not None and self.yw is None) \
-      or (self.xw is None and self.yw is not None):
-      sys.exit("SAS_NG output at specified points requires both xw and yw to be defined")
-    # If they are None, now (post-check) define them to be x and y
-    elif self.xw is None and self.yw is None
-      self.xw = self.x.copy()
-      self.yw = self.y.copy()
+    if self.dimension == 1:
+      if self.xw is None:
+        self.xw = self.x.copy()
+    elif self.dimension == 2:
+      try:
+        self.yw
+      except:
+        self.yw = None
+      if (self.xw is not None and self.yw is None) \
+        or (self.xw is None and self.yw is not None):
+        sys.exit("SAS_NG output at specified points requires both xw and yw to be defined")
+      # If they are None, now (post-check) define them to be x and y
+      elif self.xw is None and self.yw is None:
+        self.xw = self.x.copy()
+        self.yw = self.y.copy()

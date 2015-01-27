@@ -67,11 +67,11 @@ class F2D(Flexure):
     sys.exit("The fast Fourier transform solution method is not yet implemented.")
 
   def SAS(self):
-    self.spatialDomainVars()
+    self.spatialDomainVarsSAS()
     self.spatialDomainGridded()
 
   def SAS_NG(self):
-    self.spatialDomainVars()
+    self.spatialDomainVarsSAS()
     self.spatialDomainNoGrid()
 
   
@@ -85,7 +85,7 @@ class F2D(Flexure):
 
   # SETUP
 
-  def spatialDomainVars(self):
+  def spatialDomainVarsSAS(self):
     self.D = self.E*self.Te**3/(12*(1-self.nu**2)) # Flexural rigidity
     self.alpha = (self.D/(self.drho*self.g))**.25 # 2D flexural parameter
     self.coeff = self.alpha**2/(2*np.pi*self.D)
@@ -137,70 +137,16 @@ class F2D(Flexure):
       print "w = "
       print self.w.shape
     
-    if self.yw is None:
-      # Check already exists to ensure that xw and yw either both are or both
-      # are not defined.
-      # But checking yw because that is more likely to accidentally be 
-      # forgotten (xw always required)
-      # If not defined, then just calculate it at the x,y points.
-      # This was the only option before.
-      for i in range(len(self.x)):
-        # More efficient if we have created some 0-load points
-        # (e.g., for where we want output)
-        if self.q[i] != 0:
-          # Create array of distances from point of load
-          r = ( (self.x - self.x[i])**2 + (self.y - self.y[i])**2 )**.5
-          # Compute and sum deflection
-          self.w += self.q[i] * self.coeff * kei(r/self.alpha)
-    else:
-      # Grid making step
-      # In this case, an output at different (x,y), e.g., on a grid, is desired
-      # First, see if there is a need for a grid, and then make it
-      # latlon arrays must have a pre-set grid
-      if self.latlon == False:
-        # Warn that any existing grid will be overwritten
-        try:
-          self.dx
-          if self.Quiet == False:
-            print "dx and dy being overwritten -- supply a full grid"
-        except:
-          try:
-            self.dy
-            if self.Quiet == False:
-              print "dx and dy being overwritten -- supply a full grid"
-          except:
-            pass
-        # Boundaries
-        n = np.max(self.y) + self.alpha
-        s = np.min(self.y) - self.alpha
-        w = np.min(self.x) + self.alpha
-        e = np.max(self.y) - self.alpha
-        # Grid spacing
-        dxprelim = self.alpha/50. # x or y
-        nx = np.ceil((e-w)/dxprelim)
-        ny = np.ceil((n-s)/dxprelim)
-        dx = (e-w) / nx
-        dy = (n-s) / ny
-        self.dx = self.dy = (dx+dy)/2. # Average of these to create a 
-                                       # square grid for more compatibility
-        self.xw = np.linspace(w, e, nx)
-        self.yw = np.linspace(s, n, ny)
-      else:
-        print "Lat/lon xw and yw must be pre-set: grid will not be square"
-        print "and may run into issues with poles, so to ensure the proper"
-        print "output points are chosen, the end user should do this."
-        sys.exit()
-      # Now calculate at the points
-      for i in range(len(self.x)):
-        # More efficient if we have created some 0-load points
-        # (e.g., for where we want output)
-        if self.q[i] != 0:
-          # Create array of distances from point of load
-          r = ( (self.x - self.x[i])**2 + (self.y - self.y[i])**2 )**.5
-          # Compute and sum deflection
-          self.w += self.q[i] * self.coeff * kei(r/self.alpha)
+    for i in range(len(self.x)):
+      # More efficient if we have created some 0-load points
+      # (e.g., for where we want output)
+      if self.q[i] != 0:
+        # Create array of distances from point of load
+        r = ( (self.xw - self.x[i])**2 + (self.yw - self.y[i])**2 )**.5
+        self.w += self.q[i] * self.coeff * kei(r/self.alpha)
+        # Compute and sum deflection
+        self.w += self.q[i] * self.coeff * kei(r/self.alpha)
 
-    
   ## FINITE DIFFERENCE
   ######################
   
