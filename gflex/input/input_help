@@ -1,24 +1,27 @@
 ; All units are SI
 
 [mode]
-model=flexure ; "flexure" or "PrattAiry"
 dimension=2 ; 1 (line) or 2 (surface) dimensions
 method=SPA ; Solution method: FD (Finite Difference), FFT (Fast Fourier 
-;          ; Transform, not yet implemented), SPA (Spatial domain analytical 
-;          ; solutions), or SPA_NG (SPA, but do not require a uniform grid
+;          ; Transform, not yet implemented), SAS (Spatial domain analytical 
+;          ; solutions), or SAS_NG (SPA, but do not require a uniform grid
 ;          ; - NG = "no grid")
-;          ; For SPA_NG, 1D data must be provided and will be returned in 
+;          ; For SAS_NG, 1D data must be provided and will be returned in 
 ;          ; two columns: (x,q0) --> (x,w). 2D data are similar, except
 ;          ; will be of the form (x,y,[q0/in or w/out])
+;          ; I am working on gridded output for these, so this might change
+;          ; in the future.
 ;          ; Both the FFT and SPA techniques rely on superposition 
 ;          ; of solutions, because they can be combined linearly, whether in 
 ;          ; the spectral or the spatial domain)
-;          ; Required only for flexural solutions
+;
+PlateSolutionType=vWC1994 ; Plate solutions can be:
+;                         ; * vWC1994 (best), 
+;                         ; * LinearTeVariationsOnly (not good, but for testing), or
+;                         ; * G2009 (from Govers et al., 2009; not bad, but not as robust as vWC1994)
 
 [parameter]
-; Young's modulus, Poisson's ratio, and elastic thickness (whether input 
-; as a scalar or a grid) are required only for the flexural isostatic solutions
-YoungsModulus=1.0E11
+YoungsModulus=6.5E10
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
@@ -28,19 +31,19 @@ InfillMaterialDensity=0 ; This is the density of material (e.g., air, water)
 ;                       ; density of infilling material, for example, at a 
 ;                       ; subsiding shoreline, you must instead iterate (see
 ;                       ; [numerical], below).
-ElasticThickness=10000 ; Used for FFT, SPA, and SPA_NG solutions (see "method", 
-;                      ; above); Finite differene solutions require a grid of  
-;                      ; elastic thicknesses because they can handle nonuniform  
-;                      ; elastic thickness (see [input], below)
 
 [input]
-; space-delimited array of loads (rho*g*h)
-; If the solution method (above) is selected as "SPA_NG", then this file
+; space-delimited array of loads
+; stresses (rho*g*h) if gridded (dx (and if applicable, dy) will be applied
+;   to convert them into masses
+; forces (rho*g*h*Area) if not gridded (SAS_NG)
+; If the solution method (above) is selected as "SAS_NG", then this file
 ; will actually be of the format (x,[y],q0) and the code will sort it out.
+; (Once again, working on a gridded output option for ungridded inputs)
 Loads=q0_sample/2D/central_square_load.txt
 ;
-; space-delimited array of elastic thicknesses; used for the finite difference 
-; solution
+; scalar value or space-delimited array of elastic thickness(es)
+; array used for finite difference solutions
 ElasticThickness=Te_sample/2D/10km_const.txt
 
 [output]
@@ -57,8 +60,37 @@ DeflectionOut=tmpout.txt
 Plot=both
 
 [numerical]
-GridSpacing=20000
-; Iterates until this is the difference between two subsequent iterations
+GridSpacing_x= ; dx [m]
+;
+; Boundary conditions can be:
+; (FD): 0Slope0Shear, 0Moment0Shear, Dirichlet0, Mirror, or Periodic
+; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
+BoundaryCondition_West=
+BoundaryCondition_East=
+;
+; Solver can be direct or iterative
+Solver=
+;
+; If you have chosen an iterative solution type ("Solver"), it will iterate
+; until this is the difference between two subsequent iterations.
 ; Set as 0 if you don't want to iterate
-; Iteration not yet implemented
-convergence=1E-3
+convergence=1E-3 ; Tolerance between iterations [m]
+
+; The coefficient array is generated as matrix "A" in the "A*W = Q" solution
+; for the finite difference option
+CoeffArray= ; Load this coefficient array (FD) instead of making a new one.
+;           ; (don't need Te, and probably not b.c.'s)
+
+[numerical2D]
+GridSpacing_y= ; dy [m]
+;
+; Boundary conditions can be:
+; (FD): 0Slope0Shear, 0Moment0Shear, Dirichlet0, Mirror, or Periodic
+; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
+BoundaryCondition_North=
+BoundaryCondition_South=
+
+[verbosity]
+Verbose= ; true/false
+Debug= ; true/false
+Quiet= ; true/false -- total silence if True
