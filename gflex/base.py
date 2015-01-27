@@ -638,6 +638,10 @@ class Isostasy(Utility, Plotting):
     # And also set default verbosity
     self.Verbose = True
     self.Debug = False
+    
+    # Default values for lat/lon usage -- defaulting not to use it
+    self.latlon = False
+    self.PlanetaryRadius = None
 
   def initialize(self, filename=None):
     # Values from configuration file
@@ -778,6 +782,14 @@ class Isostasy(Utility, Plotting):
           print self.q0
           print "Exiting."
           sys.exit()
+          
+    # See if it wants to be run in lat/lon
+    # Could put this in 2D section, but could imagine an eventual desire
+    # to change this and have 1D lat/lon profiles as well.
+    # So while the options will be under "numerical2D", this place here will 
+    # remain held for an eventual future.
+    self.latlon = self.configGet("string", "numerical2D", "latlon", optional=True)
+    self.PlanetaryRadius = self.configGet("string", "numerical2D", "PlanetaryRadius", optional=True)
 
     # Plotting selection
     self.plotChoice = self.configGet("string", "output", "Plot", optional=True)

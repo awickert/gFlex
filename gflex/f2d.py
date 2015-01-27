@@ -10,10 +10,6 @@ class F2D(Flexure):
   def initialize(self, filename=None):
     self.dimension = 2 # Set it here in case it wasn't set for selection before
     # Default lat/lon solutions to False (i.e. not happening)
-    try:
-      self.latlon
-    except:
-      self.latlon = False
     super(F2D, self).initialize()
     if self.Verbose: print 'F2D initialized'
 
@@ -148,8 +144,8 @@ class F2D(Flexure):
         # (e.g., for where we want output)
         if self.q[i] != 0:
           # Create array of distances from point of load
-          r = greatCircleDistance(lat1=self.y[i], long1=self.x[i], \
-                                  lat2=self.xw, long2=self.yw, radius=self.planet_radius)
+          r = self.greatCircleDistance(lat1=self.y[i], long1=self.x[i], \
+                                  lat2=self.xw, long2=self.yw, radius=self.PlanetaryRadius)
           self.w += self.q[i] * self.coeff * kei(r/self.alpha)
           # Compute and sum deflection
           self.w += self.q[i] * self.coeff * kei(r/self.alpha)
