@@ -5,6 +5,7 @@ except:
   import gflex # first time running
 
 from matplotlib import pyplot as plt
+import numpy as np
 
 # Looks like it wants to be an input file!
 filename = '../gflex/input/input_f1d_test' # it works for usage (1) and (2)
