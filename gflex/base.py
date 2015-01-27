@@ -1123,7 +1123,7 @@ class Flexure(Isostasy):
         or (self.xw is None and self.yw is not None):
         sys.exit("SAS_NG output at specified points requires both xw and yw to be defined")
       # All right, now just finish defining
-      if type(self.xw) == str:
+      if type(self.yw) == str:
         self.yw = self.loadFile(self.yw)
       elif self.yw is None:
           self.yw = self.y.copy()

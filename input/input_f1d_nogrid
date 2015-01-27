@@ -14,11 +14,11 @@ InfillMaterialDensity=0
 [input]
 Loads=q0_sample/1D/irregular_grid_test.txt
 ElasticThickness=20000
-xw=
+xw=xy_sample/x1D_-50--170km100pts.txt
 
 [output]
 DeflectionOut=
-Plot=w
+Plot=both
 
 [numerical]
 GridSpacing_x=6000

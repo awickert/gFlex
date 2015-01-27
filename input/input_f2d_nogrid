@@ -18,8 +18,8 @@ Loads=q0_sample/2D/xyq_grid_SAS_NG.txt
 ElasticThickness=25000
 ; xw and yw are vectors of desired output points for the SAS_NG method.
 ; they are ignored if a different solution method is chosen.
-xw=
-yw=
+xw=xy_sample/xw_-500--1500km20pts.txt
+yw=xy_sample/yw_-500--1500km20pts.txt
 
 [output]
 ; DeflectionOut is a file path for an ASCII grid of w

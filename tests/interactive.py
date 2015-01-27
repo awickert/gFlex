@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 # Looks like it wants to be an input file!
-filename = '../input/input_f2d' # it works for usage (1) and (2)
+filename = '../input/input_f2d_nogrid' # it works for usage (1) and (2)
 obj = gflex.WhichModel(filename)
 
 ## SET MODEL TYPE AND DIMENSIONS HERE ##
@@ -21,7 +21,24 @@ elif obj.dimension == 2:
 self = obj # easier interaction
 
 #cm = obj.coeff_matrix.copy()
-obj.set_value('CoeffArray', cm)
+#obj.set_value('CoeffArray', cm)
+
+"""
+# Generate points to calculate deflections from SAS_NG
+x = np.linspace(-500E3, 1500E3, 20)
+y = np.linspace(-500E3, 1500E3, 10)
+X, Y = np.meshgrid(x,y)
+x = np.reshape(X, -1)
+y = np.reshape(Y, -1)
+
+obj.set_value('xw', x)
+obj.set_value('yw', y)
+"""
+
+"""
+x = np.linspace(-50E3, 170E3, 100)
+obj.set_value('xw', x)
+"""
 
 obj.initialize(filename)
 
