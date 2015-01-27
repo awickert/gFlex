@@ -20,7 +20,6 @@ DeflectionOut=
 ; tmpout.txt
 ; Plot choices are q, w, both, or (for 1D) combo
 Plot=combo
-;combo
 
 [numerical]
 GridSpacing_x=6000
