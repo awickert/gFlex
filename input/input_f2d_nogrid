@@ -43,8 +43,10 @@ CoeffArray=
 GridSpacing_y=4000 ; dy
 BoundaryCondition_North=0Moment0Shear
 BoundaryCondition_South=Mirror
+latlon= ; true/false: flag to enable lat/lon input. Defaults False
+PlanetaryRadius= ; radius of planet [m], for lat/lon solutions
 
 [verbosity]
 Verbose=false
 Debug=false
-
+Quiet=false

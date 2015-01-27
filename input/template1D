@@ -14,7 +14,7 @@ InfillMaterialDensity=0
 [input]
 Loads=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
 ElasticThickness=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
-; xw is a vectors of desired output points for the SAS_NG method.
+; xw is a vector of desired output points for the SAS_NG method.
 ; it is ignored if a different solution method is chosen.
 xw=
 
@@ -32,5 +32,6 @@ Solver=direct
 ConvergenceTolerance=<!!!!!!!!!!!!! ADD THIS (METERS DIFFERENCE BETWEEN ITERATIONS) !!!!!!!!!!!!!>
 
 [verbosity]
-Verbose=False
-Debug=False
+Verbose= ; true/false: defaults to true
+Debug= ; true/false: defaults to false
+Quiet= ; true/false: defaults to false

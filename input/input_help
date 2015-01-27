@@ -91,8 +91,12 @@ GridSpacing_y= ; dy [m]
 ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 BoundaryCondition_North=
 BoundaryCondition_South=
+; 
+; Flag to enable lat/lon input. By default, this is false
+latlon= ; true/false: flag to enable lat/lon input. Defaults False.
+PlanetaryRadius= ; radius of planet [m], for lat/lon solutions
 
 [verbosity]
-Verbose= ; true/false
-Debug= ; true/false
-Quiet= ; true/false -- total silence if True
+Verbose= ; true/false. Defaults to True.
+Debug= ; true/false. Defaults to False.
+Quiet= ; true/false -- total silence if True. Defaults to False.

@@ -43,7 +43,6 @@ BoundaryCondition_North=Mirror
 BoundaryCondition_South=0Slope0Shear
 
 [verbosity]
-Verbose=false
-Debug=false
-Quiet=false
-
+Verbose=
+Debug=
+Quiet=

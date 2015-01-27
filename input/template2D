@@ -46,9 +46,11 @@ ConvergenceTolerance=1E-3
 GridSpacing_y= ; dy [m]
 BoundaryCondition_North=
 BoundaryCondition_South=
+latlon= ; true/false: flag to enable lat/lon input
+PlanetaryRadius= ; radius of planet [m], for lat/lon solutions
 
 [verbosity]
-Verbose= ; true/false
-Debug= ; true/false
-Quiet= ; true/false
+Verbose= ; true/false: defaults to true
+Debug= ; true/false: defaults to false
+Quiet= ; true/false: defaults to false
 

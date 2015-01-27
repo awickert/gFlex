@@ -17,13 +17,11 @@ ElasticThickness=Te_sample/1D/8km_20km_ramp.txt
 
 [output]
 DeflectionOut=
-; tmpout.txt
 ; Plot choices are q, w, both, or (for 1D) combo
 Plot=combo
 
 [numerical]
 GridSpacing_x=6000
-GridSpacing_y=
 BoundaryCondition_West=Periodic
 BoundaryCondition_East=Periodic
 ; Solver can be direct or iterative
