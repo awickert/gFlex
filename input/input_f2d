@@ -15,10 +15,10 @@ InfillMaterialDensity=0
 
 [input]
 ; Path to input load array
-Loads=/home/awickert/models/flexure/gflex/input/q0_sample/2D/diag.txt
+Loads=q0_sample/2D/diag.txt
 ; Elastic thickness grid goes here; cannot coexist with a constant Te
 ; defined above
-ElasticThickness=/home/awickert/models/flexure/gflex/input/Te_sample/2D/fault_24-30.txt
+ElasticThickness=Te_sample/2D/fault_24-30.txt
 
 [output]
 ; DeflectionOut is a file path for an ASCII grid of w

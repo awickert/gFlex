@@ -12,8 +12,8 @@ MantleDensity=3300
 InfillMaterialDensity=0
 
 [input]
-Loads=/home/awickert/models/flexure/gflex/input/q0_sample/1D/central_block.txt
-ElasticThickness=/home/awickert/models/flexure/gflex/input/Te_sample/1D/8km_20km_ramp.txt
+Loads=q0_sample/1D/central_block.txt
+ElasticThickness=Te_sample/1D/8km_20km_ramp.txt
 
 [output]
 DeflectionOut=
