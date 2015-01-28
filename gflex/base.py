@@ -379,7 +379,7 @@ class Plotting(object):
     #  self.plotChoice = None
     if self.plotChoice:
       if self.Verbose: print "Starting to plot " + self.plotChoice
-      if self.dimension==1:
+      if self.dimension == 1:
         if self.plotChoice == 'q':
           plt.figure(1)
           if self.method == 'SAS_NG':
@@ -476,7 +476,7 @@ class Plotting(object):
             print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
             print "Possible input strings are: q, w, both, and (for 1D) combo"
             print "Unable to produce plot."
-      elif self.dimension==2:
+      elif self.dimension == 2:
         if self.plotChoice == 'q':
           fig = plt.figure(1, figsize=(8,6))
           if self.method != 'SAS_NG':
@@ -517,9 +517,14 @@ class Plotting(object):
     """
     Plot if you want to - for troubleshooting - 1 figure
     """
-    plt.imshow(z, extent=(0, self.dx/1000.*z.shape[0], self.dy/1000.*z.shape[1], 0)) #,interpolation='nearest'
-    plt.xlabel('x [km]', fontsize=12)
-    plt.ylabel('y [km]', fontsize=12)
+    if self.latlon:
+      plt.imshow(z, extent=(0, self.dx*z.shape[0], self.dy*z.shape[1], 0)) #,interpolation='nearest'
+      plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
+      plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
+    else:
+      plt.imshow(z, extent=(0, self.dx/1000.*z.shape[0], self.dy/1000.*z.shape[1], 0)) #,interpolation='nearest'
+      plt.xlabel('x [km]', fontsize=12, fontweight='bold')
+      plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
 
     plt.title(titletext,fontsize=16)
@@ -534,16 +539,26 @@ class Plotting(object):
 
     plt.subplot(211)
     plt.title('Load thickness, mantle equivalent [m]',fontsize=16)
-    plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.qs.shape[0], self.dy/1000.*self.qs.shape[1], 0))
-    plt.xlabel('x [km]', fontsize=12, fontweight='bold')
-    plt.ylabel('y [km]', fontsize=12, fontweight='bold')
+    if self.latlon:
+      plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx*self.qs.shape[0], self.dy*self.qs.shape[1], 0))
+      plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
+      plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
+    else:
+      plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.qs.shape[0], self.dy/1000.*self.qs.shape[1], 0))
+      plt.xlabel('x [km]', fontsize=12, fontweight='bold')
+      plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
 
     plt.subplot(212)
     plt.title('Deflection [m]')
-    plt.imshow(self.w, extent=(0, self.dx/1000.*self.w.shape[0], self.dy/1000.*self.w.shape[1], 0))
-    plt.xlabel('x [km]', fontsize=12, fontweight='bold')
-    plt.ylabel('y [km]', fontsize=12, fontweight='bold')
+    if self.latlon:
+      plt.imshow(self.w, extent=(0, self.dx*self.w.shape[0], self.dy*self.w.shape[1], 0))
+      plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
+      plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
+    else:
+      plt.imshow(self.w, extent=(0, self.dx/1000.*self.w.shape[0], self.dy/1000.*self.w.shape[1], 0))
+      plt.xlabel('x [km]', fontsize=12, fontweight='bold')
+      plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
   
   def xyzinterp(self, x, y, z, titletext):
@@ -581,19 +596,34 @@ class Plotting(object):
     zi[np.isnan(zi)] = 0
     # contour the gridded outputs, plotting dots at the randomly spaced data points.
     #CS = plt.contour(xi,yi,zi,15,linewidths=0.5,colors='k') -- don't need lines
-    CS = plt.contourf(xi/1000., yi/1000., zi, 100, cmap=plt.cm.jet)
+    if self.latlon:
+      CS = plt.contourf(xi, yi, zi, 100, cmap=plt.cm.jet)
+    else:
+      CS = plt.contourf(xi/1000., yi/1000., zi, 100, cmap=plt.cm.jet)
     plt.colorbar() # draw colorbar
     # plot model points.
     # Computed at
-    plt.plot(x/1000., y/1000., 'o', markerfacecolor='.6', markeredgecolor='.6', markersize=1)
-    # Load sources (overlay computed at)
-    plt.plot(self.x/1000., self.y/1000., 'o', markerfacecolor='.2', markeredgecolor='.2', markersize=1)
-    #plt.hexbin(self.x, self.y, C=self.w) -- show colors on points -- harder to see
-    plt.xlabel('x [km]')
-    plt.ylabel('y [km]')
+    if self.latlon:
+      plt.plot(x, y, 'o', markerfacecolor='.6', markeredgecolor='.6', markersize=1)
+      plt.plot(self.x, self.y, 'o', markerfacecolor='.2', markeredgecolor='.2', markersize=1)
+    else:
+      plt.plot(x/1000., y/1000., 'o', markerfacecolor='.6', markeredgecolor='.6', markersize=1)
+      # Load sources (overlay computed at)
+      plt.plot(self.x/1000., self.y/1000., 'o', markerfacecolor='.2', markeredgecolor='.2', markersize=1)
+      #plt.hexbin(self.x, self.y, C=self.w) -- show colors on points -- harder to see
+    if self.latlon:
+      plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
+      plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
+    else:
+      plt.xlabel('x [km]', fontsize=12, fontweight='bold')
+      plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     # Limits -- to not get messed up by points (view wants to be wider so whole point visible)
-    plt.xlim( (xi[0]/1000., xi[-1]/1000.) )
-    plt.ylim( (yi[0]/1000., yi[-1]/1000.) )
+    if self.latlon:
+      plt.xlim( (xi[0], xi[-1]) )
+      plt.ylim( (yi[0], yi[-1]) )
+    else:
+      plt.xlim( (xi[0]/1000., xi[-1]/1000.) )
+      plt.ylim( (yi[0]/1000., yi[-1]/1000.) )
     # Title
     plt.title(titletext, fontsize=16)
 
