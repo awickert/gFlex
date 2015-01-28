@@ -72,17 +72,17 @@ class BmiGflex(object):
       self._shape = self._model.q0.shape
     else:
       if self._model.dimension == 1:
-        self.model.qA_NG = np.vstack((self._model.x, self._model.q0) # Is this poor form? should I use setters?
+        self.model.qA_NG = np.vstack((self._model.x, self._model.q0)) # Is this poor form? should I use setters?
       elif self._model.dimension == 2:
-        self.model.qA_NG = np.vstack((self._model.x, self._model.y, self._model.q0) # Is this poor form? should I use setters?
-        self._coords = np
+        self.model.qA_NG = np.vstack((self._model.x, self._model.y, self._model.q0)) # Is this poor form? should I use setters?
+        # self._coords = np # START WORK HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!???????????
       self._shape = self._model.q.shape
 
     self._origin = (0., ) * self._model.dimension
     self._w = np.empty_like(self._model.q0)
 
     self._values = {
-        'lithosphere__vertical_displacement', : self.w,
+        'lithosphere__vertical_displacement' : self.w,
         'earth_material_load__magnitude_of_stress' : self._model.qs,
         'earth_material_load__x_positions' : self._model.x,
         'earth_material_load__y_positions' : self._model.y,
