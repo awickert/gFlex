@@ -441,9 +441,9 @@ class Plotting(object):
             ax.plot(self.x/1000., self.qs/(self.rho_m*self.g) + self.w,'g-',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
           # Plot deflection
           if self.method == "SAS_NG":
-            ax.plot(xkm, self.w, 'ko-', linewidth=2, label="Deflection [m mantle equivalent]")
+            ax.plot(self.xw/1000., self.w, 'ko-', linewidth=2, label="Deflection [m mantle equivalent]")
           else:
-            ax.plot(xkm,self.w, 'k-', linewidth=2, label="Deflection [m mantle equivalent]")
+            ax.plot(self.x/1000.,self.w, 'k-', linewidth=2, label="Deflection [m mantle equivalent]")
           # Set y min to equal to the absolute value maximum of y max and y min
           # (and therefore show isostasy better)
           yabsmax = max(abs(np.array(plt.ylim())))
@@ -799,7 +799,8 @@ class Isostasy(Utility, Plotting):
       self.q0 = None
     if self.q0 == '':
       self.q0 = None
-    self.q0 = self.loadFile(self.q0) # Won't do this if q0 is None
+    if type(self.q0) == str:
+      self.q0 = self.loadFile(self.q0) # Won't do this if q0 is None
           
     # Check consistency of dimensions
     if self.q0 is not None:
