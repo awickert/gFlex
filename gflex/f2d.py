@@ -144,8 +144,7 @@ class F2D(Flexure):
         # (e.g., for where we want output)
         if self.q[i] != 0:
           # Create array of distances from point of load
-          r = self.greatCircleDistance(lat1=self.y[i], long1=self.x[i], \
-                                  lat2=self.xw, long2=self.yw, radius=self.PlanetaryRadius)
+          r = self.greatCircleDistance(lat1=self.y[i], long1=self.x[i], lat2=self.yw, long2=self.xw, radius=self.PlanetaryRadius)
           self.w += self.q[i] * self.coeff * kei(r/self.alpha)
           # Compute and sum deflection
           self.w += self.q[i] * self.coeff * kei(r/self.alpha)

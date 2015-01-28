@@ -237,14 +237,14 @@ class Utility(object):
     if val_string=='Verbosity' or val_string=='Verbose':
       return self.Verbose
 
-  def greatCircleDistance(lat1, long1, lat2, long2, radius):
+  def greatCircleDistance(self, lat1, long1, lat2, long2, radius):
     """
     Returns the great circle distance between two points.
     Useful when using the SAS_NG solution in lat/lon coordinates
     Modified from http://www.johndcook.com/blog/python_longitude_latitude/
     It should be able to take numpy arrays.
     """
- 
+
     # Convert latitude and longitude to
     # spherical coordinates in radians.
     degrees_to_radians = np.pi/180.0
@@ -266,9 +266,9 @@ class Utility(object):
     # distance = radius * arc length
      
     cos_arc_length = np.sin(theta1rad) * np.sin(theta2rad) * \
-                     math.cos(lambda1rad - lambda2rad) + \
-                     np.cos(theta1rad)*math.cos(theta2rad)
-    arc = np.acos( cos_arc_length )
+                     np.cos(lambda1rad - lambda2rad) + \
+                     np.cos(theta1rad) * np.cos(theta2rad)
+    arc = np.arccos( cos_arc_length )
  
     great_circle_distance = radius * arc
     
@@ -789,7 +789,7 @@ class Isostasy(Utility, Plotting):
     # So while the options will be under "numerical2D", this place here will 
     # remain held for an eventual future.
     self.latlon = self.configGet("string", "numerical2D", "latlon", optional=True)
-    self.PlanetaryRadius = self.configGet("string", "numerical2D", "PlanetaryRadius", optional=True)
+    self.PlanetaryRadius = self.configGet("float", "numerical2D", "PlanetaryRadius", optional=True)
 
     # Plotting selection
     self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
