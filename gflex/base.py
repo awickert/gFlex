@@ -1099,6 +1099,16 @@ class Flexure(Isostasy):
       # q0 is the parsable input to either a qs grid or contains (x,(y),q)
       del self.q0
     if self.dimension == 2:
+      # Define a stress-based qs = q0
+      # But only if the latter has not already been defined
+      # (e.g., by the getters and setters)
+      try:
+        self.qs
+      except:
+        self.qs = self.q0.copy()
+        # Remove self.q0 to avoid issues with multiply-defined inputs
+        # q0 is the parsable input to either a qs grid or contains (x,(y),q)
+        del self.q0
       from scipy.special import kei
 
   def SAS_NG(self):
