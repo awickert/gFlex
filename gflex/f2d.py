@@ -9,7 +9,6 @@ from scipy.special import kei
 class F2D(Flexure):
   def initialize(self, filename=None):
     self.dimension = 2 # Set it here in case it wasn't set for selection before
-    # Default lat/lon solutions to False (i.e. not happening)
     super(F2D, self).initialize()
     if self.Verbose: print 'F2D initialized'
 
@@ -19,19 +18,19 @@ class F2D(Flexure):
     if self.Verbose:
       print 'Solver start time [Unix epoch]:', self.solver_start_time
       
-    if self.method == 'FD':
+    if self.Method == 'FD':
       # Finite difference
       super(F2D, self).FD()
       self.method_func = self.FD
-    elif self.method == 'FFT':
+    elif self.Method == 'FFT':
       # Fast Fourier transform
       super(F2D, self).FFT()
       self.method_func = self.FFT
-    elif self.method == "SAS":
+    elif self.Method == "SAS":
       # Superposition of analytical solutions
       super(F2D, self).SAS()
       self.method_func = self.SAS
-    elif self.method == "SAS_NG":
+    elif self.Method == "SAS_NG":
       # Superposition of analytical solutions,
       # nonuniform points (no grid)
       super(F2D, self).SAS_NG()
@@ -1525,7 +1524,7 @@ class F2D(Flexure):
       print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
     
     q0vector = self.qs.reshape(-1, order='C')
-    if self.solver == "iterative" or self.solver == "Iterative":
+    if self.Solver == "iterative" or self.Solver == "Iterative":
       if self.Debug:
         print "Using generalized minimal residual method for iterative solution"
       if self.Verbose:
@@ -1533,7 +1532,7 @@ class F2D(Flexure):
       wvector = scipy.sparse.linalg.isolve.lgmres(self.coeff_matrix, q0vector)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
       wvector = wvector[0] # Reach into tuple to get my array back
     else:
-      if self.solver == "direct" or self.solver == "Direct":
+      if self.Solver == "direct" or self.Solver == "Direct":
         if self.Debug:
           print "Using direct solution with UMFpack"
       else:

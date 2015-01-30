@@ -220,7 +220,7 @@ class Plotting(object):
       if self.dimension == 1:
         if self.plotChoice == 'q':
           plt.figure(1)
-          if self.method == 'SAS_NG':
+          if self.Method == 'SAS_NG':
             plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
             plt.ylabel('Load volume, mantle equivalent [m$^3$]', fontsize=12, fontweight='bold')
           else:
@@ -231,7 +231,7 @@ class Plotting(object):
           plt.show()
         elif self.plotChoice == 'w':
           plt.figure(1)
-          if self.method == 'SAS_NG':
+          if self.Method == 'SAS_NG':
             plt.plot(self.xw/1000., self.w, 'k-')
           else:
             plt.plot(self.x/1000., self.w, 'k-')
@@ -242,7 +242,7 @@ class Plotting(object):
         elif self.plotChoice == 'both':
           plt.figure(1,figsize=(6,9))
           ax = plt.subplot(212)
-          if self.method == "SAS_NG":
+          if self.Method == "SAS_NG":
             ax.plot(self.xw/1000., self.w, 'k-')
           else:
             ax.plot(self.x/1000., self.w, 'k-')
@@ -250,7 +250,7 @@ class Plotting(object):
           ax.set_xlabel('Distance along profile [m]', fontsize=12, fontweight='bold')
           plt.subplot(211)
           plt.title('Loads and Lithospheric Deflections', fontsize=16)
-          if self.method == 'SAS_NG':
+          if self.Method == 'SAS_NG':
             plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
             plt.ylabel('Load volume, mantle equivalent [m$^3$]', fontsize=12, fontweight='bold')
             plt.xlim(ax.get_xlim())
@@ -265,20 +265,20 @@ class Plotting(object):
           titletext='Loads and Lithospheric Deflections'
           ax = fig.add_subplot(1,1,1)
           # Plot undeflected load
-          if self.method == "SAS_NG":
+          if self.Method == "SAS_NG":
             if self.Quiet == False:
               print "Combo plot can't work with SAS_NG! Don't have mechanism in place\nto calculate load width."
               print "Big problem -- what is the area represented by the loads at the\nextreme ends of the array?"
           else:
             ax.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'g--', linewidth=2, label="Load thickness [m mantle equivalent]")
           # Plot deflected load
-          if self.method == "SAS_NG":
+          if self.Method == "SAS_NG":
             pass
             #ax.plot(self.x/1000.,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
           else:
             ax.plot(self.x/1000., self.qs/(self.rho_m*self.g) + self.w,'g-',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
           # Plot deflection
-          if self.method == "SAS_NG":
+          if self.Method == "SAS_NG":
             ax.plot(self.xw/1000., self.w, 'ko-', linewidth=2, label="Deflection [m mantle equivalent]")
           else:
             ax.plot(self.x/1000.,self.w, 'k-', linewidth=2, label="Deflection [m mantle equivalent]")
@@ -290,7 +290,7 @@ class Plotting(object):
           # Plot title selector -- be infomrative
           try:
             self.Te
-            if self.method == "FD":
+            if self.Method == "FD":
               if type(self.Te) is np.ndarray:
                 if (self.Te != (self.Te).mean()).any():
                   plt.title(titletext,fontsize=16)       
@@ -317,7 +317,7 @@ class Plotting(object):
       elif self.dimension == 2:
         if self.plotChoice == 'q':
           fig = plt.figure(1, figsize=(8,6))
-          if self.method != 'SAS_NG':
+          if self.Method != 'SAS_NG':
             self.surfplot(self.qs/(self.rho_m*self.g), 'Load thickness, mantle equivalent [m]')
             plt.show()
           else:
@@ -326,7 +326,7 @@ class Plotting(object):
           plt.show()
         elif self.plotChoice == 'w':
           fig = plt.figure(1, figsize=(8,6))
-          if self.method != 'SAS_NG':
+          if self.Method != 'SAS_NG':
             self.surfplot(self.w, 'Deflection [m]')
             plt.show()
           else:
@@ -335,7 +335,7 @@ class Plotting(object):
           plt.show()
         elif self.plotChoice == 'both':
           plt.figure(1,figsize=(6,9))
-          if self.method != 'SAS_NG':
+          if self.Method != 'SAS_NG':
             self.twoSurfplots()
             plt.show()
           else:
@@ -589,9 +589,9 @@ class Flexure(Utility, Plotting):
       self.coeff_creation_time = None
       self.time_to_solve = None
       
-      self.method = self.configGet("string", "mode", "method")
+      self.Method = self.configGet("string", "mode", "method")
       # Boundary conditions
-      # This used to be nested inside an "if self.method == 'FD'", but it seems 
+      # This used to be nested inside an "if self.Method == 'FD'", but it seems 
       # better to define these to ensure there aren't mistaken impressions
       # about what they do for the SAS case
       # Not optional: flexural solutions can be very sensitive to b.c.'s
@@ -607,7 +607,7 @@ class Flexure(Utility, Plotting):
       self.rho_fill = self.configGet('float', "parameter", "InfillMaterialDensity")
 
       # Grid spacing
-      if self.method != 'SAS_NG':
+      if self.Method != 'SAS_NG':
         # No meaning for ungridded superimposed analytical solutions
         # From configuration file
         self.dx = self.configGet("float", "numerical", "GridSpacing_x")
@@ -616,7 +616,7 @@ class Flexure(Utility, Plotting):
 
       # Mode: solution method and type of plate solution (if applicable)
       if self.filename:
-        self.method = self.configGet("string", "mode", "method")
+        self.Method = self.configGet("string", "mode", "method")
         if self.dimension == 2:
           self.PlateSolutionType = self.configGet("string", "mode", "PlateSolutionType")
       
@@ -666,7 +666,7 @@ class Flexure(Utility, Plotting):
           
     # Check consistency of dimensions
     if self.q0 is not None:
-      if self.method != 'SAS_NG':
+      if self.Method != 'SAS_NG':
         if self.q0.ndim != self.dimension:
           print "Number of dimensions in loads file is inconsistent with"
           print "number of dimensions in solution technique."
@@ -735,7 +735,7 @@ class Flexure(Utility, Plotting):
   def bc_check(self):
     # Check that boundary conditions are acceptable with code implementation
     # Acceptable b.c.'s
-    if self.method == 'FD':
+    if self.Method == 'FD':
       # Check if a coefficient array has been defined
       # It would only be by a getter or setter;
       # no way to do I/O with this with present configuration files
@@ -853,12 +853,12 @@ class Flexure(Utility, Plotting):
       del self.q0
     # Is there a solver defined?
     try:
-      self.solver # See if it exists already
+      self.Solver # See if it exists already
     except:
       # Well, will fail if it doesn't see this, maybe not the most reasonable
       # error message.
       if self.filename:
-        self.solver = self.configGet("string", "numerical", "Solver")
+        self.Solver = self.configGet("string", "numerical", "Solver")
       else:
         sys.exit("No solver defined!")
     # Check consistency of size if coeff array was loaded

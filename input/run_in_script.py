@@ -5,23 +5,25 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 obj = gflex.F1D()
-obj.set_value('Quiet', True)
 
-obj.set_value('Method', 'FD')
-obj.set_value('PlateSolutionType', 'vWC1994')
-obj.set_value('Solver', 'direct')
+obj.Quiet = True
 
-obj.set_value('GravAccel', 9.8)
-obj.set_value('YoungsModulus', 65E10)
-obj.set_value('PoissonsRatio', .25)
-obj.set_value('MantleDensity', 3300.)
-obj.set_value('InfiillMaterialDensity', 0.)
+obj.Method = 'FD'
+obj.PlateSolutionType = 'vWC1994'
+obj.Solver = 'direct'
 
-obj.set_value('ElasticThickness', 35000.)
-obj.set_value('Loads_grid_stress', 1E6*np.ones(50))
-obj.set_value('GridSpacing_x', 5000.)
-obj.set_value('BoundaryCondition_East', 'Dirichlet0')
-obj.set_value('BoundaryCondition_West', '0Slope0Shear')
+obj.g = 9.8 # acceleration due to gravity
+obj.E = 65E10 # Young's Modulus
+obj.nu = 0.25 # Poisson's Ratio
+obj.rho_m = 3300. # MantleDensity
+obj.rho_fill = 0. # InfiillMaterialDensity
+
+obj.Te = 35000. # Elastic thickness
+obj.qs = 1E6*np.ones(50) # surface load stresses
+obj.dx = 5000.
+obj.BC_W = '0Slope0Shear' # west boundary condition
+obj. BC_E = 'Dirichlet0' # east boundary condition
+obj.AAA = 'GridSpacing_x', 5000.
 
 obj.initialize()
 obj.run()

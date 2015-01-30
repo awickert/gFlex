@@ -12,19 +12,19 @@ class F1D(Flexure):
   def run(self):
     self.bc_check()
     self.solver_start_time = time.time()
-    if self.method == 'FD':
+    if self.Method == 'FD':
       # Finite difference
       super(F1D, self).FD()
       self.method_func = self.FD
-    elif self.method == 'FFT':
+    elif self.Method == 'FFT':
       # Fast Fourier transform
       super(F1D, self).FFT()
       self.method_func = self.FFT
-    elif self.method == "SAS":
+    elif self.Method == "SAS":
       # Superposition of analytical solutions
       super(F1D, self).SAS()
       self.method_func = self.SAS
-    elif self.method == "SAS_NG":
+    elif self.Method == "SAS_NG":
       # Superposition of analytical solutions,
       # nonuniform points
       super(F1D, self).SAS_NG()
@@ -566,7 +566,7 @@ class F1D(Flexure):
       self.calc_max_flexural_wavelength()
       print 'maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells
     
-    if self.solver == "iterative" or self.solver == "Iterative":
+    if self.Solver == "iterative" or self.Solver == "Iterative":
       if self.Debug:
         print "Using generalized minimal residual method for iterative solution"
       if self.Verbose:
@@ -576,7 +576,7 @@ class F1D(Flexure):
       w = isolve.lgmres(self.coeff_matrix, -self.qs, tol=self.iterative_ConvergenceTolerance)  
       self.w = w[0] # Reach into tuple to get my array back
     else:
-      if self.solver == "direct" or self.solver == "Direct":
+      if self.Solver == "direct" or self.Solver == "Direct":
         if self.Debug:
           print "Using direct solution with UMFpack"
       else:
