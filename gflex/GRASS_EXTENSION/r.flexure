@@ -154,20 +154,14 @@
 #%end
 
 
-# PATH
-import sys
-
 # GFLEX
 import gflex
 
 # PYTHON
 import numpy as np
-import time
 
 # GRASS
 from grass.script import core as grass
-from grass.script import mapcalc
-from grass.script import db as db
 import grass.script.array as garray
 
 def main():
