@@ -837,14 +837,6 @@ class Flexure(Utility, Plotting):
           print "Exiting."
           sys.exit()
           
-    # See if it wants to be run in lat/lon
-    # Could put this in 2D section, but could imagine an eventual desire
-    # to change this and have 1D lat/lon profiles as well.
-    # So while the options will be under "numerical2D", this place here will 
-    # remain held for an eventual future.
-    self.latlon = self.configGet("string", "numerical2D", "latlon", optional=True)
-    self.PlanetaryRadius = self.configGet("float", "numerical2D", "PlanetaryRadius", optional=True)
-
     # Plotting selection
     self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
 
@@ -1036,14 +1028,14 @@ class Flexure(Utility, Plotting):
       self.iterative_ConvergenceTolerance = self.configGet("float", "numerical", "ConvergenceTolerance")    
       # Try to import Te grid or scalar for the finite difference solution
       try:
-        self.Te = self.configGet("float", "input", "ElasticThickness", optional=True)
+        self.Te = self.configGet("float", "input", "ElasticThickness", optional=False)
         if self.Te is None:
-          Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
+          Tepath = self.configGet("string", "input", "ElasticThickness", optional=False)
           self.Te = Tepath
         else:
           Tepath = None
       except:
-        Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
+        Tepath = self.configGet("string", "input", "ElasticThickness", optional=False)
         self.Te = Tepath
       if self.Te is None:
         if self.coeff_matrix is not None:
@@ -1120,6 +1112,13 @@ class Flexure(Utility, Plotting):
     if self.filename:
       # Define the (scalar) elastic thickness
       self.Te = self.configGet("float", "input", "ElasticThickness")
+      # See if it wants to be run in lat/lon
+      # Could put under in 2D if-statement, but could imagine an eventual desire
+      # to change this and have 1D lat/lon profiles as well.
+      # So while the options will be under "numerical2D", this place here will 
+      # remain held for an eventual future.
+      self.latlon = self.configGet("string", "numerical2D", "latlon", optional=True)
+      self.PlanetaryRadius = self.configGet("float", "numerical2D", "PlanetaryRadius", optional=True)
       if self.dimension == 2:
         from scipy.special import kei
     # Parse out input q0 into variables of imoprtance for solution
