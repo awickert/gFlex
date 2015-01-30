@@ -85,7 +85,7 @@ def main():
   elif obj.dimension == 2:
     obj = F2D(filename)
 
-  obj.initialize(filename) # Does nothing
+  obj.initialize(filename)
   
   if obj.Debug: print 'Command line:', sys.argv
 

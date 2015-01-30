@@ -207,7 +207,9 @@ def main():
 
   # This code is for 2D flexural isostasy
   obj = gflex.F2D()
-   
+  # And show that it is coming from GRASS GIS
+  obj.grass = True
+  
   # Set verbosity
   if grass.verbosity() >= 2:
     obj.set_value('Verbose', True)

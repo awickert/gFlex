@@ -52,11 +52,12 @@ class Utility(object):
         # Carry on if the variable is optional
         var = None
         if self.Verbose or self.Debug:
-          print ""
-          print 'No value entered for optional parameter "' + name + '"'
-          print 'in category "' + category + '" in configuration file.'
-          print 'No action related to this optional parameter will be taken.'
-          print ""
+          if self.grass == False:
+            print ""
+            print 'No value entered for optional parameter "' + name + '"'
+            print 'in category "' + category + '" in configuration file.'
+            print 'No action related to this optional parameter will be taken.'
+            print ""
       else:
         print 'Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from configuration file.'
         if specialReturnMessage:
@@ -146,7 +147,7 @@ class Utility(object):
       self.Quiet = True
       self.Debug = False
       self.Verbose = False
-
+      
     # Output
     elif value_key == 'DeflectionOut':
       # Output file name (string)
@@ -159,7 +160,6 @@ class Utility(object):
     # FOR FLEXURAL ISOSTASY
 
     # [Mode]
-    # The lowercase version is here from earlier work; should phase it out
     elif value_key == value_key == 'Method':
       self.method = value
     elif value_key == 'PlateSolutionType':
@@ -660,7 +660,7 @@ class Isostasy(Utility, Plotting):
     # Use standard routine to pull out values
     # If no filename provided, will not initialize configuration file.
     self.filename = filename
-    
+        
     # DEFAULT VERBOSITY
     # Set default "quiet" to False, unless set by setter or overwritten by 
     # the configuration file.
@@ -669,6 +669,16 @@ class Isostasy(Utility, Plotting):
     self.Verbose = True
     self.Debug = False
     
+    # Set GRASS GIS usage flag: if GRASS is used, don't display error
+    # messages related to unset options. This sets it to False if it 
+    # hasn't already been set (and it can be set after this too)
+    # (Though since this is __init__, would have to go through WhichModel
+    # for some reason to define self.grass before this
+    try:
+      self.grass
+    except:
+      self.grass = False
+
     # Default values for lat/lon usage -- defaulting not to use it
     self.latlon = False
     self.PlanetaryRadius = None
@@ -1060,17 +1070,14 @@ class Flexure(Isostasy):
     if Tepath:
       self.Te = self.loadFile(self.Te, close_on_fail = False)
       if self.Te is None:
-        if self.Quiet == False:
-          print "Requested Te file is provided but cannot be located."
-          print "No scalar elastic thickness is provided in configuration file"
-          print "(Typo in path to input Te grid?)"
+        print "Requested Te file is provided but cannot be located."
+        print "No scalar elastic thickness is provided in configuration file"
+        print "(Typo in path to input Te grid?)"
         if self.coeff_matrix is not None:
-          if self.Quiet == False:
-            print "But a coefficient matrix has been found."
-            print "Calculations will be carried forward using it."
+          print "But a coefficient matrix has been found."
+          print "Calculations will be carried forward using it."
         else:
-          if self.Quiet == False:
-            print "Exiting."
+          print "Exiting."
           sys.exit()
 
       # Check that Te is the proper size if it was loaded
