@@ -264,7 +264,7 @@ def main():
         print "Setting x-resolution [m] to "+"%.2f" %dx_at_mid_latitude+" * [degrees]"
       obj.set_value('GridSpacing_y', grass.region()['nsres']*dx_at_mid_latitude)
     else:
-      sys.exit("Need projected coordinates, or the '-l' flag to approximate.")
+      grass.fatal(_("Need the '-l' flag to enable lat/lon solution approximation."))
   else:
     obj.set_value('GridSpacing_x', grass.region()['ewres'])
     obj.set_value('GridSpacing_y', grass.region()['nsres'])
@@ -272,8 +272,6 @@ def main():
   # Get loads from GRASS
   # Calling it "qs" because these are stresses and q0 is the path to the input
   # (so similar to usage in main code)
-  # Not deleting q0 because we need to keep the array name to re-set the region 
-  # at the end
   qsrast = garray.array()
   qsrast.read(q0)
   
@@ -312,14 +310,9 @@ def main():
   # And create a nice colormap!
   grass.run_command('r.colors', map=output, color='differences', quiet=True)
 
-  # Finally, return to original resolution (overwrites previous region selection)
-  grass.run_command('g.region', rast=q0)
-  
   # Reinstate this with a flag or output filename
   #grass.run_command('r.resamp.interp', input=output, output=output + '_interp', method='lanczos', overwrite=True, quiet=True)
   #grass.run_command('r.colors', map=output + '_interp', color='rainbow', quiet=True)#, flags='e')
-
-  #imshow(obj.w, interpolation='nearest'), show()
 
 if __name__ == "__main__":
   options, flags = grass.parser()
