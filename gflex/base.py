@@ -5,6 +5,7 @@ import types # For flow control
 from matplotlib import pyplot as plt
 
 class Utility(object):
+
   """
   Generic utility functions
   """
@@ -630,6 +631,9 @@ class Plotting(object):
 
 class WhichModel(Utility):
   def __init__(self, filename=None):
+    """
+    WhichModel is a copy of initialization features inside the main class
+    """
     self.filename = filename
     if self.filename:
       try:
@@ -648,11 +652,8 @@ class WhichModel(Utility):
         except:
           sys.exit()
 
-# class Isostasy inherits IRF interface, and it determines the simulation type
-# by reading three parameters from configuration file, but it does not set up other
-# parameters, which is the responsibility of derived concrete classes.
-class Isostasy(Utility, Plotting):
-
+class Flexure(Utility, Plotting):
+  
   def __init__(self, filename=None):
     # 17 Nov 2014: Splitting out initialize from __init__ to allow space
     # to use getters and setters to define values
@@ -776,6 +777,18 @@ class Isostasy(Utility, Plotting):
         if self.dimension == 2:
           self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
 
+      # Mode: solution method and type of plate solution (if applicable)
+      if self.filename:
+        self.method = self.configGet("string", "mode", "method")
+        if self.dimension == 2:
+          self.PlateSolutionType = self.configGet("string", "mode", "PlateSolutionType")
+      
+      # Parameters
+      self.drho = self.rho_m - self.rho_fill
+      if self.filename:
+        self.E  = self.configGet("float", "parameter", "YoungsModulus")
+        self.nu = self.configGet("float", "parameter", "PoissonsRatio")
+      
       # Loading grid
       # q0 is either a load array or an x,y,q array.
       # Therefore q_0, initial q, before figuring out what it really is
@@ -957,26 +970,7 @@ class Isostasy(Utility, Plotting):
           print "analytical solutions and expect them to work."
           print ""
           sys.exit()
-  
-# class Flexure inherits Isostay and it overrides the __init__ method. It also
-# define three different solution methods, which are implemented by its subclass.
-class Flexure(Isostasy):
-  
-  def initialize(self, filename=None):
-    super(Flexure, self).initialize(filename)
-
-    # Mode: solution method and type of plate solution (if applicable)
-    if self.filename:
-      self.method = self.configGet("string", "mode", "method")
-      if self.dimension == 2:
-        self.PlateSolutionType = self.configGet("string", "mode", "PlateSolutionType")
-    
-    # Parameters
-    self.drho = self.rho_m - self.rho_fill
-    if self.filename:
-      self.E  = self.configGet("float", "parameter", "YoungsModulus")
-      self.nu = self.configGet("float", "parameter", "PoissonsRatio")
-    
+ 
   def coeffArraySizeCheck(self):
     """
     Make sure that q0 and coefficient array are the right size compared to 
