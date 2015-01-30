@@ -69,12 +69,16 @@ class Utility(object):
     """
     Universal setter
     """
-    # FIRST, VALUES THAT EVERYONE NEEDS::   
+    # Values in config. file (if provided)
     
     # [mode]
     # Dimensions -- 1D or 2D solution.
     if value_key =='dimension':
       self.dimension = value
+    elif value_key == value_key == 'Method':
+      self.method = value
+    elif value_key == 'PlateSolutionType':
+      self.PlateSolutionType = value
 
     # [parameter]
     elif value_key == 'GravAccel':
@@ -83,6 +87,10 @@ class Utility(object):
       self.rho_m = value
     elif value_key == 'InfillMaterialDensity':
       self.rho_fill = value
+    elif value_key == 'YoungsModulus':
+      self.E  = value
+    elif value_key == 'PoissonsRatio':
+      self.nu = value
 
     # [input]
     # Loading grid
@@ -97,9 +105,16 @@ class Utility(object):
       self.xw = value
     elif value_key == 'yw':
       self.yw = value
+    elif value_key == 'ElasticThickness':
+      self.Te = value
 
     # [numerical]
     # Grid spacing
+    elif value_key == 'Solver':
+      self.solver = value # Direct or iterative
+    elif value_key == 'ConvergenceTolerance':
+      self.iterative_ConvergenceTolerance = value
+    # None of the above?
     elif value_key == 'GridSpacing_x':
       self.dx = value
     elif value_key == 'GridSpacing_y':
@@ -120,12 +135,6 @@ class Utility(object):
       self.BC_N = value
     elif value_key == 'BoundaryCondition_South':
       self.BC_S = value
-    # x, y NOT IN CONFIGURATION FILE -- FOR POINT LOADS
-    # vectors of x and y values
-    elif value_key == 'x':
-      self.x = value
-    elif value_key == 'y':
-      self.y = value
     # If you desire latitude/longitude input for 2D solutions
     # Flag for latitude/longitude
     elif value_key == 'latlon':
@@ -149,7 +158,7 @@ class Utility(object):
       self.Debug = False
       self.Verbose = False
       
-    # Output
+    # [output]
     elif value_key == 'DeflectionOut':
       # Output file name (string)
       self.wOutFile = value
@@ -157,22 +166,7 @@ class Utility(object):
       # 'q0', 'w', 'both', or (1D) 'combo'
       self.plotChoice = value
     
-    # THEN, LITHOSPHERIC ELASTIC PROPERTIES AND SOLUTION METHOD
-    # FOR FLEXURAL ISOSTASY
-
-    # [Mode]
-    elif value_key == value_key == 'Method':
-      self.method = value
-    elif value_key == 'PlateSolutionType':
-      self.PlateSolutionType = value
-
-    # [Parameters]
-    elif value_key == 'YoungsModulus':
-      self.E  = value
-    elif value_key == 'PoissonsRatio':
-      self.nu = value
-      
-    # [Input]
+    # Values not in config. file
     elif value_key == 'CoeffArray':
       # coeff_matrix NOT IN CONFIGURATION FILE -- just for getter/setter
       # This coefficient array is what is used with the UMFPACK direct solver
@@ -183,17 +177,15 @@ class Utility(object):
       if self.Verbose:
         print "LOADING COEFFICIENT ARRAY"
         print "Elastic thickness maps will not be used for the solution."
-    elif value_key == 'ElasticThickness':
-      self.Te = value
-
-    # [Numerical]
-    elif value_key == 'Solver':
-      self.solver = value # Direct or iterative
-    elif value_key == 'ConvergenceTolerance':
-      self.iterative_ConvergenceTolerance = value
-    # None of the above?
+    # x, y NOT IN CONFIGURATION FILE -- FOR POINT LOADS
+    # vectors of x and y values
+    elif value_key == 'x':
+      self.x = value
+    elif value_key == 'y':
+      self.y = value
+    
     else:
-      sys.exit('Error setting value: "'+value_key+'"')
+      sys.exit('Error setting value: "'+value_key+'". is the value_key correct?')
     # Inherit from higher-level setter, if not one of these
     # Currently not inheriting from the whichModel() setter, as I
     # figure that has to be done right away or not at all
@@ -783,12 +775,6 @@ class Flexure(Utility, Plotting):
         if self.dimension == 2:
           self.PlateSolutionType = self.configGet("string", "mode", "PlateSolutionType")
       
-      # Parameters
-      self.drho = self.rho_m - self.rho_fill
-      if self.filename:
-        self.E  = self.configGet("float", "parameter", "YoungsModulus")
-        self.nu = self.configGet("float", "parameter", "PoissonsRatio")
-      
       # Loading grid
       # q0 is either a load array or an x,y,q array.
       # Therefore q_0, initial q, before figuring out what it really is
@@ -797,7 +783,15 @@ class Flexure(Utility, Plotting):
       # it later is combined with dx and (if 2D) dy for FD cases
       # for point loads, need mass: q0 should be written as [x, (y), force])
       self.q0 = self.configGet('string', "input", "Loads")
+
       
+    # Parameters -- rho_m and rho_fill defined, so this outside
+    # of if-statement (to work with getters/setters as well)
+    self.drho = self.rho_m - self.rho_fill
+    if self.filename:
+      self.E  = self.configGet("float", "parameter", "YoungsModulus")
+      self.nu = self.configGet("float", "parameter", "PoissonsRatio")
+    
     # Stop program if there is no q0 defined or if it is None-type
     try:
       self.q0
