@@ -165,7 +165,7 @@ class F2D(Flexure):
     difference solution coefficient matrix
     """
     
-    if self.method != 'SAS_NG':
+    if self.Method != 'SAS_NG':
       self.dx4 = self.dx**4
       self.dy4 = self.dy**4
       self.dx2dy2 = self.dx**2 * self.dy**2
