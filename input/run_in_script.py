@@ -23,7 +23,6 @@ obj.qs = 1E6*np.ones(50) # surface load stresses
 obj.dx = 5000.
 obj.BC_W = '0Slope0Shear' # west boundary condition
 obj. BC_E = 'Dirichlet0' # east boundary condition
-obj.AAA = 'GridSpacing_x', 5000.
 
 obj.initialize()
 obj.run()
