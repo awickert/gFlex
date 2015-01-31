@@ -159,6 +159,7 @@ import gflex
 
 # PYTHON
 import numpy as np
+import sys
 
 # GRASS
 from grass.script import core as grass
@@ -166,147 +167,106 @@ import grass.script.array as garray
 
 def main():
 
-  # Flags
-  latlon_override = flags['l']
-  
-  # Inputs
-  # Solution selection
-  method = options['method']
-  # Parameters that are often changed for the solution
-  q0 = options['q0']
-  Te = options['te']
-  Te_units = options['te_units']
-  rho_fill = float(options['rho_fill'])
-  # Parameters that often stay at their default values
-  GravAccel = float(options['g'])
-  YoungsModulus = float(options['ym']) # Can't just use "E" because reserved for "east", I think
-  PoissonsRatio = float(options['nu'])
-  MantleDensity = float(options['rho_m'])
-  # Solver type and iteration tolerance
-  Solver = options['solver']
-  ConvergenceTolerance = float(options['tolerance'])
-  # Boundary conditions
-  bcn = options['northbc']
-  bcs = options['southbc']
-  bcw = options['westbc']
-  bce = options['eastbc']
-  # Output
-  output = options['output']
-  
-  # First check if output exists
-  if len(grass.parse_command('g.list', type='rast', pattern=output)):
-    if not grass.overwrite():
-      grass.fatal(_("Raster map '" + output + "' already exists. Use '--o' to overwrite."))
-  
-  # Is Te raster or scalar?
-  TeIsRast = False
-  try:
-    Te = float(Te)
-  except:
-    TeIsRast = True
-
   # This code is for 2D flexural isostasy
   obj = gflex.F2D()
   # And show that it is coming from GRASS GIS
   obj.grass = True
   
-  # Set verbosity
-  if grass.verbosity() >= 2:
-    obj.set_value('Verbose', True)
-  if grass.verbosity() >= 3:
-    obj.set_value('Debug', True)
-  elif grass.verbosity() == 0:
-    obj.set_value('Quiet', True)
+  # Flags
+  latlon_override = flags['l']
   
-  if method == 'SAS':
-    obj.set_value('Method', 'SAS')
-  elif method == 'FD':
-    obj.set_value('Method', 'FD')
-    obj.set_value('Solver', Solver)
+  # Inputs
+  # Solution selection
+  obj.Method = options['method']
+  if obj.Method == 'FD':
+    obj.Solver = options['solver']
+    if obj.Solver:
+      obj.ConvergenceTolerance = options['tolerance']
     # Always use the van Wees and Cloetingh (1994) solution type.
     # It is the best.
-    obj.set_value('PlateSolutionType', 'vWC1994')
-  # No need for "else" here:
-  # Will automatically fail via parser if value is out of range
-
-  # Make a bunch of standard selections
-  obj.set_value('GravAccel', GravAccel)
-  obj.set_value('YoungsModulus', YoungsModulus)
-  obj.set_value('PoissonsRatio', PoissonsRatio)
-  obj.set_value('MantleDensity', MantleDensity)
+    obj.PlateSolutionType = 'vWC1994'
+  # Parameters that are often changed for the solution
+  qs = options['q0']
+  obj.qs = garray.array()
+  obj.qs.read(qs)
+  # Elastic thickness
+  try:
+    obj.Te = float(options['te'])
+  except:
+    obj.Te = garray.array() # FlexureTe is the one that is used by Flexure
+    obj.Te.read(options['te'])
+    obj.Te = np.array(obj.Te)
+  if options['te_units'] == 'km':
+    obj.Te *= 1000
+  elif options['te_units'] == 'm':
+    pass
+  else:
+    sys.exit() # Just do this in case there is a mistake in the options
+               # limitations given above
+  obj.rho_fill = float(options['rho_fill'])
+  # Parameters that often stay at their default values
+  obj.g = float(options['g'])
+  obj.E = float(options['ym']) # Can't just use "E" because reserved for "east", I think
+  obj.nu = float(options['nu'])
+  obj.rho_m = float(options['rho_m'])
+  # Solver type and iteration tolerance
+  obj.Solver = options['solver']
+  obj.ConvergenceTolerance = float(options['tolerance'])
+  # Boundary conditions
+  obj.BC_N = options['northbc']
+  obj.BC_S = options['southbc']
+  obj.BC_W = options['westbc']
+  obj.BC_E = options['eastbc']
+  # Set verbosity
+  if grass.verbosity() >= 2:
+    obj.Verbose = True
+  if grass.verbosity() >= 3:
+    obj.Debug = True
+  elif grass.verbosity() == 0:
+    obj.Quiet = True
   
-  # And solver / iterations (if needed)
-  obj.set_value('Solver', Solver)
-  obj.set_value('ConvergenceTolerance', ConvergenceTolerance)
-
-  # Set all boundary conditions
-  obj.set_value('BoundaryCondition_East', bce)
-  obj.set_value('BoundaryCondition_West', bcw)
-  obj.set_value('BoundaryCondition_North', bcn)
-  obj.set_value('BoundaryCondition_South', bcs)
-
+  # First check if output exists
+  if len(grass.parse_command('g.list', type='rast', pattern=options['output'])):
+    if not grass.overwrite():
+      grass.fatal(_("Raster map '" + output + "' already exists. Use '--o' to overwrite."))
+  
   # Get grid spacing from GRASS
-  # Check if lat/lon
+  # Check if lat/lon and proceed as directed
   if grass.region_env()[6] == '3':
     if latlon_override:
       if obj.get_value('Verbosity'):
         print "Latitude/longitude grid."
         print "Based on r_Earth = 6371 km"
         print "Setting y-resolution [m] to 111,195 * [degrees]"
-      obj.set_value('GridSpacing_x', grass.region()['ewres']*111195.)
+      obj.dy = grass.region()['nsres']*111195.
       NSmid = (grass.region()['n'] + grass.region()['s'])/2.
       dx_at_mid_latitude = (3.14159/180.) * 6371000. * np.cos(np.deg2rad(NSmid))
-      if obj.get_value('Verbosity'):
+      if obj.Verbose:
         print "Setting x-resolution [m] to "+"%.2f" %dx_at_mid_latitude+" * [degrees]"
-      obj.set_value('GridSpacing_y', grass.region()['nsres']*dx_at_mid_latitude)
+      obj.dx = grass.region()['ewres']*dx_at_mid_latitude
     else:
       grass.fatal(_("Need the '-l' flag to enable lat/lon solution approximation."))
+  # Otherwise straightforward
   else:
-    obj.set_value('GridSpacing_x', grass.region()['ewres'])
-    obj.set_value('GridSpacing_y', grass.region()['nsres'])
-
-  # Get loads from GRASS
-  # Calling it "qs" because these are stresses and q0 is the path to the input
-  # (so similar to usage in main code)
-  qsrast = garray.array()
-  qsrast.read(q0)
-  
-  # Get elastic thickness from GRASS if it is not a scalar value
-  if TeIsRast:
-    FlexureTe = garray.array() # FlexureTe is the one that is used by Flexure
-    FlexureTe.read(Te)
-  else:
-    FlexureTe = Te
-    
-  # Adjust elastic thickness if given in km
-  if Te_units == 'km':
-    FlexureTe *= 1000 # for km --> m
-    # meters are the only other option, so just do nothing otherwise
-
-  # Values set by user -- set to np.array for flow control in main code
-  obj.set_value('Loads', np.array(qsrast))
-  if type(FlexureTe) == type(garray.array()):
-    obj.set_value('ElasticThickness', np.array(FlexureTe))
-  else:
-    # if scalar
-    obj.set_value('ElasticThickness', FlexureTe)
-  obj.set_value('InfillMaterialDensity', rho_fill)
+    obj.dx = grass.region()['ewres']
+    obj.dy = grass.region()['nsres']
 
   # CALCULATE!
   obj.initialize()
   obj.run()
   obj.finalize()
 
-
   # Write to GRASS
   # Create a new garray buffer and write to it
   outbuffer = garray.array() # Instantiate output buffer
   outbuffer[...] = obj.w
-  outbuffer.write(output, overwrite=grass.overwrite) # Write it with the desired name
+  outbuffer.write(options['output'], overwrite=grass.overwrite) # Write it with the desired name
   # And create a nice colormap!
-  grass.run_command('r.colors', map=output, color='differences', quiet=True)
+  grass.run_command('r.colors', map=options['output'], color='differences', quiet=True)
 
   # Reinstate this with a flag or output filename
+  # But I think better to let interpolation happen a posteriori
+  # So the user knows what the solution is and what it isn't
   #grass.run_command('r.resamp.interp', input=output, output=output + '_interp', method='lanczos', overwrite=True, quiet=True)
   #grass.run_command('r.colors', map=output + '_interp', color='rainbow', quiet=True)#, flags='e')
 
