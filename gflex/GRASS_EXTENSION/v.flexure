@@ -29,24 +29,22 @@
 #%  description: Lithospheric flexure
 #% keywords: vector
 #%end
-#%flag
-#%  key: l
-#%  description: Allows running in lat/lon: distances from great circles
-#%end
-#%flag
-#%  key: r
-#%  description: Use user-specified resolution (otherwise internally computed)
-#%end
 #%option
-#%  key: q
+#%  key: q0
 #%  type: string
 #%  gisprompt: old,vector,vector
 #%  description: Vector map of loads (thickness * area * density * g) [N]
 #%  required : yes
 #%end
 #%option
-#%  key: te
+#%  key: column
 #%  type: string
+#%  description: Column containing load values [N]
+#%  required : yes
+#%end
+#%option
+#%  key: te
+#%  type: double
 #%  description: Elastic thicnkess: scalar; unis chosen in "te_units"
 #%  required : yes
 #%end
@@ -58,7 +56,7 @@
 #%  required : yes
 #%end
 #%option
-#%  key: output
+#%  key: w
 #%  type: string
 #%  gisprompt: old,cell,raster
 #%  description: Output raster map of vertical deflections [m]
@@ -75,7 +73,7 @@
 #%  key: ym
 #%  type: double
 #%  description: Young's Modulus [Pa]
-#%  answer: 65E10
+#%  answer: 65E9
 #%  required : no
 #%end
 #%option
@@ -112,163 +110,100 @@ import numpy as np
 import time
 
 # GRASS
-from grass.script import core as grass
-from grass.script import mapcalc
-from grass.script import db as db
-import grass.script.array as garray
+import grass.script as grass
+from grass.pygrass import vector
 
 def main():
 
-  # Flags
-  latlon_override = flags['l']
-  user_resolution_override = flags['r']
-  
-  # Inputs
-  # Solution selection
-  method = options['method']
-  # Parameters that are often changed for the solution
-  q0 = options['q0']
-  Te = options['te']
-  Te_units = options['te_units']
-  rho_fill = float(options['rho_fill'])
-  # Parameters that often stay at their default values
-  GravAccel = float(options['g'])
-  YoungsModulus = float(options['ym']) # Can't just use "E" because reserved for "east", I think
-  PoissonsRatio = float(options['nu'])
-  MantleDensity = float(options['rho_m'])
-  # Solver type and iteration tolerance
-  Solver = options['solver']
-  ConvergenceTolerance = float(options['tolerance'])
-  # Boundary conditions
-  bcn = options['northbc']
-  bcs = options['southbc']
-  bcw = options['westbc']
-  bce = options['eastbc']
-  # Output
-  output = options['output']
-  
-  # Is Te raster or scalar?
-  TeIsRast = False
-  try:
-    Te = float(Te)
-  except:
-    TeIsRast = True
-
   # This code is for 2D flexural isostasy
-  obj = gflex.F2D()
-  # And it is for the nongridded superposition of analytical solutions
-  obj.set_value('Method', 'SAS_NG')
-   
+  flex = gflex.F2D()
+  # And show that it is coming from GRASS GIS
+  flex.grass = True
+  
+  # Method
+  flex.Method = 'SAS_NG'
+
+  # Parameters that are often changed for the solution
+  # x, y, q
+  # for x,y see my StackOverflow answer:
+  # http://gis.stackexchange.com/questions/28061/how-to-access-vector-coordinates-in-grass-gis-from-python
+  points = vector.VectorTopo(options['q0'])
+  points.open('r')
+  coords = []
+  for i in range(len(data)):
+    coords.append(data.read(i+1).coords())
+  coords = np.array(coords)
+  flex.x = coords[:,0]
+  flex.y = coords[:,1]
+  # q
+  vect_db = grass.vector_db_select(options['q0'])
+  col_names = np.array(vect_db['columns'])
+  q_col = (col_names == options['column'])
+  if np.sum(q_col):
+    col_values = np.array(vect_db['values'].values()).astype(float)
+    flex.q = col_values[:, q_col]
+  else:
+    grass.fatal(_("provided column name, "+options['column']+" does not match\nany column in "+options['q0']+"."))    
+  # Elastic thickness
+  flex.Te = float(options['te'])
+  if options['te_units'] == 'km':
+    flex.Te *= 1000
+  elif options['te_units'] == 'm':
+    pass
+  else:
+      grass.fatal(_("Inappropriate te_units. How?"))
+  flex.rho_fill = float(options['rho_fill'])
+  # Parameters that often stay at their default values
+  flex.g = float(options['g'])
+  flex.E = float(options['ym']) # Can't just use "E" because reserved for "east", I think
+  flex.nu = float(options['nu'])
+  flex.rho_m = float(options['rho_m'])
+
   # Set verbosity
   if grass.verbosity() >= 2:
-    obj.set_value('Verbose', True)
+    flex.Verbose = True
   if grass.verbosity() >= 3:
-    obj.set_value('Debug', True)
+    flex.Debug = True
   elif grass.verbosity() == 0:
-    obj.set_value('Quiet', True)
+    flex.Quiet = True
   
-  # Make a bunch of standard selections
-  obj.set_value('GravAccel', GravAccel)
-  obj.set_value('YoungsModulus', YoungsModulus)
-  obj.set_value('PoissonsRatio', PoissonsRatio)
-  obj.set_value('MantleDensity', MantleDensity)
+  # First check if output exists
+  if len(grass.parse_command('g.list', type='rast', pattern=options['output'])):
+    if not grass.overwrite():
+      grass.fatal(_("Raster map '" + output + "' already exists. Use '--o' to overwrite."))
   
-  # IF RASTER OUTPUT -- HAVE VECTOR OUTPUT OPTION AVAILABLE TOO
-  # WAIT, RASTER OUTPUT NOT POSSIBLE IN MY CODE!
-  # WELL, IS VERY EASY TO CODE
-  # But will have to update plotting steps with regular grid, add an option 
-  # to have grid outputs, have new xout, yout for the grid, ...but should
-  # be possible.
-  # THEN to assign a solution grid
-  
-  # Create region
-  
-  # Create grid in that region
-  # Resolution either imposed or automatically calculated based on 
-  # flexural wavelength
-  
-  # Convert that grid to vector points array
-
-  # Find a way to pass the lat/lon converted distancces into the formula -- 
-  # -- perhaps by including a lat/lon input possiblity -- in fact, may have to 
-  # calculate it over there because of the structure of the code
-
-  # Next steps will be to 
-
-
-  # Get grid spacing from GRASS
-  # Check if lat/lon
+  # Check if lat/lon and let user know if verbosity is True
   if grass.region_env()[6] == '3':
-    if latlon_override:
-      if obj.get_value('Verbosity'):
-        print "Latitude/longitude grid."
-        print "Based on r_Earth = 6371 km"
-        print "Setting y-resolution [m] to 111,195 * [degrees]"
-      obj.set_value('GridSpacing_x', grass.region()['ewres']*111195.)
-      NSmid = (grass.region()['n'] + grass.region()['s'])/2.
-      dx_at_mid_latitude = (3.14159/180.) * 6371000. * np.cos(np.deg2rad(NSmid))
-      if obj.get_value('Verbosity'):
-        print "Setting x-resolution [m] to "+"%.2f" %dx_at_mid_latitude+" * [degrees]"
-      obj.set_value('GridSpacing_y', grass.region()['nsres']*dx_at_mid_latitude)
-    else:
-      sys.exit("Need projected coordinates, or the '-l' flag to approximate.")
-  else:
-    obj.set_value('GridSpacing_x', grass.region()['ewres'])
-    obj.set_value('GridSpacing_y', grass.region()['nsres'])
-
-  # Get loads from GRASS
-  # Calling it "qs" because these are stresses and q0 is the path to the input
-  # (so similar to usage in main code)
-  # Not deleting q0 because we need to keep the array name to re-set the region 
-  # at the end
-  qsrast = garray.array()
-  qsrast.read(q0)
-  
-  # Get elastic thickness from GRASS if it is not a scalar value
-  if TeIsRast:
-    FlexureTe = garray.array() # FlexureTe is the one that is used by Flexure
-    FlexureTe.read(Te)
-  else:
-    FlexureTe = Te
-    
-  # Adjust elastic thickness if given in km
-  if Te_units == 'km':
-    FlexureTe *= 1000 # for km --> m
-    # meters are the only other option, so just do nothing otherwise
-
-  # Values set by user -- set to np.array for flow control in main code
-  obj.set_value('Loads', np.array(qsrast))
-  if type(FlexureTe) == type(garray.array()):
-    obj.set_value('ElasticThickness', np.array(FlexureTe))
-  else:
-    # if scalar
-    obj.set_value('ElasticThickness', FlexureTe)
-  obj.set_value('InfillMaterialDensity', rho_fill)
+    if flex.Verbose:
+      print "Latitude/longitude grid."
+      print "Based on r_Earth = 6371 km"
+      print "Computing distances between load points using great circle paths"
 
   # CALCULATE!
-  obj.initialize()
-  obj.run()
-  obj.finalize()
-
+  flex.initialize()
+  flex.run()
+  flex.finalize()
 
   # Write to GRASS
   # Create a new garray buffer and write to it
   outbuffer = garray.array() # Instantiate output buffer
-  outbuffer[...] = obj.w
-  outbuffer.write(output, overwrite=True) # Write it with the desired name
+  outbuffer[...] = flex.w
+  outbuffer.write(options['output'], overwrite=grass.overwrite) # Write it with the desired name
   # And create a nice colormap!
-  grass.run_command('r.colors', map=output, color='differences', quiet=True)
+  grass.run_command('r.colors', map=options['output'], color='differences', quiet=True)
 
-  # Finally, return to original resolution (overwrites previous region selection)
-  grass.run_command('g.region', rast=q0)
-  
   # Reinstate this with a flag or output filename
+  # But I think better to let interpolation happen a posteriori
+  # So the user knows what the solution is and what it isn't
   #grass.run_command('r.resamp.interp', input=output, output=output + '_interp', method='lanczos', overwrite=True, quiet=True)
   #grass.run_command('r.colors', map=output + '_interp', color='rainbow', quiet=True)#, flags='e')
 
-  #imshow(obj.w, interpolation='nearest'), show()
-
 if __name__ == "__main__":
   options, flags = grass.parser()
-  main()
+  #original_sigint = signal.getsignal(signal.SIGINT)
+  #signal.signal(signal.SIGINT, exit_gracefully)
+  try:
+    main()
+  except:
+    sys.exit()
 
