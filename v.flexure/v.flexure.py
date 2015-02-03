@@ -212,7 +212,7 @@ def main():
   # Check if lat/lon and let user know if verbosity is True
   if grass.region_env()[6] == '3':
     flex.latlon = True
-    flex.planetaryRadius = float(grass.parse_command('g.proj', flags='j')['+a'])
+    flex.PlanetaryRadius = float(grass.parse_command('g.proj', flags='j')['+a'])
     if flex.Verbose:
       print "Latitude/longitude grid."
       print "Based on r_Earth = 6371 km"
