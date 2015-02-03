@@ -26,7 +26,7 @@
 # and their effects on lithospheric flexure
 
 #%module
-#%  description: Lithospheric flexure
+#% description: Lithospheric flexure: gridded deflections from scattered point loads
 #% keywords: vector
 #%end
 #%option
@@ -58,9 +58,16 @@
 #%option
 #%  key: w
 #%  type: string
+#%  gisprompt: old,vector,vector
+#%  description: Output vector points map of vertical deflections [m]
+#%  required : yes
+#%end
+#%option
+#%  key: w_rast
+#%  type: string
 #%  gisprompt: old,cell,raster
 #%  description: Output raster map of vertical deflections [m]
-#%  required : yes
+#%  required : no
 #%end
 #%option
 #%  key: g
@@ -99,6 +106,7 @@
 #%end
 
 
+
 # PATH
 import sys
 
@@ -113,8 +121,25 @@ import time
 import grass.script as grass
 from grass.pygrass import vector
 
-def main():
+def get_points_xy(vect_name):
+  """
+  to find x and y using pygrass, see my (A. Wickert's) StackOverflow answer:
+  http://gis.stackexchange.com/questions/28061/how-to-access-vector-coordinates-in-grass-gis-from-python
+  """
+  points = vector.VectorTopo(vect_name)
+  points.open('r')
+  coords = []
+  for i in range(len(points)):
+    coords.append(points.read(i+1).coords())
+  coords = np.array(coords)
+  return coords[:,0], coords[:,0] # x, y
 
+def main():
+  """
+  Superposition of analytical solutions in gFlex for flexural isostasy in
+  GRASS GIS
+  """
+  
   # This code is for 2D flexural isostasy
   flex = gflex.F2D()
   # And show that it is coming from GRASS GIS
@@ -122,20 +147,22 @@ def main():
   
   # Method
   flex.Method = 'SAS_NG'
-
+  
   # Parameters that are often changed for the solution
+  ######################################################
+  
   # x, y, q
-  # for x,y see my StackOverflow answer:
-  # http://gis.stackexchange.com/questions/28061/how-to-access-vector-coordinates-in-grass-gis-from-python
-  points = vector.VectorTopo(options['q0'])
-  points.open('r')
-  coords = []
-  for i in range(len(data)):
-    coords.append(data.read(i+1).coords())
-  coords = np.array(coords)
-  flex.x = coords[:,0]
-  flex.y = coords[:,1]
-  # q
+  flex.x, flex.y = get_points_xy(options['q0'])
+  # xw, yw: gridded output
+  if len(grass.parse_command('g.list', type='vect', pattern=options['w'])):
+    if not grass.overwrite():
+      grass.fatal(_("Vector map '" + options['w'] + "' already exists. Use '--o' to overwrite."))
+  # Just check raster at the same time if it exists
+  # RASTER CHECK RIGHT ON THIS LINE
+  grass.run_command('v.mkgrid', map=options['w'], type='point', quiet=True)
+  grass.run_command('v.db.addcolumn', map=options['w'], columns='w double precision')
+  flex.xw, flex.yw = get_points_xy(options['w']) # gridded output coordinates
+  
   vect_db = grass.vector_db_select(options['q0'])
   col_names = np.array(vect_db['columns'])
   q_col = (col_names == options['column'])
@@ -153,7 +180,9 @@ def main():
   else:
       grass.fatal(_("Inappropriate te_units. How?"))
   flex.rho_fill = float(options['rho_fill'])
+  
   # Parameters that often stay at their default values
+  ######################################################
   flex.g = float(options['g'])
   flex.E = float(options['ym']) # Can't just use "E" because reserved for "east", I think
   flex.nu = float(options['nu'])
@@ -168,7 +197,7 @@ def main():
     flex.Quiet = True
   
   # First check if output exists
-  if len(grass.parse_command('g.list', type='rast', pattern=options['output'])):
+  if len(grass.parse_command('g.list', type='rast', pattern=options['w'])):
     if not grass.overwrite():
       grass.fatal(_("Raster map '" + output + "' already exists. Use '--o' to overwrite."))
   
@@ -184,26 +213,10 @@ def main():
   flex.run()
   flex.finalize()
 
-  # Write to GRASS
-  # Create a new garray buffer and write to it
-  outbuffer = garray.array() # Instantiate output buffer
-  outbuffer[...] = flex.w
-  outbuffer.write(options['output'], overwrite=grass.overwrite) # Write it with the desired name
-  # And create a nice colormap!
-  grass.run_command('r.colors', map=options['output'], color='differences', quiet=True)
-
-  # Reinstate this with a flag or output filename
-  # But I think better to let interpolation happen a posteriori
-  # So the user knows what the solution is and what it isn't
-  #grass.run_command('r.resamp.interp', input=output, output=output + '_interp', method='lanczos', overwrite=True, quiet=True)
-  #grass.run_command('r.colors', map=output + '_interp', color='rainbow', quiet=True)#, flags='e')
+  # print output -- as a test
+  print flex.w
 
 if __name__ == "__main__":
   options, flags = grass.parser()
-  #original_sigint = signal.getsignal(signal.SIGINT)
-  #signal.signal(signal.SIGINT, exit_gracefully)
-  try:
-    main()
-  except:
-    sys.exit()
-
+  main()
+  
