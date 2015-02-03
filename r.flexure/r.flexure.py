@@ -154,15 +154,31 @@
 #%  required : no
 #%end
 
-# GFLEX
-import gflex
+##################
+# IMPORT MODULES #
+##################
 
 # PYTHON
 import numpy as np
-
 # GRASS
-from grass.script import core as grass
+import grass.script as grass
 import grass.script.array as garray
+# GFLEX
+try:
+  import gflex
+except:
+  print ""
+  print "MODULE IMPORT ERROR."
+  print "In order to run r.flexure or g.flexure, you must download and install"
+  print "gFlex. The most recent development version is available from"
+  print "https://github.com/awickert/gFlex."
+  print "Installation instructions are available on the page."
+  grass.fatal(_("Software dependency must be installed."))
+
+
+############################
+# PASS VARIABLES AND SOLVE #
+############################
 
 def main():
 

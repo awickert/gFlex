@@ -27,7 +27,8 @@
 
 #%module
 #% description: Lithospheric flexure: gridded deflections from scattered point loads
-#% keywords: vector
+#% keyword: vector
+#% keyword: geophysics
 #%end
 #%option
 #%  key: q0
@@ -110,14 +111,22 @@
 # IMPORT MODULES #
 ##################
 
-# GFLEX
-import gflex
 # PYTHON
 import numpy as np
-import time
 # GRASS
 import grass.script as grass
 from grass.pygrass import vector
+# GFLEX
+try:
+  import gflex
+except:
+  print ""
+  print "MODULE IMPORT ERROR."
+  print "In order to run r.flexure or g.flexure, you must download and install"
+  print "gFlex. The most recent development version is available from"
+  print "https://github.com/awickert/gFlex."
+  print "Installation instructions are available on the page."
+  grass.fatal(_("Software dependency must be installed."))
 
 
 ####################
