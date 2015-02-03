@@ -28,8 +28,9 @@
 # by Andy Wickert
 
 #%module
-#% description: Lithospheric flexure
-#% keywords: raster
+#% description: Computes lithospheric flexural isostasy
+#% keyword: raster
+#% keyword: geophysics
 #%end
 #%flag
 #%  key: l
