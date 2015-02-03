@@ -158,11 +158,12 @@ def main():
     if not grass.overwrite():
       grass.fatal(_("Vector map '" + options['w'] + "' already exists. Use '--o' to overwrite."))
   # Just check raster at the same time if it exists
-  # RASTER CHECK RIGHT ON THIS LINE
+  if len(grass.parse_command('g.list', type='rast', pattern=options['w_rast'])):
+    if not grass.overwrite():
+      grass.fatal(_("Raster map '" + options['w_rast'] + "' already exists. Use '--o' to overwrite."))
   grass.run_command('v.mkgrid', map=options['w'], type='point', quiet=True)
   grass.run_command('v.db.addcolumn', map=options['w'], columns='w double precision')
   flex.xw, flex.yw = get_points_xy(options['w']) # gridded output coordinates
-  
   vect_db = grass.vector_db_select(options['q0'])
   col_names = np.array(vect_db['columns'])
   q_col = (col_names == options['column'])
@@ -178,7 +179,7 @@ def main():
   elif options['te_units'] == 'm':
     pass
   else:
-      grass.fatal(_("Inappropriate te_units. How?"))
+    grass.fatal(_("Inappropriate te_units. How? Options should be limited by GRASS."))
   flex.rho_fill = float(options['rho_fill'])
   
   # Parameters that often stay at their default values
@@ -212,9 +213,39 @@ def main():
   flex.initialize()
   flex.run()
   flex.finalize()
+  
+  # Now to use lower-level GRASS vector commands to work with the database 
+  # table -- update its entries
+  # See for help:
+  # http://nbviewer.ipython.org/github/zarch/workshop-pygrass/blob/master/02_Vector.ipynb
+  w = vector.VectorTopo(options['w']) # UPDATE TO GENERALIZE
+  w.open('rw') # Get ready to read and write
+  wdb = w.dblinks[0]
+  wtable = wdb.table()
+  col = int((np.array(wtable.columns.names()) == 'w').nonzero()[0]) # update this column
+  for i in range(1, len(w)+1):
+    # update tuple
+    wattrs = w[i].attrs
+    # newvalues ignores cat column -- assuming here it is the first one
+    wnewvalues = w[i].attrs.values()[1:col] + tuple([flex.w[i-1]]) + w[i].attrs.values()[col+1:]
+    wtable.update(key=i, values=wnewvalues)
+  wtable.conn.commit() # Save this
+  w.close()
+  
+  # Old work trying to connect databases -- but only needed if one does not already exist.
+  #from grass.pygrass.vector.table import Link
+  #w.layer = 1 # set db layer to update
+  # Set the link based on values from w and wdb
+  #wlink = Link(layer=w.layer, name=w.name, table=w.name, key=wdb.key, \
+  #             database=wdb.database, driver=wdb.driver)
+  #w.dblinks.add(wlink) # Connect it to its database (w/out this have just header)
 
-  # print output -- as a test
-  print flex.w
+  # And raster export
+  # Vector defined by raster resolution, so can do direct v.to.rast
+  if options['w_rast']:
+    grass.run_command('v.to.rast', input=options['w'], output=options['w_rast'], use='attr', attribute_column='w')
+    # And create a nice colormap!
+    grass.run_command('r.colors', map=options['w_rast'], color='differences', quiet=True)
 
 if __name__ == "__main__":
   options, flags = grass.parser()
