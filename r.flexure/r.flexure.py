@@ -154,39 +154,15 @@
 #%  required : no
 #%end
 
-
 # GFLEX
 import gflex
 
 # PYTHON
 import numpy as np
-import sys
 
 # GRASS
 from grass.script import core as grass
 import grass.script.array as garray
-
-
-
-import signal
-import time
-
-
-def exit_gracefully(signum, frame):
-    # restore the original signal handler as otherwise evil things will happen
-    # in raw_input when CTRL+C is pressed, and our signal handler is not re-entrant
-    signal.signal(signal.SIGINT, original_sigint)
-
-    try:
-        if raw_input("\nReally quit? (y/n)> ").lower().startswith('y'):
-            sys.exit(1)
-
-    except KeyboardInterrupt:
-        print("Ok ok, quitting")
-        sys.exit(1)
-
-
-
 
 def main():
 
@@ -223,9 +199,7 @@ def main():
     flex.Te *= 1000
   elif options['te_units'] == 'm':
     pass
-  else:
-    sys.exit() # Just do this in case there is a mistake in the options
-               # limitations given above
+  # No "else"; shouldn't happen
   flex.rho_fill = float(options['rho_fill'])
   # Parameters that often stay at their default values
   flex.g = float(options['g'])
@@ -304,10 +278,5 @@ def main():
 
 if __name__ == "__main__":
   options, flags = grass.parser()
-  #original_sigint = signal.getsignal(signal.SIGINT)
-  #signal.signal(signal.SIGINT, exit_gracefully)
-  try:
-    main()
-  except:
-    sys.exit()
+  main()
 
