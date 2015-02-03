@@ -132,7 +132,7 @@ def get_points_xy(vect_name):
   for i in range(len(points)):
     coords.append(points.read(i+1).coords())
   coords = np.array(coords)
-  return coords[:,0], coords[:,0] # x, y
+  return coords[:,0], coords[:,1] # x, y
 
 def main():
   """
@@ -169,7 +169,7 @@ def main():
   q_col = (col_names == options['column'])
   if np.sum(q_col):
     col_values = np.array(vect_db['values'].values()).astype(float)
-    flex.q = col_values[:, q_col]
+    flex.q = col_values[:, q_col].squeeze() # Make it 1D for consistency w/ x, y
   else:
     grass.fatal(_("provided column name, "+options['column']+" does not match\nany column in "+options['q0']+"."))    
   # Elastic thickness
@@ -208,6 +208,11 @@ def main():
   flex.initialize()
   flex.run()
   flex.finalize()
+  
+  #flex.plotChoice = 'both'
+  #flex.output()
+  #out = np.vstack((flex.xw, flex.yw, flex.w)).transpose()
+  #np.savetxt('out.txt', out)
   
   # Now to use lower-level GRASS vector commands to work with the database 
   # table -- update its entries
