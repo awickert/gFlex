@@ -406,7 +406,7 @@ class Plotting(object):
     # Help from http://wiki.scipy.org/Cookbook/Matplotlib/Gridding_irregularly_spaced_data
     
     if self.Verbose:
-      print "Starting to interpolate grid -- can be a slow process!"
+      print "Starting to interpolate grid for plotting -- can be a slow process!"
     
     from scipy.interpolate import griddata
     import numpy.ma as ma
