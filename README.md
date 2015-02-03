@@ -50,13 +50,129 @@ python setup.py install
 
 ## Running
 
+Once gFlex is installed, it is possible to run it in three ways:
+1. With a configuration file
+2. Within a Python script
+3. Within GRASS GIS
+
+For options 1 and 2, there are pre-built methods that can be selected along the way to visualize results. These use Python's Matplotlib plotting library. For option 3, GRASS GIS is used for visualization.
+
 #### With configuration file
 
-Then you can generate a configuration file (see examples in the **input** directory) and input data and run gFlex. It can produce plots and ASCII files with model outputs. Good files to look up include **input/template1D**, **input/template2D**, and **input/input_help**. The last of these, **input_help**, provides a longer explanation of what the parameters are.
+A configuration file can be generated to run gFlex; see examples in the **input** directory. To run gFlex using this file, one simply opens a terminal window and types:
 
 ```
 # run like this:
 gflex <path-to-configuration-file>
+```
+
+Good files to look up include **input/template1D**, **input/template2D**, and **input/input_help**. The last of these, **input_help**, provides a longer explanation of what the parameters are, and is therefore included here for your reference:
+
+```
+; input_help
+; All units are SI. Not all entries are needed.
+; Standard parameter values for Earth are included.
+
+[mode]
+dimension=2 ; 1 (line) or 2 (surface) dimensions
+method=SPA ; Solution method: FD (Finite Difference), FFT (Fast Fourier 
+;          ; Transform, not yet implemented), SAS (Spatial domain analytical 
+;          ; solutions), or SAS_NG (SPA, but do not require a uniform grid
+;          ; - NG = "no grid")
+;          ; For SAS_NG, 1D data must be provided and will be returned in 
+;          ; two columns: (x,q0) --> (x,w). 2D data are similar, except
+;          ; will be of the form (x,y,[q0/in or w/out])
+;          ; I am working on gridded output for these, so this might change
+;          ; in the future.
+;          ; Both the FFT and SPA techniques rely on superposition 
+;          ; of solutions, because they can be combined linearly, whether in 
+;          ; the spectral or the spatial domain)
+;
+PlateSolutionType=vWC1994 ; Plate solutions can be:
+;                         ; * vWC1994 (best), or
+;                         ; * G2009 (from Govers et al., 2009; not bad, but not 
+;                         ;          as robust as vWC1994)
+
+[parameter]
+YoungsModulus=6.5E10
+PoissonsRatio=0.25
+GravAccel=9.8
+MantleDensity=3300
+InfillMaterialDensity=0 ; This is the density of material (e.g., air, water) 
+;                       ; that is filling (or leaving) the hole that was 
+;                       ; created by flexure. If you do not have a constant 
+;                       ; density of infilling material, for example, at a 
+;                       ; subsiding shoreline, you must instead iterate (see
+;                       ; [numerical], below).
+
+[input]
+; space-delimited array of loads
+; stresses (rho*g*h) if gridded (dx (and if applicable, dy) will be applied
+;   to convert them into masses
+; forces (rho*g*h*Area) if not gridded (SAS_NG)
+; If the solution method (above) is selected as "SAS_NG", then this file
+; will actually be of the format (x,[y],q0) and the code will sort it out.
+; (Once again, working on a gridded output option for ungridded inputs)
+Loads=q0_sample/2D/central_square_load.txt
+;
+; scalar value or space-delimited array of elastic thickness(es)
+; array used for finite difference solutions
+ElasticThickness=Te_sample/2D/10km_const.txt
+;
+; xw and yw are vectors of desired output points for the SAS_NG method.
+; If they are not specified and a SAS_NG solution is run, the solution will be 
+; calculated at the points with the loads.
+; they are ignored if a different solution method is chosen.
+xw=
+yw=
+
+[output]
+; DeflectionOut is for writing an output file. 
+; If this is blank, no output is printed.
+; Otherwise, a space-delimited ASCII file of 
+; outputs is with this file name (and path).
+DeflectionOut=tmpout.txt
+;
+; Acceptable inputs to "Plot" are q0 (loads), w (deflection), or both; any 
+; other entry here will result in no plotting.
+; Automatically plots a 1D line or 2D surface based on the choice 
+; of "dimension" variable in [mode]
+Plot=both
+
+[numerical]
+GridSpacing_x= ; dx [m]
+;
+; Boundary conditions can be:
+; (FD): 0Slope0Shear, 0Moment0Shear, Dirichlet0, Mirror, or Periodic
+; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
+BoundaryCondition_West=
+BoundaryCondition_East=
+;
+; Solver can be direct or iterative
+Solver=
+;
+; If you have chosen an iterative solution type ("Solver"), it will iterate
+; until this is the difference between two subsequent iterations.
+; Set as 0 if you don't want to iterate
+convergence=1E-3 ; Tolerance between iterations [m]
+
+[numerical2D]
+GridSpacing_y= ; dy [m]
+;
+; Boundary conditions can be:
+; (FD): 0Slope0Shear, 0Moment0Shear, Dirichlet0, Mirror, or Periodic
+; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
+BoundaryCondition_North=
+BoundaryCondition_South=
+; 
+; Flag to enable lat/lon input. By default, this is false
+latlon= ; true/false: flag to enable lat/lon input. Defaults False.
+PlanetaryRadius= ; radius of planet [m], for lat/lon solutions
+
+[verbosity]
+Verbose= ; true/false. Defaults to True.
+Debug= ; true/false. Defaults to False.
+Quiet= ; true/false -- total silence if True. Defaults to False.
 ```
 
 To run gFlex inside of GRASS GIS, you may copy **r.flexure** to the **scripts** directory of your GRASS GIS installation. This isn't the real way to install GRASS GIS add-ons, but it works for the moment until gFlex is complete enough to be submitted to the GRASS GIS add-ons repository.
