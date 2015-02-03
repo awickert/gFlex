@@ -1,4 +1,6 @@
-; All units are SI
+; input_help
+; All units are SI. Not all entries are needed.
+; Standard parameter values for Earth are included.
 
 [mode]
 dimension=2 ; 1 (line) or 2 (surface) dimensions
