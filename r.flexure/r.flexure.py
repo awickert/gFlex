@@ -9,7 +9,7 @@
 #               set of loads and with a given elastic thickness (scalar 
 #               or array)
 #
-# COPYRIGHT:    (c) 2012, 2014 Andrew Wickert
+# COPYRIGHT:    (c) 2012, 2014, 2015 Andrew Wickert
 #
 #               This program is free software under the GNU General Public
 #               License (>=v2). Read the file COPYING that comes with GRASS
@@ -173,7 +173,7 @@ except:
   print "gFlex. The most recent development version is available from"
   print "https://github.com/awickert/gFlex."
   print "Installation instructions are available on the page."
-  grass.fatal(_("Software dependency must be installed."))
+  grass.fatal("Software dependency must be installed.")
 
 
 ############################
@@ -181,6 +181,9 @@ except:
 ############################
 
 def main():
+  """
+  Gridded flexural isostatic solutions
+  """
 
   # This code is for 2D flexural isostasy
   flex = gflex.F2D()
@@ -242,7 +245,7 @@ def main():
   # First check if output exists
   if len(grass.parse_command('g.list', type='rast', pattern=options['output'])):
     if not grass.overwrite():
-      grass.fatal(_("Raster map '" + output + "' already exists. Use '--o' to overwrite."))
+      grass.fatal("Raster map '" + options['output'] + "' already exists. Use '--o' to overwrite.")
   
   # Get grid spacing from GRASS
   # Check if lat/lon and proceed as directed
@@ -259,20 +262,12 @@ def main():
         print "Setting x-resolution [m] to "+"%.2f" %dx_at_mid_latitude+" * [degrees]"
       flex.dx = grass.region()['ewres']*dx_at_mid_latitude
     else:
-      grass.fatal(_("Need the '-l' flag to enable lat/lon solution approximation."))
+      grass.fatal("Need the '-l' flag to enable lat/lon solution approximation.")
   # Otherwise straightforward
   else:
     flex.dx = grass.region()['ewres']
     flex.dy = grass.region()['nsres']
     
-  """
-  # Wish list
-  #awickert@dakib:~$ check that lat/lon part of flex code works^C
-  #awickert@dakib:~$ find a way to make it cancel-able in mid-run, like it is by itself^C
-  #awickert@dakib:~$ perhaps find a way to give it a counter as to how long it will take^C
-  #awickert@dakib:~$ or actually, based on my functional relationship, calculate this!
-  """
-
   # CALCULATE!
   flex.initialize()
   flex.run()
