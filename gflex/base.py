@@ -777,9 +777,37 @@ class Flexure(Utility, Plotting):
           else:
             sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
     else:
-      if self.BC_E == 'NoOutsideLoads' or self.BC_E == '' \
-         and self.BC_W == 'NoOutsideLoads' or self.BC_W == '':
-        if self.BC_E == '' or self.BC_W == '':
+      # Analytical solution boundary conditions
+      # If they aren't set, it is because no input file has been used
+      # Just set them to an empty string (like input file would do)
+      try:
+        self.BC_E
+      except:
+        self.BC_E = ''
+      try:
+        self.BC_W
+      except:
+        self.BC_W = ''
+      if self.dimension == 2:
+        try:
+          self.BC_S
+        except:
+          self.BC_S = ''
+        try:
+          self.BC_N
+        except:
+          self.BC_N = ''
+      else:
+        # Simplifies flow control a few lines down to define these as None-type
+        self.BC_S = None
+        self.BC_N = None
+      if ( self.BC_E == 'NoOutsideLoads' or self.BC_E == '' \
+         and self.BC_W == 'NoOutsideLoads' or self.BC_W == '' ) \
+         and ( self.dimension != 2 \
+         or (self.BC_E == 'NoOutsideLoads' or self.BC_E == '' \
+         and self.BC_W == 'NoOutsideLoads' or self.BC_W == '') ):
+        if self.BC_E == '' or self.BC_W == '' \
+           or self.BC_S == '' or self.BC_N == '':
           if self.Verbose:
             print "Assuming NoOutsideLoads boundary condition, as this is implicit in the " 
             print "  superposition-based analytical solution"
