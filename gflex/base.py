@@ -518,8 +518,14 @@ class Flexure(Utility, Plotting):
       self.grass = False
 
     # Default values for lat/lon usage -- defaulting not to use it
-    self.latlon = False
-    self.PlanetaryRadius = None
+    try:
+      self.latlon
+    except:
+      self.latlon = False
+    try:
+      self.PlanetaryRadius
+    except:
+      self.PlanetaryRadius = None
 
   def initialize(self, filename=None):
     # Values from configuration file
