@@ -50,23 +50,24 @@ python setup.py install
 
 ## Running
 
-Once gFlex is installed, it is possible to run it in three ways:
-1. With a configuration file
-2. Within a Python script
-3. Within GRASS GIS
+Once gFlex is installed, it is possible to run it in four ways:
+ 1. With a configuration file
+ 2. Within a Python script
+ 3. Within GRASS GIS
+ 4. As a coupled component of a set of models via the Community Surface Dynamics Modeling System [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description)
 
-For options 1 and 2, there are pre-built methods that can be selected along the way to visualize results. These use Python's Matplotlib plotting library. For option 3, GRASS GIS is used for visualization.
+For options 1 and 2, there are pre-built methods that can be selected along the way to visualize results. These use Python's Matplotlib plotting library. For option 3, GRASS GIS is used for visualization. In Option 4, output from CSDMS sets of models can be visualized using tools such as [VisIt](https://wci.llnl.gov/simulation/computer-codes/visit/) ([CSDMS page about VisIt](http://csdms.colorado.edu/wiki/CMT_visualization)) and [ParaView](http://www.paraview.org/). Paraview also now has [Python bindings](http://www.paraview.org/python/), which can further be used to visualize outputs produced wiht any of these methods.
 
 #### With configuration file
 
-A configuration file can be generated to run gFlex; see examples in the **input** directory. To run gFlex using this file, one simply opens a terminal window and types:
+A configuration file can be generated to run gFlex; see examples in the **input/** directory. To run gFlex using this file, one simply opens a terminal window and types:
 
 ```
 # run like this:
 gflex <path-to-configuration-file>
 ```
 
-Good files to look up include **input/template1D**, **input/template2D**, and **input/input_help**. The last of these, **input_help**, provides a longer explanation of what the parameters are, and is therefore included here for your reference:
+For help constructing configuration files, see the blank template files **input/template1D** and **input/template2D**, as well as the other examples found in the **input/** directory. The **input/** directory also contains **input/README.md**, which provides a further local description of the files available. **input/input_help** provides a longer explanation of what the parameters are, and is therefore reproduced immediately below for reference:
 
 ```
 ; input_help
@@ -175,10 +176,6 @@ Debug= ; true/false. Defaults to False.
 Quiet= ; true/false -- total silence if True. Defaults to False.
 ```
 
-To run gFlex inside of GRASS GIS, you may copy **r.flexure** to the **scripts** directory of your GRASS GIS installation. This isn't the real way to install GRASS GIS add-ons, but it works for the moment until gFlex is complete enough to be submitted to the GRASS GIS add-ons repository.
-
-To run gFlex within the CSDMS environment, see **gflex_bmi.py**.
-
 #### Within a Python script (with or without a configuration file)
 
 To run gFlex from other Python programs, simply add code like you will find in **gflex_copy_paste.py**, and see **gflex/input/run_in_script.py** as an example, and my scratch file (if it is tracked on git) is **gflex/tests/interactive.py**:
@@ -210,3 +207,11 @@ obj.finalize()
 # Standalone plotting output if you so desire
 obj.output()
 ```
+
+#### Within GRASS GIS
+
+To run gFlex inside of GRASS GIS, you may copy **r.flexure** to the **scripts** directory of your GRASS GIS installation. This isn't the real way to install GRASS GIS add-ons, but it works for the moment until gFlex is complete enough to be submitted to the GRASS GIS add-ons repository.
+
+#### As part of the CSDMS CMI
+
+To run gFlex within the CSDMS Component Model Interface (CMI) environment, see **gflex_bmi.py**.
