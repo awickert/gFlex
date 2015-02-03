@@ -161,8 +161,8 @@ def main():
   if len(grass.parse_command('g.list', type='rast', pattern=options['w_rast'])):
     if not grass.overwrite():
       grass.fatal(_("Raster map '" + options['w_rast'] + "' already exists. Use '--o' to overwrite."))
-  grass.run_command('v.mkgrid', map=options['w'], type='point', quiet=True)
-  grass.run_command('v.db.addcolumn', map=options['w'], columns='w double precision')
+  grass.run_command('v.mkgrid', map=options['w'], type='point', overwrite=grass.overwrite(), quiet=True)
+  grass.run_command('v.db.addcolumn', map=options['w'], columns='w double precision', quiet=True)
   flex.xw, flex.yw = get_points_xy(options['w']) # gridded output coordinates
   vect_db = grass.vector_db_select(options['q0'])
   col_names = np.array(vect_db['columns'])
@@ -197,11 +197,6 @@ def main():
   elif grass.verbosity() == 0:
     flex.Quiet = True
   
-  # First check if output exists
-  if len(grass.parse_command('g.list', type='rast', pattern=options['w'])):
-    if not grass.overwrite():
-      grass.fatal(_("Raster map '" + output + "' already exists. Use '--o' to overwrite."))
-  
   # Check if lat/lon and let user know if verbosity is True
   if grass.region_env()[6] == '3':
     if flex.Verbose:
@@ -230,7 +225,9 @@ def main():
     wnewvalues = w[i].attrs.values()[1:col] + tuple([flex.w[i-1]]) + w[i].attrs.values()[col+1:]
     wtable.update(key=i, values=wnewvalues)
   wtable.conn.commit() # Save this
-  w.close()
+  w.close(build=False) # don't build here b/c it is always verbose
+  grass.run_command('v.build', map=options['w'], quiet=True)
+  
   
   # Old work trying to connect databases -- but only needed if one does not already exist.
   #from grass.pygrass.vector.table import Link
@@ -243,7 +240,7 @@ def main():
   # And raster export
   # Vector defined by raster resolution, so can do direct v.to.rast
   if options['w_rast']:
-    grass.run_command('v.to.rast', input=options['w'], output=options['w_rast'], use='attr', attribute_column='w')
+    grass.run_command('v.to.rast', input=options['w'], output=options['w_rast'], use='attr', attribute_column='w', type='point', overwrite=grass.overwrite(), quiet=True)
     # And create a nice colormap!
     grass.run_command('r.colors', map=options['w_rast'], color='differences', quiet=True)
 
