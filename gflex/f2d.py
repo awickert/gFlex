@@ -15,8 +15,6 @@ class F2D(Flexure):
   def run(self):
     self.bc_check()
     self.solver_start_time = time.time()
-    if self.Verbose:
-      print 'Solver start time [Unix epoch]:', self.solver_start_time
       
     if self.Method == 'FD':
       # Finite difference
