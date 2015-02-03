@@ -12,7 +12,6 @@ import gflex
 
 # PYTHON
 import numpy as np
-import time
 
 # plotting
 from matplotlib import pyplot as plt
@@ -54,16 +53,14 @@ for l in [100E3, 200E3, 500E3, 1000E3]:
   #for Te in [25000, GRID]:
   for Te in [25000]:
     Te0 = Te
-    #for bc in ["0Slope0Shear", 'Dirichlet0', 'Mirror', '0Slope0Shear']:
-    for bc in ['Periodic']:
-    #for bc in ['NoOutsideLoads']:
+    #for bc in ['0Moment0Shear', 'Dirichlet0', 'Mirror', '0Slope0Shear']:
+    #for bc in ['Periodic']:
+    for bc in ['NoOutsideLoads']:
       #for method in ['SAS', 'SAS_NG', 'FD']:
-      #for method in ['FD']:
-      for method in ['FD']:
-        for dx in [100, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000]:
-        #for dx in [5000, 10000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000,
-        #for dx in [10000, 25000, 40000, 50000]:
-        #for dx in [10000]: #, 20000, 25000, 40000, 50000]: #1000, 2000, 2500, 4000, 5000, 10000, 
+      for method in ['SAS_NG']:
+        for dx in [100, 200, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 10000, 50000]:
+        #for dx in [0.5, 1, 2, 5, 10, 25, 50, 100, 200, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 10000, 50000]:
+        #for dx in [500, 1000, 2000]:
 
             obj.set_value('Method', method)
             # Grid size and spacing
@@ -76,7 +73,6 @@ for l in [100E3, 200E3, 500E3, 1000E3]:
               print dx 
               q0 = np.zeros((L/dx))
               q0[(L/2-l/2)/dx : (L/2+l/2)/dx+.0001] = q_load
-              #obj.set_value('Loads', q)
 
               #q0 = np.vstack((np.reshape(X,-1), np.reshape(Y,-1), np.reshape(q,-1))).transpose()
               
@@ -87,18 +83,16 @@ for l in [100E3, 200E3, 500E3, 1000E3]:
               else:
                 # Getters and setters only exist because of old CSDMS IRF
                 # interface anyway :)
-                obj.qs = q0
+                obj.qs = q0.copy()
                 obj.dx = dx
               
               """
               # VARIABLE TE OPTION
-              Te *= np.ones(q.shape)
+              Te *= np.ones(q0.shape)
               
               # Make sinusoid
-              x = np.linspace(dx/2, L-dx/2, q.shape[1])
-              y = np.linspace(dx/2, L-dx/2, q.shape[0])
-              X,Y = np.meshgrid(x,y)
-              sineadd = 15000 * (np.sin(4*np.pi*X/L) + np.sin(4*np.pi*Y/L))
+              x = np.linspace(dx/2, L-dx/2, len(q0))
+              sineadd = 15000 * (np.sin(4*np.pi*x/L))
 
               Te += sineadd
               """
@@ -108,8 +102,6 @@ for l in [100E3, 200E3, 500E3, 1000E3]:
               # Set all boundary conditions
               obj.set_value('BoundaryCondition_East', bc)
               obj.set_value('BoundaryCondition_West', bc)
-              obj.set_value('BoundaryCondition_North', bc)
-              obj.set_value('BoundaryCondition_South', bc)
 
               # Elastic thickness
               obj.set_value('ElasticThickness', Te)
@@ -118,17 +110,23 @@ for l in [100E3, 200E3, 500E3, 1000E3]:
               obj.initialize()
               obj.run()
               obj.finalize()
-              del obj.D
+              try:
+                del obj.D
+              except:
+                pass
               try:
                 del obj.coeff_matrix # This was not being properly overwritten!
               except:
                 pass
 
-              nelements.append(np.prod(q.shape))
-              nloadelements.append(np.sum(q > 0))
+              nelements.append(np.prod(q0.shape))
+              nloadelements.append(np.sum(q0 > 0))
               solvetime.append(obj.time_to_solve)
               
-              print len(obj.q0)
+              try:
+                print len(obj.qs)
+              except:
+                print len(obj.q)
               
               print 'Time to solve [s]:', obj.get_value('SolverTime')
               
@@ -187,13 +185,13 @@ plt.show()
 outarray = np.vstack((nelements, nloadelements, nelements*nloadelements, solvetime)).transpose()
 
 #np.savetxt('benchmark/FD_Periodic_variable_load_constant_Te.csv.csv', outarray, delimiter=',',)
-#np.savetxt('benchmark/FD_not_Periodic_200km_load_constant_Te.csv', outarray, delimiter=',',)
+#np.savetxt('benchmark/FD_not_Periodic_variable_load_constant_Te.csv', outarray, delimiter=',',)
 
 #np.savetxt('benchmark/FD_Periodic_variable_load_variable_Te.csv.csv', outarray, delimiter=',',)
-#np.savetxt('benchmark/FD_not_Periodic_200km_load_variable_Te.csv', outarray, delimiter=',',)
+#np.savetxt('benchmark/FD_not_Periodic_variable_load_variable_Te.csv', outarray, delimiter=',',)
 
 
 #np.savetxt('benchmark/SAS.csv', outarray, delimiter=',',)
-#np.savetxt('benchmark/SAS_NG.csv', outarray, delimiter=',',)
+np.savetxt('benchmark/SAS_NG.csv', outarray, delimiter=',',)
 
 

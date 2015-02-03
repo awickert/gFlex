@@ -5,6 +5,7 @@ import types # For flow control
 from matplotlib import pyplot as plt
 
 class Utility(object):
+
   """
   Generic utility functions
   """
@@ -52,187 +53,154 @@ class Utility(object):
         # Carry on if the variable is optional
         var = None
         if self.Verbose or self.Debug:
-          print ""
-          print 'No value entered for optional parameter "' + name + '"'
-          print 'in category "' + category + '" in configuration file.'
-          print 'No action related to this optional parameter will be taken.'
-          print ""
+          if self.grass == False:
+            print ""
+            print 'No value entered for optional parameter "' + name + '"'
+            print 'in category "' + category + '" in configuration file.'
+            print 'No action related to this optional parameter will be taken.'
+            print ""
       else:
         print 'Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from configuration file.'
         if specialReturnMessage:
           print specialReturnMessage
         sys.exit("Exiting.")
 
-  def set_value(self, value_key, value):
-    """
-    Universal setter
-    """
-    # FIRST, VALUES THAT EVERYONE NEEDS::   
-    
-    # [mode]
-    # Dimensions -- 1D or 2D solution.
-    if value_key =='dimension':
-      self.dimension = value
-
-    # [parameter]
-    elif value_key == 'GravAccel':
-      self.g = value
-    elif value_key == 'MantleDensity':
-      self.rho_m = value
-    elif value_key == 'InfillMaterialDensity':
-      self.rho_fill = value
-
-    # [input]
-    # Loading grid
-    elif value_key == 'Loads':
-      self.q0 = value
-    # NOT IN CONFIGURATION FILE
-    elif value_key == 'Loads_grid_stress':
-      self.qs = value
-    elif value_key == 'Loads_force':
-      self.q = value
-
-    # [numerical]
-    # Grid spacing
-    elif value_key == 'GridSpacing_x':
-      self.dx = value
-    elif value_key == 'GridSpacing_y':
-      if self.Debug:
-        print "Setting y-value; should be done only for 2D problems"
-      self.dy = value
-    # Boundary conditions
-    # "Dirichlet0" - 0-displacement at edges)
-    # "0Slope0Shear" - First and third derivatives are 0: not so physical, but basically means that dw/dx_i at boundaries is flat and at a value that is not externally imposed
-    # "0Moment0Shear" - second and third derivatives are 0: free cantilever edge (same as Stewart and Watts (1997) used, and standard in CivE)
-    # "Periodic" - wraparound on edges
-    # "Mirror" - reflects on edges
-    elif value_key == 'BoundaryCondition_East':
-      self.BC_E = value
-    elif value_key == 'BoundaryCondition_West':
-      self.BC_W = value
-    elif value_key == 'BoundaryCondition_North':
-      self.BC_N = value
-    elif value_key == 'BoundaryCondition_South':
-      self.BC_S = value
-    # NOT IN CONFIGURATION FILE -- FOR POINT LOADS
-    # vectors of x and y values
-    elif value_key == 'x':
-      self.x = value
-    elif value_key == 'y':
-      self.y = value
-
-    # [verbosity]
-    elif value_key == 'Verbosity' or value_key == 'Verbose':
-      if self.Quiet:
-        self.Verbose = False
-      else:
-        self.Verbose = value
-    elif value_key == 'Debug':
-      if self.Quiet:
-        self.Debug = False
-      else:
-        self.Debug = value
-    elif value_key == 'Quiet':
-      self.Quiet = True
-      self.Debug = False
-      self.Verbose = False
-
-    # Output
-    elif value_key == 'DeflectionOut':
-      # Output file name (string)
-      self.wOutFile = value
-    elif value_key == 'Plot':
-      # 'q0', 'w', 'both', or (1D) 'combo'
-      self.plotChoice = value
-    
-    # THEN, LITHOSPHERIC ELASTIC PROPERTIES AND SOLUTION METHOD
-    # FOR FLEXURAL ISOSTASY
-
-    # [Mode]
-    # The lowercase version is here from earlier work; should phase it out
-    elif value_key == value_key == 'Method':
-      self.method = value
-    elif value_key == 'PlateSolutionType':
-      self.PlateSolutionType = value
-
-    # [Parameters]
-    elif value_key == 'YoungsModulus':
-      self.E  = value
-    elif value_key == 'PoissonsRatio':
-      self.nu = value
-      
-    # [Input]
-    elif value_key == 'CoeffArray':
-      # This coefficient array is what is used with the UMFPACK direct solver
-      # or the iterative solver
-      self.coeff_matrix = value
-      self.readyCoeff() # See if this is a sparse or something that needs to be loaded
-      # if so, let everyone know
-      if self.Verbose:
-        print "LOADING COEFFICIENT ARRAY"
-        print "Elastic thickness maps will not be used for the solution."
-    elif value_key == 'ElasticThickness':
-      self.Te = value
-
-    # [Numerical]
-    elif value_key == 'Solver':
-      self.solver = value # Direct or iterative
-    elif value_key == 'ConvergenceTolerance':
-      self.iterative_ConvergenceTolerance = value
-    # None of the above?
-    else:
-      sys.exit('Error setting value: "'+value_key+'"')
-    # Inherit from higher-level setter, if not one of these
-    # Currently not inheriting from the whichModel() setter, as I
-    # figure that has to be done right away or not at all
-    
   def readyCoeff(self):
     from scipy import sparse
     if sparse.issparse(self.coeff_matrix):
       pass # Good type
-    # Otherwise, try to load from file
-    elif type(self.coeff_matrix) is types.StringType:
-      pass
-      print "Loading sparse coefficient arrays is not yet implemented."
-      print "This must be done soon."
-      print "Exiting."
-      sys.exit()
     else:
       try:
         self.coeff_matrix = sparse.dia_matrix(self.coeff_matrix)
       except:
-        "Failed to make a sparse array or load a sparse matrix from the input."
-  
-  # UNIVERSAL GETTER
-  def get_value(self, val_string):
-    if val_string=='Deflection':
-      # This is the primary model output
-      return self.w
-    elif val_string=='SolverTime':
-      # Amount of time taken by the solver (direct or iterative)
-      return self.time_to_solve
-    if val_string=='Loads':
-      # This is the model input for the gridded case
-      return self.q0
-    if val_string=='x':
-      # This is a component of the ungridded model input
-      # It is also produced during the gridded model run
-      # But will be overwritten in those cases
-      return self.x
-    if val_string=='y':
-      # This is a component of the ungridded model input
-      # It is also produced during the gridded model run
-      # But will be overwritten in those cases
-      return self.y
-    if val_string=='LoadVerticalNormalForces':
-      # This is a component of the ungridded model input
-      return self.q
-    if val_string=='ElasticThickness':
-      # This is the model input
-      return self.Te
-    if val_string=='Verbosity' or val_string=='Verbose':
-      return self.Verbose
+        sys.exit("Failed to make a sparse array or load a sparse matrix from the input.")
 
+  def greatCircleDistance(self, lat1, long1, lat2, long2, radius):
+    """
+    Returns the great circle distance between two points.
+    Useful when using the SAS_NG solution in lat/lon coordinates
+    Modified from http://www.johndcook.com/blog/python_longitude_latitude/
+    It should be able to take numpy arrays.
+    """
+
+    # Convert latitude and longitude to
+    # spherical coordinates in radians.
+    degrees_to_radians = np.pi/180.0
+         
+    # theta = colatitude = 90 - latitude
+    theta1rad = (90.0 - lat1)*degrees_to_radians
+    theta2rad = (90.0 - lat2)*degrees_to_radians
+         
+    # lambda = longitude
+    lambda1rad = long1*degrees_to_radians
+    lambda2rad = long2*degrees_to_radians
+         
+    # Compute spherical distance from spherical coordinates.
+         
+    # For two locations in spherical coordinates
+    # (1, theta, phi) and (1, theta, phi)
+    # cosine( arc length ) =
+    #    sin(theta) * sin(theta') * cos(theta-theta') + cos(phi) * cos(phi')
+    # distance = radius * arc length
+     
+    cos_arc_length = np.sin(theta1rad) * np.sin(theta2rad) * \
+                     np.cos(lambda1rad - lambda2rad) + \
+                     np.cos(theta1rad) * np.cos(theta2rad)
+    arc = np.arccos( cos_arc_length )
+ 
+    great_circle_distance = radius * arc
+    
+    return great_circle_distance
+
+  def define_points_grid(self):
+    """
+    This is experimental code that could be used in the spatialDomainNoGrid
+    section to build a grid of points on which to generate the solution.
+    However, the current development plan (as of 27 Jan 2015) is to have the 
+    end user supply the list of points where they want a solution (and/or for 
+    it to be provided in a more automated way by GRASS GIS). But because this 
+    (untested) code may still be useful, it will remain as its own function 
+    here.
+    It used to be in f2d.py.
+    """
+    # Grid making step
+    # In this case, an output at different (x,y), e.g., on a grid, is desired
+    # First, see if there is a need for a grid, and then make it
+    # latlon arrays must have a pre-set grid
+    if self.latlon == False:
+      # Warn that any existing grid will be overwritten
+      try:
+        self.dx
+        if self.Quiet == False:
+          print "dx and dy being overwritten -- supply a full grid"
+      except:
+        try:
+          self.dy
+          if self.Quiet == False:
+            print "dx and dy being overwritten -- supply a full grid"
+        except:
+          pass
+      # Boundaries
+      n = np.max(self.y) + self.alpha
+      s = np.min(self.y) - self.alpha
+      w = np.min(self.x) + self.alpha
+      e = np.max(self.y) - self.alpha
+      # Grid spacing
+      dxprelim = self.alpha/50. # x or y
+      nx = np.ceil((e-w)/dxprelim)
+      ny = np.ceil((n-s)/dxprelim)
+      dx = (e-w) / nx
+      dy = (n-s) / ny
+      self.dx = self.dy = (dx+dy)/2. # Average of these to create a 
+                                     # square grid for more compatibility
+      self.xw = np.linspace(w, e, nx)
+      self.yw = np.linspace(s, n, ny)
+    else:
+      print "Lat/lon xw and yw must be pre-set: grid will not be square"
+      print "and may run into issues with poles, so to ensure the proper"
+      print "output points are chosen, the end user should do this."
+      sys.exit()
+    
+        
+  def loadFile(self, var, close_on_fail = True):
+    """
+    A special function to replate a variable name that is a string file path
+    with the loaded file.
+    var is a string on input
+    output is a numpy array or a None-type object (success vs. failure)
+    """
+    out = None
+    try:
+      # First see if it is a full path or directly links from the current
+      # working directory
+      out = np.load(var)
+      if self.Verbose: print "Loading "+var+" from numpy binary"
+    except:
+      try:
+        out = np.loadtxt(var)
+        if self.Verbose: print "Loading "+var+" ASCII"
+      except:
+        # Then see if it is relative to the location of the configuration file
+        try:
+          out = load(self.inpath + var)
+          if self.Verbose: print "Loading "+var+" from numpy binary"
+        except:
+          try:
+            out = np.loadtxt(self.inpath + var)
+            if self.Verbose: print "Loading "+var+" ASCII"
+          # If failure
+          except:
+            if close_on_fail:
+              print "Cannot find "+var+" file"
+              print ""+var+" path = " + var
+              print "Looked relative to model python files."
+              print "Also looked relative to configuration file path,"
+              print "  ", self.inpath
+              print "Exiting."
+              sys.exit()
+            else:
+              pass
+    return out
 
 class Plotting(object):
   # Plot, if desired
@@ -249,10 +217,10 @@ class Plotting(object):
     #  self.plotChoice = None
     if self.plotChoice:
       if self.Verbose: print "Starting to plot " + self.plotChoice
-      if self.dimension==1:
+      if self.dimension == 1:
         if self.plotChoice == 'q':
           plt.figure(1)
-          if self.method == 'SAS_NG':
+          if self.Method == 'SAS_NG':
             plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
             plt.ylabel('Load volume, mantle equivalent [m$^3$]', fontsize=12, fontweight='bold')
           else:
@@ -263,8 +231,8 @@ class Plotting(object):
           plt.show()
         elif self.plotChoice == 'w':
           plt.figure(1)
-          if self.method == 'SAS_NG':
-            plt.plot(self.x/1000., self.w, 'ko-')
+          if self.Method == 'SAS_NG':
+            plt.plot(self.xw/1000., self.w, 'k-')
           else:
             plt.plot(self.x/1000., self.w, 'k-')
           plt.ylabel('Deflection [m]', fontsize=12, fontweight='bold')
@@ -273,47 +241,47 @@ class Plotting(object):
           plt.show()
         elif self.plotChoice == 'both':
           plt.figure(1,figsize=(6,9))
+          ax = plt.subplot(212)
+          if self.Method == "SAS_NG":
+            ax.plot(self.xw/1000., self.w, 'k-')
+          else:
+            ax.plot(self.x/1000., self.w, 'k-')
+          ax.set_ylabel('Deflection [m]', fontsize=12, fontweight='bold')
+          ax.set_xlabel('Distance along profile [m]', fontsize=12, fontweight='bold')
           plt.subplot(211)
           plt.title('Loads and Lithospheric Deflections', fontsize=16)
-          if self.method == 'SAS_NG':
+          if self.Method == 'SAS_NG':
             plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
             plt.ylabel('Load volume, mantle equivalent [m$^3$]', fontsize=12, fontweight='bold')
+            plt.xlim(ax.get_xlim())
           else:
             plt.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'k-')
             plt.ylabel('Load thickness, mantle equivalent [m]', fontsize=12, fontweight='bold')
           plt.xlabel('Distance along profile [km]', fontsize=12, fontweight='bold')
-          plt.subplot(212)
-          if self.method == "SAS_NG":
-            plt.plot(self.x, self.w, 'ko-')
-          else:
-            plt.plot(self.x, self.w, 'k-')
-          plt.ylabel('Deflection [m]', fontsize=12, fontweight='bold')
-          plt.xlabel('Distance along profile [m]', fontsize=12, fontweight='bold')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'combo':
           fig = plt.figure(1,figsize=(10,6))
           titletext='Loads and Lithospheric Deflections'
-          xkm = self.x/1000
           ax = fig.add_subplot(1,1,1)
           # Plot undeflected load
-          if self.method == "SAS_NG":
+          if self.Method == "SAS_NG":
             if self.Quiet == False:
               print "Combo plot can't work with SAS_NG! Don't have mechanism in place\nto calculate load width."
               print "Big problem -- what is the area represented by the loads at the\nextreme ends of the array?"
           else:
-            ax.plot(xkm,self.qs/(self.rho_m*self.g),'g--',linewidth=2,label="Load thickness [m mantle equivalent]")
+            ax.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'g--', linewidth=2, label="Load thickness [m mantle equivalent]")
           # Plot deflected load
-          if self.method == "SAS_NG":
+          if self.Method == "SAS_NG":
             pass
-            #ax.plot(xkm,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
+            #ax.plot(self.x/1000.,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
           else:
-            ax.plot(xkm,self.qs/(self.rho_m*self.g) + self.w,'g-',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
+            ax.plot(self.x/1000., self.qs/(self.rho_m*self.g) + self.w,'g-',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
           # Plot deflection
-          if self.method == "SAS_NG":
-            ax.plot(xkm, self.w, 'ko-', linewidth=2, label="Deflection [m mantle equivalent]")
+          if self.Method == "SAS_NG":
+            ax.plot(self.xw/1000., self.w, 'ko-', linewidth=2, label="Deflection [m mantle equivalent]")
           else:
-            ax.plot(xkm,self.w, 'k-', linewidth=2, label="Deflection [m mantle equivalent]")
+            ax.plot(self.x/1000.,self.w, 'k-', linewidth=2, label="Deflection [m mantle equivalent]")
           # Set y min to equal to the absolute value maximum of y max and y min
           # (and therefore show isostasy better)
           yabsmax = max(abs(np.array(plt.ylim())))
@@ -322,7 +290,7 @@ class Plotting(object):
           # Plot title selector -- be infomrative
           try:
             self.Te
-            if self.method == "FD":
+            if self.Method == "FD":
               if type(self.Te) is np.ndarray:
                 if (self.Te != (self.Te).mean()).any():
                   plt.title(titletext,fontsize=16)       
@@ -346,35 +314,35 @@ class Plotting(object):
             print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
             print "Possible input strings are: q, w, both, and (for 1D) combo"
             print "Unable to produce plot."
-      elif self.dimension==2:
+      elif self.dimension == 2:
         if self.plotChoice == 'q':
           fig = plt.figure(1, figsize=(8,6))
-          if self.method != 'SAS_NG':
+          if self.Method != 'SAS_NG':
             self.surfplot(self.qs/(self.rho_m*self.g), 'Load thickness, mantle equivalent [m]')
             plt.show()
           else:
-            self.xyzinterp(self.q, 'Load volume, mantle equivalent [m$^3$]')
+            self.xyzinterp(self.x, self.y, self.q, 'Load volume, mantle equivalent [m$^3$]')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'w':
           fig = plt.figure(1, figsize=(8,6))
-          if self.method != 'SAS_NG':
+          if self.Method != 'SAS_NG':
             self.surfplot(self.w, 'Deflection [m]')
             plt.show()
           else:
-            self.xyzinterp(self.w, 'Deflection [m]')
+            self.xyzinterp(self.xw, self.yw, self.w, 'Deflection [m]')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'both':
           plt.figure(1,figsize=(6,9))
-          if self.method != 'SAS_NG':
+          if self.Method != 'SAS_NG':
             self.twoSurfplots()
             plt.show()
           else:
             plt.subplot(211)
-            self.xyzinterp(self.q, 'Load volume, mantle equivalent [m$^3$]')
+            self.xyzinterp(self.x, self.y, self.q, 'Load volume, mantle equivalent [m$^3$]')
             plt.subplot(212)
-            self.xyzinterp(self.w, 'Deflection [m]')
+            self.xyzinterp(self.xw, self.yw, self.w, 'Deflection [m]')
             plt.tight_layout()
             plt.show()
         else:
@@ -387,9 +355,14 @@ class Plotting(object):
     """
     Plot if you want to - for troubleshooting - 1 figure
     """
-    plt.imshow(z, extent=(0, self.dx/1000.*z.shape[0], self.dy/1000.*z.shape[1], 0)) #,interpolation='nearest'
-    plt.xlabel('x [km]', fontsize=12)
-    plt.ylabel('y [km]', fontsize=12)
+    if self.latlon:
+      plt.imshow(z, extent=(0, self.dx*z.shape[0], self.dy*z.shape[1], 0)) #,interpolation='nearest'
+      plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
+      plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
+    else:
+      plt.imshow(z, extent=(0, self.dx/1000.*z.shape[0], self.dy/1000.*z.shape[1], 0)) #,interpolation='nearest'
+      plt.xlabel('x [km]', fontsize=12, fontweight='bold')
+      plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
 
     plt.title(titletext,fontsize=16)
@@ -404,37 +377,47 @@ class Plotting(object):
 
     plt.subplot(211)
     plt.title('Load thickness, mantle equivalent [m]',fontsize=16)
-    plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.qs.shape[0], self.dy/1000.*self.qs.shape[1], 0))
-    plt.xlabel('x [km]', fontsize=12, fontweight='bold')
-    plt.ylabel('y [km]', fontsize=12, fontweight='bold')
+    if self.latlon:
+      plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx*self.qs.shape[0], self.dy*self.qs.shape[1], 0))
+      plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
+      plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
+    else:
+      plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.qs.shape[0], self.dy/1000.*self.qs.shape[1], 0))
+      plt.xlabel('x [km]', fontsize=12, fontweight='bold')
+      plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
 
     plt.subplot(212)
     plt.title('Deflection [m]')
-    plt.imshow(self.w, extent=(0, self.dx/1000.*self.w.shape[0], self.dy/1000.*self.w.shape[1], 0))
-    plt.xlabel('x [km]', fontsize=12, fontweight='bold')
-    plt.ylabel('y [km]', fontsize=12, fontweight='bold')
+    if self.latlon:
+      plt.imshow(self.w, extent=(0, self.dx*self.w.shape[0], self.dy*self.w.shape[1], 0))
+      plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
+      plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
+    else:
+      plt.imshow(self.w, extent=(0, self.dx/1000.*self.w.shape[0], self.dy/1000.*self.w.shape[1], 0))
+      plt.xlabel('x [km]', fontsize=12, fontweight='bold')
+      plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
   
-  def xyzinterp(self, z, titletext):
+  def xyzinterp(self, x, y, z, titletext):
     """
     Interpolates and plots ungridded model outputs from SAS_NG solution
     """
     # Help from http://wiki.scipy.org/Cookbook/Matplotlib/Gridding_irregularly_spaced_data
     
     if self.Verbose:
-      print "Starting to interpolate grid -- can be a slow process!"
+      print "Starting to interpolate grid for plotting -- can be a slow process!"
     
     from scipy.interpolate import griddata
     import numpy.ma as ma
     
     # define grid.
-    xmin = np.min(self.x)
-    xmean = np.mean(self.x) # not used right now
-    xmax = np.max(self.x)
-    ymin = np.min(self.y)
-    ymean = np.mean(self.y) # not used right now
-    ymax = np.max(self.y)
+    xmin = np.min(self.xw)
+    xmean = np.mean(self.xw) # not used right now
+    xmax = np.max(self.xw)
+    ymin = np.min(self.yw)
+    ymean = np.mean(self.yw) # not used right now
+    ymax = np.max(self.yw)
     x_range = xmax - xmin
     y_range = ymax - ymin
     
@@ -446,24 +429,48 @@ class Plotting(object):
     xi = np.linspace(xmin, xmax, 200)
     yi = np.linspace(ymin, ymax, 200)
     # grid the z-axis
-    zi = griddata((self.x, self.y), z, (xi[None,:], yi[:,None]), method='cubic')
+    zi = griddata((x, y), z, (xi[None,:], yi[:,None]), method='cubic')
+    # turn nan into 0 -- this will just be outside computation area for q
+    zi[np.isnan(zi)] = 0
     # contour the gridded outputs, plotting dots at the randomly spaced data points.
     #CS = plt.contour(xi,yi,zi,15,linewidths=0.5,colors='k') -- don't need lines
-    CS = plt.contourf(xi/1000.,yi/1000.,zi,100,cmap=plt.cm.jet)
+    if self.latlon:
+      CS = plt.contourf(xi, yi, zi, 100, cmap=plt.cm.jet)
+    else:
+      CS = plt.contourf(xi/1000., yi/1000., zi, 100, cmap=plt.cm.jet)
     plt.colorbar() # draw colorbar
     # plot model points.
-    plt.scatter(self.x/1000., self.y/1000., marker='.', c='k', s=1)
-    #plt.hexbin(self.x, self.y, C=self.w) -- show colors on points -- harder to see
-    plt.xlabel('x [km]')
-    plt.ylabel('y [km]')
+    # Computed at
+    if self.latlon:
+      plt.plot(x, y, 'o', markerfacecolor='.6', markeredgecolor='.6', markersize=1)
+      plt.plot(self.x, self.y, 'o', markerfacecolor='.2', markeredgecolor='.2', markersize=1)
+    else:
+      plt.plot(x/1000., y/1000., 'o', markerfacecolor='.6', markeredgecolor='.6', markersize=1)
+      # Load sources (overlay computed at)
+      plt.plot(self.x/1000., self.y/1000., 'o', markerfacecolor='.2', markeredgecolor='.2', markersize=1)
+      #plt.hexbin(self.x, self.y, C=self.w) -- show colors on points -- harder to see
+    if self.latlon:
+      plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
+      plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
+    else:
+      plt.xlabel('x [km]', fontsize=12, fontweight='bold')
+      plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     # Limits -- to not get messed up by points (view wants to be wider so whole point visible)
-    plt.xlim( (xi[0]/1000., xi[-1]/1000.) )
-    plt.ylim( (yi[0]/1000., yi[-1]/1000.) )
+    if self.latlon:
+      plt.xlim( (xi[0], xi[-1]) )
+      plt.ylim( (yi[0], yi[-1]) )
+    else:
+      plt.xlim( (xi[0]/1000., xi[-1]/1000.) )
+      plt.ylim( (yi[0]/1000., yi[-1]/1000.) )
     # Title
     plt.title(titletext, fontsize=16)
 
+
 class WhichModel(Utility):
   def __init__(self, filename=None):
+    """
+    WhichModel is a copy of initialization features inside the main class
+    """
     self.filename = filename
     if self.filename:
       try:
@@ -482,11 +489,8 @@ class WhichModel(Utility):
         except:
           sys.exit()
 
-# class Isostasy inherits IRF interface, and it determines the simulation type
-# by reading three parameters from configuration file, but it does not set up other
-# parameters, which is the responsibility of derived concrete classes.
-class Isostasy(Utility, Plotting):
-
+class Flexure(Utility, Plotting):
+  
   def __init__(self, filename=None):
     # 17 Nov 2014: Splitting out initialize from __init__ to allow space
     # to use getters and setters to define values
@@ -494,7 +498,7 @@ class Isostasy(Utility, Plotting):
     # Use standard routine to pull out values
     # If no filename provided, will not initialize configuration file.
     self.filename = filename
-    
+        
     # DEFAULT VERBOSITY
     # Set default "quiet" to False, unless set by setter or overwritten by 
     # the configuration file.
@@ -502,6 +506,26 @@ class Isostasy(Utility, Plotting):
     # And also set default verbosity
     self.Verbose = True
     self.Debug = False
+    
+    # Set GRASS GIS usage flag: if GRASS is used, don't display error
+    # messages related to unset options. This sets it to False if it 
+    # hasn't already been set (and it can be set after this too)
+    # (Though since this is __init__, would have to go through WhichModel
+    # for some reason to define self.grass before this
+    try:
+      self.grass
+    except:
+      self.grass = False
+
+    # Default values for lat/lon usage -- defaulting not to use it
+    try:
+      self.latlon
+    except:
+      self.latlon = False
+    try:
+      self.PlanetaryRadius
+    except:
+      self.PlanetaryRadius = None
 
   def initialize(self, filename=None):
     # Values from configuration file
@@ -571,9 +595,9 @@ class Isostasy(Utility, Plotting):
       self.coeff_creation_time = None
       self.time_to_solve = None
       
-      self.method = self.configGet("string", "mode", "method")
+      self.Method = self.configGet("string", "mode", "method")
       # Boundary conditions
-      # This used to be nested inside an "if self.method == 'FD'", but it seems 
+      # This used to be nested inside an "if self.Method == 'FD'", but it seems 
       # better to define these to ensure there aren't mistaken impressions
       # about what they do for the SAS case
       # Not optional: flexural solutions can be very sensitive to b.c.'s
@@ -589,13 +613,19 @@ class Isostasy(Utility, Plotting):
       self.rho_fill = self.configGet('float', "parameter", "InfillMaterialDensity")
 
       # Grid spacing
-      if self.method != 'SAS_NG':
+      if self.Method != 'SAS_NG':
         # No meaning for ungridded superimposed analytical solutions
         # From configuration file
         self.dx = self.configGet("float", "numerical", "GridSpacing_x")
         if self.dimension == 2:
           self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
 
+      # Mode: solution method and type of plate solution (if applicable)
+      if self.filename:
+        self.Method = self.configGet("string", "mode", "method")
+        if self.dimension == 2:
+          self.PlateSolutionType = self.configGet("string", "mode", "PlateSolutionType")
+      
       # Loading grid
       # q0 is either a load array or an x,y,q array.
       # Therefore q_0, initial q, before figuring out what it really is
@@ -604,7 +634,15 @@ class Isostasy(Utility, Plotting):
       # it later is combined with dx and (if 2D) dy for FD cases
       # for point loads, need mass: q0 should be written as [x, (y), force])
       self.q0 = self.configGet('string', "input", "Loads")
+
       
+    # Parameters -- rho_m and rho_fill defined, so this outside
+    # of if-statement (to work with getters/setters as well)
+    self.drho = self.rho_m - self.rho_fill
+    if self.filename:
+      self.E  = self.configGet("float", "parameter", "YoungsModulus")
+      self.nu = self.configGet("float", "parameter", "PoissonsRatio")
+    
     # Stop program if there is no q0 defined or if it is None-type
     try:
       self.q0
@@ -627,38 +665,14 @@ class Isostasy(Utility, Plotting):
       self.q0
     except:
       self.q0 = None
+    if self.q0 == '':
+      self.q0 = None
+    if type(self.q0) == str:
+      self.q0 = self.loadFile(self.q0) # Won't do this if q0 is None
+          
+    # Check consistency of dimensions
     if self.q0 is not None:
-      # If a q0 is a string (i.e. we need to load something)
-      if type(self.q0) == str:
-        try:
-          # First see if it is a full path or directly links from the current
-          # working directory
-          self.q0 = np.load(self.q0)
-          if self.Verbose: print "Loading q0 from numpy binary"
-        except:
-          try:
-            self.q0 = np.loadtxt(self.q0)
-            if self.Verbose: print "Loading q0 ASCII"
-          except:
-            # Then see if it is relative to the location of the configuration file
-            try:
-              self.q0 = load(self.inpath + self.q0)
-              if self.Verbose: print "Loading q0 from numpy binary"
-            except:
-              try:
-                self.q0 = np.loadtxt(self.inpath + self.q0)
-                if self.Verbose: print "Loading q0 ASCII"
-              # If failure
-              except:
-                print "Cannot find q0 file"
-                print "q0path = " + self.q0
-                print "Looked relative to model python files."
-                print "Also looked relative to configuration file path, " + self.inpath
-                print "Exiting."
-                sys.exit()
-      
-      # Check consistency of dimensions
-      if self.method != 'SAS_NG':
+      if self.Method != 'SAS_NG':
         if self.q0.ndim != self.dimension:
           print "Number of dimensions in loads file is inconsistent with"
           print "number of dimensions in solution technique."
@@ -667,7 +681,7 @@ class Isostasy(Utility, Plotting):
           print self.q0
           print "Exiting."
           sys.exit()
-
+          
     # Plotting selection
     self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
 
@@ -727,40 +741,79 @@ class Isostasy(Utility, Plotting):
   def bc_check(self):
     # Check that boundary conditions are acceptable with code implementation
     # Acceptable b.c.'s
-    if self.method == 'FD':
-      self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-      self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-      # Boundary conditions should be defined by this point -- whether via 
-      # the configuration file or the getters and setters
-      self.bclist = [self.BC_E, self.BC_W]
-      if self.dimension == 2:
-        self.bclist += [self.BC_N, self.BC_S]
-      # Now check that these are valid boundary conditions
-      for bc in self.bclist:
-        if self.dimension == 1:
-          if (bc == self.bc1D).any():
-            pass
+    if self.Method == 'FD':
+      # Check if a coefficient array has been defined
+      # It would only be by a getter or setter;
+      # no way to do I/O with this with present configuration files
+      # Define as None for use later.
+      try:
+        self.coeff_matrix
+      except:
+        self.coeff_matrix = None
+      # No need to create a coeff_matrix if one already exists
+      if self.coeff_matrix is None:
+        # Acceptable boundary conditions
+        self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+        self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+        # Boundary conditions should be defined by this point -- whether via 
+        # the configuration file or the getters and setters
+        self.bclist = [self.BC_E, self.BC_W]
+        if self.dimension == 2:
+          self.bclist += [self.BC_N, self.BC_S]
+        # Now check that these are valid boundary conditions
+        for bc in self.bclist:
+          if self.dimension == 1:
+            if (bc == self.bc1D).any():
+              pass
+            else:
+              sys.exit("'"+bc+"'"+ " is not an acceptable 1D finite difference boundary condition\n"\
+                       +"and/or is not yet implement in the code. Acceptable boundary conditions\n"\
+                       +"are:\n"\
+                       +str(self.bc1D)+"\n"\
+                       +"Exiting.")
+          elif self.dimension == 2:
+            if (bc == self.bc2D).any():
+              pass
+            else:
+              sys.exit("'"+bc+"'"+ " is not an acceptable 2D finite difference boundary condition\n"\
+                       +"and/or is not yet implement in the code. Acceptable boundary conditions\n"\
+                       +"are:\n"\
+                       +str(self.bc2D)+"\n"\
+                       +"Exiting.")
           else:
-            sys.exit("'"+bc+"'"+ " is not an acceptable 1D finite difference boundary condition\n"\
-                     +"and/or is not yet implement in the code. Acceptable boundary conditions\n"\
-                     +"are:\n"\
-                     +str(self.bc1D)+"\n"\
-                     +"Exiting.")
-        elif self.dimension == 2:
-          if (bc == self.bc2D).any():
-            pass
-          else:
-            sys.exit("'"+bc+"'"+ " is not an acceptable 2D finite difference boundary condition\n"\
-                     +"and/or is not yet implement in the code. Acceptable boundary conditions\n"\
-                     +"are:\n"\
-                     +str(self.bc2D)+"\n"\
-                     +"Exiting.")
-        else:
-          sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
+            sys.exit("For a flexural solution, grid must be 1D or 2D. Exiting.")
     else:
-      if self.BC_E == 'NoOutsideLoads' or self.BC_E == '' \
-         and self.BC_W == 'NoOutsideLoads' or self.BC_W == '':
-        if self.BC_E == '' or self.BC_W == '':
+      # Analytical solution boundary conditions
+      # If they aren't set, it is because no input file has been used
+      # Just set them to an empty string (like input file would do)
+      try:
+        self.BC_E
+      except:
+        self.BC_E = ''
+      try:
+        self.BC_W
+      except:
+        self.BC_W = ''
+      if self.dimension == 2:
+        try:
+          self.BC_S
+        except:
+          self.BC_S = ''
+        try:
+          self.BC_N
+        except:
+          self.BC_N = ''
+      else:
+        # Simplifies flow control a few lines down to define these as None-type
+        self.BC_S = None
+        self.BC_N = None
+      if ( self.BC_E == 'NoOutsideLoads' or self.BC_E == '' \
+         and self.BC_W == 'NoOutsideLoads' or self.BC_W == '' ) \
+         and ( self.dimension != 2 \
+         or (self.BC_E == 'NoOutsideLoads' or self.BC_E == '' \
+         and self.BC_W == 'NoOutsideLoads' or self.BC_W == '') ):
+        if self.BC_E == '' or self.BC_W == '' \
+           or self.BC_S == '' or self.BC_N == '':
           if self.Verbose:
             print "Assuming NoOutsideLoads boundary condition, as this is implicit in the " 
             print "  superposition-based analytical solution"
@@ -782,26 +835,7 @@ class Isostasy(Utility, Plotting):
           print "analytical solutions and expect them to work."
           print ""
           sys.exit()
-  
-# class Flexure inherits Isostay and it overrides the __init__ method. It also
-# define three different solution methods, which are implemented by its subclass.
-class Flexure(Isostasy):
-  
-  def initialize(self, filename=None):
-    super(Flexure, self).initialize(filename)
-
-    # Mode: solution method and type of plate solution (if applicable)
-    if self.filename:
-      self.method = self.configGet("string", "mode", "method")
-      if self.dimension == 2:
-        self.PlateSolutionType = self.configGet("string", "mode", "PlateSolutionType")
-    
-    # Parameters
-    self.drho = self.rho_m - self.rho_fill
-    if self.filename:
-      self.E  = self.configGet("float", "parameter", "YoungsModulus")
-      self.nu = self.configGet("float", "parameter", "PoissonsRatio")
-    
+ 
   def coeffArraySizeCheck(self):
     """
     Make sure that q0 and coefficient array are the right size compared to 
@@ -834,10 +868,13 @@ class Flexure(Isostasy):
   ### variable-length arguments, which is the way how Python overloads functions.
   def FD(self):
     """
-    Handles set-up for the finite difference solution method
+    Set-up for the finite difference solution method
     """
     if self.Verbose:
       print "Finite Difference Solution Technique"
+    # Used to check for coeff_matrix here, but now doing so in self.bc_check()
+    # called by f1d and f2d at the start
+    # 
     # Define a stress-based qs = q0
     # But only if the latter has not already been defined
     # (e.g., by the getters and setters)
@@ -850,35 +887,28 @@ class Flexure(Isostasy):
       del self.q0
     # Is there a solver defined?
     try:
-      self.solver # See if it exists already
+      self.Solver # See if it exists already
     except:
       # Well, will fail if it doesn't see this, maybe not the most reasonable
       # error message.
       if self.filename:
-        self.solver = self.configGet("string", "numerical", "Solver")
+        self.Solver = self.configGet("string", "numerical", "Solver")
       else:
         sys.exit("No solver defined!")
-    # Check if a coefficient array has been defined
-    # It would only be by a getter or setter;
-    # no way to do I/O with this with present configuration files
-    try:
-      self.coeff_matrix
-    except:
-      self.coeff_matrix = None
     # Check consistency of size if coeff array was loaded
     if self.filename:
       # In the case that it is iterative, find the convergence criterion
       self.iterative_ConvergenceTolerance = self.configGet("float", "numerical", "ConvergenceTolerance")    
       # Try to import Te grid or scalar for the finite difference solution
       try:
-        self.Te = self.configGet("float", "input", "ElasticThickness", optional=True)
+        self.Te = self.configGet("float", "input", "ElasticThickness", optional=False)
         if self.Te is None:
-          Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
+          Tepath = self.configGet("string", "input", "ElasticThickness", optional=False)
           self.Te = Tepath
         else:
           Tepath = None
       except:
-        Tepath = self.configGet("string", "input", "ElasticThickness", optional=True)
+        Tepath = self.configGet("string", "input", "ElasticThickness", optional=False)
         self.Te = Tepath
       if self.Te is None:
         if self.coeff_matrix is not None:
@@ -897,31 +927,17 @@ class Flexure(Isostasy):
     # Assume that even if a coeff_matrix is defined
     # That the user wants Te if they gave the path
     if Tepath:
-      try:
-        # First see if it is a full path or directly links from the current
-        # working directory
-        self.Te = np.loadtxt(Tepath)
-        if self.Verbose:
-          print "Loading elastic thickness array from provided file path"
-      except:
-        try:
-          # Then see if it is relative to the location of the configuration file
-            self.Te = np.loadtxt(self.inpath + Tepath)
-            if self.Verbose:
-                print "Elastic thickness array loaded from provided filename"
-        except:
-          if self.Quiet == False:
-            print "Requested Te file is provided but cannot be located."
-            print "No scalar elastic thickness is provided in configuration file"
-            print "(Typo in path to input Te grid?)"
-          if self.coeff_matrix is not None:
-            if self.Quiet == False:
-              print "But a coefficient matrix has been found."
-              print "Calculations will be carried forward using it."
-          else:
-            if self.Quiet == False:
-              print "Exiting."
-            sys.exit()
+      self.Te = self.loadFile(self.Te, close_on_fail = False)
+      if self.Te is None:
+        print "Requested Te file is provided but cannot be located."
+        print "No scalar elastic thickness is provided in configuration file"
+        print "(Typo in path to input Te grid?)"
+        if self.coeff_matrix is not None:
+          print "But a coefficient matrix has been found."
+          print "Calculations will be carried forward using it."
+        else:
+          print "Exiting."
+          sys.exit()
 
       # Check that Te is the proper size if it was loaded
       # Will be array if it was loaded
@@ -936,6 +952,10 @@ class Flexure(Isostasy):
   # with other functions
 
   def SAS(self):
+    """
+    Set-up for the rectangularly-gridded superposition of analytical solutions 
+    method for solving flexure
+    """
     if self.filename:
       # Define the (scalar) elastic thickness
       self.Te = self.configGet("float", "input", "ElasticThickness")
@@ -945,12 +965,33 @@ class Flexure(Isostasy):
       # q0 is the parsable input to either a qs grid or contains (x,(y),q)
       del self.q0
     if self.dimension == 2:
+      # Define a stress-based qs = q0
+      # But only if the latter has not already been defined
+      # (e.g., by the getters and setters)
+      try:
+        self.qs
+      except:
+        self.qs = self.q0.copy()
+        # Remove self.q0 to avoid issues with multiply-defined inputs
+        # q0 is the parsable input to either a qs grid or contains (x,(y),q)
+        del self.q0
       from scipy.special import kei
 
   def SAS_NG(self):
+    """
+    Set-up for the ungridded superposition of analytical solutions 
+    method for solving flexure
+    """
     if self.filename:
       # Define the (scalar) elastic thickness
       self.Te = self.configGet("float", "input", "ElasticThickness")
+      # See if it wants to be run in lat/lon
+      # Could put under in 2D if-statement, but could imagine an eventual desire
+      # to change this and have 1D lat/lon profiles as well.
+      # So while the options will be under "numerical2D", this place here will 
+      # remain held for an eventual future.
+      self.latlon = self.configGet("string", "numerical2D", "latlon", optional=True)
+      self.PlanetaryRadius = self.configGet("float", "numerical2D", "PlanetaryRadius", optional=True)
       if self.dimension == 2:
         from scipy.special import kei
     # Parse out input q0 into variables of imoprtance for solution
@@ -984,3 +1025,41 @@ class Flexure(Isostasy):
     # q0 is the parsable input to either a qs grid or contains (x,(y),q)
     del self.q0
     
+    # Check if a seperate output set of x,y points has been defined
+    # otherwise, set those values to None
+    # First, try to load the arrays
+    try:
+      self.xw
+    except:
+      try:
+        self.xw = self.configGet('string', "input", "xw", optional=True)
+        if self.xw == '':
+          self.xw = None
+      except:
+        self.xw = None
+    # If strings, load arrays
+    if type(self.xw) == str:
+      self.xw = self.loadFile(self.xw)
+    if self.dimension == 2:
+      try:
+        # already set by setter?
+        self.yw
+      except:
+        try:
+          self.yw = self.configGet('string', "input", "yw", optional=True )
+          if self.yw == '':
+            self.yw = None
+        except:
+          self.yw = None
+      # At this point, can check if we have both None or both defined
+      if (self.xw is not None and self.yw is None) \
+        or (self.xw is None and self.yw is not None):
+        sys.exit("SAS_NG output at specified points requires both xw and yw to be defined")
+      # All right, now just finish defining
+      if type(self.yw) == str:
+        self.yw = self.loadFile(self.yw)
+      elif self.yw is None:
+          self.yw = self.y.copy()
+    if self.xw is None:
+        self.xw = self.x.copy()
+

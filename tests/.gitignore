@@ -57,3 +57,6 @@ target/
 # Linux temp files
 *~
 *.swp
+
+# Directory with benchmarking tests -- not part of package
+benchmark/

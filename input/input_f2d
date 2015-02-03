@@ -1,0 +1,48 @@
+; All units are SI
+
+[mode]
+dimension=2 ; 1 or 2 dimensions
+method=FD ; Solution method: FD, FFT, SAS, SAS_NG
+PlateSolutionType=vWC1994
+# Plate solutions can be vWC1994 (best) or G2009 (not bad, but not as robust as vWC1994)
+
+[parameter]
+YoungsModulus=6.5E10
+PoissonsRatio=0.25
+GravAccel=9.8
+MantleDensity=3300
+InfillMaterialDensity=0
+
+[input]
+; Path to input load array
+Loads=q0_sample/2D/diag.txt
+; Elastic thickness grid goes here; cannot coexist with a constant Te
+; defined above
+ElasticThickness=Te_sample/2D/fault_24-30.txt
+
+[output]
+; DeflectionOut is a file path for an ASCII grid of w
+DeflectionOut=
+; Plot choices are q, w, both, or (for 1D) combo
+Plot=both
+
+[numerical]
+GridSpacing_x=4000 ; dx
+BoundaryCondition_West=0Moment0Shear
+BoundaryCondition_East=Dirichlet0
+; Solver can be direct or iterative
+Solver=direct
+; Iterates until this is the difference between two subsequent iterations
+; Set as 0 if you don't want to iterate
+ConvergenceTolerance=1E-3
+
+[numerical2D]
+; Those parameters shared between this and the 1D solution are in "[numerical]"
+GridSpacing_y=4000 ; dy
+BoundaryCondition_North=Mirror
+BoundaryCondition_South=0Slope0Shear
+
+[verbosity]
+Verbose=
+Debug=
+Quiet=

@@ -99,11 +99,11 @@ for l in [100E3, 200E3, 500E3, 1000E3]:
               obj.set_value('Loads_force', np.reshape(q,-1))
               
               """
-              Te *= np.ones(q.shape)
+              Te *= np.ones(q0.shape)
               
               # Make sinusoid
-              x = np.linspace(dx/2, L-dx/2, q.shape[1])
-              y = np.linspace(dx/2, L-dx/2, q.shape[0])
+              x = np.linspace(dx/2, L-dx/2, q0.shape[1])
+              y = np.linspace(dx/2, L-dx/2, q0.shape[0])
               X,Y = np.meshgrid(x,y)
               sineadd = 15000 * (np.sin(4*np.pi*X/L) + np.sin(4*np.pi*Y/L))
 

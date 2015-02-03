@@ -15,22 +15,20 @@ class F2D(Flexure):
   def run(self):
     self.bc_check()
     self.solver_start_time = time.time()
-    if self.Verbose:
-      print 'Solver start time [Unix epoch]:', self.solver_start_time
       
-    if self.method == 'FD':
+    if self.Method == 'FD':
       # Finite difference
       super(F2D, self).FD()
       self.method_func = self.FD
-    elif self.method == 'FFT':
+    elif self.Method == 'FFT':
       # Fast Fourier transform
       super(F2D, self).FFT()
       self.method_func = self.FFT
-    elif self.method == "SAS":
+    elif self.Method == "SAS":
       # Superposition of analytical solutions
       super(F2D, self).SAS()
       self.method_func = self.SAS
-    elif self.method == "SAS_NG":
+    elif self.Method == "SAS_NG":
       # Superposition of analytical solutions,
       # nonuniform points (no grid)
       super(F2D, self).SAS_NG()
@@ -67,11 +65,11 @@ class F2D(Flexure):
     sys.exit("The fast Fourier transform solution method is not yet implemented.")
 
   def SAS(self):
-    self.spatialDomainVars()
+    self.spatialDomainVarsSAS()
     self.spatialDomainGridded()
 
   def SAS_NG(self):
-    self.spatialDomainVars()
+    self.spatialDomainVarsSAS()
     self.spatialDomainNoGrid()
 
   
@@ -85,7 +83,7 @@ class F2D(Flexure):
 
   # SETUP
 
-  def spatialDomainVars(self):
+  def spatialDomainVarsSAS(self):
     self.D = self.E*self.Te**3/(12*(1-self.nu**2)) # Flexural rigidity
     self.alpha = (self.D/(self.drho*self.g))**.25 # 2D flexural parameter
     self.coeff = self.alpha**2/(2*np.pi*self.D)
@@ -132,20 +130,28 @@ class F2D(Flexure):
 
   def spatialDomainNoGrid(self):
 
-    self.w = np.zeros(self.x.shape)
+    self.w = np.zeros(self.xw.shape)
     if self.Debug:
       print "w = "
       print self.w.shape
     
-    for i in range(len(self.x)):
-      # More efficient if we have created some 0-load points
-      # (e.g., for where we want output)
-      if self.q[i] != 0:
-        # Create array of distances from point of load
-        r = ( (self.x - self.x[i])**2 + (self.y - self.y[i])**2 )**.5
-        # Compute and sum deflection
-        self.w += self.q[i] * self.coeff * kei(r/self.alpha)
-    
+    if self.latlon:
+      for i in range(len(self.x)):
+        # More efficient if we have created some 0-load points
+        # (e.g., for where we want output)
+        if self.q[i] != 0:
+          # Create array of distances from point of load
+          r = self.greatCircleDistance(lat1=self.y[i], long1=self.x[i], lat2=self.yw, long2=self.xw, radius=self.PlanetaryRadius)
+          self.w += self.q[i] * self.coeff * kei(r/self.alpha)
+          # Compute and sum deflection
+          self.w += self.q[i] * self.coeff * kei(r/self.alpha)
+    else:
+      for i in range(len(self.x)):
+        if self.q[i] != 0:
+          r = ( (self.xw - self.x[i])**2 + (self.yw - self.y[i])**2 )**.5
+          self.w += self.q[i] * self.coeff * kei(r/self.alpha)
+          self.w += self.q[i] * self.coeff * kei(r/self.alpha)
+
   ## FINITE DIFFERENCE
   ######################
   
@@ -157,7 +163,7 @@ class F2D(Flexure):
     difference solution coefficient matrix
     """
     
-    if self.method != 'SAS_NG':
+    if self.Method != 'SAS_NG':
       self.dx4 = self.dx**4
       self.dy4 = self.dy**4
       self.dx2dy2 = self.dx**2 * self.dy**2
@@ -436,45 +442,6 @@ class F2D(Flexure):
                      + (8.*D0 - 2.*nu*Dxx - 2.*nu*Dyy)/dx2dy2 \
                      + drho*g
                      
-      elif self.PlateSolutionType == 'LinearTeVariationsOnly':
-        sys.exit("CHECK LATER PARTS OF SOLUTION: NOT SURE IF THEY ARE RIGHT")
-        # So check starting with self.c_j1i0
-        # These were flipped around in x and y
-        # And need a good look over
-        # before I will feel OK using them
-        # More info here!!!!!!!!!
-        # SIMPLER STENCIL: just del**2(D del**2(w)): only linear variations
-        # in Te are allowed.
-        # x = -2, y = 0
-        self.cj_2i0_coeff_ij = D0 / dx4
-        # x = 0, y = -2
-        self.cj0i_2_coeff_ij = D0 / dy4
-        # x = 0, y = 2
-        self.cj0i2_coeff_ij = D0 / dy4
-        # x = 2, y = 0
-        self.cj2i0_coeff_ij = D0 / dx4
-        # x = -1, y = -1
-        self.cj_1i_1_coeff_ij = 2.*D0 / dx2dy2
-        # x = -1, y = 1
-        self.cj_1i1_coeff_ij = 2.*D0 / dx2dy2
-        # x = 1, y = -1
-        self.cj1i_1_coeff_ij = 2.*D0 / dx2dy2
-        # x = 1, y = 1
-        self.cj1i1_coeff_ij = 2.*D0 / dx2dy2
-        # x = -1, y = 0
-        self.cj_1i0_coeff_ij = (-4.*D0 + Dxx)/dx4 + (-4.*D0 + Dyy)/dx2dy2
-        # x = 0, y = -1
-        self.cj0i_1_coeff_ij = (-4.*D0 + Dyy)/dx4 + (-4.*D0 + Dxx)/dx2dy2
-        # x = 0, y = 1
-        self.cj0i1_coeff_ij = (-4.*D0 + Dyy)/dx4 + (-4.*D0 + Dxx)/dx2dy2
-        # x = 1, y = 0
-        self.cj1i0_coeff_ij = (-4.*D0 + Dxx)/dx4 + (-4.*D0 + Dyy)/dx2dy2
-        # x = 0, y = 0
-        self.cj0i0_coeff_ij = (6.*D0 - 2.*Dxx)/dx4 \
-                     + (6.*D0 - 2.*Dyy)/dy4 \
-                     + (8.*D0 - 2.*Dxx - 2.*Dyy)/dx2dy2 \
-                     + drho*g
-
       elif self.PlateSolutionType == 'G2009':
         # STENCIL FROM GOVERS ET AL. 2009 -- first-order differences
         # x is j and y is i b/c matrix row/column notation
@@ -509,11 +476,9 @@ class F2D(Flexure):
       else:
         sys.exit("Not an acceptable plate solution type. Please choose from:\n"+
                   "* vWC1994\n"+
-                  "* LinearTeVariationsOnly\n"+
                   "* G2009\n"+
                   "")
                   
-
       ################################################################
       # CREATE COEFFICIENT ARRAYS: PLAIN, WITH NO B.C.'S YET APPLIED #
       ################################################################
@@ -1557,7 +1522,7 @@ class F2D(Flexure):
       print 'maxFlexuralWavelength_ncells: (x, y):', self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y
     
     q0vector = self.qs.reshape(-1, order='C')
-    if self.solver == "iterative" or self.solver == "Iterative":
+    if self.Solver == "iterative" or self.Solver == "Iterative":
       if self.Debug:
         print "Using generalized minimal residual method for iterative solution"
       if self.Verbose:
@@ -1565,7 +1530,7 @@ class F2D(Flexure):
       wvector = scipy.sparse.linalg.isolve.lgmres(self.coeff_matrix, q0vector)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
       wvector = wvector[0] # Reach into tuple to get my array back
     else:
-      if self.solver == "direct" or self.solver == "Direct":
+      if self.Solver == "direct" or self.Solver == "Direct":
         if self.Debug:
           print "Using direct solution with UMFpack"
       else:

@@ -12,19 +12,19 @@ class F1D(Flexure):
   def run(self):
     self.bc_check()
     self.solver_start_time = time.time()
-    if self.method == 'FD':
+    if self.Method == 'FD':
       # Finite difference
       super(F1D, self).FD()
       self.method_func = self.FD
-    elif self.method == 'FFT':
+    elif self.Method == 'FFT':
       # Fast Fourier transform
       super(F1D, self).FFT()
       self.method_func = self.FFT
-    elif self.method == "SAS":
+    elif self.Method == "SAS":
       # Superposition of analytical solutions
       super(F1D, self).SAS()
       self.method_func = self.SAS
-    elif self.method == "SAS_NG":
+    elif self.Method == "SAS_NG":
       # Superposition of analytical solutions,
       # nonuniform points
       super(F1D, self).SAS_NG()
@@ -118,7 +118,7 @@ class F1D(Flexure):
     """
     Superposition of analytical solutions without a gridded domain
     """
-    self.w = np.zeros(self.q.shape)
+    self.w = np.zeros(self.xw.shape)
 
     if self.Debug:
       print "w = "
@@ -128,7 +128,7 @@ class F1D(Flexure):
       # More efficient if we have created some 0-load points
       # (e.g., for where we want output)
       if self.q[i] != 0:
-        dist = np.abs(self.x - self.x[i])
+        dist = np.abs(self.xw - self.x[i])
         self.w -= self.q[i] * self.coeff * np.exp(-dist/self.alpha) * \
           ( np.cos(dist/self.alpha) + np.sin(dist/self.alpha) )
 
@@ -335,7 +335,7 @@ class F1D(Flexure):
 
     # Then assemble these rows: this is where the periodic boundary condition 
     # can matter.
-    if self.coeff_matrix:
+    if self.coeff_matrix is not None:
       pass
     elif self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
       # In this case, the boundary-condition-related stacking has already 
@@ -566,7 +566,7 @@ class F1D(Flexure):
       self.calc_max_flexural_wavelength()
       print 'maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells
     
-    if self.solver == "iterative" or self.solver == "Iterative":
+    if self.Solver == "iterative" or self.Solver == "Iterative":
       if self.Debug:
         print "Using generalized minimal residual method for iterative solution"
       if self.Verbose:
@@ -576,7 +576,7 @@ class F1D(Flexure):
       w = isolve.lgmres(self.coeff_matrix, -self.qs, tol=self.iterative_ConvergenceTolerance)  
       self.w = w[0] # Reach into tuple to get my array back
     else:
-      if self.solver == "direct" or self.solver == "Direct":
+      if self.Solver == "direct" or self.Solver == "Direct":
         if self.Debug:
           print "Using direct solution with UMFpack"
       else:
