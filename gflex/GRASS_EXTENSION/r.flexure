@@ -28,7 +28,7 @@
 # by Andy Wickert
 
 #%module
-#%  description: Lithospheric flexure
+#% description: Lithospheric flexure
 #% keywords: raster
 #%end
 #%flag
@@ -165,65 +165,88 @@ import sys
 from grass.script import core as grass
 import grass.script.array as garray
 
+
+
+import signal
+import time
+
+
+def exit_gracefully(signum, frame):
+    # restore the original signal handler as otherwise evil things will happen
+    # in raw_input when CTRL+C is pressed, and our signal handler is not re-entrant
+    signal.signal(signal.SIGINT, original_sigint)
+
+    try:
+        if raw_input("\nReally quit? (y/n)> ").lower().startswith('y'):
+            sys.exit(1)
+
+    except KeyboardInterrupt:
+        print("Ok ok, quitting")
+        sys.exit(1)
+
+
+
+
 def main():
 
   # This code is for 2D flexural isostasy
-  obj = gflex.F2D()
+  flex = gflex.F2D()
   # And show that it is coming from GRASS GIS
-  obj.grass = True
+  flex.grass = True
   
   # Flags
   latlon_override = flags['l']
   
   # Inputs
   # Solution selection
-  obj.Method = options['method']
-  if obj.Method == 'FD':
-    obj.Solver = options['solver']
-    if obj.Solver:
-      obj.ConvergenceTolerance = options['tolerance']
+  flex.Method = options['method']
+  if flex.Method == 'FD':
+    flex.Solver = options['solver']
+    if flex.Solver:
+      flex.ConvergenceTolerance = options['tolerance']
     # Always use the van Wees and Cloetingh (1994) solution type.
     # It is the best.
-    obj.PlateSolutionType = 'vWC1994'
+    flex.PlateSolutionType = 'vWC1994'
   # Parameters that are often changed for the solution
   qs = options['q0']
-  obj.qs = garray.array()
-  obj.qs.read(qs)
+  flex.qs = garray.array()
+  flex.qs.read(qs)
   # Elastic thickness
   try:
-    obj.Te = float(options['te'])
+    flex.Te = float(options['te'])
   except:
-    obj.Te = garray.array() # FlexureTe is the one that is used by Flexure
-    obj.Te.read(options['te'])
-    obj.Te = np.array(obj.Te)
+    flex.Te = garray.array() # FlexureTe is the one that is used by Flexure
+    flex.Te.read(options['te'])
+    flex.Te = np.array(flex.Te)
   if options['te_units'] == 'km':
-    obj.Te *= 1000
+    flex.Te *= 1000
   elif options['te_units'] == 'm':
     pass
   else:
     sys.exit() # Just do this in case there is a mistake in the options
                # limitations given above
-  obj.rho_fill = float(options['rho_fill'])
+  flex.rho_fill = float(options['rho_fill'])
   # Parameters that often stay at their default values
-  obj.g = float(options['g'])
-  obj.E = float(options['ym']) # Can't just use "E" because reserved for "east", I think
-  obj.nu = float(options['nu'])
-  obj.rho_m = float(options['rho_m'])
+  flex.g = float(options['g'])
+  flex.E = float(options['ym']) # Can't just use "E" because reserved for "east", I think
+  flex.nu = float(options['nu'])
+  flex.rho_m = float(options['rho_m'])
   # Solver type and iteration tolerance
-  obj.Solver = options['solver']
-  obj.ConvergenceTolerance = float(options['tolerance'])
+  flex.Solver = options['solver']
+  flex.ConvergenceTolerance = float(options['tolerance'])
   # Boundary conditions
-  obj.BC_N = options['northbc']
-  obj.BC_S = options['southbc']
-  obj.BC_W = options['westbc']
-  obj.BC_E = options['eastbc']
+  flex.BC_N = options['northbc']
+  flex.BC_S = options['southbc']
+  flex.BC_W = options['westbc']
+  flex.BC_E = options['eastbc']
+
   # Set verbosity
   if grass.verbosity() >= 2:
-    obj.Verbose = True
+    flex.Verbose = True
   if grass.verbosity() >= 3:
-    obj.Debug = True
+    flex.Debug = True
   elif grass.verbosity() == 0:
-    obj.Quiet = True
+    flex.Quiet = True
   
   # First check if output exists
   if len(grass.parse_command('g.list', type='rast', pattern=options['output'])):
@@ -234,32 +257,40 @@ def main():
   # Check if lat/lon and proceed as directed
   if grass.region_env()[6] == '3':
     if latlon_override:
-      if obj.get_value('Verbosity'):
+      if flex.Verbose:
         print "Latitude/longitude grid."
         print "Based on r_Earth = 6371 km"
         print "Setting y-resolution [m] to 111,195 * [degrees]"
-      obj.dy = grass.region()['nsres']*111195.
+      flex.dy = grass.region()['nsres']*111195.
       NSmid = (grass.region()['n'] + grass.region()['s'])/2.
       dx_at_mid_latitude = (3.14159/180.) * 6371000. * np.cos(np.deg2rad(NSmid))
-      if obj.Verbose:
+      if flex.Verbose:
         print "Setting x-resolution [m] to "+"%.2f" %dx_at_mid_latitude+" * [degrees]"
-      obj.dx = grass.region()['ewres']*dx_at_mid_latitude
+      flex.dx = grass.region()['ewres']*dx_at_mid_latitude
     else:
       grass.fatal(_("Need the '-l' flag to enable lat/lon solution approximation."))
   # Otherwise straightforward
   else:
-    obj.dx = grass.region()['ewres']
-    obj.dy = grass.region()['nsres']
+    flex.dx = grass.region()['ewres']
+    flex.dy = grass.region()['nsres']
+    
+  """
+  # Wish list
+  #awickert@dakib:~$ check that lat/lon part of flex code works^C
+  #awickert@dakib:~$ find a way to make it cancel-able in mid-run, like it is by itself^C
+  #awickert@dakib:~$ perhaps find a way to give it a counter as to how long it will take^C
+  #awickert@dakib:~$ or actually, based on my functional relationship, calculate this!
+  """
 
   # CALCULATE!
-  obj.initialize()
-  obj.run()
-  obj.finalize()
+  flex.initialize()
+  flex.run()
+  flex.finalize()
 
   # Write to GRASS
   # Create a new garray buffer and write to it
   outbuffer = garray.array() # Instantiate output buffer
-  outbuffer[...] = obj.w
+  outbuffer[...] = flex.w
   outbuffer.write(options['output'], overwrite=grass.overwrite) # Write it with the desired name
   # And create a nice colormap!
   grass.run_command('r.colors', map=options['output'], color='differences', quiet=True)
@@ -272,5 +303,10 @@ def main():
 
 if __name__ == "__main__":
   options, flags = grass.parser()
-  main()
+  #original_sigint = signal.getsignal(signal.SIGINT)
+  #signal.signal(signal.SIGINT, exit_gracefully)
+  try:
+    main()
+  except:
+    sys.exit()
 
