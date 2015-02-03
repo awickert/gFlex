@@ -1,37 +1,36 @@
-; All units are SI
+; All units are SI. Not all entries are needed.
+; See "input_help" for descriptions of the entries
+; Standard parameter values for Earth are included.
 
 [mode]
-dimension=1 ; 1 or 2 dimensions
-method=FD ; Solution method: FD, FFT, SPA, SPA_NG
+dimension=1
+method=
 
 [parameter]
 YoungsModulus=6.5E10
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
-InfillMaterialDensity=0
+InfillMaterialDensity=
 
 [input]
-Loads=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
-ElasticThickness=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
-; xw is a vector of desired output points for the SAS_NG method.
-; it is ignored if a different solution method is chosen.
+Loads=
+ElasticThickness=
 xw=
 
 [output]
-DeflectionOut=<!!!!!!!!!!!!! ADD THIS IF YOU WANT OUTPUT TO BE SAVED !!!!!!!!!!!!!>
-; Plot choices are q, w, both, or (for 1D) combo
-Plot=<!!!!!!!!!!!!! ADD THIS IF YOU WANT A PLOT MADE AND DISPLAYED !!!!!!!!!!!!!>
+DeflectionOut=
+Plot=
 
 [numerical]
-GridSpacing_x=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
-BoundaryCondition_West=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
-BoundaryCondition_East=<!!!!!!!!!!!!! ADD THIS !!!!!!!!!!!!!>
-; Solver can be direct or iterative
-Solver=direct
-ConvergenceTolerance=<!!!!!!!!!!!!! ADD THIS (METERS DIFFERENCE BETWEEN ITERATIONS) !!!!!!!!!!!!!>
+GridSpacing_x=
+BoundaryCondition_West=
+BoundaryCondition_East=
+Solver=
+ConvergenceTolerance=
 
 [verbosity]
-Verbose= ; true/false: defaults to true
-Debug= ; true/false: defaults to false
-Quiet= ; true/false: defaults to false
+Verbose=
+Debug=
+Quiet=
+

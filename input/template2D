@@ -1,56 +1,45 @@
-; All units are SI
+; All units are SI. Not all entries are needed.
+; See "input_help" for descriptions of the entries
+; Standard parameter values for Earth are included.
 
 [mode]
-dimension= ; 1 or 2 dimensions
-method= ; Solution method: FD, SAS, SAS_NG
-; Plate solutions can be vWC1994 (best) or G2009 (not bad, but not as robust 
-; as vWC1994)
-PlateSolutionType=vWC1994
+dimension=2
+method=
+PlateSolutionType=
 
 [parameter]
 YoungsModulus=6.5E10
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
-InfillMaterialDensity=0
+InfillMaterialDensity=
 
 [input]
 Loads=
-; Elastic thickness grid or scalar value goes here
 ElasticThickness=
-; xw and yw are vectors of desired output points for the SAS_NG method.
-; they are ignored if a different solution method is chosen.
 xw=
 yw=
 
 [output]
-; DeflectionOut is a file path for an ASCII grid of w that the model will write (optional
 DeflectionOut=
-; Plot choices are q, w, both, or (for 1D) combo (optional)
 Plot=
 
-; Boundary conditions can be:
-; (FD): 0Slope0Shear, 0Moment0Shear, Dirichlet0, Mirror, or Periodic
-; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
-
 [numerical]
-GridSpacing_x= ; dx [m]
+GridSpacing_x=
 BoundaryCondition_West=
 BoundaryCondition_East=
-; Solver can be direct or iterative
 Solver=
-; Tolerance between iterations [m]
-ConvergenceTolerance=1E-3
+ConvergenceTolerance=
 
 [numerical2D]
-GridSpacing_y= ; dy [m]
+GridSpacing_y=
 BoundaryCondition_North=
 BoundaryCondition_South=
-latlon= ; true/false: flag to enable lat/lon input
-PlanetaryRadius= ; radius of planet [m], for lat/lon solutions
+latlon=
+PlanetaryRadius=
 
 [verbosity]
-Verbose= ; true/false: defaults to true
-Debug= ; true/false: defaults to false
-Quiet= ; true/false: defaults to false
+Verbose=
+Debug=
+Quiet=
 
