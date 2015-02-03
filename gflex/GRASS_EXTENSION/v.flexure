@@ -228,15 +228,6 @@ def main():
   w.close(build=False) # don't build here b/c it is always verbose
   grass.run_command('v.build', map=options['w'], quiet=True)
   
-  
-  # Old work trying to connect databases -- but only needed if one does not already exist.
-  #from grass.pygrass.vector.table import Link
-  #w.layer = 1 # set db layer to update
-  # Set the link based on values from w and wdb
-  #wlink = Link(layer=w.layer, name=w.name, table=w.name, key=wdb.key, \
-  #             database=wdb.database, driver=wdb.driver)
-  #w.dblinks.add(wlink) # Connect it to its database (w/out this have just header)
-
   # And raster export
   # Vector defined by raster resolution, so can do direct v.to.rast
   if options['w_rast']:
