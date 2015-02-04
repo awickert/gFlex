@@ -178,12 +178,56 @@ Quiet= ; true/false -- total silence if True. Defaults to False.
 
 #### Within a Python script (with or without a configuration file)
 
-To run gFlex from other Python programs, simply add code like you will find in **gflex_copy_paste.py**, and see **gflex/input/run_in_script.py** as an example, and my scratch file (if it is tracked on git) is **gflex/tests/interactive.py**:
+You may run gFlex from other Python programs. When you install it (above), this also produces a Python module that you may import to access it while scripting.
+
+##### With no configuration file
+**gflex/input/run_in_script.py**, reproduced below, is a good example of how to set the variables and run the model. This method requires no input file, as all of the values are set inside the Python script that imports gflex. This is essentially how the GRASS GIS interface was written, and is a way to embed the abilities of gFlex into another model.
+
+```
+import gflex
+import numpy as np
+from matplotlib import pyplot as plt
+
+flex = gflex.F1D()
+
+flex.Quiet = True
+
+flex.Method = 'FD'
+flex.PlateSolutionType = 'vWC1994'
+flex.Solver = 'direct'
+
+flex.g = 9.8 # acceleration due to gravity
+flex.E = 65E10 # Young's Modulus
+flex.nu = 0.25 # Poisson's Ratio
+flex.rho_m = 3300. # MantleDensity
+flex.rho_fill = 0. # InfiillMaterialDensity
+
+flex.Te = 35000. # Elastic thickness
+flex.qs = np.zeros(50); flex.qs[10:40] += 1E6 # surface load stresses
+flex.dx = 5000.
+flex.BC_W = 'Dirichlet0' # west boundary condition
+flex. BC_E = '0Moment0Shear' # east boundary condition
+
+flex.initialize()
+flex.run()
+flex.finalize()
+
+# If you want to plot the output
+flex.plotChoice='combo'
+# An output file could also be defined here
+# flex.wOutFile = 
+flex.output() # Plots and/or saves output, or does nothing, depending on
+              # whether flex.plotChoice and/or flex.wOutFile have been set
+```
+
+##### With a configuration file
+
+If you would like to use a Python script with a configuration file, this is also possible.
 
 ```
 import gflex
 
-# If you want to use an input file:
+# To use a configuration file:
 filename = '../gflex/input/input_f1d_test' # it works for usage (1) and (2)
 obj = gflex.WhichModel(filename)
 
@@ -194,19 +238,16 @@ if obj.dimension == 1:
 elif obj.dimension == 2:
   obj = gflex.F2D(filename)
 
-# Othrwise just initialize with getters and setters
-# e.g.,
-# obj.set_value('GridSpacing_y', 50000)
-
 # Then run the code!
 obj.initialize(filename)
-# You can use getters/setters here too
 obj.run()
 obj.finalize()
 
 # Standalone plotting output if you so desire
+flex.plotChoice='w'
 obj.output()
 ```
+
 
 #### Within GRASS GIS
 

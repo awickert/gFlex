@@ -4,26 +4,33 @@ import gflex
 import numpy as np
 from matplotlib import pyplot as plt
 
-obj = gflex.F1D()
+flex = gflex.F1D()
 
-obj.Quiet = True
+flex.Quiet = True
 
-obj.Method = 'FD'
-obj.PlateSolutionType = 'vWC1994'
-obj.Solver = 'direct'
+flex.Method = 'FD'
+flex.PlateSolutionType = 'vWC1994'
+flex.Solver = 'direct'
 
-obj.g = 9.8 # acceleration due to gravity
-obj.E = 65E10 # Young's Modulus
-obj.nu = 0.25 # Poisson's Ratio
-obj.rho_m = 3300. # MantleDensity
-obj.rho_fill = 0. # InfiillMaterialDensity
+flex.g = 9.8 # acceleration due to gravity
+flex.E = 65E10 # Young's Modulus
+flex.nu = 0.25 # Poisson's Ratio
+flex.rho_m = 3300. # MantleDensity
+flex.rho_fill = 0. # InfiillMaterialDensity
 
-obj.Te = 35000. # Elastic thickness
-obj.qs = 1E6*np.ones(50) # surface load stresses
-obj.dx = 5000.
-obj.BC_W = '0Slope0Shear' # west boundary condition
-obj. BC_E = 'Dirichlet0' # east boundary condition
+flex.Te = 35000. # Elastic thickness
+flex.qs = np.zeros(50); flex.qs[10:40] += 1E6 # surface load stresses
+flex.dx = 5000.
+flex.BC_W = 'Dirichlet0' # west boundary condition
+flex. BC_E = '0Moment0Shear' # east boundary condition
 
-obj.initialize()
-obj.run()
-obj.finalize()
+flex.initialize()
+flex.run()
+flex.finalize()
+
+# If you want to plot the output
+flex.plotChoice='combo'
+# An output file could also be defined here
+# flex.wOutFile = 
+flex.output() # Plots and/or saves output, or does nothing, depending on
+              # whether flex.plotChoice and/or flex.wOutFile have been set
