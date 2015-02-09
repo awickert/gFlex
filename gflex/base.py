@@ -572,10 +572,10 @@ class Flexure(Utility, Plotting):
         self.Quiet = self.configGet("bool", "verbosity", "Quiet", optional=False)
       except:
         pass
-      # Quiet overrides all others
-      if self.Quiet:
-        self.Debug = False
-        self.Verbose = False
+    # Quiet overrides all others
+    if self.Quiet:
+      self.Debug = False
+      self.Verbose = False
     
     # Introduce model
     # After configuration file can define "Quiet", and getter/setter should be done
