@@ -181,16 +181,16 @@ Quiet= ; true/false -- total silence if True. Defaults to False.
 You may run gFlex from other Python programs. When you install it (above), this also produces a Python module that you may import to access it while scripting.
 
 ##### With no configuration file
-**gflex/input/run_in_script.py**, reproduced below, is a good example of how to set the variables and run the model. This method requires no input file, as all of the values are set inside the Python script that imports gflex. This is essentially how the GRASS GIS interface was written, and is a way to embed the abilities of gFlex into another model.
+**gflex/input/run_in_script_2D.py**, reproduced below, is a good example of how to set the variables and run the model. This method requires no input file, as all of the values are set inside the Python script that imports gflex. This is essentially how the GRASS GIS interface was written, and is a way to embed the abilities of gFlex into another model. A one-dimensional example, **gflex/input/run_in_script_1D.py**, is also available.
 
 ```
 import gflex
 import numpy as np
 from matplotlib import pyplot as plt
 
-flex = gflex.F1D()
+flex = gflex.F2D()
 
-flex.Quiet = True
+flex.Quiet = False
 
 flex.Method = 'FD'
 flex.PlateSolutionType = 'vWC1994'
@@ -202,18 +202,22 @@ flex.nu = 0.25 # Poisson's Ratio
 flex.rho_m = 3300. # MantleDensity
 flex.rho_fill = 0. # InfiillMaterialDensity
 
-flex.Te = 35000. # Elastic thickness
-flex.qs = np.zeros(50); flex.qs[10:40] += 1E6 # surface load stresses
+flex.Te = 35000. # Elastic thickness -- scalar but may be an array
+flex.qs = np.zeros((50, 50)) # Template array for surface load stresses
+flex.qs[10:40, 10:40] += 1E6 # Populating this template
 flex.dx = 5000.
+flex.dy = 5000.
 flex.BC_W = 'Dirichlet0' # west boundary condition
 flex. BC_E = '0Moment0Shear' # east boundary condition
+flex. BC_S = 'Periodic' # east boundary condition
+flex. BC_N = 'Periodic' # east boundary condition
 
 flex.initialize()
 flex.run()
 flex.finalize()
 
 # If you want to plot the output
-flex.plotChoice='combo'
+flex.plotChoice='both'
 # An output file could also be defined here
 # flex.wOutFile = 
 flex.output() # Plots and/or saves output, or does nothing, depending on
