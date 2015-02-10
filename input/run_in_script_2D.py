@@ -25,8 +25,8 @@ flex.dx = 5000.
 flex.dy = 5000.
 flex.BC_W = 'Dirichlet0' # west boundary condition
 flex.BC_E = '0Moment0Shear' # east boundary condition
-flex.BC_S = 'Periodic' # east boundary condition
-flex.BC_N = 'Periodic' # east boundary condition
+flex.BC_S = 'Periodic' # south boundary condition
+flex.BC_N = 'Periodic' # north boundary condition
 
 flex.initialize()
 flex.run()
