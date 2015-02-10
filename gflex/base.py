@@ -687,7 +687,13 @@ class Flexure(Utility, Plotting):
 
   # Finalize
   def finalize(self):
-    # Just print a line to stdout
+    # Can include an option for this later, but for the moment, this will
+    # clear the coefficient array so it doens't cause problems for model runs
+    # searching for the proper rigidity
+    try:
+      del self.coeff_matrix
+    except:
+      pass
     if self.Quiet==False:
       print ""
 
