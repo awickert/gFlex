@@ -1174,23 +1174,24 @@ class F2D(Flexure):
     # 0MOMENT0SHEAR - AND - MIRROR #
     ################################
     # How do multiple types of b.c.'s interfere
-    # Mirror dominates with 0Moment0Shear -- it just mirrors the 
-    # 0Moment0Shear free end -- so this will be the same as 
-    # 0Slope0Shear (above), but repeating here just because this is all
-    # new and I am working it out as I go... so easier to think through
-    # different secitons than to make code super-compact
+    # 0Moment0Shear must determine corner conditions in order to be mirrored
+    # by the "mirror" b.c.
     if (self.BC_N == 'Mirror' and self.BC_W == '0Moment0Shear') \
       or (self.BC_W == 'Mirror' and self.BC_N == '0Moment0Shear'):
-      self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
+      self.cj0i0[0,0] += 2*self.cj_1i_1_coeff_ij[0,0]
+      self.cj1i1[0,0] -= self.cj_1i_1_coeff_ij[0,0]
     if (self.BC_N == 'Mirror' and self.BC_E == '0Moment0Shear') \
       or (self.BC_E == 'Mirror' and self.BC_N == '0Moment0Shear'):
-      self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
+      self.cj0i0[0,-1] += 2*self.cj_1i_1_coeff_ij[0,-1]
+      self.cj1i1[0,-1] -= self.cj_1i_1_coeff_ij[0,-1]
     if (self.BC_S == 'Mirror' and self.BC_W == '0Moment0Shear') \
       or (self.BC_W == 'Mirror' and self.BC_S == '0Moment0Shear'):
-      self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
+      self.cj0i0[-1,0] += 2*self.cj_1i_1_coeff_ij[-1,0]
+      self.cj1i_1[-1,0] -= self.cj_1i1_coeff_ij[-1,0]
     if (self.BC_S == 'Mirror' and self.BC_E == '0Moment0Shear') \
       or (self.BC_E == 'Mirror' and self.BC_S == '0Moment0Shear'):
-      self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
+      self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
+      self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
 
     ######################################
     # 0MOMENT0SHEAR - AND - 0SLOPE0SHEAR #
@@ -1218,47 +1219,9 @@ class F2D(Flexure):
     ##############################
     # PERIODIC B.C.'S AND OTHERS #
     ##############################
-    # Other boundary conditions will determine their portion of the corners 
-    # when periodic is just 1 orientation: only when it is both should it 
-    # tesseltate a plane.
-    # Dirichlet requires no modifications.
-    # What this means is that the periodic acts to repeat the other boundary
-    # conditions rather than the other boundary conditions acting on the 
-    # periodic boundary.
-    if (self.BC_W == 'Periodic' and self.BC_E == 'Periodic'):
-      if (self.BC_N == '0Slope0Shear' or self.BC_N == 'Mirror'):
-        self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
-        self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
-      elif (self.BC_N == '0Moment0Shear'):
-        self.cj0i0[0,0] += 2*self.cj_1i_1_coeff_ij[0,0]
-        self.cj1i1[0,0] -= self.cj_1i_1_coeff_ij[0,0]
-        self.cj0i0[0,-1] += 2*self.cj_1i_1_coeff_ij[0,-1]
-        self.cj1i1[0,-1] -= self.cj_1i_1_coeff_ij[0,-1]
-      if (self.BC_S == '0Slope0Shear' or self.BC_S == 'Mirror'):
-        self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
-        self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
-      elif (self.BC_S == '0Moment0Shear'):
-        self.cj0i0[-1,0] += 2*self.cj_1i_1_coeff_ij[-1,0]
-        self.cj1i_1[-1,0] -= self.cj_1i1_coeff_ij[-1,0]
-        self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
-        self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
-    if (self.BC_N == 'Periodic' and self.BC_S == 'Periodic'):
-      if (self.BC_W == '0Slope0Shear' or self.BC_W == 'Mirror'):
-        self.cj1i1[0,0] += self.cj_1i_1_coeff_ij[0,0]
-        self.cj1i_1[-1,0] += self.cj_1i1_coeff_ij[-1,0]
-      elif (self.BC_W == '0Moment0Shear'):
-        self.cj0i0[0,0] += 2*self.cj_1i_1_coeff_ij[0,0]
-        self.cj1i1[0,0] -= self.cj_1i_1_coeff_ij[0,0]
-        self.cj0i0[-1,0] += 2*self.cj_1i_1_coeff_ij[-1,0]
-        self.cj1i_1[-1,0] -= self.cj_1i1_coeff_ij[-1,0]
-      if (self.BC_E == '0Slope0Shear' or self.BC_E == 'Mirror'):
-        self.cj_1i1[0,-1] += self.cj1i_1_coeff_ij[0,-1]
-        self.cj_1i_1[-1,-1] += self.cj1i1_coeff_ij[-1,-1]
-      elif (self.BC_E == '0Moment0Shear'):
-        self.cj0i0[0,-1] += 2*self.cj_1i_1_coeff_ij[0,-1]
-        self.cj1i1[0,-1] -= self.cj_1i_1_coeff_ij[0,-1]
-        self.cj0i0[-1,-1] += 2*self.cj_1i_1_coeff_ij[-1,-1]
-        self.cj_1i_1[-1,-1] -= self.cj1i1_coeff_ij[-1,-1]
+
+    # The Periodic boundary natively continues the other boundary conditions
+    # Nothing to be done here.
 
   def build_diagonals(self):
 
