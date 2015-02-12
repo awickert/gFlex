@@ -572,10 +572,10 @@ class Flexure(Utility, Plotting):
         self.Quiet = self.configGet("bool", "verbosity", "Quiet", optional=False)
       except:
         pass
-      # Quiet overrides all others
-      if self.Quiet:
-        self.Debug = False
-        self.Verbose = False
+    # Quiet overrides all others
+    if self.Quiet:
+      self.Debug = False
+      self.Verbose = False
     
     # Introduce model
     # After configuration file can define "Quiet", and getter/setter should be done
@@ -687,7 +687,13 @@ class Flexure(Utility, Plotting):
 
   # Finalize
   def finalize(self):
-    # Just print a line to stdout
+    # Can include an option for this later, but for the moment, this will
+    # clear the coefficient array so it doens't cause problems for model runs
+    # searching for the proper rigidity
+    try:
+      del self.coeff_matrix
+    except:
+      pass
     if self.Quiet==False:
       print ""
 

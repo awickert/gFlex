@@ -6,4 +6,4 @@ These are sample input files.
 * **q0_sample/** contains input load grids.
 * **Te_sample/** contains input flexural rigidity grids
 * **xy_sample/** contains files to run the ungridded superposition of analytical solutions (SAS_NG)
-
+* **run_in_script_1D** and **run_in_script_2D** show how to run gFlex by accessing its functions from within a Python script.

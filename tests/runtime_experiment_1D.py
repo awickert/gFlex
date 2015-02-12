@@ -17,26 +17,21 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 # This code is for 2D flexural isostasy (and instantiate)
-obj = gflex.F1D()
-obj.set_value('Quiet', True)
+flex = gflex.F1D()
+flex.Quiet = True
 # Always use the van Wees and Cloetingh (1994) solution type.
 # It is the best.
-obj.set_value('PlateSolutionType', 'vWC1994')
- 
+flex.PlateSolutionType = 'vWC1994'
+
 # Make a bunch of standard selections
-obj.set_value('GravAccel', 9.8)
-obj.set_value('YoungsModulus', 65E10)
-obj.set_value('PoissonsRatio', .25)
-obj.set_value('MantleDensity', 3300.)
-obj.set_value('InfillMaterialDensity', 0.)
+flex.g = 9.8 # acceleration due to gravity
+flex.E = 65E10 # Young's Modulus
+flex.nu = 0.25 # Poisson's Ratio
+flex.rho_m = 3300. # MantleDensity
+flex.rho_fill = 0. # InfiillMaterialDensity
 
 # And solver / iterations (if needed)
-obj.set_value('Solver', 'direct')
-#obj.set_value('ConvergenceTolerance', ConvergenceTolerance)
-
-# Always use the van Wees and Cloetingh (1994) solution type.
-# It is the best.
-obj.set_value('PlateSolutionType', 'vWC1994')
+flex.Solver = 'direct'
 
 # Domain length
 L = 1000E3 # domain length
@@ -62,7 +57,7 @@ for l in [100E3, 200E3, 500E3, 1000E3]:
         #for dx in [0.5, 1, 2, 5, 10, 25, 50, 100, 200, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 10000, 50000]:
         #for dx in [500, 1000, 2000]:
 
-            obj.set_value('Method', method)
+            flex.Method = method
             # Grid size and spacing
             # SIZE -- MAINTAIN BLOCKS INSIDE, TOO -- START WORK HERE
             
@@ -78,13 +73,13 @@ for l in [100E3, 200E3, 500E3, 1000E3]:
               
               if method == 'SAS_NG':
                 x = np.linspace(dx/2, L-dx/2, len(q0))
-                obj.set_value('x', x)
-                obj.set_value('Loads_force', np.reshape(q0,-1))
+                flex.x = x
+                flex.q = np.reshape(q0,-1)
               else:
                 # Getters and setters only exist because of old CSDMS IRF
                 # interface anyway :)
-                obj.qs = q0.copy()
-                obj.dx = dx
+                flex.qs = q0.copy
+                flex.dx = dx
               
               """
               # VARIABLE TE OPTION
@@ -97,42 +92,40 @@ for l in [100E3, 200E3, 500E3, 1000E3]:
               Te += sineadd
               """
               
-              #plt.imshow(obj.q0); plt.show()
-
               # Set all boundary conditions
-              obj.set_value('BoundaryCondition_East', bc)
-              obj.set_value('BoundaryCondition_West', bc)
+              flex.BC_E = bc
+              flex.BC_W = bc
 
               # Elastic thickness
-              obj.set_value('ElasticThickness', Te)
+              flex.Te = Te
 
               # CALCULATE!
-              obj.initialize()
-              obj.run()
-              obj.finalize()
+              flex.initialize()
+              flex.run()
+              flex.finalize()
               try:
-                del obj.D
+                del flex.D
               except:
                 pass
               try:
-                del obj.coeff_matrix # This was not being properly overwritten!
+                del flex.coeff_matrix # This was not being properly overwritten!
               except:
                 pass
 
               nelements.append(np.prod(q0.shape))
               nloadelements.append(np.sum(q0 > 0))
-              solvetime.append(obj.time_to_solve)
+              solvetime.append(flex.time_to_solve)
               
               try:
-                print len(obj.qs)
+                print len(flex.qs)
               except:
-                print len(obj.q)
+                print len(flex.q)
               
-              print 'Time to solve [s]:', obj.get_value('SolverTime')
+              print 'Time to solve [s]:', flex.time_to_solve
               
               #ne.append(np.prod(q.shape))
               #nle.append(np.sum(q > 0))
-              #st.append(obj.time_to_solve)
+              #st.append(flex.time_to_solve)
               Te = Te0
               
               
@@ -192,6 +185,6 @@ outarray = np.vstack((nelements, nloadelements, nelements*nloadelements, solveti
 
 
 #np.savetxt('benchmark/SAS.csv', outarray, delimiter=',',)
-np.savetxt('benchmark/SAS_NG.csv', outarray, delimiter=',',)
-
+#np.savetxt('benchmark/SAS_NG.csv', outarray, delimiter=',',)
+np.savetxt('SAS_NG.csv', outarray, delimiter=',',)
 
