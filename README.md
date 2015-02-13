@@ -34,7 +34,7 @@ Download [**pythonxy**](https://code.google.com/p/pythonxy/wiki/Downloads) or an
 
 ###### Mac
 
-Use a package manager like [**homebrew**](http://brew.sh/) and follow the Linux instructions, or install a distribution following the Windows instructions. Either option should work. gFlex has not yet been tested on Mac, so please leave a message if you do so.
+The current recommendation is to use a package manager like [**homebrew**](http://brew.sh/) and follow the Linux instructions; recent efforts to download Python distributions (both **Anaconda** and **Enthought**) have not met with success with both gFlex and GRASS, though **Anaconda** has been tested successfully with Windows. As a result, it should be more successful to keep the Python packages managed better by something like **homebrew**.
 
 #### gFlex
 
