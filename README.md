@@ -34,7 +34,7 @@ Download [**pythonxy**](https://code.google.com/p/pythonxy/wiki/Downloads) or an
 
 ###### Mac
 
-Use a package manager like [**homebrew**](http://brew.sh/) and follow the Linux instructions, or install a distribution following the Windows instructions. Either option should work. gFlex has not yet been tested on Mac, so please leave a message if you do so.
+The current recommendation is to use a package manager like [**homebrew**](http://brew.sh/) and follow the Linux instructions; recent efforts to download Python distributions (both **Anaconda** and **Enthought**) have not met with success with both gFlex and GRASS, though **Anaconda** has been tested successfully with Windows. As a result, it should be more successful to keep the Python packages managed better by something like **homebrew**.
 
 #### gFlex
 
@@ -255,7 +255,10 @@ obj.output()
 
 #### Within GRASS GIS
 
+(Outdated)
 To run gFlex inside of GRASS GIS, you may copy **r.flexure** to the **scripts** directory of your GRASS GIS installation. This isn't the real way to install GRASS GIS add-ons, but it works for the moment until gFlex is complete enough to be submitted to the GRASS GIS add-ons repository.
+
+When running **r.flexure**, it is important to ensure that the elastic thickness map is at or properly interpolated to the computational region (**g.region**) resolution before solving. A nearest-neighbor interpolated Te map will cause perceived gradients in elastic thickness to be very sharp, and this will strongly affect (and misdirect) the flexural solutions.
 
 #### As part of the CSDMS CMI
 
