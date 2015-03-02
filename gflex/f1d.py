@@ -1,6 +1,6 @@
 from __future__ import division # No automatic floor division
 from base import *
-from scipy.sparse import dia_matrix, csr_matrix, spdiags
+from scipy.sparse import spdiags
 from scipy.sparse.linalg import spsolve, isolve
 
 class F1D(Flexure):
