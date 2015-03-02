@@ -1,4 +1,4 @@
-#! /usr/local/python/bin/python
+#! /usr/bin/env python
 
 # isostasy.py
 # Written by Andrew Wickert with help from Greg Tucker and Eric Hutton
