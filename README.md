@@ -255,11 +255,28 @@ obj.output()
 
 #### Within GRASS GIS
 
-(Outdated)
-To run gFlex inside of GRASS GIS, you may copy **r.flexure** to the **scripts** directory of your GRASS GIS installation. This isn't the real way to install GRASS GIS add-ons, but it works for the moment until gFlex is complete enough to be submitted to the GRASS GIS add-ons repository.
+To run gFlex inside of GRASS GIS 7, run the following commands from within a GRASS GIS session:
+
+```
+g.extension r.flexure
+g.extension v.flexure
+```
+
+This will reach into the GRASS GIS subversion repository, download the source code, and install the packages. These are stored at and have help files located at, respectively:
+
+* **r.flexure**
+** Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/raster/r.flexure
+** Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/r.flexure.html
+* **v.flexure**
+** Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/vector/v.flexure
+** Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/v.flexure.html
 
 When running **r.flexure**, it is important to ensure that the elastic thickness map is at or properly interpolated to the computational region (**g.region**) resolution before solving. A nearest-neighbor interpolated Te map will cause perceived gradients in elastic thickness to be very sharp, and this will strongly affect (and misdirect) the flexural solutions.
 
+#### As part of Landlab
+
+Landlab is an in-development (but nearing release) Earth-surface modeling framework built to facilitate easy integration of geomorphic, ecological, hydrological, geological, etc. Earth-surface related models to simulate and investigate the links between multiple processes. gFlex can be linked with Landlab, and the code to do this is available within the Landlab repository at https://github.com/landlab/landlab/tree/master/landlab/components/gFlex.
+
 #### As part of the CSDMS CMI
 
-To run gFlex within the CSDMS Component Model Interface (CMI) environment, see **gflex_bmi.py**.
+To run gFlex within the CSDMS Component Model Interface (CMI) environment, see **gflex_bmi.py**. The Landlab interface to gFlex (above) also provides gFlex with a CSDMS CMI interface, making this local CMI interface redundant, but useful if one does not want to install the entire Landlab modeling framework (https://github.com/landlab/landlab).
