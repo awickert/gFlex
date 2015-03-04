@@ -30,7 +30,7 @@ setup(
     license = "GPL v3",
     keywords = ['geophysics', 'geology', 'geodynamics', 'lithosphere', 'isostasy'],
     classifiers = [],
-    url = "https://github.com/awickert/gFlex",
-    download_url = "https://github.com/awickert/gFlex/tarball",
+    url = ["https://github.com/awickert/gFlex", "http://csdms.colorado.edu/wiki/Model:gFlex"],
+    download_url = "https://github.com/awickert/gFlex/tarball/v0.8",
     long_description=read('README.md'),
 )
