@@ -8,18 +8,15 @@ from setuptools.command.install import install
 
 import os
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
-
-long_description=read('README.md'),
 # This is for upload to PyPI
 # Should not be necessary on most computers
-if os.path.exists('README.txt'):
+try:
     long_description = open('README.txt').read()
-
+except:
+    long_description = "see README.md"
 setup(
     name = "gFlex",
-    version = "0.8",
+    version = "0.8.0.0.1",
     packages = find_packages(exclude="tests"),
     entry_points = {
       'console_scripts': ['gflex = gflex:main']
@@ -38,5 +35,5 @@ setup(
     classifiers = [],
     url = ["https://github.com/awickert/gFlex", "http://csdms.colorado.edu/wiki/Model:gFlex"],
     download_url = "https://github.com/awickert/gFlex/tarball/v0.8",
-    long_description = long_description
+    long_description = long_description,
 )
