@@ -11,6 +11,12 @@ import os
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+long_description=read('README.md'),
+# This is for upload to PyPI
+# Should not be necessary on most computers
+if os.path.exists('README.txt'):
+    long_description = open('README.txt').read()
+
 setup(
     name = "gFlex",
     version = "0.8",
@@ -32,5 +38,5 @@ setup(
     classifiers = [],
     url = ["https://github.com/awickert/gFlex", "http://csdms.colorado.edu/wiki/Model:gFlex"],
     download_url = "https://github.com/awickert/gFlex/tarball/v0.8",
-    long_description=read('README.md'),
+    long_description = long_description
 )
