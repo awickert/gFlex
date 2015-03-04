@@ -48,6 +48,14 @@ Recent efforts to download Python distributions (both **Anaconda** and **Enthoug
 
 #### gFlex
 
+##### Downloading and Installing in One Step
+
+If you have **pip**, you may simply type:
+```
+pip install gFlex
+```
+and you will have a full, running copy of gFlex from [PyPI](https://pypi.python.org/pypi).
+
 ##### Downloading
 
 gFlex may be downloaded here at GitHub, by either:
