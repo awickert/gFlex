@@ -1,3 +1,8 @@
+#! /usr/bin/env python
+
+# modified from:
+# https://coderwall.com/p/qawuyq/use-markdown-readme-s-in-python-modules
+
 import pandoc
 import os
 
