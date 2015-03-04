@@ -54,7 +54,7 @@ If you have **pip**, you may simply type:
 ```
 pip install gFlex
 ```
-and you will have a full, running copy of gFlex from [PyPI](https://pypi.python.org/pypi).
+and you will have a full, running copy of the latest release verison of gFlex from [PyPI](https://pypi.python.org/pypi).
 
 ##### Downloading
 
