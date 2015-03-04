@@ -16,7 +16,7 @@ except:
     long_description = "see README.md"
 setup(
     name = "gFlex",
-    version = "0.8.0.0.1",
+    version = "0.8.1",
     packages = find_packages(exclude="tests"),
     entry_points = {
       'console_scripts': ['gflex = gflex:main']
@@ -34,6 +34,6 @@ setup(
     keywords = ['geophysics', 'geology', 'geodynamics', 'lithosphere', 'isostasy'],
     classifiers = [],
     url = ["https://github.com/awickert/gFlex", "http://csdms.colorado.edu/wiki/Model:gFlex"],
-    download_url = "https://github.com/awickert/gFlex/tarball/v0.8",
+    download_url = "https://github.com/awickert/gFlex/tarball/v0.8.1",
     long_description = long_description,
 )
