@@ -732,12 +732,10 @@ class Flexure(Utility, Plotting):
         self.wOutFile = self.configGet("string", "output", "DeflectionOut", optional=True)
         # If this exists and is a string, write output to a file
         if self.wOutFile[-4:] == '.npy':
-          from numpy import save
-          save(self.wOutFile,self.w)
+          np.save(self.wOutFile,self.w)
         else:
-          from numpy import savetxt
           # Shouldn't need more than mm precision, at very most
-          savetxt(self.wOutFile,self.w,fmt='%.3f')
+          np.savetxt(self.wOutFile,self.w,fmt='%.3f')
           if self.Verbose:
             print 'Saving deflections --> ' + self.wOutFile
       except:
