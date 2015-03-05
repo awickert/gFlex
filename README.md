@@ -16,8 +16,7 @@ In order to run properly, gFlex requires the following Python dependencies:
 * scipy
 * matplotlib
 * setuptools
-
-If you do not have setuptools, it will be automatically installed when you install gFlex, assuming you have an internet connnection at that time.
+* pip (optional)
 
 *For users who are new to Python, follow these directions to install the Python interpreters onto your computer.*
 
@@ -27,7 +26,10 @@ Use your package manager to download and install the required Python packages. F
 
 ```
 # Basic packages
-sudo apt-get install python python-numpy python-scipy python-setuptools python-configparser python-matplotlib
+sudo apt-get install python python-numpy python-scipy python-setuptools python-configparser python-matplotlib 
+
+# Pip (recommended for automatic installs via setuptools)
+python-pip
 
 # iPython console -- very useful (optional)
 sudo apt-get install ipython
@@ -42,23 +44,45 @@ Download [**python(x,y)**](https://code.google.com/p/pythonxy/wiki/Downloads) or
 
 ###### Mac
 
-The current recommendation is to use a package manager like [**homebrew**](http://brew.sh/). With this you can install Python, and then move on to using **pip** to install the Python modules. A good introduction to this can be found here: http://www.thisisthegreenroom.com/2011/installing-python-numpy-scipy-matplotlib-and-ipython-on-lion/#numpy.
+The current recommendation is to use a package manager like [**homebrew**](http://brew.sh/). With this you can install Python, and then move on to using **pip** to install the Python modules. A good introduction to this can be found here: http://www.thisisthegreenroom.com/2011/installing-python-numpy-scipy-matplotlib-and-ipython-on-lion. See the **Linux** instructions for the list of packages that you will need; after installing pip, these commands can be substituted as follows, e.g.,
+```
+# OLD
+sudo apt-get install python-numpy
+# NEW
+pip install numpy
+```
 
 Recent efforts to download Python distributions (both **Anaconda** and **Enthought**) have not met with success with both gFlex and GRASS, though **Anaconda** has been tested successfully with Windows. As a result, it should be more successful to keep the Python packages managed better by something like **homebrew** with **pip**.
 
+##### Setuptools and ez-setup (Windows and Mac with distributions)
+
+The distributions for Mac and Windows do not come with setuptools, which is required to install gFlex. However, if you install ez_setup, the gFlex install script will automatically install setuptools for you. Simply type:
+```
+pip install ez_setup # Windows or Mac without special privileges required
+sudo pip install ez_setup # Mac where sudo privileges are required
+```
+Of course, one can also bypass the need for the install script to install setuptools by using pip preemptively:
+```
+pip install setuptools # Windows or Mac without special privileges required
+sudo pip install setuptools # Mac where sudo privileges are required
+```
+
 #### gFlex
 
-##### Downloading and Installing in One Step
+##### Downloading and Installing in One Step from PyPI using pip
+
+gFlex is downloadable from the Python Package Index ([PyPI](https://pypi.python.org/pypi)); see https://pypi.python.org/pypi/gFlex.
 
 If you have **pip**, you may simply type:
 ```
+pip install 
 pip install gflex
 # Or if the destination install folder requires sudo access
 # (for UNIX-like systems)
 sudo pip install gflex
 # pip install gFlex works too -- install is caps-insensitive
 ```
-and you will have a full, running copy of the latest release verison of gFlex from [PyPI](https://pypi.python.org/pypi).
+and you will have a full, running copy of the latest release verison of gFlex.
 
 ##### Downloading
 
