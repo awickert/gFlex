@@ -330,11 +330,11 @@ g.extension v.flexure
 This will reach into the GRASS GIS subversion repository, download the source code, and install the packages. These are stored at and have help files located at, respectively:
 
 * **r.flexure**
-** Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/raster/r.flexure
-** Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/r.flexure.html
+ * Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/raster/r.flexure
+ * Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/r.flexure.html
 * **v.flexure**
-** Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/vector/v.flexure
-** Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/v.flexure.html
+ * Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/vector/v.flexure
+ * Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/v.flexure.html
 
 When running **r.flexure**, it is important to ensure that the elastic thickness map is at or properly interpolated to the computational region (**g.region**) resolution before solving. A nearest-neighbor interpolated Te map will cause perceived gradients in elastic thickness to be very sharp, and this will strongly affect (and misdirect) the flexural solutions.
 
