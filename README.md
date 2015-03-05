@@ -326,7 +326,7 @@ g.extension r.flexure
 g.extension v.flexure
 ```
 
-This will reach into the GRASS GIS subversion repository, download the source code, and install the packages. These are stored at and have help files located at, respectively:
+This will reach into the GRASS GIS subversion repository, download the source code, and install the packages. **r.flexure** is used for raster grids by either finite difference or analytical methods. **v.flexure** takes advantage of the ungridded analytical method to solve for flexure at an aribtrary set of load points, albeit limited to cases with constant elastic thickness. These are stored at and have help files located at, respectively:
 
 * **r.flexure**
  * Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/raster/r.flexure
