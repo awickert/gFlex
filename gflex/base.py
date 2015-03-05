@@ -3,6 +3,7 @@ import numpy as np
 import time # For efficiency counting
 import types # For flow control
 from matplotlib import pyplot as plt
+from _version import __version__
 
 class Utility(object):
 
@@ -582,9 +583,10 @@ class Flexure(Utility, Plotting):
     # by this point if we are going that way.
     if self.Quiet == False:
       print "" # Blank line at start of run
-      print "*********************************************"
-      print "*** Initializing gFlex development branch ***"
-      print "*********************************************"
+      print ""
+      print "****************************"+"*"*len(__version__)
+      print "*** Initializing gFlex v"+__version__+" ***"
+      print "****************************"+"*"*len(__version__)
       print ""
       print "Open-source licensed under GNU GPL v3"
       print ""
