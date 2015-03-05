@@ -31,7 +31,7 @@ python python-numpy python-scipy \
 python-setuptools python-matplotlib 
 
 # pip (recommended for automatic installs via setuptools)
-python-pip
+sudo apt-get install python-pip
 
 # iPython console -- very useful (optional)
 sudo apt-get install ipython
