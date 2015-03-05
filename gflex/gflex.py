@@ -1,19 +1,11 @@
 #! /usr/bin/env python
 
 # isostasy.py
-# Written by Andrew Wickert with help from Greg Tucker and Eric Hutton
-# This is the standalone driver for the flexural istostasy program
-# 2010-2011
-
-"""
-Solves flexural and non-flexural (Airy & Pratt) isostasy.
-
-Non-flexural isostasy solved analytically on 1D and 2D grids.
-
-Flexural isostasy is solved both analytically (for constant flexural rigidity)
-and numerically (for either variable or constant flexural rigidity); the former
-uses Green's functions and the latter uses a direct sparse matrix solution.
-"""
+# Originally written by Andrew Wickert with help from Greg Tucker and 
+# Eric Hutton as the standalone driver for the flexural istostasy program
+# called "flexure" (2010-2011)
+# Significantly updated by Andrew Wickert in 2014-2015 for the release
+# of gFlex
 
 import os.path
 import sys
@@ -21,38 +13,63 @@ from base import *
 from f1d import *
 from f2d import *
 
+"""
+Solves flexural isostasy both analytically (for constant flexural rigidity)
+and numerically (for either variable or constant flexural rigidity).
+
+Analytical solutions are by superposition of analytical solutions
+in the spatial domain (i.e. a sum of Green's functions)
+
+Numerical solutions are finite difference by a direct sparse matrix solver.
+"""
+try:
+  from _version import __version__
+except:
+  __version__ = '? version file missing ?'
+
+def welcome():
+  print ""
+  print "**************************"+"*"*len(__version__)
+  print "*** WELCOME to gFlex v"+__version__+" ***"
+  print "**************************"+"*"*len(__version__)
+  print ""
+
 def displayUsage():
-  print ""
-  print "***********************************************"
-  print "*** WELCOME to the gFlex development branch ***"
-  print "***********************************************"
-  print ""
   print "Open-source licensed under GNU GPL v3"
   print ""
-  print 'Usage: gflex.py <<path_to_input_file>> [-h OR --help for more information]'
+  print 'Usage:'
+  print 'gflex <<path_to_configuration_file>>  # TO RUN STANDALONE'
+  print 'gflex -h  *OR*  gflex --help          # DISPLAY ADDITIONAL HELP'
+  print 'gflex -v  *OR*  gflex --version       # DISPLAY VERSION NUMBER'
+  print 'import gflex                          # WITHIN PYTHON SHELL OR SCRIPT'
   print ""
   
-def displayScriptInclusionInstructions():
+def furtherHelp():
   print ""
-  print "USAGE NOTE FOR NO CONFIGURATION FILE"
-  print "--------------------------------------------------------------------"
-  print "No configuration file: to run entirely with getters and setters, it is"
-  print "not posslible to simply run 'gflex.py'. Instead one must write a script"
-  print "in Python or a compatible language that includes 'import gflex' and"
-  print "then defines a flexure object (F1D or F2D), like:"
+  print "ADDITIONAL HELP:"
+  print "--------------- "
   print ""
+  print "To generate an input file, please see the examples in the 'input'"
+  print "directory of this install."
+  print ""
+  print "To run in a Python script or shell, follow this general pattern:"
   print "import gflex"
-  print "model_object = gflex.F1D()"
-  print "model_object.set_value(VALUE_KEY, VALUE)"
-  print "#...more..."
+  print "flex = gflex.F1D()"
+  print "flex.method = ..."
+  print "# ...more variable setting..."
+  print "# see the 'input' directory for examples"
   print ""
 
 def main():
   # Choose how to instantiate
   if len(sys.argv) == 2:
     if sys.argv[1] == '--help' or sys.argv[1] == '-h':
+      welcome()
       displayUsage()
-      displayScriptInclusionInstructions()
+      furtherHelp()
+      return
+    if sys.argv[1] == '--version' or sys.argv[1] == '-v':
+      print "gFlex v"+__version__
       return
     else:
       # Looks like it wants to be an configuration file!
@@ -66,16 +83,20 @@ def main():
           print ">>>> Error: configuration file contains an error <<<<"
           sys.exit("")
         else:
-          print ">>>> Error: can't locate specified configuration file. <<<<"
+          print ">>>> Error: cannot locate specified configuration file. <<<<"
           sys.exit("")
 
   elif len(sys.argv) == 1:
+    welcome()
     displayUsage()
-    displayScriptInclusionInstructions()
+    print ""
     sys.exit()
   else:
-    print "Too many input parameters provided; exiting."
+    welcome()
+    print ">>>> ERROR: Too many input parameters provided; exiting. <<<<"
+    print ""
     displayUsage()
+    print ""
     sys.exit()
   
   ## SET MODEL TYPE AND DIMENSIONS HERE ##
@@ -108,3 +129,4 @@ def main():
 
 if __name__ == '__main__':
   main()
+
