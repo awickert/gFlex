@@ -10,13 +10,24 @@ import os
 
 # This is for upload to PyPI
 # Should not be necessary on most computers
+
+import re
+VERSIONFILE="gflex/_version.py"
+verstrline = open(VERSIONFILE, "rt").read()
+VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+mo = re.search(VSRE, verstrline, re.M)
+if mo:
+    __version__ = mo.group(1)
+else:
+    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
+
 try:
     long_description = open('README.txt').read()
 except:
     long_description = "see README.md"
 setup(
     name = "gFlex",
-    version = "0.8.1",
+    version = __version__,
     packages = find_packages(exclude="tests"),
     entry_points = {
       'console_scripts': ['gflex = gflex:main']
