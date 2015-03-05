@@ -12,7 +12,7 @@ flex.Method = 'FD'
 flex.Solver = 'direct'
 
 flex.g = 9.8 # acceleration due to gravity
-flex.E = 65E10 # Young's Modulus
+flex.E = 65E9 # Young's Modulus
 flex.nu = 0.25 # Poisson's Ratio
 flex.rho_m = 3300. # MantleDensity
 flex.rho_fill = 0. # InfiillMaterialDensity

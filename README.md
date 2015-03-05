@@ -160,7 +160,7 @@ PlateSolutionType=vWC1994 ; Plate solutions can be:
 ;                         ;          as robust as vWC1994)
 
 [parameter]
-YoungsModulus=6.5E10
+YoungsModulus=65E9
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
@@ -262,7 +262,7 @@ flex.PlateSolutionType = 'vWC1994'
 flex.Solver = 'direct'
 
 flex.g = 9.8 # acceleration due to gravity
-flex.E = 65E10 # Young's Modulus
+flex.E = 65E9 # Young's Modulus
 flex.nu = 0.25 # Poisson's Ratio
 flex.rho_m = 3300. # MantleDensity
 flex.rho_fill = 0. # InfiillMaterialDensity
