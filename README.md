@@ -26,7 +26,9 @@ Use your package manager to download and install the required Python packages. F
 
 ```
 # Basic packages
-sudo apt-get install python python-numpy python-scipy python-setuptools python-matplotlib 
+sudo apt-get install \
+python python-numpy python-scipy \
+python-setuptools python-matplotlib 
 
 # pip (recommended for automatic installs via setuptools)
 python-pip
