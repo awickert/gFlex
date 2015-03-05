@@ -114,14 +114,13 @@ python setup.py develop # If you want the install to see instantly
 
 ## Running
 
-Once gFlex is installed, it is possible to run it in five ways:
+Once gFlex is installed, it is possible to run it in four ways:
  1. With a configuration file
  2. Within a Python script
  3. Within GRASS GIS
- 4. As part of the Landlab Earth-surface modeling framework
- 5. As a coupled component of a set of models via the Community Surface Dynamics Modeling System [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description)
+ 4. As part of the Landlab Earth-surface modeling framework, including an interface to the the Community Surface Dynamics Modeling System [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description)
 
-For options 1 and 2, there are pre-built methods that can be selected along the way to visualize results. These use Python's Matplotlib plotting library. For option 3, GRASS GIS is used for visualization. In Option 4, output from CSDMS sets of models can be visualized using tools such as [VisIt](https://wci.llnl.gov/simulation/computer-codes/visit/) ([CSDMS page about VisIt](http://csdms.colorado.edu/wiki/CMT_visualization)) and [ParaView](http://www.paraview.org/). ParaView also now has [Python bindings](http://www.paraview.org/python/), which can further be used to visualize outputs produced with any of these methods.
+For options 1 and 2, there are pre-built methods that can be selected along the way to visualize results. These use Python's Matplotlib plotting library. For option 3, GRASS GIS is used for visualization. In Option 4, output from Landlab can be visualized with Matplotlib, and output from CSDMS sets of models can be visualized using tools such as [VisIt](https://wci.llnl.gov/simulation/computer-codes/visit/) ([CSDMS page about VisIt](http://csdms.colorado.edu/wiki/CMT_visualization)) and [ParaView](http://www.paraview.org/). ParaView also now has [Python bindings](http://www.paraview.org/python/), which can further be used to visualize outputs produced with any of these methods.
 
 #### With configuration file
 
@@ -338,10 +337,8 @@ This will reach into the GRASS GIS subversion repository, download the source co
 
 When running **r.flexure**, it is important to ensure that the elastic thickness map is at or properly interpolated to the computational region (**g.region**) resolution before solving. A nearest-neighbor interpolated Te map will cause perceived gradients in elastic thickness to be very sharp, and this will strongly affect (and misdirect) the flexural solutions.
 
-#### As part of Landlab
+#### As part of Landlab and the CSDMS CMI
 
 Landlab is an in-development (but nearing release) Earth-surface modeling framework built to facilitate easy integration of geomorphic, ecological, hydrological, geological, etc. Earth-surface related models to simulate and investigate the links between multiple processes. gFlex can be linked with Landlab, and the code to do this is available within the Landlab repository at https://github.com/landlab/landlab/tree/master/landlab/components/gFlex.
 
-#### As part of the CSDMS CMI
-
-To run gFlex within the CSDMS Component Model Interface (CMI) environment, see **gflex_bmi.py**. The Landlab interface to gFlex (above) also provides gFlex with a CSDMS CMI interface, making this local CMI interface redundant, but useful if one does not want to install the entire Landlab modeling framework (https://github.com/landlab/landlab).
+The Landlab interface to gFlex also provides gFlex with the Community Surface Dynamics Modeling System (CSDMS) [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description) interface. This allows it to be run as a coupled component across multiple programming languages and paradigms as part of the CSDMS community of models. For more information on model coupling with CSDMS, see the example presentation at http://csdms.colorado.edu/w/images/CSDMS_lecture7.pdf and the paper on the model coupling published by [Peckham et al., "A component-based approach to integrated modeling in the geosciences: The design of CSDMS"](http://www.sciencedirect.com/science/article/pii/S0098300412001252).
