@@ -52,7 +52,11 @@ Recent efforts to download Python distributions (both **Anaconda** and **Enthoug
 
 If you have **pip**, you may simply type:
 ```
-pip install gFlex
+pip install gflex
+# Or if the destination install folder requires sudo access
+# (for UNIX-like systems)
+sudo pip install gflex
+# pip install gFlex works too -- install is caps-insensitive
 ```
 and you will have a full, running copy of the latest release verison of gFlex from [PyPI](https://pypi.python.org/pypi).
 
