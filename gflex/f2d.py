@@ -230,7 +230,7 @@ class F2D(Flexure):
     # West
     if self.BC_W == 'Periodic':
       self.BC_Rigidity_W = 'periodic'
-    elif (self.BC_W == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+    elif (self.BC_W == np.array(['0Displacement0Slope', '0Moment0Shear', '0Slope0Shear'])).any():
       self.BC_Rigidity_W = '0 curvature'
     elif self.BC_W == 'Mirror':
       self.BC_Rigidity_W = 'mirror symmetry'
@@ -239,7 +239,7 @@ class F2D(Flexure):
     # East
     if self.BC_E == 'Periodic':
       self.BC_Rigidity_E = 'periodic'
-    elif (self.BC_E == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+    elif (self.BC_E == np.array(['0Displacement0Slope', '0Moment0Shear', '0Slope0Shear'])).any():
       self.BC_Rigidity_E = '0 curvature'
     elif self.BC_E == 'Mirror':
       self.BC_Rigidity_E = 'mirror symmetry'
@@ -248,7 +248,7 @@ class F2D(Flexure):
     # North
     if self.BC_N == 'Periodic':
       self.BC_Rigidity_N = 'periodic'
-    elif (self.BC_N == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+    elif (self.BC_N == np.array(['0Displacement0Slope', '0Moment0Shear', '0Slope0Shear'])).any():
       self.BC_Rigidity_N = '0 curvature'
     elif self.BC_N == 'Mirror':
       self.BC_Rigidity_N = 'mirror symmetry'
@@ -257,7 +257,7 @@ class F2D(Flexure):
     # South
     if self.BC_S == 'Periodic':
       self.BC_Rigidity_S = 'periodic'
-    elif (self.BC_S == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+    elif (self.BC_S == np.array(['0Displacement0Slope', '0Moment0Shear', '0Slope0Shear'])).any():
       self.BC_Rigidity_S = '0 curvature'
     elif self.BC_S == 'Mirror':
       self.BC_Rigidity_S = 'mirror symmetry'
@@ -576,7 +576,7 @@ class F2D(Flexure):
 
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
-    elif self.BC_W == 'Dirichlet0':
+    elif self.BC_W == '0Displacement0Slope':
       j = 0
       self.cj_2i0[:,j] += np.inf
       self.cj_1i_1[:,j] += np.inf
@@ -727,7 +727,7 @@ class F2D(Flexure):
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
 
-    elif self.BC_E == 'Dirichlet0':
+    elif self.BC_E == '0Displacement0Slope':
       j = -1
       self.cj_2i0[:,j] += 0
       self.cj_1i_1[:,j] += 0
@@ -857,7 +857,7 @@ class F2D(Flexure):
              # inclusion below, when constructing sparse matrix diagonals
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
-    elif self.BC_N == 'Dirichlet0':
+    elif self.BC_N == '0Displacement0Slope':
       i = 0
       self.cj_2i0[i,:] += 0
       self.cj_1i_1[i,:][self.cj_1i_1[i,:] != np.inf] = np.nan
@@ -983,7 +983,7 @@ class F2D(Flexure):
              # inclusion below, when constructing sparse matrix diagonals
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
-    elif self.BC_S == 'Dirichlet0':
+    elif self.BC_S == '0Displacement0Slope':
       i = -2
       self.cj_2i0[i,:] += 0
       self.cj_1i_1[i,:] += 0

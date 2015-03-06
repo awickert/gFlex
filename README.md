@@ -210,7 +210,7 @@ Plot=both
 GridSpacing_x= ; dx [m]
 ;
 ; Boundary conditions can be:
-; (FD): 0Slope0Shear, 0Moment0Shear, Dirichlet0, Mirror, or Periodic
+; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
 ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 BoundaryCondition_West=
 BoundaryCondition_East=
@@ -227,7 +227,7 @@ convergence=1E-3 ; Tolerance between iterations [m]
 GridSpacing_y= ; dy [m]
 ;
 ; Boundary conditions can be:
-; (FD): 0Slope0Shear, 0Moment0Shear, Dirichlet0, Mirror, or Periodic
+; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
 ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 BoundaryCondition_North=
 BoundaryCondition_South=
@@ -273,7 +273,7 @@ flex.qs = np.zeros((50, 50)) # Template array for surface load stresses
 flex.qs[10:40, 10:40] += 1E6 # Populating this template
 flex.dx = 5000.
 flex.dy = 5000.
-flex.BC_W = 'Dirichlet0' # west boundary condition
+flex.BC_W = '0Displacement0Slope' # west boundary condition
 flex.BC_E = '0Moment0Shear' # east boundary condition
 flex.BC_S = 'Periodic' # south boundary condition
 flex.BC_N = 'Periodic' # north boundary condition

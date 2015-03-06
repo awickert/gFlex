@@ -189,7 +189,7 @@ class F1D(Flexure):
     # West
     if self.BC_W == 'Periodic':
       self.BC_Rigidity_W = 'periodic'
-    elif (self.BC_W == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+    elif (self.BC_W == np.array(['0Displacement0Slope', '0Moment0Shear', '0Slope0Shear'])).any():
       self.BC_Rigidity_W = '0 curvature'
     elif self.BC_W == 'Mirror':
       self.BC_Rigidity_W = 'mirror symmetry'
@@ -198,7 +198,7 @@ class F1D(Flexure):
     # East
     if self.BC_E == 'Periodic':
       self.BC_Rigidity_E = 'periodic'
-    elif (self.BC_E == np.array(['Dirichlet0', '0Moment0Shear', '0Slope0Shear'])).any():
+    elif (self.BC_E == np.array(['0Displacement0Slope', '0Moment0Shear', '0Slope0Shear'])).any():
       self.BC_Rigidity_E = '0 curvature'
     elif self.BC_E == 'Mirror':
       self.BC_Rigidity_E = 'mirror symmetry'
@@ -301,8 +301,8 @@ class F1D(Flexure):
     # In 2D, these are handled inside the function; in 1D, there are separate
     # defined functions. Keeping these due to inertia and fear of cut/paste
     # mistakes
-    if self.BC_E == 'Dirichlet0' or self.BC_W == 'Dirichlet0':
-      self.BC_Dirichlet0()
+    if self.BC_E == '0Displacement0Slope' or self.BC_W == '0Displacement0Slope':
+      self.BC_0Displacement0Slope()
     if self.BC_E == '0Slope0Shear' or self.BC_W == '0Slope0Shear':
       self.BC_0Slope0Shear()
     if self.BC_E == '0Moment0Shear' or self.BC_W == '0Moment0Shear':
@@ -371,7 +371,7 @@ class F1D(Flexure):
     self.diags = np.vstack((self.r1,self.r2,self.l2,self.l1,self.c0,self.r1,self.r2,self.l2,self.l1))
     self.offsets = np.array([1-self.ncolsx,2-self.ncolsx,-2,-1,0,1,2,self.ncolsx-2,self.ncolsx-1])
 
-  def BC_Dirichlet0(self):
+  def BC_0Displacement0Slope(self):
     """
     Dirichlet boundary condition for 0 deflection.
     This requires that nothing be done to the edges of the solution array, 
@@ -380,7 +380,7 @@ class F1D(Flexure):
     we are not accidentally including the wrong cells here (and for consistency 
     with the other solution types -- this takes negligible time)
     """
-    if self.BC_W == 'Dirichlet0':
+    if self.BC_W == '0Displacement0Slope':
       i=0
       self.l2[i] = np.nan
       self.l1[i] = np.nan
@@ -393,7 +393,7 @@ class F1D(Flexure):
       self.c0[i] += 0
       self.r1[i] += 0
       self.r2[i] += 0
-    if self.BC_E == 'Dirichlet0':
+    if self.BC_E == '0Displacement0Slope':
       i=-2
       self.l2[i] += 0
       self.l1[i] += 0

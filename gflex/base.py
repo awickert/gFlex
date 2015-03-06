@@ -759,8 +759,8 @@ class Flexure(Utility, Plotting):
       # No need to create a coeff_matrix if one already exists
       if self.coeff_matrix is None:
         # Acceptable boundary conditions
-        self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-        self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+        self.bc1D = np.array(['0Displacement0Slope', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+        self.bc2D = np.array(['0Displacement0Slope', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
         # Boundary conditions should be defined by this point -- whether via 
         # the configuration file or the getters and setters
         self.bclist = [self.BC_E, self.BC_W]
