@@ -20,7 +20,7 @@ flex.rho_fill = 0. # InfiillMaterialDensity
 flex.Te = 35000. # Elastic thickness -- scalar but may be an array
 flex.qs = np.zeros(50); flex.qs[10:40] += 1E6 # surface load stresses
 flex.dx = 5000.
-flex.BC_W = 'Dirichlet0' # west boundary condition
+flex.BC_W = '0Displacement0Slope' # west boundary condition
 flex. BC_E = '0Moment0Shear' # east boundary condition
 
 flex.initialize()

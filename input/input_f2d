@@ -29,7 +29,7 @@ Plot=both
 [numerical]
 GridSpacing_x=4000 ; dx
 BoundaryCondition_West=0Moment0Shear
-BoundaryCondition_East=Dirichlet0
+BoundaryCondition_East=0Displacement0Slope
 ; Solver can be direct or iterative
 Solver=direct
 ; Iterates until this is the difference between two subsequent iterations

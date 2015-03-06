@@ -732,12 +732,10 @@ class Flexure(Utility, Plotting):
         self.wOutFile = self.configGet("string", "output", "DeflectionOut", optional=True)
         # If this exists and is a string, write output to a file
         if self.wOutFile[-4:] == '.npy':
-          from numpy import save
-          save(self.wOutFile,self.w)
+          np.save(self.wOutFile,self.w)
         else:
-          from numpy import savetxt
           # Shouldn't need more than mm precision, at very most
-          savetxt(self.wOutFile,self.w,fmt='%.3f')
+          np.savetxt(self.wOutFile,self.w,fmt='%.3f')
           if self.Verbose:
             print 'Saving deflections --> ' + self.wOutFile
       except:
@@ -761,8 +759,8 @@ class Flexure(Utility, Plotting):
       # No need to create a coeff_matrix if one already exists
       if self.coeff_matrix is None:
         # Acceptable boundary conditions
-        self.bc1D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-        self.bc2D = np.array(['Dirichlet0', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+        self.bc1D = np.array(['0Displacement0Slope', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
+        self.bc2D = np.array(['0Displacement0Slope', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
         # Boundary conditions should be defined by this point -- whether via 
         # the configuration file or the getters and setters
         self.bclist = [self.BC_E, self.BC_W]

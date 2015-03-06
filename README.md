@@ -26,10 +26,12 @@ Use your package manager to download and install the required Python packages. F
 
 ```
 # Basic packages
-sudo apt-get install python python-numpy python-scipy python-setuptools python-matplotlib 
+sudo apt-get install \
+python python-numpy python-scipy \
+python-setuptools python-matplotlib 
 
-# Pip (recommended for automatic installs via setuptools)
-python-pip
+# pip (recommended for automatic installs via setuptools)
+sudo apt-get install python-pip
 
 # iPython console -- very useful (optional)
 sudo apt-get install ipython
@@ -114,14 +116,13 @@ python setup.py develop # If you want the install to see instantly
 
 ## Running
 
-Once gFlex is installed, it is possible to run it in five ways:
+Once gFlex is installed, it is possible to run it in four ways:
  1. With a configuration file
  2. Within a Python script
  3. Within GRASS GIS
- 4. As part of the Landlab Earth-surface modeling framework
- 5. As a coupled component of a set of models via the Community Surface Dynamics Modeling System [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description)
+ 4. As part of the Landlab Earth-surface modeling framework, including an interface to the the Community Surface Dynamics Modeling System [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description)
 
-For options 1 and 2, there are pre-built methods that can be selected along the way to visualize results. These use Python's Matplotlib plotting library. For option 3, GRASS GIS is used for visualization. In Option 4, output from CSDMS sets of models can be visualized using tools such as [VisIt](https://wci.llnl.gov/simulation/computer-codes/visit/) ([CSDMS page about VisIt](http://csdms.colorado.edu/wiki/CMT_visualization)) and [ParaView](http://www.paraview.org/). ParaView also now has [Python bindings](http://www.paraview.org/python/), which can further be used to visualize outputs produced with any of these methods.
+For options 1 and 2, there are pre-built methods that can be selected along the way to visualize results. These use Python's Matplotlib plotting library. For option 3, GRASS GIS is used for visualization. In Option 4, output from Landlab can be visualized with Matplotlib, and output from CSDMS sets of models can be visualized using tools such as [VisIt](https://wci.llnl.gov/simulation/computer-codes/visit/) ([CSDMS page about VisIt](http://csdms.colorado.edu/wiki/CMT_visualization)) and [ParaView](http://www.paraview.org/). ParaView also now has [Python bindings](http://www.paraview.org/python/), which can further be used to visualize outputs produced with any of these methods.
 
 #### With configuration file
 
@@ -209,7 +210,7 @@ Plot=both
 GridSpacing_x= ; dx [m]
 ;
 ; Boundary conditions can be:
-; (FD): 0Slope0Shear, 0Moment0Shear, Dirichlet0, Mirror, or Periodic
+; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
 ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 BoundaryCondition_West=
 BoundaryCondition_East=
@@ -226,7 +227,7 @@ convergence=1E-3 ; Tolerance between iterations [m]
 GridSpacing_y= ; dy [m]
 ;
 ; Boundary conditions can be:
-; (FD): 0Slope0Shear, 0Moment0Shear, Dirichlet0, Mirror, or Periodic
+; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
 ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 BoundaryCondition_North=
 BoundaryCondition_South=
@@ -272,7 +273,7 @@ flex.qs = np.zeros((50, 50)) # Template array for surface load stresses
 flex.qs[10:40, 10:40] += 1E6 # Populating this template
 flex.dx = 5000.
 flex.dy = 5000.
-flex.BC_W = 'Dirichlet0' # west boundary condition
+flex.BC_W = '0Displacement0Slope' # west boundary condition
 flex.BC_E = '0Moment0Shear' # east boundary condition
 flex.BC_S = 'Periodic' # south boundary condition
 flex.BC_N = 'Periodic' # north boundary condition
@@ -327,21 +328,19 @@ g.extension r.flexure
 g.extension v.flexure
 ```
 
-This will reach into the GRASS GIS subversion repository, download the source code, and install the packages. These are stored at and have help files located at, respectively:
+This will reach into the GRASS GIS subversion repository, download the source code, and install the packages. **r.flexure** is used for raster grids by either finite difference or analytical methods. **v.flexure** takes advantage of the ungridded analytical method to solve for flexure at an aribtrary set of load points, albeit limited to cases with constant elastic thickness. These are stored at and have help files located at, respectively:
 
 * **r.flexure**
-** Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/raster/r.flexure
-** Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/r.flexure.html
+ * Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/raster/r.flexure
+ * Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/r.flexure.html
 * **v.flexure**
-** Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/vector/v.flexure
-** Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/v.flexure.html
+ * Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/vector/v.flexure
+ * Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/v.flexure.html
 
 When running **r.flexure**, it is important to ensure that the elastic thickness map is at or properly interpolated to the computational region (**g.region**) resolution before solving. A nearest-neighbor interpolated Te map will cause perceived gradients in elastic thickness to be very sharp, and this will strongly affect (and misdirect) the flexural solutions.
 
-#### As part of Landlab
+#### As part of Landlab and the CSDMS CMI
 
 Landlab is an in-development (but nearing release) Earth-surface modeling framework built to facilitate easy integration of geomorphic, ecological, hydrological, geological, etc. Earth-surface related models to simulate and investigate the links between multiple processes. gFlex can be linked with Landlab, and the code to do this is available within the Landlab repository at https://github.com/landlab/landlab/tree/master/landlab/components/gFlex.
 
-#### As part of the CSDMS CMI
-
-To run gFlex within the CSDMS Component Model Interface (CMI) environment, see **gflex_bmi.py**. The Landlab interface to gFlex (above) also provides gFlex with a CSDMS CMI interface, making this local CMI interface redundant, but useful if one does not want to install the entire Landlab modeling framework (https://github.com/landlab/landlab).
+The Landlab interface to gFlex also provides gFlex with the Community Surface Dynamics Modeling System (CSDMS) [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description) interface. This allows it to be run as a coupled component across multiple programming languages and paradigms as part of the CSDMS community of models. For more information on model coupling with CSDMS, see the example presentation at http://csdms.colorado.edu/w/images/CSDMS_lecture7.pdf and the paper on the model coupling published by [Peckham et al., "A component-based approach to integrated modeling in the geosciences: The design of CSDMS"](http://www.sciencedirect.com/science/article/pii/S0098300412001252).
