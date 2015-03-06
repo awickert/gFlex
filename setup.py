@@ -45,6 +45,6 @@ setup(
     keywords = ['geophysics', 'geology', 'geodynamics', 'lithosphere', 'isostasy'],
     classifiers = [],
     url = ["https://github.com/awickert/gFlex", "http://csdms.colorado.edu/wiki/Model:gFlex"],
-    download_url = "https://github.com/awickert/gFlex/tarball/v0.8.1",
+    download_url = "https://github.com/awickert/gFlex/tarball/v"+__version__,
     long_description = long_description,
 )
