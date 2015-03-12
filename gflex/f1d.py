@@ -373,7 +373,7 @@ class F1D(Flexure):
 
   def BC_0Displacement0Slope(self):
     """
-    Dirichlet boundary condition for 0 deflection.
+    0Displacement0Slope boundary condition for 0 deflection.
     This requires that nothing be done to the edges of the solution array, 
     because the lack of the off-grid terms implies that they go to 0
     Here we just turn the cells outside the array into nan, to ensure that 
