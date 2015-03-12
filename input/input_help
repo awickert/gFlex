@@ -23,7 +23,7 @@ PlateSolutionType=vWC1994 ; Plate solutions can be:
 ;                         ;          as robust as vWC1994)
 
 [parameter]
-YoungsModulus=6.5E10
+YoungsModulus=65E9
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
