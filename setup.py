@@ -42,7 +42,7 @@ setup(
     author_email = "awickert@umn.edu",
     description = "One- and two-dimensional plate bending, designed for Earth's lithosphere",
     license = "GPL v3",
-    keywords = ['geophysics', 'geology', 'geodynamics', 'lithosphere', 'isostasy'],
+    keywords = ['geophysics', 'geology', 'geodynamics', 'lithosphere', 'isostasy', 'GRASS GIS'],
     classifiers = [],
     url = ["https://github.com/awickert/gFlex", "http://csdms.colorado.edu/wiki/Model:gFlex"],
     download_url = "https://github.com/awickert/gFlex/tarball/v"+__version__,
