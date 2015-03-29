@@ -145,7 +145,7 @@ class Utility(object):
       n = np.max(self.y) + self.alpha
       s = np.min(self.y) - self.alpha
       w = np.min(self.x) + self.alpha
-      e = np.max(self.y) - self.alpha
+      e = np.max(self.x) - self.alpha
       # Grid spacing
       dxprelim = self.alpha/50. # x or y
       nx = np.ceil((e-w)/dxprelim)
@@ -1065,7 +1065,7 @@ class Flexure(Utility, Plotting):
       if type(self.yw) == str:
         self.yw = self.loadFile(self.yw)
       elif self.yw is None:
-          self.yw = self.y.copy()
+        self.yw = self.y.copy()
     if self.xw is None:
-        self.xw = self.x.copy()
+      self.xw = self.x.copy()
 
