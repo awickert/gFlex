@@ -44,8 +44,14 @@ class F2D(Flexure):
       print 'Time to solve [s]:', self.time_to_solve
 
   def finalize(self):
+    # If elastic thickness has been padded, return it to its original
+    # value, so this is not messed up for repeat operations in a 
+    # model-coupling exercise
+    try:
+      self.Te = self.Te_unpadded
+    except:
+      pass
     if self.Verbose: print 'F2D finalized'
-
     super(F2D, self).finalize()
     
   ########################################
