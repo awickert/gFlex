@@ -88,7 +88,7 @@ class F1D(Flexure):
 
   def gridded_x(self):
     self.nx = self.qs.shape[0]
-    self.x = np.arange(0,self.dx*self.nx,self.dx)
+    self._x_local = np.arange(0,self.dx*self.nx,self.dx)
     
   
   ## SPATIAL DOMAIN SUPERPOSITION OF ANALYTICAL SOLUTIONS
@@ -111,7 +111,7 @@ class F1D(Flexure):
     for i in range(self.nx):
       # Loop over locations that have loads, and sum
       if self.qs[i]:
-        dist = abs(self.x[i]-self.x)
+        dist = abs(self._x_local[i]-self._x_local)
         # -= b/c pos load leads to neg (downward) deflection
         self.w -= self.qs[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
           (np.cos(dist/self.alpha) + np.sin(dist/self.alpha))
@@ -135,7 +135,7 @@ class F1D(Flexure):
       # More efficient if we have created some 0-load points
       # (e.g., for where we want output)
       if self.q[i] != 0:
-        dist = np.abs(self.xw - self.x[i])
+        dist = np.abs(self.xw - self._x_local[i])
         self.w -= self.q[i] * self.coeff * np.exp(-dist/self.alpha) * \
           ( np.cos(dist/self.alpha) + np.sin(dist/self.alpha) )
 
