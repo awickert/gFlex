@@ -893,7 +893,12 @@ class Flexure(Utility, Plotting):
       # Remove self.q0 to avoid issues with multiply-defined inputs
       # q0 is the parsable input to either a qs grid or contains (x,(y),q)
       del self.q0
-    # Is there a solver defined?
+    # Give it x and y dimensions for help with plotting tools
+    # (not implemented internally, but a help with external methods)
+    self.x = np.arange(self.dx/2., self.dx * self.qs.shape[0], self.dx)
+    if self.dimension == 2:
+      self.y = np.arange(self.dy/2., self.dy * self.qs.shape[1], self.dy)
+    # Is there a solver defined
     try:
       self.Solver # See if it exists already
     except:
