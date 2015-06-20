@@ -142,10 +142,12 @@ class Utility(object):
         except:
           pass
       # Boundaries
-      n = np.max(self.y) + self.alpha
-      s = np.min(self.y) - self.alpha
-      w = np.min(self.x) + self.alpha
-      e = np.max(self.y) - self.alpha
+      self._x_local = self.x
+      self._y_local = self.y
+      n = np.max(self._y_local) + self.alpha
+      s = np.min(self._y_local) - self.alpha
+      w = np.min(self._x_local) + self.alpha
+      e = np.max(self._x_local) - self.alpha
       # Grid spacing
       dxprelim = self.alpha/50. # x or y
       nx = np.ceil((e-w)/dxprelim)
@@ -222,10 +224,10 @@ class Plotting(object):
         if self.plotChoice == 'q':
           plt.figure(1)
           if self.Method == 'SAS_NG':
-            plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
+            plt.plot(self._x_local/1000., self.q/(self.rho_m*self.g), 'ko-')
             plt.ylabel('Load volume, mantle equivalent [m$^3$]', fontsize=12, fontweight='bold')
           else:
-            plt.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'k-')
+            plt.plot(self._x_local/1000., self.qs/(self.rho_m*self.g), 'k-')
             plt.ylabel('Load thickness, mantle equivalent [km]', fontsize=12, fontweight='bold')
           plt.xlabel('Distance along profile [km]', fontsize=12, fontweight='bold')
           plt.tight_layout()
@@ -235,7 +237,7 @@ class Plotting(object):
           if self.Method == 'SAS_NG':
             plt.plot(self.xw/1000., self.w, 'k-')
           else:
-            plt.plot(self.x/1000., self.w, 'k-')
+            plt.plot(self._x_local/1000., self.w, 'k-')
           plt.ylabel('Deflection [m]', fontsize=12, fontweight='bold')
           plt.xlabel('Distance along profile [km]', fontsize=12, fontweight='bold')
           plt.tight_layout()
@@ -246,17 +248,17 @@ class Plotting(object):
           if self.Method == "SAS_NG":
             ax.plot(self.xw/1000., self.w, 'k-')
           else:
-            ax.plot(self.x/1000., self.w, 'k-')
+            ax.plot(self._x_local/1000., self.w, 'k-')
           ax.set_ylabel('Deflection [m]', fontsize=12, fontweight='bold')
           ax.set_xlabel('Distance along profile [m]', fontsize=12, fontweight='bold')
           plt.subplot(211)
           plt.title('Loads and Lithospheric Deflections', fontsize=16)
           if self.Method == 'SAS_NG':
-            plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
+            plt.plot(self._x_local/1000., self.q/(self.rho_m*self.g), 'ko-')
             plt.ylabel('Load volume, mantle equivalent [m$^3$]', fontsize=12, fontweight='bold')
             plt.xlim(ax.get_xlim())
           else:
-            plt.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'k-')
+            plt.plot(self._x_local/1000., self.qs/(self.rho_m*self.g), 'k-')
             plt.ylabel('Load thickness, mantle equivalent [m]', fontsize=12, fontweight='bold')
           plt.xlabel('Distance along profile [km]', fontsize=12, fontweight='bold')
           plt.tight_layout()
@@ -271,18 +273,18 @@ class Plotting(object):
               print "Combo plot can't work with SAS_NG! Don't have mechanism in place\nto calculate load width."
               print "Big problem -- what is the area represented by the loads at the\nextreme ends of the array?"
           else:
-            ax.plot(self.x/1000., self.qs/(self.rho_m*self.g), 'g--', linewidth=2, label="Load thickness [m mantle equivalent]")
+            ax.plot(self._x_local/1000., self.qs/(self.rho_m*self.g), 'g--', linewidth=2, label="Load thickness [m mantle equivalent]")
           # Plot deflected load
           if self.Method == "SAS_NG":
             pass
-            #ax.plot(self.x/1000.,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
+            #ax.plot(self._x_local/1000.,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
           else:
-            ax.plot(self.x/1000., self.qs/(self.rho_m*self.g) + self.w,'g-',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
+            ax.plot(self._x_local/1000., self.qs/(self.rho_m*self.g) + self.w,'g-',linewidth=2,label="Deflection [m] + load thickness [m mantle equivalent]")
           # Plot deflection
           if self.Method == "SAS_NG":
             ax.plot(self.xw/1000., self.w, 'ko-', linewidth=2, label="Deflection [m mantle equivalent]")
           else:
-            ax.plot(self.x/1000.,self.w, 'k-', linewidth=2, label="Deflection [m mantle equivalent]")
+            ax.plot(self._x_local/1000.,self.w, 'k-', linewidth=2, label="Deflection [m mantle equivalent]")
           # Set y min to equal to the absolute value maximum of y max and y min
           # (and therefore show isostasy better)
           yabsmax = max(abs(np.array(plt.ylim())))
@@ -322,7 +324,7 @@ class Plotting(object):
             self.surfplot(self.qs/(self.rho_m*self.g), 'Load thickness, mantle equivalent [m]')
             plt.show()
           else:
-            self.xyzinterp(self.x, self.y, self.q, 'Load volume, mantle equivalent [m$^3$]')
+            self.xyzinterp(self._x_local, self._y_local, self.q, 'Load volume, mantle equivalent [m$^3$]')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'w':
@@ -341,7 +343,7 @@ class Plotting(object):
             plt.show()
           else:
             plt.subplot(211)
-            self.xyzinterp(self.x, self.y, self.q, 'Load volume, mantle equivalent [m$^3$]')
+            self.xyzinterp(self._x_local, self._y_local, self.q, 'Load volume, mantle equivalent [m$^3$]')
             plt.subplot(212)
             self.xyzinterp(self.xw, self.yw, self.w, 'Deflection [m]')
             plt.tight_layout()
@@ -444,12 +446,12 @@ class Plotting(object):
     # Computed at
     if self.latlon:
       plt.plot(x, y, 'o', markerfacecolor='.6', markeredgecolor='.6', markersize=1)
-      plt.plot(self.x, self.y, 'o', markerfacecolor='.2', markeredgecolor='.2', markersize=1)
+      plt.plot(self._x_local, self._y_local, 'o', markerfacecolor='.2', markeredgecolor='.2', markersize=1)
     else:
       plt.plot(x/1000., y/1000., 'o', markerfacecolor='.6', markeredgecolor='.6', markersize=1)
       # Load sources (overlay computed at)
-      plt.plot(self.x/1000., self.y/1000., 'o', markerfacecolor='.2', markeredgecolor='.2', markersize=1)
-      #plt.hexbin(self.x, self.y, C=self.w) -- show colors on points -- harder to see
+      plt.plot(self._x_local/1000., self._y_local/1000., 'o', markerfacecolor='.2', markeredgecolor='.2', markersize=1)
+      #plt.hexbin(self._x_local, self._y_local, C=self.w) -- show colors on points -- harder to see
     if self.latlon:
       plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
       plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
@@ -891,7 +893,12 @@ class Flexure(Utility, Plotting):
       # Remove self.q0 to avoid issues with multiply-defined inputs
       # q0 is the parsable input to either a qs grid or contains (x,(y),q)
       del self.q0
-    # Is there a solver defined?
+    # Give it x and y dimensions for help with plotting tools
+    # (not implemented internally, but a help with external methods)
+    self.x = np.arange(self.dx/2., self.dx * self.qs.shape[0], self.dx)
+    if self.dimension == 2:
+      self.y = np.arange(self.dy/2., self.dy * self.qs.shape[1], self.dy)
+    # Is there a solver defined
     try:
       self.Solver # See if it exists already
     except:
@@ -1017,7 +1024,7 @@ class Flexure(Utility, Plotting):
       try:
         # If these have already been set, e.g., by getters/setters, great!
         self.x
-        self.y
+        self.u
         self.q
       except:
         # Using [x, y, w] configuration file
@@ -1027,6 +1034,13 @@ class Flexure(Utility, Plotting):
           self.q = self.q0[:,2]
         else:
           sys.exit("For 2D (ungridded) SAS_NG configuration file, need [x,y,w] array. Your dimensions are: "+str(self.q0.shape))
+    # x, y are in absolute coordinates. Create a local grid reference to 
+    # these. This local grid, which starts at (0,0), is defined just so that 
+    # we have a way of running the model without defined real-world 
+    # coordinates
+    self._x_local = self.x
+    if self.dimension == 2:
+      self._y_local = self.y
     # Remove self.q0 to avoid issues with multiply-defined inputs
     # q0 is the parsable input to either a qs grid or contains (x,(y),q)
     del self.q0
@@ -1065,7 +1079,7 @@ class Flexure(Utility, Plotting):
       if type(self.yw) == str:
         self.yw = self.loadFile(self.yw)
       elif self.yw is None:
-          self.yw = self.y.copy()
+        self.yw = self._y_local.copy()
     if self.xw is None:
-        self.xw = self.x.copy()
+      self.xw = self._x_local.copy()
 

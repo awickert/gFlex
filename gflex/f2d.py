@@ -44,8 +44,14 @@ class F2D(Flexure):
       print 'Time to solve [s]:', self.time_to_solve
 
   def finalize(self):
+    # If elastic thickness has been padded, return it to its original
+    # value, so this is not messed up for repeat operations in a 
+    # model-coupling exercise
+    try:
+      self.Te = self.Te_unpadded
+    except:
+      pass
     if self.Verbose: print 'F2D finalized'
-
     super(F2D, self).finalize()
     
   ########################################
@@ -93,10 +99,12 @@ class F2D(Flexure):
   def spatialDomainGridded(self):
   
     self.nx = self.qs.shape[1]
-    self.x = np.arange(0,self.dx*self.nx,self.dx)
+    # _x_local because it may be in a real coordinate system, but this is
+    # just used internally to compute distance
+    self._x_local = np.arange(0,self.dx*self.nx,self.dx)
     
     self.ny = self.qs.shape[0]
-    self.y = np.arange(0,self.dx*self.nx,self.dx)
+    self._y_local = np.arange(0,self.dx*self.nx,self.dx)
     
     # Prepare a large grid of solutions beforehand, so we don't have to
     # keep calculating kei (time-intensive!)
@@ -136,19 +144,19 @@ class F2D(Flexure):
       print self.w.shape
     
     if self.latlon:
-      for i in range(len(self.x)):
+      for i in range(len(self._x_local)):
         # More efficient if we have created some 0-load points
         # (e.g., for where we want output)
         if self.q[i] != 0:
           # Create array of distances from point of load
-          r = self.greatCircleDistance(lat1=self.y[i], long1=self.x[i], lat2=self.yw, long2=self.xw, radius=self.PlanetaryRadius)
+          r = self.greatCircleDistance(lat1=self._y_local[i], long1=self._x_local[i], lat2=self.yw, long2=self.xw, radius=self.PlanetaryRadius)
           self.w += self.q[i] * self.coeff * kei(r/self.alpha)
           # Compute and sum deflection
           self.w += self.q[i] * self.coeff * kei(r/self.alpha)
     else:
-      for i in range(len(self.x)):
+      for i in range(len(self._x_local)):
         if self.q[i] != 0:
-          r = ( (self.xw - self.x[i])**2 + (self.yw - self.y[i])**2 )**.5
+          r = ( (self.xw - self._x_local[i])**2 + (self.yw - self._y_local[i])**2 )**.5
           self.w += self.q[i] * self.coeff * kei(r/self.alpha)
 
   ## FINITE DIFFERENCE
