@@ -5,6 +5,10 @@ gFlex
 
 These instructions are meant to take an user familiar with computers but new to (or a beginner with) Python through the basics of how to get gFlex to work. The Python scripting part towards the end should be pretty straightforward as well, insofar as information is provided on how to get and set the chosen values inside gFlex. *Please leave a message if you have trouble working with gFlex; your comments could assist both you and the more general improvement of this documentation.*
 
+When you use gFlex, please cite:
+
+**Wickert, A. D.: [Open-source modular solutions for flexural isostasy: gFlex v1.0](http://www.geosci-model-dev-discuss.net/8/4245/2015/gmdd-8-4245-2015.html), Geosci. Model Dev. Discuss., 8, 4245-4292, doi:10.5194/gmdd-8-4245-2015, 2015.**
+
 ## Download and Installation
 
 #### Python
