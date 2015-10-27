@@ -1,61 +1,48 @@
 ; All units are SI
 
 [mode]
-model=flexure ; "flexure" or "PrattAiry"
 dimension=2 ; 1 or 2 dimensions
-method=SAS ; Solution method: FD, FFT, SAS, SAS_NG
+method=FD ; Solution method: FD, FFT, SAS, SAS_NG
 PlateSolutionType=vWC1994
-# Plate solutions can be vWC1994 (best), LinearTeVariationsOnly (not good, but for testing), or G2009 (not bad, but not as robust as vWC1994)
+# Plate solutions can be vWC1994 (best) or G2009 (not bad, but not as robust as vWC1994)
 
 [parameter]
-YoungsModulus=1.0E11
+YoungsModulus=6.5E10
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
 InfillMaterialDensity=0
-; Scalar constant Te usable for any solution type
-ElasticThickness=40000
-; 40000
-; 25000
 
 [input]
 ; Path to input load array
-Loads=q0_sample/2D/central_square_load.txt ; central_square_load.txt ; q0_sample/2D/global1degDEM.txt ; q0_sample/2D/diag.txt ; 
+Loads=q0_sample/2D/diag.txt
 ; Elastic thickness grid goes here; cannot coexist with a constant Te
 ; defined above
-ElasticThickness=
-#Te_sample/2D/corner_range_15_31.txt
-#Te_sample/2D/range_8_42_km_full_of_discontinuities.txt
-#Te_sample/2D/40km_const.txt
-#Te_sample/2D/corner_range_15_31.txt
-#Te_sample/2D/10km_const.txt
-#Te_sample/2D/40km_const.txt ; Te_sample/2D/corner_range_15_31.txt
+ElasticThickness=Te_sample/2D/fault_24-30.txt
 
 [output]
 ; DeflectionOut is a file path for an ASCII grid of w
 DeflectionOut=
-; Plot choices are q0, w, both, or (for 1D) combo
+; Plot choices are q, w, both, or (for 1D) combo
 Plot=both
 
 [numerical]
 GridSpacing_x=4000 ; dx
-BoundaryCondition_West=Mirror
-BoundaryCondition_East=0Moment0Shear
+BoundaryCondition_West=0Moment0Shear
+BoundaryCondition_East=0Displacement0Slope
 ; Solver can be direct or iterative
 Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
 ; Set as 0 if you don't want to iterate
 ConvergenceTolerance=1E-3
-CoeffArray=
-# CoeffArray import instead of computation; not sure how well this has been implemented
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
 GridSpacing_y=4000 ; dy
-BoundaryCondition_North=0Moment0Shear
-BoundaryCondition_South=Mirror
+BoundaryCondition_North=Mirror
+BoundaryCondition_South=0Slope0Shear
 
 [verbosity]
-Verbose=False
-Debug=False
-
+Verbose=
+Debug=
+Quiet=
