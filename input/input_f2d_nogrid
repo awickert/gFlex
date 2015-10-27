@@ -1,28 +1,52 @@
 ; All units are SI
 
 [mode]
-model=flexure ; "flexure" or "PrattAiry"
 dimension=2 ; 1 or 2 dimensions
-method=SPA_NG ; Solution method: FD, FFT, SPA, SPA_NG
+method=SAS_NG ; Solution method: FD, FFT (not yet included), SAS, SAS_NG
+PlateSolutionType=vWC1994
 
 [parameter]
-YoungsModulus=1.0E11
+YoungsModulus=6.5E10
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
 InfillMaterialDensity=0
-ElasticThickness=2000 ; Used for FFT, SPA, and SPA_NG solutions
 
 [input]
-Loads=q0_sample/2D/CHILDxyload.out
-ElasticThickness=
+; Path to input load array
+Loads=q0_sample/2D/latlonq_grid_SAS_NG.txt
+ElasticThickness=25000
+; xw and yw are vectors of desired output points for the SAS_NG method.
+; they are ignored if a different solution method is chosen.
+xw=xy_sample/xw_30E_60E_20pts.txt
+yw=xy_sample/yw_70N_85N_20pts.txt
 
 [output]
-DeflectionOut=tmpout.txt
-Plot=
+; DeflectionOut is a file path for an ASCII grid of w
+DeflectionOut=
+; Plot choices are q, w, both, or (for 1D) combo
+Plot=both
 
 [numerical]
-GridSpacing=200000
+GridSpacing_x= ; dx
+BoundaryCondition_West=NoOutsideLoads
+BoundaryCondition_East=NoOutsideLoads
+; Solver can be direct or iterative
+Solver=direct
 ; Iterates until this is the difference between two subsequent iterations
 ; Set as 0 if you don't want to iterate
-convergence=1E-3
+ConvergenceTolerance=1E-3
+CoeffArray=
+
+[numerical2D]
+; Those parameters shared between this and the 1D solution are in "[numerical]"
+GridSpacing_y= ; dy
+BoundaryCondition_North=0Moment0Shear
+BoundaryCondition_South=Mirror
+latlon=true ; true/false: flag to enable lat/lon input. Defaults False
+PlanetaryRadius=6371000 ; radius of planet [m], for lat/lon solutions
+
+[verbosity]
+Verbose=false
+Debug=false
+Quiet=false

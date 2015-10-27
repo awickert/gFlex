@@ -1,0 +1,36 @@
+; All units are SI. Not all entries are needed.
+; See "input_help" for descriptions of the entries
+; Standard parameter values for Earth are included.
+
+[mode]
+dimension=1
+method=
+
+[parameter]
+YoungsModulus=6.5E10
+PoissonsRatio=0.25
+GravAccel=9.8
+MantleDensity=3300
+InfillMaterialDensity=
+
+[input]
+Loads=
+ElasticThickness=
+xw=
+
+[output]
+DeflectionOut=
+Plot=
+
+[numerical]
+GridSpacing_x=
+BoundaryCondition_West=
+BoundaryCondition_East=
+Solver=
+ConvergenceTolerance=
+
+[verbosity]
+Verbose=
+Debug=
+Quiet=
+
