@@ -725,26 +725,27 @@ class Flexure(Utility, Plotting):
       # If wOutFile exists, has already been set by a setter
       self.wOutFile
       if self.Verbose:
-        print "Output filename provided by setter"
-        print "Not saving file with this code; that should be handled by the driver"
-        
+        print "Output filename provided."
     # Otherwise, it needs to be set by an configuration file
     except:
       try:
         self.wOutFile = self.configGet("string", "output", "DeflectionOut", optional=True)
-        # If this exists and is a string, write output to a file
-        if self.wOutFile[-4:] == '.npy':
-          np.save(self.wOutFile,self.w)
-        else:
-          # Shouldn't need more than mm precision, at very most
-          np.savetxt(self.wOutFile,self.w,fmt='%.3f')
-          if self.Verbose:
-            print 'Saving deflections --> ' + self.wOutFile
       except:
         # if there is no parsable output string, do not generate output;
         # this allows the user to leave the line blank and produce no output
         if self.Debug:
-          print 'Not writing any deflection output to file'
+          print 'No output filename provided:'
+          print '  not writing any deflection output to file'
+    if self.wOutFile:
+        if self.wOutFile[-4:] == '.npy':
+          from numpy import save
+          save(self.wOutFile,self.w)
+        else:
+          from numpy import savetxt
+          # Shouldn't need more than mm precision, at very most
+          savetxt(self.wOutFile,self.w,fmt='%.3f')
+          if self.Verbose:
+            print 'Saving deflections --> ' + self.wOutFile
 
   def bc_check(self):
     # Check that boundary conditions are acceptable with code implementation
