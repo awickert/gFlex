@@ -50,11 +50,11 @@ Download [**python(x,y)**](https://code.google.com/p/pythonxy/wiki/Downloads) or
 
 ###### Mac
 
-The current recommendation is to use a package manager like [**homebrew**](http://brew.sh/). With this you can install Python, and then move on to using **pip** to install the Python modules. A good introduction to this can be found here: http://www.thisisthegreenroom.com/2011/installing-python-numpy-scipy-matplotlib-and-ipython-on-lion. See the **Linux** instructions for the list of packages that you will need; after installing pip, these commands can be substituted as follows, e.g.,
+The current recommendation is to use a package manager like [**homebrew**](http://brew.sh/). With this you can install Python, and then move on to using **pip** (or **homebrew**) to install the Python modules. A good introduction to this can be found here: http://www.thisisthegreenroom.com/2011/installing-python-numpy-scipy-matplotlib-and-ipython-on-lion. See the **Linux** instructions for the list of packages that you will need; after installing pip, these commands can be substituted as follows, e.g.,
 ```
-# OLD
-sudo apt-get install python-numpy
-# NEW
+# Homebrew
+sudo brew install python-numpy
+# Pip
 pip install numpy
 ```
 
