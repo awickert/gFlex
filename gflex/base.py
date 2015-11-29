@@ -636,7 +636,6 @@ class Flexure(Utility, Plotting):
       # it later is combined with dx and (if 2D) dy for FD cases
       # for point loads, need mass: q0 should be written as [x, (y), force])
       self.q0 = self.configGet('string', "input", "Loads")
-
       
     # Parameters -- rho_m and rho_fill defined, so this outside
     # of if-statement (to work with getters/setters as well)
@@ -686,6 +685,15 @@ class Flexure(Utility, Plotting):
           
     # Plotting selection
     self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
+
+    # Ensure that Te is of floating-point type to avoid integer math
+    # and floor division
+    try:
+      self.Te = self.Te.astype(float) # array
+    except:
+      # Integer scalar Te does not seem to be a problem, but taking this step
+      # anyway for consistency
+      self.Te = float(self.Te) # integer
 
   # Finalize
   def finalize(self):
@@ -873,6 +881,7 @@ class Flexure(Utility, Plotting):
   ### need to determine its interface, it is best to have a uniform interface
   ### no matter it is 1D or 2D; but if it can't be that way, we can set up a
   ### variable-length arguments, which is the way how Python overloads functions.
+
   def FD(self):
     """
     Set-up for the finite difference solution method
