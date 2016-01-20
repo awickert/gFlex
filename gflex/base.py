@@ -1,9 +1,9 @@
-import sys, ConfigParser, os
+import sys, configparser, os
 import numpy as np
 import time # For efficiency counting
 import types # For flow control
 from matplotlib import pyplot as plt
-from _version import __version__
+from ._version import __version__
 
 class Utility(object):
 
@@ -38,15 +38,15 @@ class Utility(object):
           # but "" is acceptable for boundary conditions
           if name[:17] != 'BoundaryCondition':
             if self.Quiet != True:
-              print "An empty input string here is not an acceptable option."
-              print name, "is not optional."
-              print "Program crash likely to occur."
+              print("An empty input string here is not an acceptable option.")
+              print(name, "is not optional.")
+              print("Program crash likely to occur.")
       elif vartype == 'integer' or vartype == 'int':
         var = self.config.getint(category, name)
       elif vartype == 'boolean' or vartype == 'bool':
         var = self.config.getboolean(category, name)
       else:
-        print "Please enter 'float', 'string' (or 'str'), 'integer' (or 'int'), or 'boolean (or 'bool') for vartype"
+        print("Please enter 'float', 'string' (or 'str'), 'integer' (or 'int'), or 'boolean (or 'bool') for vartype")
         sys.exit() # Won't exit, but will lead to exception
       return var
     except:
@@ -55,15 +55,15 @@ class Utility(object):
         var = None
         if self.Verbose or self.Debug:
           if self.grass == False:
-            print ""
-            print 'No value entered for optional parameter "' + name + '"'
-            print 'in category "' + category + '" in configuration file.'
-            print 'No action related to this optional parameter will be taken.'
-            print ""
+            print("")
+            print('No value entered for optional parameter "' + name + '"')
+            print('in category "' + category + '" in configuration file.')
+            print('No action related to this optional parameter will be taken.')
+            print("")
       else:
-        print 'Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from configuration file.'
+        print('Problem loading ' + vartype + ' "' + name + '" in category "' + category + '" from configuration file.')
         if specialReturnMessage:
-          print specialReturnMessage
+          print(specialReturnMessage)
         sys.exit("Exiting.")
 
   def readyCoeff(self):
@@ -133,12 +133,12 @@ class Utility(object):
       try:
         self.dx
         if self.Quiet == False:
-          print "dx and dy being overwritten -- supply a full grid"
+          print("dx and dy being overwritten -- supply a full grid")
       except:
         try:
           self.dy
           if self.Quiet == False:
-            print "dx and dy being overwritten -- supply a full grid"
+            print("dx and dy being overwritten -- supply a full grid")
         except:
           pass
       # Boundaries
@@ -159,9 +159,9 @@ class Utility(object):
       self.xw = np.linspace(w, e, nx)
       self.yw = np.linspace(s, n, ny)
     else:
-      print "Lat/lon xw and yw must be pre-set: grid will not be square"
-      print "and may run into issues with poles, so to ensure the proper"
-      print "output points are chosen, the end user should do this."
+      print("Lat/lon xw and yw must be pre-set: grid will not be square")
+      print("and may run into issues with poles, so to ensure the proper")
+      print("output points are chosen, the end user should do this.")
       sys.exit()
     
         
@@ -177,29 +177,29 @@ class Utility(object):
       # First see if it is a full path or directly links from the current
       # working directory
       out = np.load(var)
-      if self.Verbose: print "Loading "+var+" from numpy binary"
+      if self.Verbose: print("Loading "+var+" from numpy binary")
     except:
       try:
         out = np.loadtxt(var)
-        if self.Verbose: print "Loading "+var+" ASCII"
+        if self.Verbose: print("Loading "+var+" ASCII")
       except:
         # Then see if it is relative to the location of the configuration file
         try:
           out = load(self.inpath + var)
-          if self.Verbose: print "Loading "+var+" from numpy binary"
+          if self.Verbose: print("Loading "+var+" from numpy binary")
         except:
           try:
             out = np.loadtxt(self.inpath + var)
-            if self.Verbose: print "Loading "+var+" ASCII"
+            if self.Verbose: print("Loading "+var+" ASCII")
           # If failure
           except:
             if close_on_fail:
-              print "Cannot find "+var+" file"
-              print ""+var+" path = " + var
-              print "Looked relative to model python files."
-              print "Also looked relative to configuration file path,"
-              print "  ", self.inpath
-              print "Exiting."
+              print("Cannot find "+var+" file")
+              print(""+var+" path = " + var)
+              print("Looked relative to model python files.")
+              print("Also looked relative to configuration file path,")
+              print("  ", self.inpath)
+              print("Exiting.")
               sys.exit()
             else:
               pass
@@ -219,7 +219,7 @@ class Plotting(object):
     #except:
     #  self.plotChoice = None
     if self.plotChoice:
-      if self.Verbose: print "Starting to plot " + self.plotChoice
+      if self.Verbose: print("Starting to plot " + self.plotChoice)
       if self.dimension == 1:
         if self.plotChoice == 'q':
           plt.figure(1)
@@ -270,8 +270,8 @@ class Plotting(object):
           # Plot undeflected load
           if self.Method == "SAS_NG":
             if self.Quiet == False:
-              print "Combo plot can't work with SAS_NG! Don't have mechanism in place\nto calculate load width."
-              print "Big problem -- what is the area represented by the loads at the\nextreme ends of the array?"
+              print("Combo plot can't work with SAS_NG! Don't have mechanism in place\nto calculate load width.")
+              print("Big problem -- what is the area represented by the loads at the\nextreme ends of the array?")
           else:
             ax.plot(self._x_local/1000., self.qs/(self.rho_m*self.g), 'g--', linewidth=2, label="Load thickness [m mantle equivalent]")
           # Plot deflected load
@@ -314,9 +314,9 @@ class Plotting(object):
           plt.show()
         else:
           if self.Quiet == False:
-            print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
-            print "Possible input strings are: q, w, both, and (for 1D) combo"
-            print "Unable to produce plot."
+            print('Incorrect plotChoice input, "' + self.plotChoice + '" provided.')
+            print("Possible input strings are: q, w, both, and (for 1D) combo")
+            print("Unable to produce plot.")
       elif self.dimension == 2:
         if self.plotChoice == 'q':
           fig = plt.figure(1, figsize=(8,6))
@@ -350,9 +350,9 @@ class Plotting(object):
             plt.show()
         else:
           if self.Quiet == False:
-            print 'Incorrect plotChoice input, "' + self.plotChoice + '" provided.'
-            print "Possible input strings are: q, w, both, and (for 1D) combo"
-            print "Unable to produce plot."
+            print('Incorrect plotChoice input, "' + self.plotChoice + '" provided.')
+            print("Possible input strings are: q, w, both, and (for 1D) combo")
+            print("Unable to produce plot.")
 
   def surfplot(self, z, titletext):
     """
@@ -409,7 +409,7 @@ class Plotting(object):
     # Help from http://wiki.scipy.org/Cookbook/Matplotlib/Gridding_irregularly_spaced_data
     
     if self.Verbose:
-      print "Starting to interpolate grid for plotting -- can be a slow process!"
+      print("Starting to interpolate grid for plotting -- can be a slow process!")
     
     from scipy.interpolate import griddata
     import numpy.ma as ma
@@ -481,7 +481,7 @@ class WhichModel(Utility):
         self.whichModel_AlreadyRun
       except:
         # Open parser and get what kind of model
-        self.config = ConfigParser.ConfigParser()
+        self.config = configparser.ConfigParser()
         try:
           self.config.read(filename)
           self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
@@ -547,7 +547,7 @@ class Flexure(Utility, Plotting):
 
     if self.filename:
       # Set up ConfigParser
-      self.config = ConfigParser.ConfigParser()
+      self.config = configparser.ConfigParser()
       try:
         self.config.read(self.filename)
         self.inpath = os.path.dirname(os.path.realpath(self.filename)) + '/'
@@ -584,14 +584,14 @@ class Flexure(Utility, Plotting):
     # After configuration file can define "Quiet", and getter/setter should be done
     # by this point if we are going that way.
     if self.Quiet == False:
-      print "" # Blank line at start of run
-      print ""
-      print "****************************"+"*"*len(__version__)
-      print "*** Initializing gFlex v"+__version__+" ***"
-      print "****************************"+"*"*len(__version__)
-      print ""
-      print "Open-source licensed under GNU GPL v3"
-      print ""
+      print("") # Blank line at start of run
+      print("")
+      print("****************************"+"*"*len(__version__))
+      print("*** Initializing gFlex v"+__version__+" ***")
+      print("****************************"+"*"*len(__version__))
+      print("")
+      print("Open-source licensed under GNU GPL v3")
+      print("")
 
     if self.filename:
       # Set clocks to None so if they are called by the getter before the 
@@ -678,12 +678,12 @@ class Flexure(Utility, Plotting):
     if self.q0 is not None:
       if self.Method != 'SAS_NG':
         if self.q0.ndim != self.dimension:
-          print "Number of dimensions in loads file is inconsistent with"
-          print "number of dimensions in solution technique."
-          print "Loads", self.q0.ndim
-          print "Dimensions", self.dimension
-          print self.q0
-          print "Exiting."
+          print("Number of dimensions in loads file is inconsistent with")
+          print("number of dimensions in solution technique.")
+          print("Loads", self.q0.ndim)
+          print("Dimensions", self.dimension)
+          print(self.q0)
+          print("Exiting.")
           sys.exit()
           
     # Plotting selection
@@ -699,14 +699,14 @@ class Flexure(Utility, Plotting):
     except:
       pass
     if self.Quiet==False:
-      print ""
+      print("")
 
   # SAVING TO FILE AND PLOTTING STEPS
 
   # Output: One of the functions run by isostasy.py; not part of IRF
   # (for standalone model use)
   def output(self):
-    if self.Verbose: print 'Output step'
+    if self.Verbose: print('Output step')
     self.outputDeflections()
     self.plotting()
 
@@ -725,8 +725,8 @@ class Flexure(Utility, Plotting):
       # If wOutFile exists, has already been set by a setter
       self.wOutFile
       if self.Verbose:
-        print "Output filename provided by setter"
-        print "Not saving file with this code; that should be handled by the driver"
+        print("Output filename provided by setter")
+        print("Not saving file with this code; that should be handled by the driver")
         
     # Otherwise, it needs to be set by an configuration file
     except:
@@ -739,12 +739,12 @@ class Flexure(Utility, Plotting):
           # Shouldn't need more than mm precision, at very most
           np.savetxt(self.wOutFile,self.w,fmt='%.3f')
           if self.Verbose:
-            print 'Saving deflections --> ' + self.wOutFile
+            print('Saving deflections --> ' + self.wOutFile)
       except:
         # if there is no parsable output string, do not generate output;
         # this allows the user to leave the line blank and produce no output
         if self.Debug:
-          print 'Not writing any deflection output to file'
+          print('Not writing any deflection output to file')
 
   def bc_check(self):
     # Check that boundary conditions are acceptable with code implementation
@@ -823,25 +823,25 @@ class Flexure(Utility, Plotting):
         if self.BC_E == '' or self.BC_W == '' \
            or self.BC_S == '' or self.BC_N == '':
           if self.Verbose:
-            print "Assuming NoOutsideLoads boundary condition, as this is implicit in the " 
-            print "  superposition-based analytical solution"
+            print("Assuming NoOutsideLoads boundary condition, as this is implicit in the ") 
+            print("  superposition-based analytical solution")
       else:
         if self.Quiet == False:
-          print ""
-          print ">>> BOUNDARY CONDITIONS IMPROPERLY DEFINED <<<"
-          print ""
-          print "For analytical solutions the boundaries must be either:"
-          print ""
-          print "* NoOutsideLoads (explicitly)"
-          print "* <left blank>"
-          print ""
-          print "The latter is to implictly indicate a desire to use the only"
-          print "boundary condition available for the superposition-based"
-          print "analytical solutions."
-          print "This check is in place to ensure that the user does not apply"
-          print "boundary conditions for finite difference solutions to the"
-          print "analytical solutions and expect them to work."
-          print ""
+          print("")
+          print(">>> BOUNDARY CONDITIONS IMPROPERLY DEFINED <<<")
+          print("")
+          print("For analytical solutions the boundaries must be either:")
+          print("")
+          print("* NoOutsideLoads (explicitly)")
+          print("* <left blank>")
+          print("")
+          print("The latter is to implictly indicate a desire to use the only")
+          print("boundary condition available for the superposition-based")
+          print("analytical solutions.")
+          print("This check is in place to ensure that the user does not apply")
+          print("boundary conditions for finite difference solutions to the")
+          print("analytical solutions and expect them to work.")
+          print("")
           sys.exit()
  
   def coeffArraySizeCheck(self):
@@ -850,9 +850,9 @@ class Flexure(Utility, Plotting):
     each other (for finite difference if loading a pre-build coefficient
     array). Otherwise, exit.
     """
-    if prod(self.coeff_matrix.shape) != long(prod(np.array(self.qs.shape,dtype=int64)+2)**2):
-      print "Inconsistent size of q0 array and coefficient mattrix"
-      print "Exiting."
+    if prod(self.coeff_matrix.shape) != int(prod(np.array(self.qs.shape,dtype=int64)+2)**2):
+      print("Inconsistent size of q0 array and coefficient mattrix")
+      print("Exiting.")
       sys.exit()
       
   def TeArraySizeCheck(self):
@@ -869,7 +869,7 @@ class Flexure(Utility, Plotting):
         if (np.array(self.Te.shape) != np.array(self.qs.shape)).any():
           sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
       else:
-        if self.Debug: print "Te and qs array sizes pass consistency check"
+        if self.Debug: print("Te and qs array sizes pass consistency check")
 
   ### need to determine its interface, it is best to have a uniform interface
   ### no matter it is 1D or 2D; but if it can't be that way, we can set up a
@@ -879,7 +879,7 @@ class Flexure(Utility, Plotting):
     Set-up for the finite difference solution method
     """
     if self.Verbose:
-      print "Finite Difference Solution Technique"
+      print("Finite Difference Solution Technique")
     # Used to check for coeff_matrix here, but now doing so in self.bc_check()
     # called by f1d and f2d at the start
     # 
@@ -942,14 +942,14 @@ class Flexure(Utility, Plotting):
     if Tepath:
       self.Te = self.loadFile(self.Te, close_on_fail = False)
       if self.Te is None:
-        print "Requested Te file is provided but cannot be located."
-        print "No scalar elastic thickness is provided in configuration file"
-        print "(Typo in path to input Te grid?)"
+        print("Requested Te file is provided but cannot be located.")
+        print("No scalar elastic thickness is provided in configuration file")
+        print("(Typo in path to input Te grid?)")
         if self.coeff_matrix is not None:
-          print "But a coefficient matrix has been found."
-          print "Calculations will be carried forward using it."
+          print("But a coefficient matrix has been found.")
+          print("Calculations will be carried forward using it.")
         else:
-          print "Exiting."
+          print("Exiting.")
           sys.exit()
 
       # Check that Te is the proper size if it was loaded

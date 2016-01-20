@@ -9,9 +9,9 @@
 
 import os.path
 import sys
-from base import *
-from f1d import *
-from f2d import *
+from .base import *
+from .f1d import *
+from .f2d import *
 
 """
 Solves flexural isostasy both analytically (for constant flexural rigidity)
@@ -23,42 +23,42 @@ in the spatial domain (i.e. a sum of Green's functions)
 Numerical solutions are finite difference by a direct sparse matrix solver.
 """
 try:
-  from _version import __version__
+  from ._version import __version__
 except:
   __version__ = '? version file missing ?'
 
 def welcome():
-  print ""
-  print "**************************"+"*"*len(__version__)
-  print "*** WELCOME to gFlex v"+__version__+" ***"
-  print "**************************"+"*"*len(__version__)
-  print ""
+  print("")
+  print("**************************"+"*"*len(__version__))
+  print("*** WELCOME to gFlex v"+__version__+" ***")
+  print("**************************"+"*"*len(__version__))
+  print("")
 
 def displayUsage():
-  print "Open-source licensed under GNU GPL v3"
-  print ""
-  print 'Usage:'
-  print 'gflex <<path_to_configuration_file>>  # TO RUN STANDALONE'
-  print 'gflex -h  *OR*  gflex --help          # DISPLAY ADDITIONAL HELP'
-  print 'gflex -v  *OR*  gflex --version       # DISPLAY VERSION NUMBER'
-  print 'import gflex                          # WITHIN PYTHON SHELL OR SCRIPT'
-  print ""
+  print("Open-source licensed under GNU GPL v3")
+  print("")
+  print('Usage:')
+  print('gflex <<path_to_configuration_file>>  # TO RUN STANDALONE')
+  print('gflex -h  *OR*  gflex --help          # DISPLAY ADDITIONAL HELP')
+  print('gflex -v  *OR*  gflex --version       # DISPLAY VERSION NUMBER')
+  print('import gflex                          # WITHIN PYTHON SHELL OR SCRIPT')
+  print("")
   
 def furtherHelp():
-  print ""
-  print "ADDITIONAL HELP:"
-  print "--------------- "
-  print ""
-  print "To generate an input file, please see the examples in the 'input'"
-  print "directory of this install."
-  print ""
-  print "To run in a Python script or shell, follow this general pattern:"
-  print "import gflex"
-  print "flex = gflex.F1D()"
-  print "flex.method = ..."
-  print "# ...more variable setting..."
-  print "# see the 'input' directory for examples"
-  print ""
+  print("")
+  print("ADDITIONAL HELP:")
+  print("--------------- ")
+  print("")
+  print("To generate an input file, please see the examples in the 'input'")
+  print("directory of this install.")
+  print("")
+  print("To run in a Python script or shell, follow this general pattern:")
+  print("import gflex")
+  print("flex = gflex.F1D()")
+  print("flex.method = ...")
+  print("# ...more variable setting...")
+  print("# see the 'input' directory for examples")
+  print("")
 
 def main():
   # Choose how to instantiate
@@ -69,7 +69,7 @@ def main():
       furtherHelp()
       return
     if sys.argv[1] == '--version' or sys.argv[1] == '-v':
-      print "gFlex v"+__version__
+      print("gFlex v"+__version__)
       return
     else:
       # Looks like it wants to be an configuration file!
@@ -80,23 +80,23 @@ def main():
       except:
         displayUsage()
         if os.path.isfile(filename):
-          print ">>>> Error: configuration file contains an error <<<<"
+          print(">>>> Error: configuration file contains an error <<<<")
           sys.exit("")
         else:
-          print ">>>> Error: cannot locate specified configuration file. <<<<"
+          print(">>>> Error: cannot locate specified configuration file. <<<<")
           sys.exit("")
 
   elif len(sys.argv) == 1:
     welcome()
     displayUsage()
-    print ""
+    print("")
     sys.exit()
   else:
     welcome()
-    print ">>>> ERROR: Too many input parameters provided; exiting. <<<<"
-    print ""
+    print(">>>> ERROR: Too many input parameters provided; exiting. <<<<")
+    print("")
     displayUsage()
-    print ""
+    print("")
     sys.exit()
   
   ## SET MODEL TYPE AND DIMENSIONS HERE ##
@@ -108,7 +108,7 @@ def main():
 
   obj.initialize(filename)
   
-  if obj.Debug: print 'Command line:', sys.argv
+  if obj.Debug: print('Command line:', sys.argv)
 
   ############################################
   ##       SET MODEL PARAMETERS HERE        ##
