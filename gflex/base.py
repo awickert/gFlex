@@ -693,7 +693,12 @@ class Flexure(Utility, Plotting):
     except:
       # Integer scalar Te does not seem to be a problem, but taking this step
       # anyway for consistency
-      self.Te = float(self.Te) # integer
+      try:
+        self.Te = float(self.Te) # integer
+      except:
+        # If not already defined, then an input file is being used, and this
+        # code should bring the grid in as floating point type... just later.
+        pass
 
   # Finalize
   def finalize(self):
