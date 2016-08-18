@@ -250,7 +250,7 @@ Quiet= ; true/false -- total silence if True. Defaults to False.
 
 You may run gFlex from other Python programs. When you install it (above), this also produces a Python module that you may import to access it while scripting.
 
-##### With no configuration file
+##### With no configuration file (recommended)
 **input/run_in_script_2D.py**, reproduced below, is a good example of how to set the variables and run the model. This method requires no input file, as all of the values are set inside the Python script that imports gflex. This is essentially how the GRASS GIS interface was written, and is a way to embed the abilities of gFlex into another model. A one-dimensional example, **input/run_in_script_1D.py**, is also available.
 
 ```
@@ -307,6 +307,10 @@ flex.plotChoice='both'
 # flex.wOutFile = 
 flex.output() # Plots and/or saves output, or does nothing, depending on
               # whether flex.plotChoice and/or flex.wOutFile have been set
+# TO OBTAIN OUTPUT DIRECTLY IN PYTHON, you can assign the internal variable,
+# flex.w, to another variable -- or as an element in a list if you are looping
+# over many runs of gFlex:
+deflection = flex.w
 ```
 
 ##### With a configuration file
