@@ -1,5 +1,4 @@
-gFlex
-=====
+# gFlex
 
 ***Multiple methods to solve elastic plate flexure, designed for applications to Earth's lithosphere.***
 
@@ -28,7 +27,7 @@ In order to run properly, gFlex requires the following Python dependencies:
 
 Use your package manager to download and install the required Python packages. For Debian/Ubuntu, it will be something like:
 
-```
+```bash
 # Basic packages
 sudo apt-get install \
 python python-numpy python-scipy \
@@ -51,7 +50,7 @@ Download [**python(x,y)**](https://code.google.com/p/pythonxy/wiki/Downloads) or
 ###### Mac
 
 The current recommendation is to use a package manager like [**homebrew**](http://brew.sh/). With this you can install Python, and then move on to using **pip** (or **homebrew**) to install the Python modules. A good introduction to this can be found here: http://www.thisisthegreenroom.com/2011/installing-python-numpy-scipy-matplotlib-and-ipython-on-lion. See the **Linux** instructions for the list of packages that you will need; after installing pip, these commands can be substituted as follows, e.g.,
-```
+```bash
 # Homebrew
 sudo brew install python-numpy
 # Pip
@@ -63,12 +62,12 @@ Recent efforts to download Python distributions (both **Anaconda** and **Enthoug
 ##### Setuptools and ez_setup (Windows and Mac with distributions)
 
 The distributions for Mac and Windows do not come with setuptools, which is required to install gFlex. However, if you install ez_setup, the gFlex install script will automatically install setuptools for you. Simply type:
-```
+```bash
 pip install ez_setup # Windows or Mac without special privileges required
 sudo pip install ez_setup # Mac where sudo privileges are required
 ```
 Of course, one can also bypass the need for the install script to install setuptools by using pip preemptively:
-```
+```bash
 pip install setuptools # Windows or Mac without special privileges required
 sudo pip install setuptools # Mac where sudo privileges are required
 ```
@@ -80,7 +79,7 @@ sudo pip install setuptools # Mac where sudo privileges are required
 gFlex is downloadable from the Python Package Index ([PyPI](https://pypi.python.org/pypi)); see https://pypi.python.org/pypi/gFlex.
 
 If you have **pip**, you may simply type:
-```
+```bash
 pip install 
 pip install gflex
 # Or if the destination install folder requires sudo access
@@ -94,7 +93,7 @@ and you will have a full, running copy of the latest release version of gFlex.
 
 gFlex may be downloaded here at GitHub, by either:
 * Copying the link at right and pasting it into the command prompt as follows:
-```
+```bash
 git clone <LINK>
 ```
 * Downloading and extracting the compressed ZIP file (link at right)
@@ -104,7 +103,7 @@ git clone <LINK>
 
 Install gFlex at the command prompt using [setuptools](https://pypi.python.org/pypi/setuptools). If you have administrator privileges, which *is often also the case when doing this install under Windows*, you may drop the "sudo". For standard Linux or Mac users, the "sudo" will remain necessary, and you will have to enter your administrator password for the program to be added to your local set of applications (e.g., as "/usr/local/bin/gflex").
 
-```
+```bash
 # For standard Linux/Mac users:
 sudo python setup.py install
 # OR
@@ -132,7 +131,7 @@ For options 1 and 2, there are pre-built methods that can be selected along the 
 
 A configuration file can be generated to run gFlex; see examples in the **input/** directory. To run gFlex using this file, one simply opens a terminal window and types:
 
-```
+```bash
 # run like this:
 gflex <path-to-configuration-file>
 ```
@@ -253,7 +252,7 @@ You may run gFlex from other Python programs. When you install it (above), this 
 ##### With no configuration file (recommended)
 **input/run_in_script_2D.py**, reproduced below, is a good example of how to set the variables and run the model. This method requires no input file, as all of the values are set inside the Python script that imports gflex. This is essentially how the GRASS GIS interface was written, and is a way to embed the abilities of gFlex into another model. A one-dimensional example, **input/run_in_script_1D.py**, is also available.
 
-```
+```python
 #! /usr/bin/env python
 
 import gflex
@@ -317,7 +316,7 @@ deflection = flex.w
 
 If you would like to use a Python script with a configuration file, this is also possible.
 
-```
+```python
 import gflex
 
 # To use a configuration file:
@@ -346,7 +345,7 @@ obj.output()
 
 To run gFlex inside of GRASS GIS 7, run the following commands from within a GRASS GIS session:
 
-```
+```bash
 g.extension r.flexure
 g.extension v.flexure
 ```
@@ -367,3 +366,7 @@ When running **r.flexure**, it is important to ensure that the elastic thickness
 Landlab is an in-development (but nearing release) Earth-surface modeling framework built to facilitate easy integration of geomorphic, ecological, hydrological, geological, etc. Earth-surface related models to simulate and investigate the links between multiple processes. gFlex can be linked with Landlab, and the code to do this is available within the Landlab repository at https://github.com/landlab/landlab/tree/master/landlab/components/gFlex.
 
 The Landlab interface to gFlex also provides gFlex with the Community Surface Dynamics Modeling System (CSDMS) [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description) interface. This allows it to be run as a coupled component across multiple programming languages and paradigms as part of the CSDMS community of models. For more information on model coupling with CSDMS, see the example presentation at http://csdms.colorado.edu/w/images/CSDMS_lecture7.pdf and the paper on the model coupling published by [Peckham et al., "A component-based approach to integrated modeling in the geosciences: The design of CSDMS"](http://www.sciencedirect.com/science/article/pii/S0098300412001252).
+
+## Utilities
+
+The "utilities" folder currently contains only one program, `flexural_wavelength_calculator.py`. Operating it is simple and fairly rudimentary: just edit the input variables directly in the calculator Python file, and then run it to see what the flexural parameter, first zero-crossing point (on the load-side of the forebulge), and the flexural wavelength.
