@@ -138,7 +138,7 @@ gflex <path-to-configuration-file>
 
 For help constructing configuration files, see the blank template files **input/template1D** and **input/template2D**, as well as the other examples found in the **input/** directory. The **input/** directory also contains **input/README.md**, which provides a further local description of the files available. **input/input_help** provides a longer explanation of what the parameters are, and is therefore reproduced immediately below for reference:
 
-```
+```Lisp
 ; input_help
 ; All units are SI. Not all entries are needed.
 ; Standard parameter values for Earth are included.
