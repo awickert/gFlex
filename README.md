@@ -6,7 +6,7 @@ These instructions are meant to take an user familiar with computers but new to 
 
 When you use gFlex, please cite:
 
-**Wickert, A. D.: [Open-source modular solutions for flexural isostasy: gFlex v1.0](http://www.geosci-model-dev-discuss.net/8/4245/2015/gmdd-8-4245-2015.html), Geosci. Model Dev. Discuss., 8, 4245-4292, doi:10.5194/gmdd-8-4245-2015, 2015.**
+**Wickert, A. D.: [Open-source modular solutions for flexural isostasy: gFlex v1.0](http://www.geosci-model-dev-discuss.net/8/4245/2015/gmdd-8-4245-2015.html), *Geosci. Model Dev.*, *9*(3), 997–1017, doi:10.5194/gmd-9-997-2016.**
 
 ## Download and Installation
 
