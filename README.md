@@ -367,6 +367,15 @@ Landlab is an in-development (but nearing release) Earth-surface modeling framew
 
 The Landlab interface to gFlex also provides gFlex with the Community Surface Dynamics Modeling System (CSDMS) [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description) interface. This allows it to be run as a coupled component across multiple programming languages and paradigms as part of the CSDMS community of models. For more information on model coupling with CSDMS, see the example presentation at http://csdms.colorado.edu/w/images/CSDMS_lecture7.pdf and the paper on the model coupling published by [Peckham et al., "A component-based approach to integrated modeling in the geosciences: The design of CSDMS"](http://www.sciencedirect.com/science/article/pii/S0098300412001252).
 
+### Plotting
+
+There are four plot choices, defined via `self.plotChoice`:
+* `'q'`: plots the load in mantle-density-equivalent units of length
+* `'w'`: plots the deflection in units of length
+* `'both'`: plots both deflection and loads in separate panels of a 2-subplot figure
+* `'combo'`: (1D only): plots lithospheric deflections and the deflected mantle-density-equivalent load atop it.
+  * Note that the load does not affect the area above/below the datum filled when `rho_fill != 0`. This affects the buoyant balance associated with the motion of the plate, with no additional considerations for topogrpahy. If you would like to include topogrpahy, an iterative approach (e.g., finding areas below sea level, filling them, flexing, finding new areas below sea level, and so on) is recommended.
+
 ## Utilities
 
 The "utilities" folder currently contains only one program, `flexural_wavelength_calculator.py`. Operating it is simple and fairly rudimentary: just edit the input variables directly in the calculator Python file, and then run it to see what the flexural parameter, first zero-crossing point (on the load-side of the forebulge), and the flexural wavelength.
