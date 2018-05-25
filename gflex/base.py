@@ -481,17 +481,19 @@ class WhichModel(Utility):
         self.whichModel_AlreadyRun
       except:
         # Open parser and get what kind of model
-        self.config = configparser.ConfigParser()
-        try:
-          self.config.read(filename)
-          # Need to change this and all slashes to be Windows compatible
-          self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
-          # Need to have these guys inside "try" to make sure it is set up OK
-          # (at least for them)
-          self.dimension = self.configGet("integer", "mode", "dimension")
-          self.whichModel_AlreadyRun = True
-        except:
-          sys.exit()
+        _fileisvalid = self.config = configparser.ConfigParser()
+        _fileisvalid = len(_fileisvalid)
+        if _fileisvalid:
+            try:
+              self.config.read(filename)
+              # Need to change this and all slashes to be Windows compatible
+              self.inpath = os.path.dirname(os.path.realpath(filename)) + '/'
+              # Need to have these guys inside "try" to make sure it is set up OK
+              # (at least for them)
+              self.dimension = self.configGet("integer", "mode", "dimension")
+              self.whichModel_AlreadyRun = True
+            except:
+              sys.exit(">>>> Error: cannot locate specified configuration file. <<<<")
 
 class Flexure(Utility, Plotting):
   
