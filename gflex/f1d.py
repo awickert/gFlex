@@ -135,7 +135,7 @@ class F1D(Flexure):
       # More efficient if we have created some 0-load points
       # (e.g., for where we want output)
       if self.q[i] != 0:
-        dist = np.abs(self.xw - self._x_local[i])
+        dist = np.abs(self.xw - self.x[i])
         self.w -= self.q[i] * self.coeff * np.exp(-dist/self.alpha) * \
           ( np.cos(dist/self.alpha) + np.sin(dist/self.alpha) )
 
