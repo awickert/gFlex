@@ -30,7 +30,8 @@ DeflectionOut=
 Plot=both
 
 [numerical]
-GridSpacing_x= ; dx
+; dx
+GridSpacing_x= 
 BoundaryCondition_West=NoOutsideLoads
 BoundaryCondition_East=NoOutsideLoads
 ; Solver can be direct or iterative
@@ -42,11 +43,14 @@ CoeffArray=
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
-GridSpacing_y= ; dy
+; dy
+GridSpacing_y= 
 BoundaryCondition_North=0Moment0Shear
 BoundaryCondition_South=Mirror
-latlon=true ; true/false: flag to enable lat/lon input. Defaults False
-PlanetaryRadius=6371000 ; radius of planet [m], for lat/lon solutions
+; true/false: flag to enable lat/lon input. Defaults False
+latlon=true
+; radius of planet [m], for lat/lon solutions
+PlanetaryRadius=6371000
 
 [verbosity]
 Verbose=false
