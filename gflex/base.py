@@ -513,6 +513,10 @@ class Flexure(Utility, Plotting):
     self.Verbose = True
     self.Debug = False
     
+    # x and y to None for checks
+    self.x = None
+    self.y = None
+    
     # Set GRASS GIS usage flag: if GRASS is used, don't display error
     # messages related to unset options. This sets it to False if it 
     # hasn't already been set (and it can be set after this too)
@@ -987,6 +991,8 @@ class Flexure(Utility, Plotting):
     Set-up for the rectangularly-gridded superposition of analytical solutions 
     method for solving flexure
     """
+    if self.x is None:
+      self.x = np.arange(self.dx/2., self.dx * self.qs.shape[0], self.dx)
     if self.filename:
       # Define the (scalar) elastic thickness
       self.Te = self.configGet("float", "input", "ElasticThickness")
@@ -996,6 +1002,8 @@ class Flexure(Utility, Plotting):
       # q0 is the parsable input to either a qs grid or contains (x,(y),q)
       del self.q0
     if self.dimension == 2:
+      if self.y is None:
+        self.y = np.arange(self.dy/2., self.dy * self.qs.shape[0], self.dy)
       # Define a stress-based qs = q0
       # But only if the latter has not already been defined
       # (e.g., by the getters and setters)
