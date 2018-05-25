@@ -1,8 +1,10 @@
 ; All units are SI
 
 [mode]
-dimension=2 ; 1 or 2 dimensions
-method=SAS_NG ; Solution method: FD, FFT (not yet included), SAS, SAS_NG
+; 1 or 2 dimensions
+dimension=2
+; Solution method: FD, FFT (not yet included), SAS, SAS_NG
+method=SAS_NG
 PlateSolutionType=vWC1994
 
 [parameter]

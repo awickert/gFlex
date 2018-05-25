@@ -1,8 +1,10 @@
 ; All units are SI
 
 [mode]
-dimension=1 ; 1 or 2 dimensions
-method=FD ; Solution method: FD, FFT, SPA, SPA_NG
+; 1 or 2 dimensions
+dimension=1
+; Solution method: FD, FFT, SPA, SPA_NG
+method=FD
 
 [parameter]
 YoungsModulus=6.5E10

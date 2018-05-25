@@ -3,40 +3,42 @@
 ; Standard parameter values for Earth are included.
 
 [mode]
-dimension=2 ; 1 (line) or 2 (surface) dimensions
-method=SPA ; Solution method: FD (Finite Difference), FFT (Fast Fourier 
-;          ; Transform, not yet implemented), SAS (Spatial domain analytical 
-;          ; solutions), or SAS_NG (SPA, but do not require a uniform grid
-;          ; - NG = "no grid")
-;          ; For SAS_NG, 1D data must be provided and will be returned in 
-;          ; two columns: (x,q0) --> (x,w). 2D data are similar, except
-;          ; will be of the form (x,y,[q0/in or w/out])
-;          ; I am working on gridded output for these, so this might change
-;          ; in the future.
-;          ; Both the FFT and SPA techniques rely on superposition 
-;          ; of solutions, because they can be combined linearly, whether in 
-;          ; the spectral or the spatial domain)
-;
-PlateSolutionType=vWC1994 ; Plate solutions can be:
-;                         ; * vWC1994 (best), or
-;                         ; * G2009 (from Govers et al., 2009; not bad, but not 
-;                         ;          as robust as vWC1994)
+; 1 (line) or 2 (surface) dimensions
+dimension=2
+; Solution method: FD (Finite Difference), FFT (Fast Fourier 
+; Transform, not yet implemented), SAS (Spatial domain analytical 
+; solutions), or SAS_NG (SPA, but do not require a uniform grid
+; - NG = "no grid")
+; For SAS_NG, 1D data must be provided and will be returned in 
+; two columns: (x,q0) --> (x,w). 2D data are similar, except
+; will be of the form (x,y,[q0/in or w/out])
+; I am working on gridded output for these, so this might change
+; in the future.
+; Both the FFT and SPA techniques rely on superposition 
+; of solutions, because they can be combined linearly, whether in 
+; the spectral or the spatial domain)
+method=SPA
+; Plate solutions can be:
+;  * vWC1994 (best), or
+;  * G2009 (from Govers et al., 2009; not bad, but not 
+;           as robust as vWC1994)
+PlateSolutionType=vWC1994
 
 [parameter]
 YoungsModulus=65E9
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
-InfillMaterialDensity=0 ; This is the density of material (e.g., air, water) 
-;                       ; that is filling (or leaving) the hole that was 
-;                       ; created by flexure. If you do not have a constant 
-;                       ; density of infilling material, for example, at a 
-;                       ; subsiding shoreline, you must instead iterate (see
-;                       ; [numerical], below).
-
+; This is the density of material (e.g., air, water) 
+; that is filling (or leaving) the hole that was 
+; created by flexure. If you do not have a constant 
+; density of infilling material, for example, at a 
+; subsiding shoreline, you must instead iterate (see
+; [numerical], below).
+InfillMaterialDensity=0
 [input]
 ; space-delimited array of loads
-; stresses (rho*g*h) if gridded (dx (and if applicable, dy) will be applied
+; stresses (rho*g*h) if gridded (dx (and if applicable, dy)) will be applied
 ;   to convert them into masses
 ; forces (rho*g*h*Area) if not gridded (SAS_NG)
 ; If the solution method (above) is selected as "SAS_NG", then this file
@@ -69,7 +71,8 @@ DeflectionOut=tmpout.txt
 Plot=both
 
 [numerical]
-GridSpacing_x= ; dx [m]
+; dx [m]
+GridSpacing_x=
 ;
 ; Boundary conditions can be:
 ; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
@@ -79,14 +82,15 @@ BoundaryCondition_East=
 ;
 ; Solver can be direct or iterative
 Solver=
-;
+; Tolerance between iterations [m]
 ; If you have chosen an iterative solution type ("Solver"), it will iterate
 ; until this is the difference between two subsequent iterations.
 ; Set as 0 if you don't want to iterate
-convergence=1E-3 ; Tolerance between iterations [m]
+convergence=1E-3
 
 [numerical2D]
-GridSpacing_y= ; dy [m]
+; dy [m]
+GridSpacing_y=
 ;
 ; Boundary conditions can be:
 ; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
@@ -94,11 +98,15 @@ GridSpacing_y= ; dy [m]
 BoundaryCondition_North=
 BoundaryCondition_South=
 ; 
-; Flag to enable lat/lon input. By default, this is false
-latlon= ; true/false: flag to enable lat/lon input. Defaults False.
-PlanetaryRadius= ; radius of planet [m], for lat/lon solutions
+; Flag to enable lat/lon input (true/false). By default, this is false
+latlon=
+; radius of planet [m], for lat/lon solutions
+PlanetaryRadius= 
 
 [verbosity]
-Verbose= ; true/false. Defaults to True.
-Debug= ; true/false. Defaults to False.
-Quiet= ; true/false -- total silence if True. Defaults to False.
+; true/false. Defaults to true.
+Verbose=
+; true/false. Defaults to false.
+Debug=
+; true/false -- total silence if true. Defaults to false.
+Quiet=

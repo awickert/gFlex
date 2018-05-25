@@ -1,10 +1,12 @@
 ; All units are SI
 
 [mode]
-dimension=2 ; 1 or 2 dimensions
-method=FD ; Solution method: FD, FFT, SAS, SAS_NG
+; 1 or 2 dimensions
+dimension=2
+; Solution method: FD, FFT, SAS, SAS_NG
+method=FD
+; Plate solutions can be vWC1994 (best) or G2009 (not bad, but not as robust as vWC1994)
 PlateSolutionType=vWC1994
-# Plate solutions can be vWC1994 (best) or G2009 (not bad, but not as robust as vWC1994)
 
 [parameter]
 YoungsModulus=6.5E10
