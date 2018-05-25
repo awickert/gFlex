@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/awickert/gFlex.svg?branch=master)](https://travis-ci.org/awickert/gFlex)
+
 # gFlex
 
 ***Multiple methods to solve elastic plate flexure, designed for applications to Earth's lithosphere.***
