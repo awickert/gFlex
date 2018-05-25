@@ -12,7 +12,7 @@ flex.Method = 'SAS' # Solution method: * FD (finite difference)
                    #                  * SAS (superposition of analytical solutions)
                    #                  * SAS_NG (ungridded SAS)
 
-flex.Solver = 'direct' # direct or iterative
+#flex.Solver = 'direct' # direct or iterative
 # convergence = 1E-3 # convergence between iterations, if an iterative solution
                      # method is chosen
 
