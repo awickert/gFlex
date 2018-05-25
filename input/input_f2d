@@ -29,7 +29,8 @@ DeflectionOut=
 Plot=both
 
 [numerical]
-GridSpacing_x=4000 ; dx
+; dx
+GridSpacing_x=4000
 BoundaryCondition_West=0Moment0Shear
 BoundaryCondition_East=0Displacement0Slope
 ; Solver can be direct or iterative
@@ -40,7 +41,8 @@ ConvergenceTolerance=1E-3
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
-GridSpacing_y=4000 ; dy
+; dy
+GridSpacing_y=4000
 BoundaryCondition_North=Mirror
 BoundaryCondition_South=0Slope0Shear
 
