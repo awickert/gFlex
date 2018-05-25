@@ -4,6 +4,7 @@ python:
 # command to install dependencies
 before_install:
   - pip install nose
+  - pip install matplotlib
   - pip install numpy
   - pip install scipy
   - pip install configparser
