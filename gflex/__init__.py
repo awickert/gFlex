@@ -1,1 +1,4 @@
-from .gflex import *
+import sys
+import os
+sys.path.append( os.path.join(os.getcwd(), 'gflex') )
+from gflex import *
