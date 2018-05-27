@@ -1,10 +1,6 @@
 #! /usr/bin/env python
 
-from ez_setup import use_setuptools
-use_setuptools()
-
 from setuptools import setup, find_packages
-from setuptools.command.install import install
 
 import os
 
@@ -47,4 +43,6 @@ setup(
     url = ["https://github.com/awickert/gFlex", "http://csdms.colorado.edu/wiki/Model:gFlex"],
     download_url = "https://github.com/awickert/gFlex/tarball/v"+__version__,
     long_description = long_description,
+
+    use_2to3=True,
 )
