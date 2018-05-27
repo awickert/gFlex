@@ -1,1 +1,1 @@
-from .gflex import *
+from gflex import *
