@@ -6,9 +6,9 @@ python:
 before_install:
   - pip install --upgrade pip
   - pip install -r requirements.txt
-  - export PYTHONPATH=$PYTHONPATH:$(pwd)
+  - pip install -e .
 install:
-  - python setup.py install
+  - python setup.py develop
 # command to run tests
 script:
   - nosetests
