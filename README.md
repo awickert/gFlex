@@ -138,6 +138,8 @@ A configuration file can be generated to run gFlex; see examples in the **input/
 gflex <path-to-configuration-file>
 ```
 
+This can be run from any directory, as the installation of gFlex adds the program "gflex" to the system path.
+
 For help constructing configuration files, see the blank template files **input/template1D** and **input/template2D**, as well as the other examples found in the **input/** directory. The **input/** directory also contains **input/README.md**, which provides a further local description of the files available. **input/input_help** provides a longer explanation of what the parameters are, and is therefore reproduced immediately below for reference:
 
 ```Lisp
