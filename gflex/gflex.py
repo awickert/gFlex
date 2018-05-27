@@ -1,11 +1,23 @@
 #! /usr/bin/env python
 
-# isostasy.py
-# Originally written by Andrew Wickert with help from Greg Tucker and 
-# Eric Hutton as the standalone driver for the flexural istostasy program
-# called "flexure" (2010-2011)
-# Significantly updated by Andrew Wickert in 2014-2015 for the release
-# of gFlex
+"""
+This file is part of gFlex.
+gFlex computes lithospheric flexural isostasy with heterogeneous rigidity
+Copyright (C) 2010-2018 Andrew D. Wickert
+
+gFlex is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+gFlex is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
 from __future__ import print_function
 import os.path
@@ -14,15 +26,6 @@ from base import *
 from f1d import *
 from f2d import *
 
-"""
-Solves flexural isostasy both analytically (for constant flexural rigidity)
-and numerically (for either variable or constant flexural rigidity).
-
-Analytical solutions are by superposition of analytical solutions
-in the spatial domain (i.e. a sum of Green's functions)
-
-Numerical solutions are finite difference by a direct sparse matrix solver.
-"""
 try:
   from _version import __version__
 except:
@@ -90,8 +93,11 @@ def main():
     print("")
     sys.exit()
   
+  
+  ########################################
   ## SET MODEL TYPE AND DIMENSIONS HERE ##
   ########################################
+  
   if obj.dimension == 1:
     obj = F1D(filename)
   elif obj.dimension == 2:
@@ -100,6 +106,7 @@ def main():
   obj.initialize(filename)
   
   if obj.Debug: print("Command line:", sys.argv)
+
 
   ############################################
   ##       SET MODEL PARAMETERS HERE        ##
@@ -111,6 +118,7 @@ def main():
   obj.finalize()
 
   obj.output() # Not part of IRF or BMI: Does standalone plotting and file output
+
 
   #####################
   ## GET VALUES HERE ##

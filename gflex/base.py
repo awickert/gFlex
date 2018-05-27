@@ -1,3 +1,22 @@
+"""
+This file is part of gFlex.
+gFlex computes lithospheric flexural isostasy with heterogeneous rigidity
+Copyright (C) 2010-2018 Andrew D. Wickert
+
+gFlex is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+gFlex is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 from __future__ import print_function
 import sys, os
 from six.moves import configparser
@@ -496,6 +515,15 @@ class WhichModel(Utility):
               sys.exit(">>>> Error: cannot locate specified configuration file. <<<<")
 
 class Flexure(Utility, Plotting):
+  """
+  Solves flexural isostasy both analytically (for constant flexural rigidity)
+  and numerically (for either variable or constant flexural rigidity).
+
+  Analytical solutions are by superposition of analytical solutions
+  in the spatial domain (i.e. a sum of Green's functions)
+
+  Numerical solutions are finite difference by a direct sparse matrix solver.
+  """
   
   def __init__(self, filename=None):
     # 17 Nov 2014: Splitting out initialize from __init__ to allow space
