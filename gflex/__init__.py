@@ -1,4 +1,6 @@
 import sys
 import os
-sys.path.append( os.path.join(os.getcwd(), 'gflex') )
+# If run from up one level
+sys.path.append( os.path.dirname(os.path.realpath(__file__)) )
+os.chdir( os.path.dirname(os.path.realpath(__file__)) )
 from gflex import *
