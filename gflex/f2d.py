@@ -118,12 +118,7 @@ class F2D(Flexure):
   def spatialDomainGridded(self):
   
     self.nx = self.qs.shape[1]
-    # _x_local because it may be in a real coordinate system, but this is
-    # just used internally to compute distance
-    self._x_local = np.arange(0,self.dx*self.nx,self.dx)
-    
     self.ny = self.qs.shape[0]
-    self._y_local = np.arange(0,self.dx*self.nx,self.dx)
     
     # Prepare a large grid of solutions beforehand, so we don't have to
     # keep calculating kei (time-intensive!)
