@@ -237,7 +237,9 @@ class Plotting(object):
     #  self.plotChoice
     #except:
     #  self.plotChoice = None
-    _aspect_ratio = self.qs.shape[0]/float(self.qs.shape[1]) # height/width
+    # This was aspect ratio for 2D:
+    # self.qs.shape[0]/float(self.qs.shape[1]) # height/width
+    _aspect_ratio = 1.6
     if self.plotChoice:
       if self.Verbose: print("Starting to plot " + self.plotChoice)
       if self.dimension == 1:
