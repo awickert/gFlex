@@ -8,11 +8,11 @@ flex = gflex.F1D()
 
 flex.Quiet = True
 
-flex.Method = 'SAS' # Solution method: * FD (finite difference)
+flex.Method = 'FD' # Solution method: * FD (finite difference)
                    #                  * SAS (superposition of analytical solutions)
                    #                  * SAS_NG (ungridded SAS)
 
-#flex.Solver = 'direct' # direct or iterative
+flex.Solver = 'direct' # direct or iterative
 # convergence = 1E-3 # convergence between iterations, if an iterative solution
                      # method is chosen
 
@@ -24,10 +24,12 @@ flex.rho_fill = 1000. # InfiillMaterialDensity
 
 flex.Te = 30000.#*np.ones(500) # Elastic thickness -- scalar but may be an array
 #flex.Te[-3:] = 0
-flex.qs = np.zeros(300); flex.qs[150] += 1E6 # surface load stresses
+flex.qs = np.zeros(300); flex.qs[100:200] += 1E6 # surface load stresses
 flex.dx = 4000. # grid cell size [m]
 flex.BC_W = '0Displacement0Slope' # west boundary condition
-flex. BC_E = '0Moment0Shear' # east boundary condition
+flex.BC_E = '0Moment0Shear' # east boundary condition
+
+flex.sigma_xx = 100.
 
 flex.initialize()
 flex.run()

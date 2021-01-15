@@ -737,6 +737,21 @@ class Flexure(Utility, Plotting):
         # code should bring the grid in as floating point type... just later.
         pass
 
+    # Check for end loads; otherwise set as 0
+    # Do this for 2D; in the 1D case, xy and yy will just not be used
+    try:
+      self.sigma_xx
+    except:
+      self.sigma_xx = 0
+    try:
+      self.sigma_xy
+    except:
+      self.sigma_xy = 0
+    try:
+      self.sigma_yy
+    except:
+      self.sigma_yy = 0
+
   # Finalize
   def finalize(self):
     # Can include an option for this later, but for the moment, this will
