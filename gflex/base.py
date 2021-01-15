@@ -24,6 +24,7 @@ import numpy as np
 import time # For efficiency counting
 import types # For flow control
 from matplotlib import pyplot as plt
+import warnings
 from _version import __version__
 
 class Utility(object):
@@ -741,14 +742,20 @@ class Flexure(Utility, Plotting):
     # Do this for 2D; in the 1D case, xy and yy will just not be used
     try:
       self.sigma_xx
+      if self.Method != 'FD':
+        warnings.warn(category=RuntimeWarning, message='End loads have been set but will not be implemented because the solution method is not finite difference') 
     except:
       self.sigma_xx = 0
     try:
       self.sigma_xy
+      if self.Method != 'FD':
+        warnings.warn(category=RuntimeWarning, message='End loads have been set but will not be implemented because the solution method is not finite difference') 
     except:
       self.sigma_xy = 0
     try:
       self.sigma_yy
+      if self.Method != 'FD':
+        warnings.warn(category=RuntimeWarning, message='End loads have been set but will not be implemented because the solution method is not finite difference') 
     except:
       self.sigma_yy = 0
 
