@@ -1,7 +1,7 @@
 """
 This file is part of gFlex.
 gFlex computes lithospheric flexural isostasy with heterogeneous rigidity
-Copyright (C) 2010-2018 Andrew D. Wickert
+Copyright (C) 2010-2020 Andrew D. Wickert
 
 gFlex is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -237,16 +237,11 @@ class Plotting(object):
     #  self.plotChoice
     #except:
     #  self.plotChoice = None
-    # height/width
-    if self.dimension == 1:
-        _aspect_ratio = 1.6
-    elif self.dimension == 2:
-        _aspect_ratio = self.qs.shape[0]/float(self.qs.shape[1])
     if self.plotChoice:
       if self.Verbose: print("Starting to plot " + self.plotChoice)
       if self.dimension == 1:
         if self.plotChoice == 'q':
-          plt.figure(1, figsize=(4, 4*_aspect_ratio))
+          plt.figure(1)
           if self.Method == 'SAS_NG':
             plt.plot(self.x/1000., self.q/(self.rho_m*self.g), 'ko-')
             plt.ylabel('Load volume, mantle equivalent [m$^3$]', fontsize=12, fontweight='bold')
@@ -257,7 +252,7 @@ class Plotting(object):
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'w':
-          plt.figure(1, figsize=(4, 4*_aspect_ratio))
+          plt.figure(1)
           if self.Method == 'SAS_NG':
             plt.plot(self.xw/1000., self.w, 'k-')
           else:
@@ -267,7 +262,7 @@ class Plotting(object):
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'both':
-          plt.figure(1, figsize=(4, 6*_aspect_ratio))
+          plt.figure(1,figsize=(6,9))
           ax = plt.subplot(212)
           if self.Method == "SAS_NG":
             ax.plot(self.xw/1000., self.w, 'k-')
@@ -288,7 +283,7 @@ class Plotting(object):
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'combo':
-          plt.figure(1, figsize=(4, 4*_aspect_ratio))
+          fig = plt.figure(1,figsize=(10,6))
           titletext='Loads and Lithospheric Deflections'
           ax = fig.add_subplot(1,1,1)
           # Plot undeflected load
@@ -343,30 +338,27 @@ class Plotting(object):
             print("Unable to produce plot.")
       elif self.dimension == 2:
         if self.plotChoice == 'q':
-          plt.figure(1, figsize=(4, 4*_aspect_ratio))
+          fig = plt.figure(1, figsize=(8,6))
           if self.Method != 'SAS_NG':
             self.surfplot(self.qs/(self.rho_m*self.g), 'Load thickness, mantle equivalent [m]')
-            plt.tight_layout()
             plt.show()
           else:
             self.xyzinterp(self.x, self.y, self.q, 'Load volume, mantle equivalent [m$^3$]')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'w':
-          plt.figure(1, figsize=(4, 4*_aspect_ratio))
+          fig = plt.figure(1, figsize=(8,6))
           if self.Method != 'SAS_NG':
             self.surfplot(self.w, 'Deflection [m]')
-            plt.tight_layout()
             plt.show()
           else:
             self.xyzinterp(self.xw, self.yw, self.w, 'Deflection [m]')
           plt.tight_layout()
           plt.show()
         elif self.plotChoice == 'both':
-          plt.figure(1, figsize=(4, 6*_aspect_ratio))
+          plt.figure(1,figsize=(6,9))
           if self.Method != 'SAS_NG':
             self.twoSurfplots()
-            plt.tight_layout(pad=1.0, h_pad=3.0)
             plt.show()
           else:
             plt.subplot(211)
@@ -386,11 +378,11 @@ class Plotting(object):
     Plot if you want to - for troubleshooting - 1 figure
     """
     if self.latlon:
-      plt.imshow(z, extent=(0, self.dx*z.shape[1], self.dy*z.shape[0], 0)) #,interpolation='nearest'
+      plt.imshow(z, extent=(0, self.dx*z.shape[0], self.dy*z.shape[1], 0)) #,interpolation='nearest'
       plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
       plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
     else:
-      plt.imshow(z, extent=(0, self.dx/1000.*z.shape[1], self.dy/1000.*z.shape[0], 0)) #,interpolation='nearest'
+      plt.imshow(z, extent=(0, self.dx/1000.*z.shape[0], self.dy/1000.*z.shape[1], 0)) #,interpolation='nearest'
       plt.xlabel('x [km]', fontsize=12, fontweight='bold')
       plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
@@ -406,29 +398,29 @@ class Plotting(object):
     # Noted here in case anyone wants to take that on in the future...
 
     plt.subplot(211)
-    plt.title('Load thickness, mantle equivalent [m]', fontsize=12, fontweight='bold')
+    plt.title('Load thickness, mantle equivalent [m]',fontsize=16)
     if self.latlon:
-      plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx*self.qs.shape[1], self.dy*self.qs.shape[0], 0))
+      plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx*self.qs.shape[0], self.dy*self.qs.shape[1], 0))
       plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
       plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
     else:
-      plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.qs.shape[1], self.dy/1000.*self.qs.shape[0], 0))
+      plt.imshow(self.qs/(self.rho_m*self.g), extent=(0, self.dx/1000.*self.qs.shape[0], self.dy/1000.*self.qs.shape[1], 0))
       plt.xlabel('x [km]', fontsize=12, fontweight='bold')
       plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
 
     plt.subplot(212)
-    plt.title('Deflection [m]', fontsize=12, fontweight='bold')
+    plt.title('Deflection [m]')
     if self.latlon:
-      plt.imshow(self.w, extent=(0, self.dx*self.w.shape[1], self.dy*self.w.shape[0], 0))
+      plt.imshow(self.w, extent=(0, self.dx*self.w.shape[0], self.dy*self.w.shape[1], 0))
       plt.xlabel('longitude [deg E]', fontsize=12, fontweight='bold')
       plt.ylabel('latitude [deg N]', fontsize=12, fontweight='bold')
     else:
-      plt.imshow(self.w, extent=(0, self.dx/1000.*self.w.shape[1], self.dy/1000.*self.w.shape[0], 0))
+      plt.imshow(self.w, extent=(0, self.dx/1000.*self.w.shape[0], self.dy/1000.*self.w.shape[1], 0))
       plt.xlabel('x [km]', fontsize=12, fontweight='bold')
       plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
-    
+  
   def xyzinterp(self, x, y, z, titletext):
     """
     Interpolates and plots ungridded model outputs from SAS_NG solution
