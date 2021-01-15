@@ -29,7 +29,7 @@ flex.dx = 4000. # grid cell size [m]
 flex.BC_W = '0Displacement0Slope' # west boundary condition
 flex.BC_E = '0Moment0Shear' # east boundary condition
 
-flex.sigma_xx = 100.
+flex.sigma_xx = 100. # Normal stress on the edge of the plate
 
 flex.initialize()
 flex.run()
