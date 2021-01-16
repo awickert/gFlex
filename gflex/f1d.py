@@ -169,6 +169,7 @@ class F1D(Flexure):
     needed to run "coeff_matrix_1d"
     """
     self.dx4 = self.dx**4
+    self.dx2 = self.dx**2 # Needed if horizontal (i.e., tectonic) stresses
     self.D = self.E*self.Te**3/(12*(1-self.nu**2))
 
   def BC_selector_and_coeff_matrix_creator(self):
@@ -282,9 +283,9 @@ class F1D(Flexure):
     # DEFINE COEFFICIENTS TO W_-2 -- W_+2 WITH B.C.'S APPLIED #
     ###########################################################
     self.l2_coeff_i = ( Dm1/2. + D0 - Dp1/2. ) / self.dx4
-    self.l1_coeff_i = ( -6.*D0 + 2.*Dp1 ) / self.dx4 - self.sigma_xx*self.Te
-    self.c0_coeff_i = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + 2*self.sigma_xx*self.Te + self.drho*self.g
-    self.r1_coeff_i = ( 2.*Dm1 - 6.*D0 ) / self.dx4 - self.sigma_xx*self.Te
+    self.l1_coeff_i = ( -6.*D0 + 2.*Dp1 ) / self.dx4 - self.sigma_xx*self.Te/self.dx2
+    self.c0_coeff_i = ( -2.*Dm1 + 10.*D0 - 2.*Dp1 ) / self.dx4 + 2*self.sigma_xx*self.Te/self.dx2 + self.drho*self.g
+    self.r1_coeff_i = ( 2.*Dm1 - 6.*D0 ) / self.dx4 - self.sigma_xx*self.Te/self.dx2
     self.r2_coeff_i = ( -Dm1/2. + D0 + Dp1/2. ) / self.dx4
     # These will be just the 1, -4, 6, -4, 1 for constant Te
 
