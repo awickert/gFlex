@@ -1,7 +1,7 @@
 """
 This file is part of gFlex.
 gFlex computes lithospheric flexural isostasy with heterogeneous rigidity
-Copyright (C) 2010-2018 Andrew D. Wickert
+Copyright (C) 2010-2020 Andrew D. Wickert
 
 gFlex is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
