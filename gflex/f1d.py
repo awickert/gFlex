@@ -116,6 +116,22 @@ class F1D(Flexure):
   # SETUP
 
   def spatialDomainVarsSAS(self):
+    # Check Te:
+    # * If scalar, okay.
+    # * If grid, convert to scalar if a singular value
+    # * Else, throw an error.
+    if np.isscalar(self.Te):
+        pass
+    elif np.all( self.Te == np.mean(self.Te) ):
+        self.Te = np.mean(self.Te)
+    else:
+        sys.exit("\nINPUT VARIABLE TYPE INCONSISTENT WITH SOLUTION TYPE.\n"
+                 "The analytical solution requires a scalar Te.\n"
+                 "(gFlex is smart enough to make this out of a uniform\n"
+                 "array, but won't know what value you want with a spatially\n"
+                 "varying array! Try finite difference instead in this case?\n"
+                 "EXITING.")
+
     self.D = self.E*self.Te**3/(12*(1-self.nu**2)) # Flexural rigidity
     self.alpha = (4*self.D/(self.drho*self.g))**.25 # 1D flexural parameter
     self.coeff = self.alpha**3/(8*self.D)
