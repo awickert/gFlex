@@ -1,7 +1,7 @@
 """
 This file is part of gFlex.
 gFlex computes lithospheric flexural isostasy with heterogeneous rigidity
-Copyright (C) 2010-2018 Andrew D. Wickert
+Copyright (C) 2010-2020 Andrew D. Wickert
 
 gFlex is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -109,6 +109,23 @@ class F2D(Flexure):
   # SETUP
 
   def spatialDomainVarsSAS(self):
+
+    # Check Te:
+    # * If scalar, okay.
+    # * If grid, convert to scalar if a singular value
+    # * Else, throw an error.
+    if np.isscalar(self.Te):
+        pass
+    elif np.all( self.Te == np.mean(self.Te) ):
+        self.Te = np.mean(self.Te)
+    else:
+        sys.exit("\nINPUT VARIABLE TYPE INCONSISTENT WITH SOLUTION TYPE.\n"
+                 "The analytical solution requires a scalar Te.\n"
+                 "(gFlex is smart enough to make this out of a uniform\n"
+                 "array, but won't know what value you want with a spatially\n"
+                 "varying array! Try finite difference instead in this case?\n"
+                 "EXITING.")
+
     self.D = self.E*self.Te**3/(12*(1-self.nu**2)) # Flexural rigidity
     self.alpha = (self.D/(self.drho*self.g))**.25 # 2D flexural parameter
     self.coeff = self.alpha**2/(2*np.pi*self.D)
@@ -362,17 +379,17 @@ class F2D(Flexure):
     if np.isscalar(self.Te):
       # So much simpler with constant D! And symmetrical stencil
       self.cj2i0 = D/dy4
-      self.cj1i_1 = 2*D/dx2dy2
-      self.cj1i0 = -4*D/dy4 - 4*D/dx2dy2
-      self.cj1i1 = 2*D/dx2dy2
+      self.cj1i_1 = 2*D/dx2dy2 + 2*self.sigma_xy*self.T_e
+      self.cj1i0 = -4*D/dy4 - 4*D/dx2dy2 - self.sigma_yy*self.T_e
+      self.cj1i1 = 2*D/dx2dy2 - 2*self.sigma_xy*self.T_e
       self.cj0i_2 = D/dx4
-      self.cj0i_1 = -4*D/dx4 - 4*D/dx2dy2
-      self.cj0i0 = 6*D/dx4 + 6*D/dy4 + 8*D/dx2dy2 + drho*g
-      self.cj0i1 = -4*D/dx4 - 4*D/dx2dy2 # Symmetry
+      self.cj0i_1 = -4*D/dx4 - 4*D/dx2dy2 - self.sigma_xx*self.T_e
+      self.cj0i0 = 6*D/dx4 + 6*D/dy4 + 8*D/dx2dy2 + drho*g + 2*self.sigma_xx*self.T_e + 2*self.sigma_yy*self.T_e
+      self.cj0i1 = -4*D/dx4 - 4*D/dx2dy2 - self.sigma_xx*self.T_e # Symmetry
       self.cj0i2 = D/dx4 # Symmetry
-      self.cj_1i_1 = 2*D/dx2dy2 # Symmetry
+      self.cj_1i_1 = 2*D/dx2dy2 - 2*self.sigma_xy*self.T_e # Symmetry
       self.cj_1i0 = -4*D/dy4 - 4*D/dx2dy2 # Symmetry
-      self.cj_1i1 = 2*D/dx2dy2 # Symmetry
+      self.cj_1i1 = 2*D/dx2dy2 + 2*self.sigma_xy*self.T_e # Symmetry
       self.cj_2i0 = D/dy4 # Symmetry
       # Bring up to size
       self.cj2i0 *= np.ones(self.qs.shape)
