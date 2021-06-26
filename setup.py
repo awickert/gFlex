@@ -40,7 +40,7 @@ setup(
     license = "GPL v3",
     keywords = ['geophysics', 'geology', 'geodynamics', 'lithosphere', 'isostasy', 'GRASS GIS'],
     classifiers = [],
-    url = ["https://github.com/awickert/gFlex"],
+    url = "https://github.com/awickert/gFlex",
     download_url = "https://github.com/awickert/gFlex/tarball/v"+__version__,
     long_description = long_description,
 
