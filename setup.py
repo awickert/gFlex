@@ -7,6 +7,7 @@ import os
 # This is for upload to PyPI
 # Should not be necessary on most computers
 
+# Get version from file
 import re
 VERSIONFILE="gflex/_version.py"
 verstrline = open(VERSIONFILE, "rt").read()
@@ -17,10 +18,6 @@ if mo:
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
-try:
-    long_description = open('README.txt').read()
-except:
-    long_description = "see README.md"
 setup(
     name = "gFlex",
     version = __version__,
@@ -42,7 +39,8 @@ setup(
     classifiers = [],
     url = "https://github.com/awickert/gFlex",
     download_url = "https://github.com/awickert/gFlex/tarball/v"+__version__,
-    long_description = long_description,
+    long_description_content_type='text/markdown',
+    long_description = open('README.md', 'r').read(),
 
     use_2to3=True,
 )
