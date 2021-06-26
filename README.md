@@ -14,7 +14,7 @@ When you use gFlex, please cite:
 
 #### Python
 
-gFlex has been tested on **Python 2.7**, and should work (with a few possible changes) on future versions of Python 2.X. It has not been tested on Python 3.X.
+gFlex has been tested on **Python 2.7**, and **Python 3.8**.
 
 In order to run properly, gFlex requires the following Python dependencies:
 * numpy
