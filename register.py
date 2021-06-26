@@ -1,15 +1,13 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 # modified from:
 # https://coderwall.com/p/qawuyq/use-markdown-readme-s-in-python-modules
 
-import pandoc
+import pypandoc
 import os
 
-pandoc.core.PANDOC_PATH = '/usr/bin/pandoc'
+output = pypandoc.convert_file('README.md', 'rst')
 
-doc = pandoc.Document()
-doc.markdown = open('README.md').read()
 f = open('README.txt','w+')
-f.write(doc.rst)
+f.write(output)
 f.close()
