@@ -1,3 +1,3 @@
 #! /usr/bin/env sh
 
-python3 setup.py sdist upload -r pypi
+twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
