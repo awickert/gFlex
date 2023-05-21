@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite Wickert, A. D. (2016), Open-source modular solutions for flexural isostasy: gFlex v1.0, Geosci. Model Dev., 9(3), 997–1017, doi:10.5194/gmd-9-997-2016. If you wish to generate a more precise citation and/or include further information on the present version, please additionally cite the present gFlex version as noted here."
+authors:
+- family-names: "Wickert"
+  given-names: "Andrew D."
+  orcid: "https://orcid.org/0000-0002-9545-3365"
+title: "gFlex"
+version: 1.1.1
+doi: 10.5281/zenodo.5034652
+date-released: 2021-06-26
+url: "https://github.com/awickert/gFlex"
