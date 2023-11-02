@@ -1,4 +1,7 @@
+[![CSDMS Component](https://custom-icon-badges.demolab.com/badge/CSDMS-Component-2473c2?logo=csdms&style=for-the-badge)](https://csdms.colorado.edu/wiki/Model:GFlex)
+
 [![Build Status](https://travis-ci.org/awickert/gFlex.svg?branch=master)](https://travis-ci.org/awickert/gFlex)
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5034652.svg)](https://doi.org/10.5281/zenodo.5034652)
 
 # gFlex
