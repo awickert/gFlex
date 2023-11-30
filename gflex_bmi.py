@@ -8,7 +8,7 @@ from f2d import F2D
 from prattairy import PrattAiry
 
 
-class BmiGflex(object):
+class BmiGflex:
   _name = 'Isostasy and Lithospheric Flexure'
   _input_var_names = ('earth_material_load__mass', )
   _output_var_names = ('lithosphere__vertical_displacement',

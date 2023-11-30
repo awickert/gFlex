@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from __future__ import division, print_function # No automatic floor division
 from base import *
 import scipy
 from scipy.special import kei
@@ -28,7 +27,7 @@ from scipy.special import kei
 class F2D(Flexure):
   def initialize(self, filename=None):
     self.dimension = 2 # Set it here in case it wasn't set for selection before
-    super(F2D, self).initialize()
+    super().initialize()
     if self.Verbose: print("F2D initialized")
 
   def run(self):
@@ -37,20 +36,20 @@ class F2D(Flexure):
       
     if self.Method == 'FD':
       # Finite difference
-      super(F2D, self).FD()
+      super().FD()
       self.method_func = self.FD
     elif self.Method == 'FFT':
       # Fast Fourier transform
-      super(F2D, self).FFT()
+      super().FFT()
       self.method_func = self.FFT
     elif self.Method == "SAS":
       # Superposition of analytical solutions
-      super(F2D, self).SAS()
+      super().SAS()
       self.method_func = self.SAS
     elif self.Method == "SAS_NG":
       # Superposition of analytical solutions,
       # nonuniform points (no grid)
-      super(F2D, self).SAS_NG()
+      super().SAS_NG()
       self.method_func = self.SAS_NG
     else:
       sys.exit('Error: method must be "FD", "FFT", "SAS", or "SAS_NG"')
@@ -71,7 +70,7 @@ class F2D(Flexure):
     except:
       pass
     if self.Verbose: print("F2D finalized")
-    super(F2D, self).finalize()
+    super().finalize()
     
   ########################################
   ## FUNCTIONS FOR EACH SOLUTION METHOD ##
