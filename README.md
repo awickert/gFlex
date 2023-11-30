@@ -63,19 +63,6 @@ pip install -r requirements.txt
 
 Recent efforts to download Python distributions (both **Anaconda** and **Enthought**) have not met with success with both gFlex and GRASS, though **Anaconda** has been tested successfully with Windows. As a result, it should be more successful to keep the Python packages managed better by something like **homebrew** with **pip**.
 
-##### Setuptools and ez_setup (Windows and Mac with distributions)
-
-The distributions for Mac and Windows do not come with setuptools, which is required to install gFlex. However, if you install ez_setup, the gFlex install script will automatically install setuptools for you. Simply type:
-```bash
-pip install ez_setup # Windows or Mac without special privileges required
-sudo pip install ez_setup # Mac where sudo privileges are required
-```
-Of course, one can also bypass the need for the install script to install setuptools by using pip preemptively:
-```bash
-pip install setuptools # Windows or Mac without special privileges required
-sudo pip install setuptools # Mac where sudo privileges are required
-```
-
 #### gFlex
 
 ##### Downloading and Installing in One Step from PyPI using pip
