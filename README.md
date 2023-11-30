@@ -18,14 +18,12 @@ When you use gFlex, please cite:
 
 #### Python
 
-gFlex has been tested on **Python 2.7** and **Python 3.8**.
+gFlex has been tested on **Python 3.10+**.
 
 In order to run properly, gFlex requires the following Python dependencies:
 * numpy
 * scipy
 * matplotlib
-* setuptools
-* pip (optional)
 
 *For users who are new to Python, follow these directions to install the Python interpreters onto your computer.*
 
@@ -60,7 +58,7 @@ The current recommendation is to use a package manager like [**homebrew**](http:
 # Homebrew
 sudo brew install python-numpy
 # Pip
-pip install numpy
+pip install -r requirements.txt
 ```
 
 Recent efforts to download Python distributions (both **Anaconda** and **Enthought**) have not met with success with both gFlex and GRASS, though **Anaconda** has been tested successfully with Windows. As a result, it should be more successful to keep the Python packages managed better by something like **homebrew** with **pip**.
