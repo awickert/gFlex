@@ -41,6 +41,4 @@ setup(
     download_url = "https://github.com/awickert/gFlex/tarball/v"+__version__,
     long_description_content_type='text/markdown',
     long_description = open('README.md').read(),
-
-    use_2to3=True,
 )
