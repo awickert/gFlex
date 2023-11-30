@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from __future__ import division, print_function # No automatic floor division
 from base import *
 from scipy.sparse import spdiags
 from scipy.sparse.linalg import spsolve, isolve
@@ -25,7 +24,7 @@ from scipy.sparse.linalg import spsolve, isolve
 class F1D(Flexure):
   def initialize(self, filename=None):
     self.dimension = 1 # Set it here in case it wasn't set for selection before
-    super(F1D, self).initialize()
+    super().initialize()
     if self.Verbose: print("F1D initialized")
 
   def run(self):
@@ -33,20 +32,20 @@ class F1D(Flexure):
     self.solver_start_time = time.time()
     if self.Method == 'FD':
       # Finite difference
-      super(F1D, self).FD()
+      super().FD()
       self.method_func = self.FD
     elif self.Method == 'FFT':
       # Fast Fourier transform
-      super(F1D, self).FFT()
+      super().FFT()
       self.method_func = self.FFT
     elif self.Method == "SAS":
       # Superposition of analytical solutions
-      super(F1D, self).SAS()
+      super().SAS()
       self.method_func = self.SAS
     elif self.Method == "SAS_NG":
       # Superposition of analytical solutions,
       # nonuniform points
-      super(F1D, self).SAS_NG()
+      super().SAS_NG()
       self.method_func = self.SAS_NG
     else:
       sys.exit('Error: method must be "FD", "FFT", "SAS", or "SAS_NG"')
@@ -67,7 +66,7 @@ class F1D(Flexure):
     except:
       pass
     if self.Verbose: print("F1D finalized")
-    super(F1D, self).finalize()   
+    super().finalize()   
     
   ########################################
   ## FUNCTIONS FOR EACH SOLUTION METHOD ##

@@ -17,9 +17,8 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from __future__ import print_function
 import sys, os
-from six.moves import configparser
+import configparser
 import numpy as np
 import time # For efficiency counting
 import types # For flow control
@@ -27,7 +26,7 @@ from matplotlib import pyplot as plt
 import warnings
 from _version import __version__
 
-class Utility(object):
+class Utility:
 
   """
   Generic utility functions
@@ -225,7 +224,7 @@ class Utility(object):
               pass
     return out
 
-class Plotting(object):
+class Plotting:
   # Plot, if desired
   # 1D all here, 2D in functions
   # Just because there is often more code in 2D plotting functions

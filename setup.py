@@ -10,13 +10,13 @@ import os
 # Get version from file
 import re
 VERSIONFILE="gflex/_version.py"
-verstrline = open(VERSIONFILE, "rt").read()
+verstrline = open(VERSIONFILE).read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VSRE, verstrline, re.M)
 if mo:
     __version__ = mo.group(1)
 else:
-    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
+    raise RuntimeError(f"Unable to find version string in {VERSIONFILE}.")
 
 setup(
     name = "gFlex",
@@ -40,7 +40,7 @@ setup(
     url = "https://github.com/awickert/gFlex",
     download_url = "https://github.com/awickert/gFlex/tarball/v"+__version__,
     long_description_content_type='text/markdown',
-    long_description = open('README.md', 'r').read(),
+    long_description = open('README.md').read(),
 
     use_2to3=True,
 )
