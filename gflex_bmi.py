@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import numpy as np
 
-# Imports for gFlex 
+# Imports for gFlex
 from base import WhichModel
 from f1d import F1D
 from f2d import F2D

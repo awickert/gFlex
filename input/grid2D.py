@@ -35,6 +35,6 @@ flex.finalize()
 # If you want to plot the output
 flex.plotChoice='both'
 # An output file could also be defined here
-# flex.wOutFile = 
+# flex.wOutFile =
 flex.output() # Plots and/or saves output, or does nothing, depending on
               # whether flex.plotChoice and/or flex.wOutFile have been set

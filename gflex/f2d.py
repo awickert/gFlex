@@ -33,7 +33,7 @@ class F2D(Flexure):
   def run(self):
     self.bc_check()
     self.solver_start_time = time.time()
-      
+
     if self.Method == 'FD':
       # Finite difference
       super().FD()
@@ -63,7 +63,7 @@ class F2D(Flexure):
 
   def finalize(self):
     # If elastic thickness has been padded, return it to its original
-    # value, so this is not messed up for repeat operations in a 
+    # value, so this is not messed up for repeat operations in a
     # model-coupling exercise
     try:
       self.Te = self.Te_unpadded
@@ -71,7 +71,7 @@ class F2D(Flexure):
       pass
     if self.Verbose: print("F2D finalized")
     super().finalize()
-    
+
   ########################################
   ## FUNCTIONS FOR EACH SOLUTION METHOD ##
   ########################################
@@ -96,12 +96,12 @@ class F2D(Flexure):
     self.spatialDomainVarsSAS()
     self.spatialDomainNoGrid()
 
-  
+
   ######################################
   ## FUNCTIONS TO SOLVE THE EQUATIONS ##
   ######################################
-  
-   
+
+
   ## SPATIAL DOMAIN SUPERPOSITION OF ANALYTICAL SOLUTIONS
   #########################################################
 
@@ -132,10 +132,10 @@ class F2D(Flexure):
   # GRIDDED
 
   def spatialDomainGridded(self):
-  
+
     self.nx = self.qs.shape[1]
     self.ny = self.qs.shape[0]
-    
+
     # Prepare a large grid of solutions beforehand, so we don't have to
     # keep calculating kei (time-intensive!)
     # This pre-prepared solution will be for a unit load
@@ -148,7 +148,7 @@ class F2D(Flexure):
 
     bigdist = np.sqrt(dist_x**2 + dist_y**2) # Distances from center
                                           # Center at [ny,nx]
-    
+
     biggrid = self.coeff * kei(bigdist/self.alpha) # Kelvin fcn solution
 
     # Now compute the deflections
@@ -172,7 +172,7 @@ class F2D(Flexure):
     if self.Debug:
       print("w = ")
       print(self.w.shape)
-    
+
     if self.latlon:
       for i in range(len(self.x)):
         # More efficient if we have created some 0-load points
@@ -191,21 +191,21 @@ class F2D(Flexure):
 
   ## FINITE DIFFERENCE
   ######################
-  
+
   def elasprep(self):
     """
     dx4, dy4, dx2dy2, D = elasprep(dx,dy,Te,E=1E11,nu=0.25)
-    
-    Defines the variables that are required to create the 2D finite 
+
+    Defines the variables that are required to create the 2D finite
     difference solution coefficient matrix
     """
-    
+
     if self.Method != 'SAS_NG':
       self.dx4 = self.dx**4
       self.dy4 = self.dy**4
       self.dx2dy2 = self.dx**2 * self.dy**2
     self.D = self.E*self.Te**3/(12*(1-self.nu**2))
-  
+
   def BC_selector_and_coeff_matrix_creator(self):
     """
     Selects the boundary conditions
@@ -215,20 +215,20 @@ class F2D(Flexure):
 
     The current method of coefficient matrix construction utilizes longer-range
     symmetry in the coefficient matrix to build it block-wise, as opposed to
-    the much less computationally efficient row-by-row ("serial") method 
+    the much less computationally efficient row-by-row ("serial") method
     that was previously employed.
-    
+
     The method is spread across the subroutines here.
-    
-    Important to this is the use of np.roll() to properly offset the 
+
+    Important to this is the use of np.roll() to properly offset the
     diagonals that end up in the main matrix: spdiags() will put each vector
-    on the proper diagonal, but will align them such that their first cell is 
-    along the first column, instead of using a 45 degrees to matrix corner 
+    on the proper diagonal, but will align them such that their first cell is
+    along the first column, instead of using a 45 degrees to matrix corner
     baseline that would stagger them appropriately for this solution method.
-    Therefore, np.roll() effectively does this staggering by having the 
+    Therefore, np.roll() effectively does this staggering by having the
     appropriate cell in the vector start at the first column.
     """
-    
+
     # Zeroth, start the timer and print the boundary conditions to the screen
     self.coeff_start_time = time.time()
     if self.Verbose:
@@ -236,29 +236,29 @@ class F2D(Flexure):
       print("Boundary condition, East:", self.BC_E, type(self.BC_E))
       print("Boundary condition, North:", self.BC_N, type(self.BC_N))
       print("Boundary condition, South:", self.BC_S, type(self.BC_S))
-    
+
     # First, set flexural rigidity boundary conditions to flesh out this padded
     # array
     self.BC_Rigidity()
-    
+
     # Second, build the coefficient arrays -- with the rigidity b.c.'s
     self.get_coeff_values()
-    
-    # Third, apply boundary conditions to the coeff_arrays to create the 
+
+    # Third, apply boundary conditions to the coeff_arrays to create the
     # flexural solution
     self.BC_Flexure()
-    
+
     # Fourth, construct the sparse diagonal array
     self.build_diagonals()
 
-    # Finally, compute the total time this process took    
+    # Finally, compute the total time this process took
     self.coeff_creation_time = time.time() - self.coeff_start_time
     if self.Quiet == False:
       print("Time to construct coefficient (operator) array [s]:", self.coeff_creation_time)
 
   def BC_Rigidity(self):
     """
-    Utility function to help implement boundary conditions by specifying 
+    Utility function to help implement boundary conditions by specifying
     them for and applying them to the elastic thickness grid
     """
 
@@ -301,7 +301,7 @@ class F2D(Flexure):
       self.BC_Rigidity_S = 'mirror symmetry'
     else:
       sys.exit("Invalid Te B.C. case")
-  
+
     #############
     # PAD ARRAY #
     #############
@@ -334,7 +334,7 @@ class F2D(Flexure):
       self.D[0,:] = self.D[2,:] # Yes, will work on corners -- double-reflection
     if self.BC_Rigidity_S == "mirror symmetry":
       self.D[-1,:] = self.D[-3,:]
-      
+
     if self.BC_Rigidity_W == "periodic":
       self.D[:,0] = self.D[:,-2]
     if self.BC_Rigidity_E == "periodic":
@@ -343,21 +343,21 @@ class F2D(Flexure):
       self.D[0,:] = self.D[-2,:]
     if self.BC_Rigidity_S == "periodic":
       self.D[-1,:] = self.D[-3,:]
-      
+
   def get_coeff_values(self):
     """
     Calculates the matrix of coefficients that is later used via sparse matrix
     solution techniques (scipy.sparse.linalg.spsolve) to compute the flexural
     response to the load. This step need only be performed once, and the
     coefficient matrix can very rapidly compute flexural solutions to any load.
-    This makes this particularly good for probelms with time-variable loads or 
-    that require iteration (e.g., water loading, in which additional water 
+    This makes this particularly good for probelms with time-variable loads or
+    that require iteration (e.g., water loading, in which additional water
     causes subsidence, causes additional water detph, etc.).
 
     These must be linearly combined to solve the equation.
 
     13 coefficients: 13 matrices of the same size as the load
-    
+
     NOTATION FOR COEFFICIENT BIULDING MATRICES (e.g., "cj0i_2"):
     c = "coefficient
     j = columns = x-value
@@ -418,15 +418,15 @@ class F2D(Flexure):
       self.cj_1i0_coeff_ij = self.cj_1i0.copy()
       self.cj_1i1_coeff_ij = self.cj_1i1.copy()
       self.cj_2i0_coeff_ij = self.cj_2i0.copy()
-      
+
     elif type(self.Te) == np.ndarray:
-    
+
       #######################################################
       # GENERATE COEFFICIENT VALUES FOR EACH SOLUTION TYPE. #
       #    "vWC1994" IS THE BEST: LOOSEST ASSUMPTIONS.      #
       #        OTHERS HERE LARGELY FOR COMPARISON           #
       #######################################################
-      
+
       # All derivatives here, to make reading the equations below easier
       D00 = D[1:-1,1:-1]
       D10 = D[1:-1,2:]
@@ -444,7 +444,7 @@ class F2D(Flexure):
       Dxx = (D_10 - 2.*D00 + D10)
       Dyy = (D0_1 - 2.*D00 + D01)
       Dxy = (D_1_1 - D_11 - D1_1 + D11)/4.
-      
+
       if self.PlateSolutionType == 'vWC1994':
         # van Wees and Cloetingh (1994) solution, re-discretized by me
         # using a central difference approx. to 2nd order precision
@@ -478,11 +478,11 @@ class F2D(Flexure):
                      + (6.*D0 - 2.*Dyy)/dy4 \
                      + (8.*D0 - 2.*nu*Dxx - 2.*nu*Dyy)/dx2dy2 \
                      + drho*g
-                     
+
       elif self.PlateSolutionType == 'G2009':
         # STENCIL FROM GOVERS ET AL. 2009 -- first-order differences
         # x is j and y is i b/c matrix row/column notation
-        # Note that this breaks down with b.c.'s that place too much control 
+        # Note that this breaks down with b.c.'s that place too much control
         # on the solution -- harmonic wavetrains
         # x = -2, y = 0
         self.cj_2i0_coeff_ij = D_10/dx4
@@ -515,7 +515,7 @@ class F2D(Flexure):
                   "* vWC1994\n"+
                   "* G2009\n"+
                   "")
-                  
+
       ################################################################
       # CREATE COEFFICIENT ARRAYS: PLAIN, WITH NO B.C.'S YET APPLIED #
       ################################################################
@@ -552,32 +552,32 @@ class F2D(Flexure):
 
   def BC_Flexure(self):
 
-    # The next section of code is split over several functions for the 1D 
+    # The next section of code is split over several functions for the 1D
     # case, but will be all in one function here, at least for now.
-    
+
     # Inf for E-W to separate from nan for N-S. N-S will spill off ends
     # of array (C order, in rows), while E-W will be internal, so I will
-    # later change np.inf to 0 to represent where internal boundaries 
+    # later change np.inf to 0 to represent where internal boundaries
     # occur.
 
     #######################################################################
     # DEFINE COEFFICIENTS TO W_j-2 -- W_j+2 WITH B.C.'S APPLIED (x: W, E) #
     #######################################################################
-    
-    # Infinitiy is used to flag places where coeff values should be 0, 
-    # and would otherwise cause boundary condition nan's to appear in the 
+
+    # Infinitiy is used to flag places where coeff values should be 0,
+    # and would otherwise cause boundary condition nan's to appear in the
     # cross-derivatives: infinity is changed into 0 later.
 
     if self.BC_W == 'Periodic':
       if self.BC_E == 'Periodic':
-        # For each side, there will be two new diagonals (mostly zeros), and 
+        # For each side, there will be two new diagonals (mostly zeros), and
         # two sets of diagonals that will replace values in current diagonals.
-        # This is because of the pattern of fill in the periodic b.c.'s in the 
+        # This is because of the pattern of fill in the periodic b.c.'s in the
         # x-direction.
-        
+
         # First, create arrays for the new values.
         # One of the two values here, that from the y -/+ 1, x +/- 1 (E/W)
-        # boundary condition, will be in the same location that will be 
+        # boundary condition, will be in the same location that will be
         # overwritten in the initiating grid by the next perioidic b.c. over
         self.cj_1i1_Periodic_right = np.zeros(self.qs.shape)
         self.cj_2i0_Periodic_right = np.zeros(self.qs.shape)
@@ -586,7 +586,7 @@ class F2D(Flexure):
         self.cj_2i0_Periodic_right[:,j] = self.cj_2i0[:,j]
         j = 1
         self.cj_2i0_Periodic_right[:,j] = self.cj_2i0[:,j]
-        
+
         # Then, replace existing values with what will be needed to make the
         # periodic boundary condition work.
         j = 0
@@ -595,16 +595,16 @@ class F2D(Flexure):
         self.cj_1i1[:,j] = self.cj_1i0[:,j]
         self.cj_1i0[:,j] = self.cj_1i_1[:,j]
 
-        # And then change remaning off-grid values to np.inf (i.e. those that 
+        # And then change remaning off-grid values to np.inf (i.e. those that
         # were not altered to a real value
         # These will be the +/- 2's and the j_1i_1 and the j1i1
-        # These are the farthest-out pentadiagonals that can't be reached by 
-        # the tridiagonals, and the tridiagonals that are farther away on the 
-        # y (big grid) axis that can't be reached by the single diagonals 
+        # These are the farthest-out pentadiagonals that can't be reached by
+        # the tridiagonals, and the tridiagonals that are farther away on the
+        # y (big grid) axis that can't be reached by the single diagonals
         # that are farthest out
         # So 4 diagonals.
         # But ci1j1 is taken care of on -1 end before being rolled forwards
-        # (i.e. clockwise, if we are reading from the top of the tread of a 
+        # (i.e. clockwise, if we are reading from the top of the tread of a
         # tire)
         j = 0
         self.cj_2i0[:,j] += np.inf
@@ -679,11 +679,11 @@ class F2D(Flexure):
       self.cj_1i0[:,j] += np.inf
       self.cj_1i1[:,j] += np.inf
       self.cj0i_2[:,j] += 0
-      self.cj0i_1[:,j] += 0 
+      self.cj0i_1[:,j] += 0
       self.cj0i0[:,j] += 0
       self.cj0i1[:,j] += 0
       self.cj0i2[:,j] += 0
-      self.cj1i_1[:,j] += self.cj_1i_1_coeff_ij[:,j] 
+      self.cj1i_1[:,j] += self.cj_1i_1_coeff_ij[:,j]
       self.cj1i0[:,j] += self.cj_1i0_coeff_ij[:,j]
       self.cj1i1[:,j] += self.cj_1i1_coeff_ij[:,j] #Interference
       self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
@@ -712,7 +712,7 @@ class F2D(Flexure):
       self.cj0i0[:,j] += 0
       self.cj0i1[:,j] += 0
       self.cj0i2[:,j] += 0
-      self.cj1i_1[:,j] += self.cj_1i_1_coeff_ij[:,j] 
+      self.cj1i_1[:,j] += self.cj_1i_1_coeff_ij[:,j]
       self.cj1i0[:,j] += self.cj_1i0_coeff_ij[:,j]
       self.cj1i1[:,j] += self.cj_1i1_coeff_ij[:,j]
       self.cj2i0[:,j] += self.cj_2i0_coeff_ij[:,j]
@@ -736,7 +736,7 @@ class F2D(Flexure):
 
     if self.BC_E == 'Periodic':
       # See more extensive comments above (BC_W)
-      
+
       if self.BC_W == 'Periodic':
         # New arrays -- new diagonals, but mostly empty. Just corners of blocks
         # (boxes) in block-diagonal matrix
@@ -747,14 +747,14 @@ class F2D(Flexure):
         self.cj2i0_Periodic_left[:,j] = self.cj2i0[:,j]
         j=-2
         self.cj2i0_Periodic_left[:,j] = self.cj2i0[:,j]
-        
+
         # Then, replace existing values with what will be needed to make the
         # periodic boundary condition work.
         j =-1
         self.cj1i_1[:,j] = self.cj1i0[:,j]
         self.cj1i0[:,j] = self.cj1i1[:,j]
 
-        # And then change remaning off-grid values to np.inf (i.e. those that 
+        # And then change remaning off-grid values to np.inf (i.e. those that
         # were not altered to a real value
         j = -1
         self.cj1i1[:,j] += np.inf
@@ -888,10 +888,10 @@ class F2D(Flexure):
     #######################################################################
     # DEFINE COEFFICIENTS TO W_i-2 -- W_i+2 WITH B.C.'S APPLIED (y: N, S) #
     #######################################################################
-   
+
     if self.BC_N == 'Periodic':
       if self.BC_S == 'Periodic':
-        pass # Will address the N-S (whole-matrix-involving) boundary condition 
+        pass # Will address the N-S (whole-matrix-involving) boundary condition
              # inclusion below, when constructing sparse matrix diagonals
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
@@ -1017,7 +1017,7 @@ class F2D(Flexure):
 
     if self.BC_S == 'Periodic':
       if self.BC_N == 'Periodic':
-        pass # Will address the N-S (whole-matrix-involving) boundary condition 
+        pass # Will address the N-S (whole-matrix-involving) boundary condition
              # inclusion below, when constructing sparse matrix diagonals
       else:
         sys.exit("Not physical to have one wrap-around boundary but not its pair.")
@@ -1144,23 +1144,23 @@ class F2D(Flexure):
     #####################################################
     # CORNERS: INTERFERENCE BETWEEN BOUNDARY CONDITIONS #
     #####################################################
-    
-    # In 2D, have to consider diagonals and interference (additive) among 
+
+    # In 2D, have to consider diagonals and interference (additive) among
     # boundary conditions
-    
+
     ############################
     # DIRICHLET -- DO NOTHING. #
     ############################
-    
+
     # Do nothing.
     # What about combinations?
     # This will mean that dirichlet boundary conditions will implicitly
     # control the corners, so, for examplel, they would be locked all of the
-    # way to the edge of the domain instead of becoming free to deflect at the 
+    # way to the edge of the domain instead of becoming free to deflect at the
     # ends.
-    # Indeed it is much easier to envision this case than one in which 
+    # Indeed it is much easier to envision this case than one in which
     # the stationary clamp is released.
-    
+
     #################
     # 0MOMENT0SHEAR #
     #################
@@ -1180,7 +1180,7 @@ class F2D(Flexure):
     ############
     # PERIODIC #
     ############
-    
+
     # I think that nothing will be needed here.
     # Periodic should just take care of all repeating in all directions by
     # its very nature. (I.e. it is embedded in the sparse array structure
@@ -1190,7 +1190,7 @@ class F2D(Flexure):
     ################
     # COMBINATIONS #
     ################
-    
+
     ##############################
     # 0SLOPE0SHEAR AND/OR MIRROR #
     ##############################
@@ -1268,10 +1268,10 @@ class F2D(Flexure):
     ##########################################################
 
     # Roll to keep the proper coefficients at the proper places in the
-    # arrays: Python will naturally just do vertical shifts instead of 
-    # diagonal shifts, so this takes into account the horizontal compoent 
+    # arrays: Python will naturally just do vertical shifts instead of
+    # diagonal shifts, so this takes into account the horizontal compoent
     # to ensure that boundary values are at the right place.
-        
+
     # Roll x
 # ASYMMETRIC RESPONSE HERE -- THIS GETS TOWARDS SOURCE OF PROBLEM!
     self.cj_2i0 = np.roll(self.cj_2i0, -2, 1)
@@ -1297,7 +1297,7 @@ class F2D(Flexure):
     for array in coeff_array_list:
       array[np.isinf(array)] = 0
      #array[np.isnan(array)] = 0 # had been used for testing
-    
+
     # Reshape to put in solver
     vec_cj_2i0 = np.reshape(self.cj_2i0, -1, order='C')
     vec_cj_1i_1 = np.reshape(self.cj_1i_1, -1, order='C')
@@ -1312,7 +1312,7 @@ class F2D(Flexure):
     vec_cj1i0 = np.reshape(self.cj1i0, -1, order='C')
     vec_cj1i1 = np.reshape(self.cj1i1, -1, order='C')
     vec_cj2i0 = np.reshape(self.cj2i0, -1, order='C')
-    
+
     # Changed this 6 Nov. 2014 in betahaus Berlin to be x-based
     Up2 = vec_cj0i2
     Up1 = np.vstack(( vec_cj_1i1, vec_cj0i1, vec_cj1i1 ))
@@ -1343,11 +1343,11 @@ class F2D(Flexure):
       # Reshape
       vec_cj1i_1_Periodic_left = np.reshape(self.cj1i_1_Periodic_left, -1, order='C')
       vec_cj2i0_Periodic_left = np.reshape(self.cj2i0_Periodic_left, -1, order='C')
-    
+
       # Build diagonals with additional entries
       # I think the fact that everything is rolled will make this work all right
       # without any additional rolling.
-      # Checked -- and indeed, what would be in my mind the last value for 
+      # Checked -- and indeed, what would be in my mind the last value for
       # Mid[3] is the first value in its array. Hooray, patterns!
       self.diags = np.vstack(( vec_cj1i_1_Periodic_left,
                                Up1,
@@ -1404,8 +1404,8 @@ class F2D(Flexure):
 
       # create banded sparse matrix
       self.coeff_matrix = scipy.sparse.spdiags(self.diags, self.offsets,
-        self.ny*self.nx, self.ny*self.nx, format='csr') 
-    
+        self.ny*self.nx, self.ny*self.nx, format='csr')
+
     elif (self.BC_W == 'Periodic' and self.BC_E == 'Periodic'):
       # Additional vector creation
       # West
@@ -1455,8 +1455,8 @@ class F2D(Flexure):
 
       # create banded sparse matrix
       self.coeff_matrix = scipy.sparse.spdiags(self.diags, self.offsets,
-        self.ny*self.nx, self.ny*self.nx, format='csr') 
-    
+        self.ny*self.nx, self.ny*self.nx, format='csr')
+
     elif (self.BC_N == 'Periodic' and self.BC_S == 'Periodic'):
       # Periodic.
       # If these are periodic, we need to wrap around the ends of the
@@ -1479,7 +1479,7 @@ class F2D(Flexure):
                                                             -2*self.nx, -self.nx-1, -self.nx, -self.nx+1, -2, -1, 0, 1, 2, self.nx-1, self.nx, self.nx+1, 2*self.nx,
                                                             self.ny*self.nx-2*self.nx, self.ny*self.nx-self.nx-1, self.ny*self.nx-self.nx, self.ny*self.nx-self.nx+1],
                                                             self.ny*self.nx, self.ny*self.nx, format='csr')
-                                                            
+
     else:
       # No periodic boundary conditions -- original form of coeff_matrix
       # creator.
@@ -1495,33 +1495,33 @@ class F2D(Flexure):
   def calc_max_flexural_wavelength(self):
     """
     Returns the approximate maximum flexural wavelength
-    This is important when padding of the grid is required: in Flexure (this 
-    code), grids are padded out to one maximum flexural wavelength, but in any 
-    case, the flexural wavelength is a good characteristic distance for any 
+    This is important when padding of the grid is required: in Flexure (this
+    code), grids are padded out to one maximum flexural wavelength, but in any
+    case, the flexural wavelength is a good characteristic distance for any
     truncation limit
     """
     if np.isscalar(self.D):
       Dmax = self.D
     else:
       Dmax = self.D.max()
-    # This is an approximation if there is fill that evolves with iterations 
+    # This is an approximation if there is fill that evolves with iterations
     # (e.g., water), but should be good enough that this won't do much to it
     alpha = (4*Dmax/(self.drho*self.g))**.25 # 2D flexural parameter
     self.maxFlexuralWavelength = 2*np.pi*alpha
     self.maxFlexuralWavelength_ncells_x = int(np.ceil(self.maxFlexuralWavelength / self.dx))
     self.maxFlexuralWavelength_ncells_y = int(np.ceil(self.maxFlexuralWavelength / self.dy))
-    
+
   def fd_solve(self):
     """
     w = fd_solve()
     Sparse flexural response calculation.
-    Can be performed by direct factorization with UMFpack (defuault) 
+    Can be performed by direct factorization with UMFpack (defuault)
     or by an iterative minimum residual technique
-    These are both the fastest of the standard Scipy builtin techniques in 
-    their respective classes 
+    These are both the fastest of the standard Scipy builtin techniques in
+    their respective classes
     Requires the coefficient matrix from "2D.coeff_matrix"
     """
-    
+
     if self.Debug:
       try:
         # Will fail if scalar
@@ -1531,14 +1531,14 @@ class F2D(Flexure):
       print("self.qs", self.qs.shape)
       self.calc_max_flexural_wavelength()
       print("maxFlexuralWavelength_ncells: (x, y):", self.maxFlexuralWavelength_ncells_x, self.maxFlexuralWavelength_ncells_y)
-    
+
     q0vector = self.qs.reshape(-1, order='C')
     if self.Solver == "iterative" or self.Solver == "Iterative":
       if self.Debug:
         print("Using generalized minimal residual method for iterative solution")
       if self.Verbose:
         print("Converging to a tolerance of", self.iterative_ConvergenceTolerance, "m between iterations")
-      wvector = scipy.sparse.linalg.isolve.lgmres(self.coeff_matrix, q0vector)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)    
+      wvector = scipy.sparse.linalg.isolve.lgmres(self.coeff_matrix, q0vector)#, tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)
       wvector = wvector[0] # Reach into tuple to get my array back
     else:
       if self.Solver == "direct" or self.Solver == "Direct":
