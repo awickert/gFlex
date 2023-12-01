@@ -29,99 +29,101 @@ from ._version import __version__
 
 
 def welcome():
-  print("")
-  print("**************************"+"*"*len(__version__))
-  print("*** WELCOME to gFlex v"+__version__+" ***")
-  print("**************************"+"*"*len(__version__))
-  print("")
+    print("")
+    print("**************************" + "*" * len(__version__))
+    print("*** WELCOME to gFlex v" + __version__ + " ***")
+    print("**************************" + "*" * len(__version__))
+    print("")
+
 
 def displayUsage():
-  print("Open-source licensed under GNU GPL v3")
-  print("")
-  print("Usage:")
-  print("gflex <<path_to_configuration_file>>  # TO RUN STANDALONE")
-  print("gflex -h  *OR*  gflex --help          # DISPLAY ADDITIONAL HELP")
-  print("gflex -v  *OR*  gflex --version       # DISPLAY VERSION NUMBER")
-  print("import gflex                          # WITHIN PYTHON SHELL OR SCRIPT")
-  print("")
+    print("Open-source licensed under GNU GPL v3")
+    print("")
+    print("Usage:")
+    print("gflex <<path_to_configuration_file>>  # TO RUN STANDALONE")
+    print("gflex -h  *OR*  gflex --help          # DISPLAY ADDITIONAL HELP")
+    print("gflex -v  *OR*  gflex --version       # DISPLAY VERSION NUMBER")
+    print("import gflex                          # WITHIN PYTHON SHELL OR SCRIPT")
+    print("")
+
 
 def furtherHelp():
-  print("")
-  print("ADDITIONAL HELP:")
-  print("--------------- ")
-  print("")
-  print('To generate an input file, please see the examples in the "input"')
-  print("directory of this install.")
-  print("")
-  print("To run in a Python script or shell, follow this general pattern:")
-  print("import gflex")
-  print("flex = gflex.F1D()")
-  print("flex.method = ...")
-  print("# ...more variable setting...")
-  print("# see the 'input' directory for examples")
-  print("")
+    print("")
+    print("ADDITIONAL HELP:")
+    print("--------------- ")
+    print("")
+    print('To generate an input file, please see the examples in the "input"')
+    print("directory of this install.")
+    print("")
+    print("To run in a Python script or shell, follow this general pattern:")
+    print("import gflex")
+    print("flex = gflex.F1D()")
+    print("flex.method = ...")
+    print("# ...more variable setting...")
+    print("# see the 'input' directory for examples")
+    print("")
+
 
 def main():
-  # Choose how to instantiate
-  if len(sys.argv) == 2:
-    if sys.argv[1] == '--help' or sys.argv[1] == '-h':
-      welcome()
-      displayUsage()
-      furtherHelp()
-      return
-    if sys.argv[1] == '--version' or sys.argv[1] == '-v':
-      print("gFlex v"+__version__)
-      return
+    # Choose how to instantiate
+    if len(sys.argv) == 2:
+        if sys.argv[1] == "--help" or sys.argv[1] == "-h":
+            welcome()
+            displayUsage()
+            furtherHelp()
+            return
+        if sys.argv[1] == "--version" or sys.argv[1] == "-v":
+            print("gFlex v" + __version__)
+            return
+        else:
+            # Looks like it wants to be an configuration file!
+            filename = sys.argv[1]  # it works for usage (1) and (2)
+            obj = WhichModel(filename)
+
+    elif len(sys.argv) == 1:
+        welcome()
+        displayUsage()
+        print("")
+        sys.exit()
     else:
-      # Looks like it wants to be an configuration file!
-      filename = sys.argv[1] # it works for usage (1) and (2)
-      obj = WhichModel(filename)
+        welcome()
+        print(">>>> ERROR: Too many input parameters provided; exiting. <<<<")
+        print("")
+        displayUsage()
+        print("")
+        sys.exit()
 
-  elif len(sys.argv) == 1:
-    welcome()
-    displayUsage()
-    print("")
-    sys.exit()
-  else:
-    welcome()
-    print(">>>> ERROR: Too many input parameters provided; exiting. <<<<")
-    print("")
-    displayUsage()
-    print("")
-    sys.exit()
+    ########################################
+    ## SET MODEL TYPE AND DIMENSIONS HERE ##
+    ########################################
 
+    if obj.dimension == 1:
+        obj = F1D(filename)
+    elif obj.dimension == 2:
+        obj = F2D(filename)
 
-  ########################################
-  ## SET MODEL TYPE AND DIMENSIONS HERE ##
-  ########################################
+    obj.initialize(filename)
 
-  if obj.dimension == 1:
-    obj = F1D(filename)
-  elif obj.dimension == 2:
-    obj = F2D(filename)
+    if obj.Debug:
+        print("Command line:", sys.argv)
 
-  obj.initialize(filename)
+    ############################################
+    ##       SET MODEL PARAMETERS HERE        ##
+    ## (if not defined in configuration file) ##
+    ############################################
+    # obj.set_value('method','FD') # for example
 
-  if obj.Debug: print("Command line:", sys.argv)
+    obj.run()
+    obj.finalize()
 
+    obj.output()  # Not part of IRF or BMI: Does standalone plotting and file output
 
-  ############################################
-  ##       SET MODEL PARAMETERS HERE        ##
-  ## (if not defined in configuration file) ##
-  ############################################
-  # obj.set_value('method','FD') # for example
-
-  obj.run()
-  obj.finalize()
-
-  obj.output() # Not part of IRF or BMI: Does standalone plotting and file output
+    #####################
+    ## GET VALUES HERE ##
+    ##   (if desired)  ##
+    #####################
+    # wout = obj.get_value('Deflection') # for example
 
 
-  #####################
-  ## GET VALUES HERE ##
-  ##   (if desired)  ##
-  #####################
-  #wout = obj.get_value('Deflection') # for example
-
-if __name__ == '__main__':
-  main()
+if __name__ == "__main__":
+    main()
