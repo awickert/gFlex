@@ -882,7 +882,7 @@ class Flexure(Utility, Plotting):
         try:
             self.q0
             # Stop program if q0 is None-type
-            if type(self.q0) == None:  # if is None type, just be patient
+            if self.q0 is None:  # if is None type, just be patient
                 sys.exit(
                     "Must define non-None-type q0 by this stage in the initialization step\n"
                     + "from either configuration file (string) or direct array import"
@@ -906,7 +906,7 @@ class Flexure(Utility, Plotting):
             self.q0 = None
         if self.q0 == "":
             self.q0 = None
-        if type(self.q0) == str:
+        if isinstance(self.q0, str):
             self.q0 = self.loadFile(self.q0)  # Won't do this if q0 is None
 
         # Check consistency of dimensions
@@ -1199,7 +1199,7 @@ class Flexure(Utility, Plotting):
         # Only if they are both defined and are arrays
         # Both being arrays is a possible bug in this check routine that I have
         # intentionally introduced
-        if type(self.Te) == np.ndarray and type(self.qs) == np.ndarray:
+        if isinstance(self.Te, np.ndarray) and isinstance(self.qs, np.ndarray):
             # Doesn't touch non-arrays or 1D arrays
             if type(self.Te) is np.ndarray:
                 if (np.array(self.Te.shape) != np.array(self.qs.shape)).any():
@@ -1279,7 +1279,7 @@ class Flexure(Utility, Plotting):
                         "No input elastic thickness or coefficient matrix supplied."
                     )
         # or if getter/setter
-        if type(self.Te) == str:
+        if isinstance(self.Te, str):
             # Try to import Te grid or scalar for the finite difference solution
             Tepath = self.Te
         else:
@@ -1420,7 +1420,7 @@ class Flexure(Utility, Plotting):
             except:
                 self.xw = None
         # If strings, load arrays
-        if type(self.xw) == str:
+        if isinstance(self.xw, str):
             self.xw = self.loadFile(self.xw)
         if self.dimension == 2:
             try:
@@ -1441,7 +1441,7 @@ class Flexure(Utility, Plotting):
                     "SAS_NG output at specified points requires both xw and yw to be defined"
                 )
             # All right, now just finish defining
-            if type(self.yw) == str:
+            if isinstance(self.yw, str):
                 self.yw = self.loadFile(self.yw)
             elif self.yw is None:
                 self.yw = self.y.copy()
