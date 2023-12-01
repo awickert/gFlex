@@ -20,18 +20,18 @@ alpha2D =   (D/(drho * g))**.25
 lambda1D = alpha1D * 2*3.14159
 lambda2D = alpha2D * 2*3.14159
 
-print ""
+print("")
 
-print "1D:"
-print "Flexural wavelength:", lambda1D/1000, 'km'
-print "Distance to first zero-crossing:", .375 * lambda1D/1000, 'km'
-print "Flexural parameter:", alpha1D/1000, 'km'
+print("1D:")
+print("Flexural wavelength:", lambda1D/1000, 'km')
+print("Distance to first zero-crossing:", .375 * lambda1D/1000, 'km')
+print("Flexural parameter:", alpha1D/1000, 'km')
 
-print ""
+print("")
 
-print "2D:"
-print "Flexural wavelength:", lambda2D/1000, 'km'
-print "Distance to first zero-crossing:", .375 * lambda2D/1000, 'km'
-print "Flexural parameter:", alpha2D/1000, 'km'
+print("2D:")
+print("Flexural wavelength:", lambda2D/1000, 'km')
+print("Distance to first zero-crossing:", .375 * lambda2D/1000, 'km')
+print("Flexural parameter:", alpha2D/1000, 'km')
 
-print ""
+print("")
