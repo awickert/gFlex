@@ -35,21 +35,21 @@ class Utility:
     """
     Wraps a try / except and a check for self.filename around ConfigParser
     as it talks to the configuration file.
-    Also, checks for existence of configuration file so this won't execute (and fail) 
-    when no configuration file is provided (e.g., running in coupled mode with CSDMS 
+    Also, checks for existence of configuration file so this won't execute (and fail)
+    when no configuration file is provided (e.g., running in coupled mode with CSDMS
     entirely with getters and setters)
 
     vartype can be 'float', 'str' or 'string' (str and string are the same),
     or 'int' or 'integer' (also the same).
-    
-    "Optional" determines whether or not the program will exit if the variable 
+
+    "Optional" determines whether or not the program will exit if the variable
     fails to load. Set it to "True" if you don't want it to exit. In this case,
     the variable will be set to "None". Otherwise, it defaults to "False".
-    
-    "specialReturnMessage" is something that you would like to add at the end 
+
+    "specialReturnMessage" is something that you would like to add at the end
     of a failure to execute message. By default it does not print.
     """
-    
+
     try:
       if vartype == 'float':
         var = self.config.getfloat(category, name)
@@ -108,40 +108,40 @@ class Utility:
     # Convert latitude and longitude to
     # spherical coordinates in radians.
     degrees_to_radians = np.pi/180.0
-         
+
     # theta = colatitude = 90 - latitude
     theta1rad = (90.0 - lat1)*degrees_to_radians
     theta2rad = (90.0 - lat2)*degrees_to_radians
-         
+
     # lambda = longitude
     lambda1rad = long1*degrees_to_radians
     lambda2rad = long2*degrees_to_radians
-         
+
     # Compute spherical distance from spherical coordinates.
-         
+
     # For two locations in spherical coordinates
     # (1, theta, phi) and (1, theta, phi)
     # cosine( arc length ) =
     #    sin(theta) * sin(theta') * cos(theta-theta') + cos(phi) * cos(phi')
     # distance = radius * arc length
-     
+
     cos_arc_length = np.sin(theta1rad) * np.sin(theta2rad) * \
                      np.cos(lambda1rad - lambda2rad) + \
                      np.cos(theta1rad) * np.cos(theta2rad)
     arc = np.arccos( cos_arc_length )
- 
+
     great_circle_distance = radius * arc
-    
+
     return great_circle_distance
 
   def define_points_grid(self):
     """
     This is experimental code that could be used in the spatialDomainNoGrid
     section to build a grid of points on which to generate the solution.
-    However, the current development plan (as of 27 Jan 2015) is to have the 
-    end user supply the list of points where they want a solution (and/or for 
-    it to be provided in a more automated way by GRASS GIS). But because this 
-    (untested) code may still be useful, it will remain as its own function 
+    However, the current development plan (as of 27 Jan 2015) is to have the
+    end user supply the list of points where they want a solution (and/or for
+    it to be provided in a more automated way by GRASS GIS). But because this
+    (untested) code may still be useful, it will remain as its own function
     here.
     It used to be in f2d.py.
     """
@@ -173,7 +173,7 @@ class Utility:
       ny = np.ceil((n-s)/dxprelim)
       dx = (e-w) / nx
       dy = (n-s) / ny
-      self.dx = self.dy = (dx+dy)/2. # Average of these to create a 
+      self.dx = self.dy = (dx+dy)/2. # Average of these to create a
                                      # square grid for more compatibility
       self.xw = np.linspace(w, e, nx)
       self.yw = np.linspace(s, n, ny)
@@ -182,8 +182,8 @@ class Utility:
       print("and may run into issues with poles, so to ensure the proper")
       print("output points are chosen, the end user should do this.")
       sys.exit()
-    
-        
+
+
   def loadFile(self, var, close_on_fail = True):
     """
     A special function to replate a variable name that is a string file path
@@ -229,7 +229,7 @@ class Plotting:
   # 1D all here, 2D in functions
   # Just because there is often more code in 2D plotting functions
   # Also, yes, this portion of the code is NOT efficient or elegant in how it
-  # handles functions. But it's just a simple way to visualize results 
+  # handles functions. But it's just a simple way to visualize results
   # easily! And not too hard to improve with a bit of time. Anyway, the main
   # goal here is the visualization, not the beauty of the code : )
   def plotting(self):
@@ -315,7 +315,7 @@ class Plotting:
             if self.Method == "FD":
               if type(self.Te) is np.ndarray:
                 if (self.Te != (self.Te).mean()).any():
-                  plt.title(titletext,fontsize=16)       
+                  plt.title(titletext,fontsize=16)
                 else:
                   plt.title(titletext + ', $T_e$ = ' + str((self.Te / 1000).mean()) + " km", fontsize=16)
               else:
@@ -323,7 +323,7 @@ class Plotting:
             else:
               plt.title(titletext + ', $T_e$ = ' + str(self.Te / 1000) + " km", fontsize=16)
           except:
-            plt.title(titletext,fontsize=16)       
+            plt.title(titletext,fontsize=16)
           # x and y labels
           plt.ylabel('Loads and flexural response [m]',fontsize=16)
           plt.xlabel('Distance along profile [km]',fontsize=16)
@@ -420,19 +420,19 @@ class Plotting:
       plt.xlabel('x [km]', fontsize=12, fontweight='bold')
       plt.ylabel('y [km]', fontsize=12, fontweight='bold')
     plt.colorbar()
-  
+
   def xyzinterp(self, x, y, z, titletext):
     """
     Interpolates and plots ungridded model outputs from SAS_NG solution
     """
     # Help from http://wiki.scipy.org/Cookbook/Matplotlib/Gridding_irregularly_spaced_data
-    
+
     if self.Verbose:
       print("Starting to interpolate grid for plotting -- can be a slow process!")
-    
+
     from scipy.interpolate import griddata
     import numpy.ma as ma
-    
+
     # define grid.
     xmin = np.min(self.xw)
     xmean = np.mean(self.xw) # not used right now
@@ -442,7 +442,7 @@ class Plotting:
     ymax = np.max(self.yw)
     x_range = xmax - xmin
     y_range = ymax - ymin
-    
+
     # x and y grids
     # 100 cells on each side -- just for plotting, not so important
     # to optimize with how many points are plotted
@@ -524,29 +524,29 @@ class Flexure(Utility, Plotting):
 
   Numerical solutions are finite difference by a direct sparse matrix solver.
   """
-  
+
   def __init__(self, filename=None):
     # 17 Nov 2014: Splitting out initialize from __init__ to allow space
     # to use getters and setters to define values
-    
+
     # Use standard routine to pull out values
     # If no filename provided, will not initialize configuration file.
     self.filename = filename
-        
+
     # DEFAULT VERBOSITY
-    # Set default "quiet" to False, unless set by setter or overwritten by 
+    # Set default "quiet" to False, unless set by setter or overwritten by
     # the configuration file.
     self.Quiet = False
     # And also set default verbosity
     self.Verbose = True
     self.Debug = False
-    
+
     # x and y to None for checks
     self.x = None
     self.y = None
-    
+
     # Set GRASS GIS usage flag: if GRASS is used, don't display error
-    # messages related to unset options. This sets it to False if it 
+    # messages related to unset options. This sets it to False if it
     # hasn't already been set (and it can be set after this too)
     # (Though since this is __init__, would have to go through WhichModel
     # for some reason to define self.grass before this
@@ -614,7 +614,7 @@ class Flexure(Utility, Plotting):
     if self.Quiet:
       self.Debug = False
       self.Verbose = False
-    
+
     # Introduce model
     # After configuration file can define "Quiet", and getter/setter should be done
     # by this point if we are going that way.
@@ -629,14 +629,14 @@ class Flexure(Utility, Plotting):
       print("")
 
     if self.filename:
-      # Set clocks to None so if they are called by the getter before the 
+      # Set clocks to None so if they are called by the getter before the
       # calculation is performed, there won't be an error
       self.coeff_creation_time = None
       self.time_to_solve = None
-      
+
       self.Method = self.configGet("string", "mode", "method")
       # Boundary conditions
-      # This used to be nested inside an "if self.Method == 'FD'", but it seems 
+      # This used to be nested inside an "if self.Method == 'FD'", but it seems
       # better to define these to ensure there aren't mistaken impressions
       # about what they do for the SAS case
       # Not optional: flexural solutions can be very sensitive to b.c.'s
@@ -664,7 +664,7 @@ class Flexure(Utility, Plotting):
         self.Method = self.configGet("string", "mode", "method")
         if self.dimension == 2:
           self.PlateSolutionType = self.configGet("string", "mode", "PlateSolutionType")
-      
+
       # Loading grid
       # q0 is either a load array or an x,y,q array.
       # Therefore q_0, initial q, before figuring out what it really is
@@ -673,14 +673,14 @@ class Flexure(Utility, Plotting):
       # it later is combined with dx and (if 2D) dy for FD cases
       # for point loads, need mass: q0 should be written as [x, (y), force])
       self.q0 = self.configGet('string', "input", "Loads")
-      
+
     # Parameters -- rho_m and rho_fill defined, so this outside
     # of if-statement (to work with getters/setters as well)
     self.drho = self.rho_m - self.rho_fill
     if self.filename:
       self.E  = self.configGet("float", "parameter", "YoungsModulus")
       self.nu = self.configGet("float", "parameter", "PoissonsRatio")
-    
+
     # Stop program if there is no q0 defined or if it is None-type
     try:
       self.q0
@@ -707,7 +707,7 @@ class Flexure(Utility, Plotting):
       self.q0 = None
     if type(self.q0) == str:
       self.q0 = self.loadFile(self.q0) # Won't do this if q0 is None
-          
+
     # Check consistency of dimensions
     if self.q0 is not None:
       if self.Method != 'SAS_NG':
@@ -719,7 +719,7 @@ class Flexure(Utility, Plotting):
           print(self.q0)
           print("Exiting.")
           sys.exit()
-          
+
     # Plotting selection
     self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
 
@@ -742,19 +742,19 @@ class Flexure(Utility, Plotting):
     try:
       self.sigma_xx
       if self.Method != 'FD':
-        warnings.warn(category=RuntimeWarning, message='End loads have been set but will not be implemented because the solution method is not finite difference') 
+        warnings.warn(category=RuntimeWarning, message='End loads have been set but will not be implemented because the solution method is not finite difference')
     except:
       self.sigma_xx = 0
     try:
       self.sigma_xy
       if self.Method != 'FD':
-        warnings.warn(category=RuntimeWarning, message='End loads have been set but will not be implemented because the solution method is not finite difference') 
+        warnings.warn(category=RuntimeWarning, message='End loads have been set but will not be implemented because the solution method is not finite difference')
     except:
       self.sigma_xy = 0
     try:
       self.sigma_yy
       if self.Method != 'FD':
-        warnings.warn(category=RuntimeWarning, message='End loads have been set but will not be implemented because the solution method is not finite difference') 
+        warnings.warn(category=RuntimeWarning, message='End loads have been set but will not be implemented because the solution method is not finite difference')
     except:
       self.sigma_yy = 0
 
@@ -782,12 +782,12 @@ class Flexure(Utility, Plotting):
   # Save output deflections to file, if desired
   def outputDeflections(self):
     """
-    Outputs a grid of deflections if an output directory is defined in the 
+    Outputs a grid of deflections if an output directory is defined in the
     configuration file
-    
-    If the filename given in the configuration file ends in ".npy", then a binary 
+
+    If the filename given in the configuration file ends in ".npy", then a binary
     numpy grid will be exported.
-    
+
     Otherwise, an ASCII grid will be exported.
     """
     try:
@@ -833,7 +833,7 @@ class Flexure(Utility, Plotting):
         # Acceptable boundary conditions
         self.bc1D = np.array(['0Displacement0Slope', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
         self.bc2D = np.array(['0Displacement0Slope', 'Periodic', 'Mirror', '0Moment0Shear', '0Slope0Shear'])
-        # Boundary conditions should be defined by this point -- whether via 
+        # Boundary conditions should be defined by this point -- whether via
         # the configuration file or the getters and setters
         self.bclist = [self.BC_E, self.BC_W]
         if self.dimension == 2:
@@ -913,10 +913,10 @@ class Flexure(Utility, Plotting):
           print("analytical solutions and expect them to work.")
           print("")
           sys.exit()
- 
+
   def coeffArraySizeCheck(self):
     """
-    Make sure that q0 and coefficient array are the right size compared to 
+    Make sure that q0 and coefficient array are the right size compared to
     each other (for finite difference if loading a pre-build coefficient
     array). Otherwise, exit.
     """
@@ -924,14 +924,14 @@ class Flexure(Utility, Plotting):
       print("Inconsistent size of q0 array and coefficient mattrix")
       print("Exiting.")
       sys.exit()
-      
+
   def TeArraySizeCheck(self):
     """
     Checks that Te and q0 array sizes are compatible
     For finite difference solution.
     """
     # Only if they are both defined and are arrays
-    # Both being arrays is a possible bug in this check routine that I have 
+    # Both being arrays is a possible bug in this check routine that I have
     # intentionally introduced
     if type(self.Te) == np.ndarray and type(self.qs) == np.ndarray:
       # Doesn't touch non-arrays or 1D arrays
@@ -953,7 +953,7 @@ class Flexure(Utility, Plotting):
       print("Finite Difference Solution Technique")
     # Used to check for coeff_matrix here, but now doing so in self.bc_check()
     # called by f1d and f2d at the start
-    # 
+    #
     # Define a stress-based qs = q0
     # But only if the latter has not already been defined
     # (e.g., by the getters and setters)
@@ -982,7 +982,7 @@ class Flexure(Utility, Plotting):
     # Check consistency of size if coeff array was loaded
     if self.filename:
       # In the case that it is iterative, find the convergence criterion
-      self.iterative_ConvergenceTolerance = self.configGet("float", "numerical", "ConvergenceTolerance")    
+      self.iterative_ConvergenceTolerance = self.configGet("float", "numerical", "ConvergenceTolerance")
       # Try to import Te grid or scalar for the finite difference solution
       try:
         self.Te = self.configGet("float", "input", "ElasticThickness", optional=False)
@@ -998,11 +998,11 @@ class Flexure(Utility, Plotting):
         if self.coeff_matrix is not None:
           pass
         else:
-          # Have to bring this out here in case it was discovered in the 
+          # Have to bring this out here in case it was discovered in the
           # try statement that there is no value given
           sys.exit("No input elastic thickness or coefficient matrix supplied.")
     # or if getter/setter
-    if type(self.Te) == str: 
+    if type(self.Te) == str:
       # Try to import Te grid or scalar for the finite difference solution
       Tepath = self.Te
     else:
@@ -1027,17 +1027,17 @@ class Flexure(Utility, Plotting):
       # Will be array if it was loaded
       if self.Te.any():
         self.TeArraySizeCheck()
-    
+
   ### need work
   def FFT(self):
     pass
 
-  # SAS and SAS_NG are the exact same here; leaving separate just for symmetry 
+  # SAS and SAS_NG are the exact same here; leaving separate just for symmetry
   # with other functions
 
   def SAS(self):
     """
-    Set-up for the rectangularly-gridded superposition of analytical solutions 
+    Set-up for the rectangularly-gridded superposition of analytical solutions
     method for solving flexure
     """
     if self.x is None:
@@ -1067,7 +1067,7 @@ class Flexure(Utility, Plotting):
 
   def SAS_NG(self):
     """
-    Set-up for the ungridded superposition of analytical solutions 
+    Set-up for the ungridded superposition of analytical solutions
     method for solving flexure
     """
     if self.filename:
@@ -1076,7 +1076,7 @@ class Flexure(Utility, Plotting):
       # See if it wants to be run in lat/lon
       # Could put under in 2D if-statement, but could imagine an eventual desire
       # to change this and have 1D lat/lon profiles as well.
-      # So while the options will be under "numerical2D", this place here will 
+      # So while the options will be under "numerical2D", this place here will
       # remain held for an eventual future.
       self.latlon = self.configGet("string", "numerical2D", "latlon", optional=True)
       self.PlanetaryRadius = self.configGet("float", "numerical2D", "PlanetaryRadius", optional=True)
@@ -1109,9 +1109,9 @@ class Flexure(Utility, Plotting):
           self.q = self.q0[:,2]
         else:
           sys.exit("For 2D (ungridded) SAS_NG configuration file, need [x,y,w] array. Your dimensions are: "+str(self.q0.shape))
-    # x, y are in absolute coordinates. Create a local grid reference to 
-    # these. This local grid, which starts at (0,0), is defined just so that 
-    # we have a way of running the model without defined real-world 
+    # x, y are in absolute coordinates. Create a local grid reference to
+    # these. This local grid, which starts at (0,0), is defined just so that
+    # we have a way of running the model without defined real-world
     # coordinates
     self.x = self.x
     if self.dimension == 2:
@@ -1119,7 +1119,7 @@ class Flexure(Utility, Plotting):
     # Remove self.q0 to avoid issues with multiply-defined inputs
     # q0 is the parsable input to either a qs grid or contains (x,(y),q)
     del self.q0
-    
+
     # Check if a seperate output set of x,y points has been defined
     # otherwise, set those values to None
     # First, try to load the arrays
@@ -1157,4 +1157,3 @@ class Flexure(Utility, Plotting):
         self.yw = self.y.copy()
     if self.xw is None:
       self.xw = self.x.copy()
-

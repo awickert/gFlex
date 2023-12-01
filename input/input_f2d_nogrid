@@ -31,7 +31,7 @@ Plot=both
 
 [numerical]
 ; dx
-GridSpacing_x= 
+GridSpacing_x=
 BoundaryCondition_West=NoOutsideLoads
 BoundaryCondition_East=NoOutsideLoads
 ; Solver can be direct or iterative
@@ -44,7 +44,7 @@ CoeffArray=
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"
 ; dy
-GridSpacing_y= 
+GridSpacing_y=
 BoundaryCondition_North=0Moment0Shear
 BoundaryCondition_South=Mirror
 ; true/false: flag to enable lat/lon input. Defaults False

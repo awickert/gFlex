@@ -59,19 +59,19 @@ class F1D(Flexure):
 
   def finalize(self):
     # If elastic thickness has been padded, return it to its original
-    # value, so this is not messed up for repeat operations in a 
+    # value, so this is not messed up for repeat operations in a
     # model-coupling exercise
     try:
       self.Te = self.Te_unpadded
     except:
       pass
     if self.Verbose: print("F1D finalized")
-    super().finalize()   
-    
+    super().finalize()
+
   ########################################
   ## FUNCTIONS FOR EACH SOLUTION METHOD ##
   ########################################
-  
+
   def FD(self):
     self.gridded_x()
     # Only generate coefficient matrix if it is not already provided
@@ -86,7 +86,7 @@ class F1D(Flexure):
     if self.plotChoice:
       self.gridded_x()
     sys.exit("The fast Fourier transform solution method is not yet implemented.")
-    
+
   def SAS(self):
     self.gridded_x()
     self.spatialDomainVarsSAS()
@@ -107,8 +107,8 @@ class F1D(Flexure):
   def gridded_x(self):
     self.nx = self.qs.shape[0]
     self._x_local = np.arange(0,self.dx*self.nx,self.dx)
-    
-  
+
+
   ## SPATIAL DOMAIN SUPERPOSITION OF ANALYTICAL SOLUTIONS
   #########################################################
 
@@ -139,9 +139,9 @@ class F1D(Flexure):
   # CONVERT LOAD MAGNITUDE AT A POINT INTO MASS INTEGRATED ACROSS DX
 
   def spatialDomainGridded(self):
-  
+
     self.w = np.zeros(self.nx) # Deflection array
-    
+
     for i in range(self.nx):
       # Loop over locations that have loads, and sum
       if self.qs[i]:
@@ -150,7 +150,7 @@ class F1D(Flexure):
         self.w -= self.qs[i] * self.coeff * self.dx * np.exp(-dist/self.alpha) * \
           (np.cos(dist/self.alpha) + np.sin(dist/self.alpha))
     # No need to return: w already belongs to "self"
-    
+
 
   # NONUNIFORM DX (NO GRID): ARBITRARILY-SPACED POINT LOADS
   # So essentially a sum of Green's functions for flexural response
@@ -164,7 +164,7 @@ class F1D(Flexure):
     if self.Debug:
       print("w = ")
       print(self.w.shape)
-    
+
     for i in range(len(self.q)):
       # More efficient if we have created some 0-load points
       # (e.g., for where we want output)
@@ -175,11 +175,11 @@ class F1D(Flexure):
 
   ## FINITE DIFFERENCE
   ######################
-  
+
   def elasprepFD(self):
     """
     dx4, D = elasprepFD(dx,Te,E=1E11,nu=0.25)
-    
+
     Defines the variables (except for the subset flexural rigidity) that are
     needed to run "coeff_matrix_1d"
     """
@@ -190,10 +190,10 @@ class F1D(Flexure):
   def BC_selector_and_coeff_matrix_creator(self):
     """
     Selects the boundary conditions
-    Then calls the function to build the pentadiagonal matrix to solve 
+    Then calls the function to build the pentadiagonal matrix to solve
     1D flexure with variable (or constant) elsatic thickness
     """
-    
+
     # Zeroth, start the timer and print the boundary conditions to the screen
     self.coeff_start_time = time.time()
     if self.Verbose:
@@ -203,25 +203,25 @@ class F1D(Flexure):
     # First, set flexural rigidity boundary conditions to flesh out this padded
     # array
     self.BC_Rigidity()
-    
+
     # Second, build the coefficient arrays -- with the rigidity b.c.'s
     self.get_coeff_values()
 
-    # Third, apply boundary conditions to the coeff_arrays to create the 
+    # Third, apply boundary conditions to the coeff_arrays to create the
     # flexural solution
     self.BC_Flexure()
-    
+
     # Fourth, construct the sparse diagonal array
     self.build_diagonals()
-    
-    # Finally, compute the total time this process took    
+
+    # Finally, compute the total time this process took
     self.coeff_creation_time = time.time() - self.coeff_start_time
     if self.Quiet == False:
       print("Time to construct coefficient (operator) array [s]:", self.coeff_creation_time)
 
   def BC_Rigidity(self):
     """
-    Utility function to help implement boundary conditions by specifying 
+    Utility function to help implement boundary conditions by specifying
     them for and applying them to the elastic thickness grid
     """
 
@@ -246,7 +246,7 @@ class F1D(Flexure):
       self.BC_Rigidity_E = 'mirror symmetry'
     else:
       sys.exit("Invalid Te B.C. case")
-    
+
     #############
     # PAD ARRAY #
     #############
@@ -254,9 +254,9 @@ class F1D(Flexure):
       self.D *= np.ones(self.qs.shape) # And leave Te as a scalar for checks
     else:
       self.Te_unpadded = self.Te.copy()
-    # F2D keeps this inside the "else" and handles this differently, 
+    # F2D keeps this inside the "else" and handles this differently,
     # largely because it has different ways of computing the flexural
-    # response with variable Te. We'll keep everything simpler here and 
+    # response with variable Te. We'll keep everything simpler here and
     # just pad this array so it can be sent through the same process
     # to create the coefficient arrays.
     self.D = np.hstack([np.nan, self.D, np.nan])
@@ -276,9 +276,9 @@ class F1D(Flexure):
       self.D[0] = self.D[-2]
     if self.BC_Rigidity_E == "periodic":
       self.D[-1] = self.D[-3]
-    
+
   def get_coeff_values(self):
-  
+
     ##############################
     # BUILD GENERAL COEFFICIENTS #
     ##############################
@@ -315,27 +315,27 @@ class F1D(Flexure):
 
     # Number of columns; equals number of rows too - square coeff matrix
     self.ncolsx = self.c0.shape[0]
-    
+
     # Either way, the way that Scipy stacks is not the same way that I calculate
     # the rows. It runs offsets down the column instead of across the row. So
-    # to simulate this, I need to re-zero everything. To do so, I use 
+    # to simulate this, I need to re-zero everything. To do so, I use
     # numpy.roll. (See self.build_diagonals.)
-    
+
   def BC_Flexure(self):
 
     # Some links that helped me teach myself how to set up the boundary conditions
     # in the matrix for the flexure problem:
-    # 
+    #
     # Good explanation of and examples of boundary conditions
     # https://en.wikipedia.org/wiki/Euler%E2%80%93Bernoulli_beam_theory#Boundary_considerations
-    # 
+    #
     # Copy of Fornberg table:
     # https://en.wikipedia.org/wiki/Finite_difference_coefficient
-    # 
+    #
     # Implementing b.c.'s:
     # http://scicomp.stackexchange.com/questions/5355/writing-the-poisson-equation-finite-difference-matrix-with-neumann-boundary-cond
     # http://scicomp.stackexchange.com/questions/7175/trouble-implementing-neumann-boundary-conditions-because-the-ghost-points-cannot
-    
+
     if self.Verbose:
       print("Boundary condition, West:", self.BC_W, type(self.BC_W))
       print("Boundary condition, East:", self.BC_E, type(self.BC_E))
@@ -367,22 +367,22 @@ class F1D(Flexure):
     ##########################################################
 
     # Roll to keep the proper coefficients at the proper places in the
-    # arrays: Python will naturally just do vertical shifts instead of 
-    # diagonal shifts, so this takes into account the horizontal compoent 
+    # arrays: Python will naturally just do vertical shifts instead of
+    # diagonal shifts, so this takes into account the horizontal compoent
     # to ensure that boundary values are at the right place.
     self.l2 = np.roll(self.l2, -2)
     self.l1 = np.roll(self.l1, -1)
     self.r1 = np.roll(self.r1, 1)
     self.r2 = np.roll(self.r2, 2)
 
-    # Then assemble these rows: this is where the periodic boundary condition 
+    # Then assemble these rows: this is where the periodic boundary condition
     # can matter.
     if self.coeff_matrix is not None:
       pass
     elif self.BC_E == 'Periodic' and self.BC_W == 'Periodic':
-      # In this case, the boundary-condition-related stacking has already 
+      # In this case, the boundary-condition-related stacking has already
       # happened inside b.c.-handling function. This is because periodic
-      # boundary conditions require extra diagonals to exist on the edges of 
+      # boundary conditions require extra diagonals to exist on the edges of
       # the solution array
       pass
     else:
@@ -391,7 +391,7 @@ class F1D(Flexure):
 
     # Everybody now (including periodic b.c. cases)
     self.coeff_matrix = spdiags(self.diags, self.offsets, self.nx, self.nx, format='csr')
-  
+
   def BC_Periodic(self):
     """
     Periodic boundary conditions: wraparound to the other side.
@@ -400,11 +400,11 @@ class F1D(Flexure):
       # If both boundaries are periodic, we are good to go (and self-consistent)
       pass # It is just a shift in the coeff. matrix creation.
     else:
-      # If only one boundary is periodic and the other doesn't implicitly 
+      # If only one boundary is periodic and the other doesn't implicitly
       # involve a periodic boundary, this is illegal!
       # I could allow it, but would have to rewrite the Periodic b.c. case,
-      # which I don't want to do to allow something that doesn't make 
-      # physical sense... so if anyone wants to do this for some unforeseen 
+      # which I don't want to do to allow something that doesn't make
+      # physical sense... so if anyone wants to do this for some unforeseen
       # reason, they can just split my function into two pieces themselves.i
       sys.exit("Having the boundary opposite a periodic boundary condition\n"+
                "be fixed and not include an implicit periodic boundary\n"+
@@ -416,10 +416,10 @@ class F1D(Flexure):
   def BC_0Displacement0Slope(self):
     """
     0Displacement0Slope boundary condition for 0 deflection.
-    This requires that nothing be done to the edges of the solution array, 
+    This requires that nothing be done to the edges of the solution array,
     because the lack of the off-grid terms implies that they go to 0
-    Here we just turn the cells outside the array into nan, to ensure that 
-    we are not accidentally including the wrong cells here (and for consistency 
+    Here we just turn the cells outside the array into nan, to ensure that
+    we are not accidentally including the wrong cells here (and for consistency
     with the other solution types -- this takes negligible time)
     """
     if self.BC_W == '0Displacement0Slope':
@@ -452,19 +452,19 @@ class F1D(Flexure):
   def BC_0Slope0Shear(self):
     i=0
     """
-    This boundary condition is esentially a Neumann 0-gradient boundary 
-    condition with that 0-gradient state extended over a longer part of 
+    This boundary condition is esentially a Neumann 0-gradient boundary
+    condition with that 0-gradient state extended over a longer part of
     the grid such that the third derivative also equals 0.
-    
-    This boundary condition has more of a geometric meaning than a physical 
-    meaning. It produces a state in which the boundaries have to have all 
-    gradients in deflection go to 0 (i.e. approach constant values) while 
+
+    This boundary condition has more of a geometric meaning than a physical
+    meaning. It produces a state in which the boundaries have to have all
+    gradients in deflection go to 0 (i.e. approach constant values) while
     not specifying what those values must be.
-    
-    This uses a 0-curvature boundary condition for elastic thickness 
+
+    This uses a 0-curvature boundary condition for elastic thickness
     that extends outside of the computational domain.
     """
-    
+
     if self.BC_W == '0Slope0Shear':
       i=0
       self.l2[i] = np.nan
@@ -496,17 +496,17 @@ class F1D(Flexure):
     """
     d2w/dx2 = d3w/dx3 = 0
     (no moment or shear)
-    This simulates a free end (broken plate, end of a cantilevered beam: 
+    This simulates a free end (broken plate, end of a cantilevered beam:
     think diving board tip)
-    It is *not* yet set up to have loads placed on the ends themselves: 
+    It is *not* yet set up to have loads placed on the ends themselves:
     (look up how to do this, thought Wikipdia has some info, but can't find
     it... what I read said something about generalizing)
     """
 
     # First, just define coefficients for each of the positions in the array
-    # These will be added in code instead of being directly combined by 
-    # the programmer (as I did above (now deleted) for constant Te), which might add 
-    # rather negligibly to the compute time but save a bunch of possibility 
+    # These will be added in code instead of being directly combined by
+    # the programmer (as I did above (now deleted) for constant Te), which might add
+    # rather negligibly to the compute time but save a bunch of possibility
     # for unfortunate typos!
 
     # Also using 0-curvature boundary condition for D (i.e. Te)
@@ -523,7 +523,7 @@ class F1D(Flexure):
       self.c0[i] += 0
       self.r1[i] += -2*self.l2_coeff_i[i]
       self.r2[i] += self.l2_coeff_i[i]
-    
+
     if self.BC_E == '0Moment0Shear':
       i=-2
       self.l2[i] += self.r2_coeff_i[i]
@@ -540,11 +540,11 @@ class F1D(Flexure):
 
   def BC_Mirror(self):
     """
-    Mirrors qs across the boundary on either the west (left) or east (right) 
+    Mirrors qs across the boundary on either the west (left) or east (right)
     side, depending on the selections.
-    
-    This can, for example, produce a scenario in which you are observing 
-    a mountain range up to the range crest (or, more correctly, the halfway 
+
+    This can, for example, produce a scenario in which you are observing
+    a mountain range up to the range crest (or, more correctly, the halfway
     point across the mountain range).
     """
     if self.BC_W == 'Mirror':
@@ -560,7 +560,7 @@ class F1D(Flexure):
       self.c0[i] += self.l2_coeff_i[i]
       self.r1[i] += 0
       self.r2[i] += 0
-    
+
     if self.BC_E == 'Mirror':
       i=-2
       self.l2[i] += 0
@@ -574,25 +574,25 @@ class F1D(Flexure):
       self.c0[i] += 0
       #self.r1[i] += np.nan
       #self.r2[i] += np.nan
-    
+
   def calc_max_flexural_wavelength(self):
     """
     Returns the approximate maximum flexural wavelength
-    This is important when padding of the grid is required: in Flexure (this 
-    code), grids are padded out to one maximum flexural wavelength, but in any 
-    case, the flexural wavelength is a good characteristic distance for any 
+    This is important when padding of the grid is required: in Flexure (this
+    code), grids are padded out to one maximum flexural wavelength, but in any
+    case, the flexural wavelength is a good characteristic distance for any
     truncation limit
     """
     if np.isscalar(self.D):
       Dmax = self.D
     else:
       Dmax = self.D.max()
-    # This is an approximation if there is fill that evolves with iterations 
+    # This is an approximation if there is fill that evolves with iterations
     # (e.g., water), but should be good enough that this won't do much to it
     alpha = (4*Dmax/(self.drho*self.g))**.25 # 2D flexural parameter
     self.maxFlexuralWavelength = 2*np.pi*alpha
     self.maxFlexuralWavelength_ncells = int(np.ceil(self.maxFlexuralWavelength / self.dx))
-    
+
   def fd_solve(self):
     """
     w = fd_solve()
@@ -601,21 +601,21 @@ class F1D(Flexure):
 
     Sparse solver for one-dimensional flexure of an elastic plate
     """
-    
+
     if self.Debug:
       print("qs", self.qs.shape)
       print("Te", self.Te.shape)
       self.calc_max_flexural_wavelength()
       print("maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells")
-    
+
     if self.Solver == "iterative" or self.Solver == "Iterative":
       if self.Debug:
         print("Using generalized minimal residual method for iterative solution")
       if self.Verbose:
         print("Converging to a tolerance of", self.iterative_ConvergenceTolerance, "m between iterations")
-      # qs negative so bends down with positive load, bends up with neative load 
+      # qs negative so bends down with positive load, bends up with neative load
       # (i.e. material removed)
-      w = isolve.lgmres(self.coeff_matrix, -self.qs, tol=self.iterative_ConvergenceTolerance)  
+      w = isolve.lgmres(self.coeff_matrix, -self.qs, tol=self.iterative_ConvergenceTolerance)
       self.w = w[0] # Reach into tuple to get my array back
     else:
       if self.Solver == 'direct' or self.Solver == 'Direct':
@@ -626,13 +626,12 @@ class F1D(Flexure):
         print("Defaulting to direct solution with UMFpack")
       # UMFpack is now the default, but setting true just to be sure in case
       # anything changes
-      # qs negative so bends down with positive load, bends up with neative load 
+      # qs negative so bends down with positive load, bends up with neative load
       # (i.e. material removed)
       self.w = spsolve(self.coeff_matrix, -self.qs, use_umfpack=True)
-    
+
     if self.Debug:
       print("w.shape:")
       print(self.w.shape)
       print("w:")
       print(self.w)
-    

@@ -36,11 +36,10 @@ flex.finalize()
 # If you want to plot the output
 flex.plotChoice='combo'
 # An output file for deflections could also be defined here
-# flex.wOutFile = 
+# flex.wOutFile =
 flex.output() # Plots and/or saves output, or does nothing, depending on
               # whether flex.plotChoice and/or flex.wOutFile have been set
 # TO OBTAIN OUTPUT DIRECTLY IN PYTHON, you can assign the internal variable,
 # flex.w, to another variable -- or as an element in a list if you are looping
 # over many runs of gFlex:
 deflection = flex.w
-

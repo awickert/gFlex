@@ -46,7 +46,7 @@ def displayUsage():
   print("gflex -v  *OR*  gflex --version       # DISPLAY VERSION NUMBER")
   print("import gflex                          # WITHIN PYTHON SHELL OR SCRIPT")
   print("")
-  
+
 def furtherHelp():
   print("")
   print("ADDITIONAL HELP:")
@@ -91,19 +91,19 @@ def main():
     displayUsage()
     print("")
     sys.exit()
-  
-  
+
+
   ########################################
   ## SET MODEL TYPE AND DIMENSIONS HERE ##
   ########################################
-  
+
   if obj.dimension == 1:
     obj = F1D(filename)
   elif obj.dimension == 2:
     obj = F2D(filename)
 
   obj.initialize(filename)
-  
+
   if obj.Debug: print("Command line:", sys.argv)
 
 
@@ -122,9 +122,8 @@ def main():
   #####################
   ## GET VALUES HERE ##
   ##   (if desired)  ##
-  ##################### 
+  #####################
   #wout = obj.get_value('Deflection') # for example
 
 if __name__ == '__main__':
   main()
-
