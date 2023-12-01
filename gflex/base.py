@@ -581,7 +581,6 @@ class Plotting:
         if self.Verbose:
             print("Starting to interpolate grid for plotting -- can be a slow process!")
 
-        import numpy.ma as ma
         from scipy.interpolate import griddata
 
         # define grid.
@@ -1340,7 +1339,6 @@ class Flexure(Utility, Plotting):
                 # Remove self.q0 to avoid issues with multiply-defined inputs
                 # q0 is the parsable input to either a qs grid or contains (x,(y),q)
                 del self.q0
-            from scipy.special import kei
 
     def SAS_NG(self):
         """
@@ -1361,8 +1359,6 @@ class Flexure(Utility, Plotting):
             self.PlanetaryRadius = self.configGet(
                 "float", "numerical2D", "PlanetaryRadius", optional=True
             )
-            if self.dimension == 2:
-                from scipy.special import kei
         # Parse out input q0 into variables of imoprtance for solution
         if self.dimension == 1:
             try:
