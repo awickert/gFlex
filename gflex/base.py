@@ -18,6 +18,7 @@ along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import configparser
+import contextlib
 import os
 import sys
 import warnings
@@ -175,15 +176,17 @@ class Utility:
             # Warn that any existing grid will be overwritten
             try:
                 self.dx
-                if not self.Quiet:
-                    print("dx and dy being overwritten -- supply a full grid")
-            except:
+            except AttributeError:
                 try:
                     self.dy
+                except AttributeError:
+                    pass
+                else:
                     if not self.Quiet:
                         print("dx and dy being overwritten -- supply a full grid")
-                except:
-                    pass
+            else:
+                if not self.Quiet:
+                    print("dx and dy being overwritten -- supply a full grid")
             # Boundaries
             n = np.max(self.y) + self.alpha
             s = np.min(self.y) - self.alpha
@@ -217,36 +220,39 @@ class Utility:
             # First see if it is a full path or directly links from the current
             # working directory
             out = np.load(var)
-            if self.Verbose:
-                print("Loading " + var + " from numpy binary")
         except:
             try:
                 out = np.loadtxt(var)
-                if self.Verbose:
-                    print("Loading " + var + " ASCII")
             except:
                 # Then see if it is relative to the location of the configuration file
                 try:
                     out = np.load(self.inpath + var)
-                    if self.Verbose:
-                        print("Loading " + var + " from numpy binary")
                 except:
                     try:
                         out = np.loadtxt(self.inpath + var)
-                        if self.Verbose:
-                            print("Loading " + var + " ASCII")
                     # If failure
                     except:
-                        if close_on_fail:
-                            print("Cannot find " + var + " file")
-                            print("" + var + " path = " + var)
-                            print("Looked relative to model python files.")
-                            print("Also looked relative to configuration file path,")
-                            print("  ", self.inpath)
-                            print("Exiting.")
-                            sys.exit()
-                        else:
-                            pass
+                        pass
+                    else:
+                        format_name = "ASCII"
+                else:
+                    format_name = "numpy binary"
+            else:
+                format_name = "ASCII"
+        else:
+            format_name = "numpy binary"
+
+        if out is None and close_on_fail:
+            print(f"Cannot find {var} file")
+            print(f"{var} path = {var}")
+            print("Looked relative to model python files.")
+            print("Also looked relative to configuration file path,")
+            print(f"  {self.inpath}")
+            print("Exiting.")
+            sys.exit()
+        elif out is not None and self.Verbose:
+            print(f"Loading {var} from {format_name}")
+
         return out
 
 
@@ -671,7 +677,7 @@ class WhichModel(Utility):
             try:
                 # only let this function imoprt things once
                 self.whichModel_AlreadyRun
-            except:
+            except AttributeError:
                 # Open parser and get what kind of model
                 _fileisvalid = self.config = configparser.ConfigParser()
                 _fileisvalid = len(_fileisvalid)
@@ -728,17 +734,17 @@ class Flexure(Utility, Plotting):
         # for some reason to define self.grass before this
         try:
             self.grass
-        except:
+        except AttributeError:
             self.grass = False
 
         # Default values for lat/lon usage -- defaulting not to use it
         try:
             self.latlon
-        except:
+        except AttributeError:
             self.latlon = False
         try:
             self.PlanetaryRadius
-        except:
+        except AttributeError:
             self.PlanetaryRadius = None
 
     def initialize(self, filename=None):
@@ -880,28 +886,29 @@ class Flexure(Utility, Plotting):
         # Stop program if there is no q0 defined or if it is None-type
         try:
             self.q0
+        except AttributeError:
+            try:
+                self.q
+            except AttributeError:
+                try:
+                    self.qs
+                except AttributeError:
+                    sys.exit(
+                        "Must define q0, q, or qs by this stage in the initialization step\n"
+                        + "from either configuration file (string) or direct array import"
+                    )
+        else:
             # Stop program if q0 is None-type
             if self.q0 is None:  # if is None type, just be patient
                 sys.exit(
                     "Must define non-None-type q0 by this stage in the initialization step\n"
                     + "from either configuration file (string) or direct array import"
                 )
-        except:
-            try:
-                self.q
-            except:
-                try:
-                    self.qs
-                except:
-                    sys.exit(
-                        "Must define q0, q, or qs by this stage in the initialization step\n"
-                        + "from either configuration file (string) or direct array import"
-                    )
 
         # Ignore this if no q0 set
         try:
             self.q0
-        except:
+        except AttributeError:
             self.q0 = None
         if self.q0 == "":
             self.q0 = None
@@ -941,41 +948,42 @@ class Flexure(Utility, Plotting):
         # Do this for 2D; in the 1D case, xy and yy will just not be used
         try:
             self.sigma_xx
+        except AttributeError:
+            self.sigma_xx = 0
+        else:
             if self.Method != "FD":
                 warnings.warn(
                     category=RuntimeWarning,
                     message="End loads have been set but will not be implemented because the solution method is not finite difference",
                 )
-        except:
-            self.sigma_xx = 0
         try:
             self.sigma_xy
+        except AttributeError:
+            self.sigma_xy = 0
+        else:
             if self.Method != "FD":
                 warnings.warn(
                     category=RuntimeWarning,
                     message="End loads have been set but will not be implemented because the solution method is not finite difference",
                 )
-        except:
-            self.sigma_xy = 0
         try:
             self.sigma_yy
+        except AttributeError:
+            self.sigma_yy = 0
+        else:
             if self.Method != "FD":
                 warnings.warn(
                     category=RuntimeWarning,
                     message="End loads have been set but will not be implemented because the solution method is not finite difference",
                 )
-        except:
-            self.sigma_yy = 0
 
     # Finalize
     def finalize(self):
         # Can include an option for this later, but for the moment, this will
         # clear the coefficient array so it doens't cause problems for model runs
         # searching for the proper rigidity
-        try:
+        with contextlib.suppress(AttributeError):
             del self.coeff_matrix
-        except:
-            pass
         if not self.Quiet:
             print("")
 
@@ -1003,10 +1011,8 @@ class Flexure(Utility, Plotting):
         try:
             # If wOutFile exists, has already been set by a setter
             self.wOutFile
-            if self.Verbose:
-                print("Output filename provided.")
-        # Otherwise, it needs to be set by an configuration file
-        except:
+        except AttributeError:
+            # Otherwise, it needs to be set by an configuration file
             try:
                 self.wOutFile = self.configGet(
                     "string", "output", "DeflectionOut", optional=True
@@ -1017,6 +1023,9 @@ class Flexure(Utility, Plotting):
                 if self.Debug:
                     print("No output filename provided:")
                     print("  not writing any deflection output to file")
+        else:
+            if self.Verbose:
+                print("Output filename provided.")
         if self.wOutFile:
             if self.wOutFile[-4:] == ".npy":
                 from numpy import save
@@ -1040,7 +1049,7 @@ class Flexure(Utility, Plotting):
             # Define as None for use later.
             try:
                 self.coeff_matrix
-            except:
+            except AttributeError:
                 self.coeff_matrix = None
             # No need to create a coeff_matrix if one already exists
             if self.coeff_matrix is None:
@@ -1110,20 +1119,20 @@ class Flexure(Utility, Plotting):
             # Just set them to an empty string (like input file would do)
             try:
                 self.BC_E
-            except:
+            except AttributeError:
                 self.BC_E = ""
             try:
                 self.BC_W
-            except:
+            except AttributeError:
                 self.BC_W = ""
             if self.dimension == 2:
                 try:
                     self.BC_S
-                except:
+                except AttributeError:
                     self.BC_S = ""
                 try:
                     self.BC_N
-                except:
+                except AttributeError:
                     self.BC_N = ""
             else:
                 # Simplifies flow control a few lines down to define these as None-type
@@ -1225,7 +1234,7 @@ class Flexure(Utility, Plotting):
         # (e.g., by the getters and setters)
         try:
             self.qs
-        except:
+        except AttributeError:
             self.qs = self.q0.copy()
             # Remove self.q0 to avoid issues with multiply-defined inputs
             # q0 is the parsable input to either a qs grid or contains (x,(y),q)
@@ -1238,7 +1247,7 @@ class Flexure(Utility, Plotting):
         # Is there a solver defined
         try:
             self.Solver  # See if it exists already
-        except:
+        except AttributeError:
             # Well, will fail if it doesn't see this, maybe not the most reasonable
             # error message.
             if self.filename:
@@ -1334,7 +1343,7 @@ class Flexure(Utility, Plotting):
             # (e.g., by the getters and setters)
             try:
                 self.qs
-            except:
+            except AttributeError:
                 self.qs = self.q0.copy()
                 # Remove self.q0 to avoid issues with multiply-defined inputs
                 # q0 is the parsable input to either a qs grid or contains (x,(y),q)
@@ -1365,7 +1374,7 @@ class Flexure(Utility, Plotting):
                 # If these have already been set, e.g., by getters/setters, great!
                 self.x
                 self.q
-            except:
+            except AttributeError:
                 # Using [x, y, w] configuration file
                 if self.q0.shape[1] == 2:
                     self.x = self.q0[:, 0]
@@ -1381,7 +1390,7 @@ class Flexure(Utility, Plotting):
                 self.x
                 self.u
                 self.q
-            except:
+            except AttributeError:
                 # Using [x, y, w] configuration file
                 if self.q0.shape[1] == 3:
                     self.x = self.q0[:, 0]
@@ -1408,7 +1417,7 @@ class Flexure(Utility, Plotting):
         # First, try to load the arrays
         try:
             self.xw
-        except:
+        except AttributeError:
             try:
                 self.xw = self.configGet("string", "input", "xw", optional=True)
                 if self.xw == "":
@@ -1422,7 +1431,7 @@ class Flexure(Utility, Plotting):
             try:
                 # already set by setter?
                 self.yw
-            except:
+            except AttributeError:
                 try:
                     self.yw = self.configGet("string", "input", "yw", optional=True)
                     if self.yw == "":

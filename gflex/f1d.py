@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
+import contextlib
 import sys
 import time
 
@@ -68,10 +69,8 @@ class F1D(Flexure):
         # If elastic thickness has been padded, return it to its original
         # value, so this is not messed up for repeat operations in a
         # model-coupling exercise
-        try:
+        with contextlib.suppress(AttributeError):
             self.Te = self.Te_unpadded
-        except:
-            pass
         if self.Verbose:
             print("F1D finalized")
         super().finalize()
