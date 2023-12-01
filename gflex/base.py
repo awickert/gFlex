@@ -66,7 +66,8 @@ class Utility:
                     if name[:17] != "BoundaryCondition":
                         if not self.Quiet:
                             print(
-                                "An empty input string here is not an acceptable option."
+                                "An empty input string here is not an acceptable"
+                                " option."
                             )
                             print(name, "is not optional.")
                             print("Program crash likely to occur.")
@@ -76,7 +77,8 @@ class Utility:
                 var = self.config.getboolean(category, name)
             else:
                 print(
-                    "Please enter 'float', 'string' (or 'str'), 'integer' (or 'int'), or 'boolean (or 'bool') for vartype"
+                    "Please enter 'float', 'string' (or 'str'), 'integer' (or 'int'),"
+                    " or 'boolean (or 'bool') for vartype"
                 )
                 sys.exit()  # Won't exit, but will lead to exception
             return var
@@ -347,10 +349,12 @@ class Plotting:
                     if self.Method == "SAS_NG":
                         if not self.Quiet:
                             print(
-                                "Combo plot can't work with SAS_NG! Don't have mechanism in place\nto calculate load width."
+                                "Combo plot can't work with SAS_NG! Don't have mechanism"
+                                " in place to calculate load width."
                             )
                             print(
-                                "Big problem -- what is the area represented by the loads at the\nextreme ends of the array?"
+                                "Big problem -- what is the area represented by the loads"
+                                " at the extreme ends of the array?"
                             )
                     else:
                         ax.plot(
@@ -363,7 +367,13 @@ class Plotting:
                     # Plot deflected load
                     if self.Method == "SAS_NG":
                         pass
-                        # ax.plot(self.x/1000.,self.q/(self.rho_m*self.g) + self.w,'go-',linewidth=2,label="Load volume [m^3] mantle equivalent]")
+                        # ax.plot(
+                        #     self.x / 1000.0,
+                        #     self.q / (self.rho_m * self.g) + self.w,
+                        #     "go-",
+                        #     linewidth=2,
+                        #     label="Load volume [m^3] mantle equivalent]",
+                        # )
                     else:
                         ax.plot(
                             self.x / 1000.0,
@@ -649,14 +659,14 @@ class Plotting:
                 markeredgecolor=".2",
                 markersize=1,
             )
-            # plt.hexbin(self.x, self.y, C=self.w) -- show colors on points -- harder to see
         if self.latlon:
             plt.xlabel("longitude [deg E]", fontsize=12, fontweight="bold")
             plt.ylabel("latitude [deg N]", fontsize=12, fontweight="bold")
         else:
             plt.xlabel("x [km]", fontsize=12, fontweight="bold")
             plt.ylabel("y [km]", fontsize=12, fontweight="bold")
-        # Limits -- to not get messed up by points (view wants to be wider so whole point visible)
+        # Limits -- to not get messed up by points (view wants to be wider so whole
+        # point visible)
         if self.latlon:
             plt.xlim((xi[0], xi[-1]))
             plt.ylim((yi[0], yi[-1]))
@@ -774,7 +784,8 @@ class Flexure(Utility, Plotting):
                 self.whichModel_AlreadyRun = True
             except:
                 sys.exit(
-                    "No configuration file at specified path, or configuration file configured incorrectly"
+                    "No configuration file at specified path, or configuration file"
+                    " configured incorrectly"
                 )
 
             # Set verbosity for model run
@@ -894,15 +905,17 @@ class Flexure(Utility, Plotting):
                     self.qs
                 except AttributeError:
                     sys.exit(
-                        "Must define q0, q, or qs by this stage in the initialization step\n"
-                        + "from either configuration file (string) or direct array import"
+                        "Must define q0, q, or qs by this stage in the initialization"
+                        " step from either configuration file (string) or direct array"
+                        " import"
                     )
         else:
             # Stop program if q0 is None-type
             if self.q0 is None:  # if is None type, just be patient
                 sys.exit(
-                    "Must define non-None-type q0 by this stage in the initialization step\n"
-                    + "from either configuration file (string) or direct array import"
+                    "Must define non-None-type q0 by this stage in the initialization"
+                    " step from either configuration file (string) or direct array"
+                    " import"
                 )
 
         # Ignore this if no q0 set
@@ -953,8 +966,10 @@ class Flexure(Utility, Plotting):
         else:
             if self.Method != "FD":
                 warnings.warn(
+                    "End loads have been set but will not be implemented because the"
+                    " solution method is not finite difference",
                     category=RuntimeWarning,
-                    message="End loads have been set but will not be implemented because the solution method is not finite difference",
+                    stacklevel=2,
                 )
         try:
             self.sigma_xy
@@ -963,8 +978,10 @@ class Flexure(Utility, Plotting):
         else:
             if self.Method != "FD":
                 warnings.warn(
+                    "End loads have been set but will not be implemented because the"
+                    " solution method is not finite difference",
                     category=RuntimeWarning,
-                    message="End loads have been set but will not be implemented because the solution method is not finite difference",
+                    stacklevel=2,
                 )
         try:
             self.sigma_yy
@@ -973,8 +990,10 @@ class Flexure(Utility, Plotting):
         else:
             if self.Method != "FD":
                 warnings.warn(
+                    "End loads have been set but will not be implemented because the"
+                    " solution method is not finite difference",
                     category=RuntimeWarning,
-                    message="End loads have been set but will not be implemented because the solution method is not finite difference",
+                    stacklevel=2,
                 )
 
     # Finalize
@@ -1080,34 +1099,22 @@ class Flexure(Utility, Plotting):
                 # Now check that these are valid boundary conditions
                 for bc in self.bclist:
                     if self.dimension == 1:
-                        if (bc == self.bc1D).any():
-                            pass
-                        else:
+                        if bc not in self.bc1D:
                             sys.exit(
-                                "'"
-                                + bc
-                                + "'"
-                                + " is not an acceptable 1D finite difference boundary condition\n"
-                                + "and/or is not yet implement in the code. Acceptable boundary conditions\n"
-                                + "are:\n"
-                                + str(self.bc1D)
-                                + "\n"
-                                + "Exiting."
+                                f"{bc!r} is not an acceptable 1D finite difference"
+                                " boundary condition and/or is not yet implement in"
+                                " the code. Acceptable boundary conditions are:"
+                                f" {', '.join(repr(bc) for bc in self.bc1D)}\n"
+                                "Exiting."
                             )
                     elif self.dimension == 2:
-                        if (bc == self.bc2D).any():
-                            pass
-                        else:
+                        if bc not in self.bc2D:
                             sys.exit(
-                                "'"
-                                + bc
-                                + "'"
-                                + " is not an acceptable 2D finite difference boundary condition\n"
-                                + "and/or is not yet implement in the code. Acceptable boundary conditions\n"
-                                + "are:\n"
-                                + str(self.bc2D)
-                                + "\n"
-                                + "Exiting."
+                                f"{bc!r} is not an acceptable 2D finite difference"
+                                " boundary condition and/or is not yet implement in"
+                                " the code. Acceptable boundary conditions are:"
+                                f" {', '.join(repr(bc) for bc in self.bc2D)}\n"
+                                "Exiting."
                             )
                     else:
                         sys.exit(
@@ -1160,9 +1167,9 @@ class Flexure(Utility, Plotting):
                 ):
                     if self.Verbose:
                         print(
-                            "Assuming NoOutsideLoads boundary condition, as this is implicit in the "
+                            "Assuming NoOutsideLoads boundary condition, as this is"
+                            " implicit in the superposition-based analytical solution"
                         )
-                        print("  superposition-based analytical solution")
             else:
                 if not self.Quiet:
                     print("")
@@ -1381,8 +1388,8 @@ class Flexure(Utility, Plotting):
                     self.q = self.q0[:, 1]
                 else:
                     sys.exit(
-                        "For 1D (ungridded) SAS_NG configuration file, need [x,w] array. Your dimensions are: "
-                        + str(self.q0.shape)
+                        "For 1D (ungridded) SAS_NG configuration file, need [x,w]"
+                        f" array. Your dimensions are: {self.q0.shape}"
                     )
         else:
             try:
@@ -1398,8 +1405,8 @@ class Flexure(Utility, Plotting):
                     self.q = self.q0[:, 2]
                 else:
                     sys.exit(
-                        "For 2D (ungridded) SAS_NG configuration file, need [x,y,w] array. Your dimensions are: "
-                        + str(self.q0.shape)
+                        "For 2D (ungridded) SAS_NG configuration file, need [x,y,w]"
+                        f" array. Your dimensions are: {self.q0.shape}"
                     )
         # x, y are in absolute coordinates. Create a local grid reference to
         # these. This local grid, which starts at (0,0), is defined just so that
