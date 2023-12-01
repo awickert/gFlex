@@ -54,7 +54,7 @@ dev = ["nox"]
 testing = ["pytest"]
 
 [project.scripts]
-gflex = "gflex.main:main"
+gflex = "gflex.gflex:main"
 
 # [tool.setuptools]
 # py-modules = []
@@ -69,7 +69,7 @@ version = {attr = "gflex._version.__version__"}
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-testpaths = ["gFlex", "tests"]
+testpaths = ["gflex", "tests"]
 norecursedirs = [".*", "*.egg*", "build", "dist", "utilities"]
 addopts = """
   --ignore setup.py
