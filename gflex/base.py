@@ -60,10 +60,10 @@ class Utility:
                 var = self.config.getfloat(category, name)
             elif vartype == "string" or vartype == "str":
                 var = self.config.get(category, name)
-                if var == "" and optional == False:
+                if var == "" and not optional:
                     # but "" is acceptable for boundary conditions
                     if name[:17] != "BoundaryCondition":
-                        if self.Quiet != True:
+                        if not self.Quiet:
                             print(
                                 "An empty input string here is not an acceptable option."
                             )
@@ -84,7 +84,7 @@ class Utility:
                 # Carry on if the variable is optional
                 var = None
                 if self.Verbose or self.Debug:
-                    if self.grass == False:
+                    if not self.grass:
                         print("")
                         print('No value entered for optional parameter "' + name + '"')
                         print('in category "' + category + '" in configuration file.')
@@ -171,16 +171,16 @@ class Utility:
         # In this case, an output at different (x,y), e.g., on a grid, is desired
         # First, see if there is a need for a grid, and then make it
         # latlon arrays must have a pre-set grid
-        if self.latlon == False:
+        if not self.latlon:
             # Warn that any existing grid will be overwritten
             try:
                 self.dx
-                if self.Quiet == False:
+                if not self.Quiet:
                     print("dx and dy being overwritten -- supply a full grid")
             except:
                 try:
                     self.dy
-                    if self.Quiet == False:
+                    if not self.Quiet:
                         print("dx and dy being overwritten -- supply a full grid")
                 except:
                     pass
@@ -339,7 +339,7 @@ class Plotting:
                     ax = fig.add_subplot(1, 1, 1)
                     # Plot undeflected load
                     if self.Method == "SAS_NG":
-                        if self.Quiet == False:
+                        if not self.Quiet:
                             print(
                                 "Combo plot can't work with SAS_NG! Don't have mechanism in place\nto calculate load width."
                             )
@@ -426,7 +426,7 @@ class Plotting:
                     plt.tight_layout()
                     plt.show()
                 else:
-                    if self.Quiet == False:
+                    if not self.Quiet:
                         print(
                             'Incorrect plotChoice input, "'
                             + self.plotChoice
@@ -481,7 +481,7 @@ class Plotting:
                         plt.tight_layout()
                         plt.show()
                 else:
-                    if self.Quiet == False:
+                    if not self.Quiet:
                         print(
                             'Incorrect plotChoice input, "'
                             + self.plotChoice
@@ -803,7 +803,7 @@ class Flexure(Utility, Plotting):
         # Introduce model
         # After configuration file can define "Quiet", and getter/setter should be done
         # by this point if we are going that way.
-        if self.Quiet == False:
+        if not self.Quiet:
             print("")  # Blank line at start of run
             print("")
             print("****************************" + "*" * len(__version__))
@@ -977,7 +977,7 @@ class Flexure(Utility, Plotting):
             del self.coeff_matrix
         except:
             pass
-        if self.Quiet == False:
+        if not self.Quiet:
             print("")
 
     # SAVING TO FILE AND PLOTTING STEPS
@@ -1156,7 +1156,7 @@ class Flexure(Utility, Plotting):
                         )
                         print("  superposition-based analytical solution")
             else:
-                if self.Quiet == False:
+                if not self.Quiet:
                     print("")
                     print(">>> BOUNDARY CONDITIONS IMPROPERLY DEFINED <<<")
                     print("")

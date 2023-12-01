@@ -61,7 +61,7 @@ class F1D(Flexure):
         self.method_func()
 
         self.time_to_solve = time.time() - self.solver_start_time
-        if self.Quiet == False:
+        if not self.Quiet:
             print("Time to solve [s]:", self.time_to_solve)
 
     def finalize(self):
@@ -233,7 +233,7 @@ class F1D(Flexure):
 
         # Finally, compute the total time this process took
         self.coeff_creation_time = time.time() - self.coeff_start_time
-        if self.Quiet == False:
+        if not self.Quiet:
             print(
                 "Time to construct coefficient (operator) array [s]:",
                 self.coeff_creation_time,
