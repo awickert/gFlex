@@ -227,7 +227,7 @@ class Utility:
             except:
                 # Then see if it is relative to the location of the configuration file
                 try:
-                    out = load(self.inpath + var)
+                    out = np.load(self.inpath + var)
                     if self.Verbose:
                         print("Loading " + var + " from numpy binary")
                 except:
@@ -1184,8 +1184,8 @@ class Flexure(Utility, Plotting):
         each other (for finite difference if loading a pre-build coefficient
         array). Otherwise, exit.
         """
-        if prod(self.coeff_matrix.shape) != long(
-            prod(np.array(self.qs.shape, dtype=int64) + 2) ** 2
+        if np.prod(self.coeff_matrix.shape) != np.long(
+            np.prod(np.array(self.qs.shape, dtype=np.int64) + 2) ** 2
         ):
             print("Inconsistent size of q0 array and coefficient mattrix")
             print("Exiting.")
