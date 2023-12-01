@@ -21,6 +21,7 @@ along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
 import sys
+
 from gflex.f1d import F1D
 from gflex.f2d import F2D
 

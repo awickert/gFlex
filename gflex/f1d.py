@@ -17,9 +17,10 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from gflex.base import Flexure
 from scipy.sparse import spdiags
-from scipy.sparse.linalg import spsolve, isolve
+from scipy.sparse.linalg import isolve, spsolve
+
+from gflex.base import Flexure
 
 
 class F1D(Flexure):

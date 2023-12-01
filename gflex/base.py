@@ -17,12 +17,16 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, os
 import configparser
+import os
+import sys
+import warnings
+
 import numpy as np
 from matplotlib import pyplot as plt
-import warnings
+
 from ._version import __version__
+
 
 class Utility:
 
@@ -428,8 +432,8 @@ class Plotting:
     if self.Verbose:
       print("Starting to interpolate grid for plotting -- can be a slow process!")
 
-    from scipy.interpolate import griddata
     import numpy.ma as ma
+    from scipy.interpolate import griddata
 
     # define grid.
     xmin = np.min(self.xw)
@@ -809,6 +813,7 @@ class Flexure(Utility, Plotting):
           save(self.wOutFile,self.w)
         else:
           from numpy import savetxt
+
           # Shouldn't need more than mm precision, at very most
           savetxt(self.wOutFile,self.w,fmt='%.3f')
           if self.Verbose:

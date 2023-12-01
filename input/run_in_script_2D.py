@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 
-import gflex
 import numpy as np
 from matplotlib import pyplot as plt
+
+import gflex
 
 flex = gflex.F2D()
 
