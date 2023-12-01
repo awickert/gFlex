@@ -585,13 +585,13 @@ class Plotting:
 
         # define grid.
         xmin = np.min(self.xw)
-        xmean = np.mean(self.xw)  # not used right now
+        # xmean = np.mean(self.xw)  # not used right now
         xmax = np.max(self.xw)
         ymin = np.min(self.yw)
-        ymean = np.mean(self.yw)  # not used right now
+        # ymean = np.mean(self.yw)  # not used right now
         ymax = np.max(self.yw)
-        x_range = xmax - xmin
-        y_range = ymax - ymin
+        # x_range = xmax - xmin
+        # y_range = ymax - ymin
 
         # x and y grids
         # 100 cells on each side -- just for plotting, not so important
@@ -607,9 +607,9 @@ class Plotting:
         # contour the gridded outputs, plotting dots at the randomly spaced data points.
         # CS = plt.contour(xi,yi,zi,15,linewidths=0.5,colors='k') -- don't need lines
         if self.latlon:
-            CS = plt.contourf(xi, yi, zi, 100, cmap=plt.cm.jet)
+            plt.contourf(xi, yi, zi, 100, cmap=plt.cm.jet)
         else:
-            CS = plt.contourf(xi / 1000.0, yi / 1000.0, zi, 100, cmap=plt.cm.jet)
+            plt.contourf(xi / 1000.0, yi / 1000.0, zi, 100, cmap=plt.cm.jet)
         plt.colorbar()  # draw colorbar
         # plot model points.
         # Computed at
