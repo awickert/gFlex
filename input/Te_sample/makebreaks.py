@@ -7,7 +7,7 @@ TeScalar = 80000
 #Te = TeScalar*np.ones((100,100))
 Te = TeScalar*np.ones(2000)
 
-# Make a discontinuous break: will be unstable, but a check of how to program 
+# Make a discontinuous break: will be unstable, but a check of how to program
 # this
 def discontinuous(orientation,number,proportion):
   output = np.zeros(Te.shape)
@@ -55,7 +55,7 @@ def gaussian(rowcol,proportion):
       elif len(Te.shape) ==1:
         g[i] = max(g[i], gaussian1d[i])
       else:
-        print "Error!"
+        print("Error!")
         raise SystemExit
   return g
 
@@ -67,6 +67,5 @@ if len(Te.shape) == 2:
   plt.colorbar()
 elif len(Te.shape) == 1:
   plt.plot(Te)
-  
-plt.show()
 
+plt.show()
