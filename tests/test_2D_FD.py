@@ -2,11 +2,11 @@
 
 import numpy as np
 
-import gflex
+from gflex.f2d import F2D
 
 
 def test_main():
-    flex = gflex.f2d.F2D()
+    flex = F2D()
 
     flex.Quiet = False
 
