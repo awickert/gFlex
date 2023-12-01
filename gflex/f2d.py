@@ -486,7 +486,7 @@ class F2D(Flexure):
             self.cj_1i1_coeff_ij = self.cj_1i1.copy()
             self.cj_2i0_coeff_ij = self.cj_2i0.copy()
 
-        elif type(self.Te) == np.ndarray:
+        elif isinstance(self.Te, np.ndarray):
             #######################################################
             # GENERATE COEFFICIENT VALUES FOR EACH SOLUTION TYPE. #
             #    "vWC1994" IS THE BEST: LOOSEST ASSUMPTIONS.      #
