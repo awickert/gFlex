@@ -17,9 +17,11 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from gflex.base import Flexure
 import scipy
 from scipy.special import kei
+
+from gflex.base import Flexure
+
 
 # class F2D inherits Flexure and overrides __init__ therefore setting up the same
 # three parameters as class Isostasy; and it then sets up more parameters specific
