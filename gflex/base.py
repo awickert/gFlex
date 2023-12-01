@@ -20,11 +20,9 @@ along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 import sys, os
 import configparser
 import numpy as np
-import time # For efficiency counting
-import types # For flow control
 from matplotlib import pyplot as plt
 import warnings
-from _version import __version__
+from ._version import __version__
 
 class Utility:
 

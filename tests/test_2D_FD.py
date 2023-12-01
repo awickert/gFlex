@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 def test_main():
-    flex = gflex.F2D()
+    flex = gflex.f2d.F2D()
 
     flex.Quiet = False
 
