@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from base import *
+from gflex.base import Flexure
 import scipy
 from scipy.special import kei
 

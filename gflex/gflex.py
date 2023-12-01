@@ -21,14 +21,11 @@ along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
 import sys
-from base import *
-from f1d import *
-from f2d import *
+from gflex.f1d import F1D
+from gflex.f2d import F2D
 
-try:
-  from _version import __version__
-except:
-  __version__ = '? version file missing ?'
+from ._version import __version__
+
 
 def welcome():
   print("")
