@@ -1,6 +1,6 @@
-[![CSDMS Component][csdms_badge]][csdms_gflex]
+[![CSDMS Component][csdms_badge]][csdms_gflex]<br/>
+[![DOI][doi_badge]][doi_link]<br/>
 [![Test][test_badge]][test_workflow]
-[![DOI][doi_badge]][doi_link]
 
 # gFlex
 
