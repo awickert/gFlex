@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gflex"
+description = "One- and two-dimensional plate bending, designed for Earth's lithosphere"
+authors = [
+  {email = "awickert@umn.edu"},
+  {name = "Andrew D. Wickert"},
+]
+maintainers = [
+  {email = "awickert@umn.edu"},
+  {name = "Andrew D. Wickert"},
+]
+keywords = [
+  'geophysics',
+  'geology',
+  'geodynamics',
+  'lithosphere',
+  'isostasy',
+  'GRASS GIS'
+]
+license = {text = "GPL-3.0-only"}
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Cython",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+requires-python = ">=3.10"
+dependencies = [
+	"matplotlib",
+	"numpy",
+	"scipy",
+]
+dynamic = ["readme", "version"]
+
+[project.urls]
+homepage = "https://github.com/awickert/gflex"
+documentation = "https://github.com/awickert/gflex/blob/main/README.md"
+repository = "https://github.com/awickert/gflex"
+changelog = "https://github.com/awickert/gflex/blob/main/CHANGES.md"
+
+[project.optional-dependencies]
+dev = ["nox"]
+testing = ["pytest"]
+
+[project.scripts]
+gflex = "gflex.gflex:main"
+
+# [tool.setuptools]
+# py-modules = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gflex*"]
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md", "AUTHORS.md", "CHANGES.md"], content-type="text/markdown"}
+version = {attr = "gflex._version.__version__"}
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["gflex", "tests"]
+norecursedirs = [".*", "*.egg*", "build", "dist", "utilities"]
+addopts = """
+  --ignore setup.py
+  --tb native
+  --strict
+  --durations 16
+  --doctest-modules
+  -vvv
+"""
+doctest_optionflags = [
+  "NORMALIZE_WHITESPACE",
+  "IGNORE_EXCEPTION_DETAIL",
+  "ALLOW_UNICODE"
+]
+
+[tool.isort]
+combine_as_imports = true
+known_first_party = "gflex"
+profile = "black"

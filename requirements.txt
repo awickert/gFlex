@@ -1,6 +1,3 @@
-nose
 matplotlib
 numpy
 scipy
-configparser
-setuptools
