@@ -1,8 +1,6 @@
-[![CSDMS Component](https://custom-icon-badges.demolab.com/badge/CSDMS-Component-2473c2?logo=csdms&style=for-the-badge)](https://csdms.colorado.edu/wiki/Model:GFlex)
-
-[![Build Status](https://travis-ci.org/awickert/gFlex.svg?branch=master)](https://travis-ci.org/awickert/gFlex)
-
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5034652.svg)](https://doi.org/10.5281/zenodo.5034652)
+[![CSDMS Component][csdms_badge]][csdms_gflex]
+[![Test][test_badge]][test_workflow]
+[![DOI][doi_badge]][doi_link]
 
 # gFlex
 
@@ -12,20 +10,19 @@ These instructions are meant to take an user familiar with computers but new to 
 
 When you use gFlex, please cite:
 
-**Wickert, A. D. (2016), [Open-source modular solutions for flexural isostasy: gFlex v1.0](https://www.geosci-model-dev.net/9/997/2016/gmd-9-997-2016.html), *Geosci. Model Dev.*, *9*(3), 997–1017, doi:10.5194/gmd-9-997-2016.**
+**Wickert, A. D. (2016), [Open-source modular solutions for flexural isostasy: gFlex v1.0][paper_doi], *Geosci. Model Dev.*, *9*(3), 997–1017, doi:10.5194/gmd-9-997-2016.**
+
 
 ## Download and Installation
 
 #### Python
 
-gFlex has been tested on **Python 2.7** and **Python 3.8**.
+gFlex has been tested on **Python 3.10+**.
 
 In order to run properly, gFlex requires the following Python dependencies:
 * numpy
 * scipy
 * matplotlib
-* setuptools
-* pip (optional)
 
 *For users who are new to Python, follow these directions to install the Python interpreters onto your computer.*
 
@@ -37,7 +34,7 @@ Use your package manager to download and install the required Python packages. F
 # Basic packages
 sudo apt-get install \
 python python-numpy python-scipy \
-python-setuptools python-matplotlib 
+python-setuptools python-matplotlib
 
 # pip (recommended for automatic installs via setuptools)
 sudo apt-get install python-pip
@@ -60,23 +57,10 @@ The current recommendation is to use a package manager like [**homebrew**](http:
 # Homebrew
 sudo brew install python-numpy
 # Pip
-pip install numpy
+pip install -r requirements.txt
 ```
 
 Recent efforts to download Python distributions (both **Anaconda** and **Enthought**) have not met with success with both gFlex and GRASS, though **Anaconda** has been tested successfully with Windows. As a result, it should be more successful to keep the Python packages managed better by something like **homebrew** with **pip**.
-
-##### Setuptools and ez_setup (Windows and Mac with distributions)
-
-The distributions for Mac and Windows do not come with setuptools, which is required to install gFlex. However, if you install ez_setup, the gFlex install script will automatically install setuptools for you. Simply type:
-```bash
-pip install ez_setup # Windows or Mac without special privileges required
-sudo pip install ez_setup # Mac where sudo privileges are required
-```
-Of course, one can also bypass the need for the install script to install setuptools by using pip preemptively:
-```bash
-pip install setuptools # Windows or Mac without special privileges required
-sudo pip install setuptools # Mac where sudo privileges are required
-```
 
 #### gFlex
 
@@ -86,7 +70,7 @@ gFlex is downloadable from the Python Package Index ([PyPI](https://pypi.python.
 
 If you have **pip**, you may simply type:
 ```bash
-pip install 
+pip install
 pip install gflex
 # Or if the destination install folder requires sudo access
 # (for UNIX-like systems)
@@ -154,22 +138,22 @@ For help constructing configuration files, see the blank template files **input/
 [mode]
 ; 1 (line) or 2 (surface) dimensions
 dimension=2
-; Solution method: FD (Finite Difference), FFT (Fast Fourier 
-; Transform, not yet implemented), SAS (Spatial domain analytical 
+; Solution method: FD (Finite Difference), FFT (Fast Fourier
+; Transform, not yet implemented), SAS (Spatial domain analytical
 ; solutions), or SAS_NG (SPA, but do not require a uniform grid
 ; - NG = "no grid")
-; For SAS_NG, 1D data must be provided and will be returned in 
+; For SAS_NG, 1D data must be provided and will be returned in
 ; two columns: (x,q0) --> (x,w). 2D data are similar, except
 ; will be of the form (x,y,[q0/in or w/out])
 ; I am working on gridded output for these, so this might change
 ; in the future.
-; Both the FFT and SPA techniques rely on superposition 
-; of solutions, because they can be combined linearly, whether in 
+; Both the FFT and SPA techniques rely on superposition
+; of solutions, because they can be combined linearly, whether in
 ; the spectral or the spatial domain)
 method=SPA
 ; Plate solutions can be:
 ;  * vWC1994 (best), or
-;  * G2009 (from Govers et al., 2009; not bad, but not 
+;  * G2009 (from Govers et al., 2009; not bad, but not
 ;           as robust as vWC1994)
 PlateSolutionType=vWC1994
 
@@ -178,10 +162,10 @@ YoungsModulus=65E9
 PoissonsRatio=0.25
 GravAccel=9.8
 MantleDensity=3300
-; This is the density of material (e.g., air, water) 
-; that is filling (or leaving) the hole that was 
-; created by flexure. If you do not have a constant 
-; density of infilling material, for example, at a 
+; This is the density of material (e.g., air, water)
+; that is filling (or leaving) the hole that was
+; created by flexure. If you do not have a constant
+; density of infilling material, for example, at a
 ; subsiding shoreline, you must instead iterate (see
 ; [numerical], below).
 InfillMaterialDensity=0
@@ -200,22 +184,22 @@ Loads=q0_sample/2D/central_square_load.txt
 ElasticThickness=Te_sample/2D/10km_const.txt
 ;
 ; xw and yw are vectors of desired output points for the SAS_NG method.
-; If they are not specified and a SAS_NG solution is run, the solution will be 
+; If they are not specified and a SAS_NG solution is run, the solution will be
 ; calculated at the points with the loads.
 ; they are ignored if a different solution method is chosen.
 xw=
 yw=
 
 [output]
-; DeflectionOut is for writing an output file. 
+; DeflectionOut is for writing an output file.
 ; If this is blank, no output is printed.
-; Otherwise, a space-delimited ASCII file of 
+; Otherwise, a space-delimited ASCII file of
 ; outputs is with this file name (and path).
 DeflectionOut=tmpout.txt
 ;
-; Acceptable inputs to "Plot" are q0 (loads), w (deflection), or both; any 
+; Acceptable inputs to "Plot" are q0 (loads), w (deflection), or both; any
 ; other entry here will result in no plotting.
-; Automatically plots a 1D line or 2D surface based on the choice 
+; Automatically plots a 1D line or 2D surface based on the choice
 ; of "dimension" variable in [mode]
 Plot=both
 
@@ -246,11 +230,11 @@ GridSpacing_y=
 ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 BoundaryCondition_North=
 BoundaryCondition_South=
-; 
+;
 ; Flag to enable lat/lon input (true/false). By default, this is false
 latlon=
 ; radius of planet [m], for lat/lon solutions
-PlanetaryRadius= 
+PlanetaryRadius=
 
 [verbosity]
 ; true/false. Defaults to true.
@@ -319,7 +303,7 @@ flex.finalize()
 # If you want to plot the output
 flex.plotChoice='both'
 # An output file for deflections could also be defined here
-# flex.wOutFile = 
+# flex.wOutFile =
 flex.output() # Plots and/or saves output, or does nothing, depending on
               # whether flex.plotChoice and/or flex.wOutFile have been set
 # TO OBTAIN OUTPUT DIRECTLY IN PYTHON, you can assign the internal variable,
@@ -395,3 +379,12 @@ There are four plot choices, defined via `self.plotChoice`:
 ## Utilities
 
 The "utilities" folder currently contains only one program, `flexural_wavelength_calculator.py`. Operating it is simple and fairly rudimentary: just edit the input variables directly in the calculator Python file, and then run it to see what the flexural parameter, first zero-crossing point (on the load-side of the forebulge), and the flexural wavelength.
+
+
+[csdms_badge]: https://custom-icon-badges.demolab.com/badge/CSDMS-Component-2473c2?logo=csdms&style=for-the-badge
+[csdms_gflex]: https://csdms.colorado.edu/wiki/Model:GFlex
+[doi_badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.5034652.svg
+[doi_link]: https://doi.org/10.5281/zenodo.5034652
+[test_badge]: https://github.com/awickert/gflex/actions/workflows/test.yml/badge.svg
+[test_workflow]: https://github.com/awickert/gflex/actions/workflows/test.yml
+[paper_doi]: https://www.geosci-model-dev.net/9/997/2016/gmd-9-997-2016.html
