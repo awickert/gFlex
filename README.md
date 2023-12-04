@@ -1,8 +1,6 @@
-[![CSDMS Component](https://custom-icon-badges.demolab.com/badge/CSDMS-Component-2473c2?logo=csdms&style=for-the-badge)](https://csdms.colorado.edu/wiki/Model:GFlex)
-
-[![Build Status](https://travis-ci.org/awickert/gFlex.svg?branch=master)](https://travis-ci.org/awickert/gFlex)
-
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5034652.svg)](https://doi.org/10.5281/zenodo.5034652)
+[![CSDMS Component][csdms_badge]][csdms_gflex]
+[![Test][test_badge]][test_workflow]
+[![DOI][doi_badge]][doi_link]
 
 # gFlex
 
@@ -12,7 +10,8 @@ These instructions are meant to take an user familiar with computers but new to 
 
 When you use gFlex, please cite:
 
-**Wickert, A. D. (2016), [Open-source modular solutions for flexural isostasy: gFlex v1.0](https://www.geosci-model-dev.net/9/997/2016/gmd-9-997-2016.html), *Geosci. Model Dev.*, *9*(3), 997–1017, doi:10.5194/gmd-9-997-2016.**
+**Wickert, A. D. (2016), [Open-source modular solutions for flexural isostasy: gFlex v1.0][paper_doi], *Geosci. Model Dev.*, *9*(3), 997–1017, doi:10.5194/gmd-9-997-2016.**
+
 
 ## Download and Installation
 
@@ -380,3 +379,12 @@ There are four plot choices, defined via `self.plotChoice`:
 ## Utilities
 
 The "utilities" folder currently contains only one program, `flexural_wavelength_calculator.py`. Operating it is simple and fairly rudimentary: just edit the input variables directly in the calculator Python file, and then run it to see what the flexural parameter, first zero-crossing point (on the load-side of the forebulge), and the flexural wavelength.
+
+
+[csdms_badge]: https://custom-icon-badges.demolab.com/badge/CSDMS-Component-2473c2?logo=csdms&style=for-the-badge
+[csdms_gflex]: https://csdms.colorado.edu/wiki/Model:GFlex
+[doi_badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.5034652.svg
+[doi_link]: https://doi.org/10.5281/zenodo.5034652
+[test_badge]: https://github.com/awickert/gflex/actions/workflows/test.yml/badge.svg
+[test_workflow]: https://github.com/awickert/gflex/actions/workflows/test.yml
+[paper_doi]: https://www.geosci-model-dev.net/9/997/2016/gmd-9-997-2016.html
