@@ -12,6 +12,7 @@ When you use gFlex, please cite:
 
 **Wickert, A. D. (2016), [Open-source modular solutions for flexural isostasy: gFlex v1.0][paper_doi], *Geosci. Model Dev.*, *9*(3), 997–1017, doi:10.5194/gmd-9-997-2016.**
 
+If you additionally want an up-to-date citation for the latest source-code release, please see that given in [CITATION.cff](CITATION.cff).
 
 ## Download and Installation
 
