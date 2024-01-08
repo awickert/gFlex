@@ -6,12 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "gflex"
 description = "One- and two-dimensional plate bending, designed for Earth's lithosphere"
 authors = [
-  {email = "awickert@umn.edu"},
-  {name = "Andrew D. Wickert"},
+  {email = "awickert@umn.edu", name = "Andrew D. Wickert"},
+  {email = "eric.hutton@colorado.edu", name = "Eric W. H. Hutton"},
 ]
 maintainers = [
-  {email = "awickert@umn.edu"},
-  {name = "Andrew D. Wickert"},
+  {email = "awickert@umn.edu", name = "Andrew D. Wickert"},
 ]
 keywords = [
   'geophysics',
