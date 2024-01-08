@@ -6,4 +6,4 @@
 
 ## Contributors
 
-None yet. Why not be the first?
+* [Eric W. H. Hutton](https://github.com/mcflugen)
