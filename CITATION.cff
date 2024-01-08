@@ -4,8 +4,11 @@ authors:
 - family-names: "Wickert"
   given-names: "Andrew D."
   orcid: "https://orcid.org/0000-0002-9545-3365"
+- family-names: "Hutton"
+  given-names: "Eric W. H."
+  orcid: "https://orcid.org/0000-0002-5864-6459"
 title: "gFlex"
-version: 1.1.1
+version: 1.2.0
 doi: 10.5281/zenodo.5034652
-date-released: 2021-06-26
+date-released: 2024-01-08
 url: "https://github.com/awickert/gFlex"
