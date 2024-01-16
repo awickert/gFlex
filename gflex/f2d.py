@@ -23,6 +23,7 @@ import time
 import numpy as np
 import scipy
 from scipy.special import kei
+from scipy.sparse.linalg import isolve, spsolve
 
 from gflex.base import Flexure
 
@@ -1784,7 +1785,7 @@ class F2D(Flexure):
                     self.iterative_ConvergenceTolerance,
                     "m between iterations",
                 )
-            wvector = scipy.sparse.linalg.isolve.lgmres(
+            wvector = isolve.lgmres(
                 self.coeff_matrix, q0vector
             )  # , tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)
             wvector = wvector[0]  # Reach into tuple to get my array back
@@ -1796,7 +1797,7 @@ class F2D(Flexure):
                 if not self.Quiet:
                     print("Solution type not understood:")
                     print("Defaulting to direct solution with UMFpack")
-            wvector = scipy.sparse.linalg.spsolve(
+            wvector = spsolve(
                 self.coeff_matrix, q0vector, use_umfpack=True
             )
 
