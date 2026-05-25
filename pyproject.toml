@@ -36,7 +36,6 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-	"bmipy",
 	"matplotlib",
 	"numpy",
 	"scipy",
@@ -50,6 +49,7 @@ repository = "https://github.com/awickert/gflex"
 changelog = "https://github.com/awickert/gflex/blob/main/CHANGES.md"
 
 [project.optional-dependencies]
+bmi = ["bmipy"]
 dev = ["nox"]
 testing = ["pytest"]
 
