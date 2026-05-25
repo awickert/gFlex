@@ -24,15 +24,22 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from bmipy.bmi import Bmi
 from numpy.typing import NDArray
+
+try:
+    from bmipy.bmi import Bmi as _BmiBase
+except ImportError as _err:
+    _BmiBase = object  # type: ignore[assignment,misc]
+    _bmipy_import_error: ImportError | None = _err
+else:
+    _bmipy_import_error = None
 
 from gflex.base import WhichModel
 from gflex.f1d import F1D
 from gflex.f2d import F2D
 
 
-class BmiGflex(Bmi):
+class BmiGflex(_BmiBase):
     """BMI wrapper for gFlex lithospheric flexure.
 
     Implements the CSDMS Basic Model Interface v2 specification.
@@ -75,6 +82,11 @@ class BmiGflex(Bmi):
     }
 
     def __init__(self) -> None:
+        if _bmipy_import_error is not None:
+            raise ImportError(
+                "bmipy is required to use BmiGflex. "
+                "Install it with: pip install gflex[bmi]"
+            ) from _bmipy_import_error
         self._model = None
         self._load = None
         self._w = None
