@@ -1,4 +1,3 @@
-bmipy
 matplotlib
 numpy
 scipy
