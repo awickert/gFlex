@@ -212,7 +212,7 @@ class Utility:
 
     def loadFile(self, var, close_on_fail=True):
         """
-        A special function to replate a variable name that is a string file path
+        A special function to replace a variable name that is a string file path
         with the loaded file.
         var is a string on input
         output is a numpy array or a None-type object (success vs. failure)
@@ -259,14 +259,34 @@ class Utility:
 
 
 class Plotting:
-    # Plot, if desired
-    # 1D all here, 2D in functions
-    # Just because there is often more code in 2D plotting functions
-    # Also, yes, this portion of the code is NOT efficient or elegant in how it
-    # handles functions. But it's just a simple way to visualize results
-    # easily! And not too hard to improve with a bit of time. Anyway, the main
-    # goal here is the visualization, not the beauty of the code : )
+    """
+    Mixin that provides quick-look plotting for F1D and F2D results.
+
+    Methods are called by :meth:`Flexure.output`; they are not intended to
+    be called directly by users.  Set ``self.plotChoice`` before calling
+    :meth:`output` to trigger a plot.
+
+    .. note::
+        Plot, if desired.
+        1D all here, 2D in functions — just because there is often more code
+        in 2D plotting functions.  Also, yes, this portion of the code is NOT
+        efficient or elegant in how it handles functions.  But it's just a
+        simple way to visualize results easily!  And not too hard to improve
+        with a bit of time.  Anyway, the main goal here is the visualization,
+        not the beauty of the code :)
+    """
+
     def plotting(self):
+        """
+        Dispatch to the appropriate plot routine based on ``self.plotChoice``.
+
+        Valid values for ``plotChoice``:
+
+        * ``'q'`` — surface load only
+        * ``'w'`` — deflection only
+        * ``'both'`` — load and deflection in separate subplots (1D and 2D)
+        * ``'combo'`` — load and deflection overlaid (1D only)
+        """
         # try:
         #  self.plotChoice
         # except:
@@ -678,9 +698,17 @@ class Plotting:
 
 
 class WhichModel(Utility):
+    """
+    Reads a configuration file to determine which model class (F1D or F2D)
+    to instantiate.  Used internally by the file-driven workflow; not needed
+    when setting attributes programmatically.
+    """
+
     def __init__(self, filename=None):
         """
-        WhichModel is a copy of initialization features inside the main class
+        Read ``dimension`` from the ``[mode]`` section of the configuration
+        file so the calling code knows whether to create an :class:`F1D` or
+        :class:`F2D` instance.
         """
         self.filename = filename
         if self.filename:
@@ -758,6 +786,20 @@ class Flexure(Utility, Plotting):
             self.PlanetaryRadius = None
 
     def initialize(self, filename=None):
+        """
+        Load parameters and prepare internal state.
+
+        If a configuration file path is available, reads all physical and
+        numerical parameters from it via :class:`configparser`.  Otherwise
+        expects the caller to have set attributes directly (programmatic
+        use).  Called automatically by :meth:`F1D.initialize` and
+        :meth:`F2D.initialize`.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to a gFlex ``.cfg`` configuration file.
+        """
         # Values from configuration file
 
         # If a filename is provided here, overwrite any prior value
@@ -998,6 +1040,14 @@ class Flexure(Utility, Plotting):
 
     # Finalize
     def finalize(self):
+        """
+        Release cached solver state.
+
+        Deletes the coefficient matrix so it is rebuilt fresh on the next
+        call, which matters when running iteratively with changing inputs.
+        Called automatically by :meth:`F1D.finalize` and
+        :meth:`F2D.finalize`.
+        """
         # Can include an option for this later, but for the moment, this will
         # clear the coefficient array so it doens't cause problems for model runs
         # searching for the proper rigidity
@@ -1017,8 +1067,8 @@ class Flexure(Utility, Plotting):
         Does nothing if neither ``wOutFile`` nor ``plotChoice`` has been
         set.  Set ``wOutFile`` to a path ending in ``'.npy'`` for a binary
         NumPy array, or any other extension for an ASCII grid.  Set
-        ``plotChoice`` to ``'deflection'``, ``'inputs'``, or ``'both'``
-        to display plots.
+        ``plotChoice`` to ``'q'``, ``'w'``, ``'both'``, or (1D only)
+        ``'combo'`` to display plots.
         """
         if self.Verbose:
             print("Output step")
