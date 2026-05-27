@@ -28,6 +28,47 @@ from scipy.sparse.linalg import isolve, spsolve
 from gflex.base import Flexure
 
 
+def flexural_wavelengths(Te, rho_m, rho_fill, E, nu, g):
+    """
+    Compute flexural parameters and wavelengths for a thin elastic plate.
+
+    Parameters
+    ----------
+    Te : float
+        Elastic thickness [m].
+    rho_m : float
+        Mantle density [kg m^-3].
+    rho_fill : float
+        Infill density [kg m^-3] (e.g. 0 for air, 1000 for water).
+    E : float
+        Young's modulus [Pa].
+    nu : float
+        Poisson's ratio.
+    g : float
+        Gravitational acceleration [m s^-2].
+
+    Returns
+    -------
+    dict
+        Keys ``alpha_1D``, ``lambda_1D``, ``zero_crossing_1D``,
+        ``alpha_2D``, ``lambda_2D``, ``zero_crossing_2D`` — all in metres.
+    """
+    drho = rho_m - rho_fill
+    D = (E * float(Te) ** 3) / (12.0 * (1.0 - nu**2))
+    alpha_1D = (4.0 * D / (drho * g)) ** 0.25
+    alpha_2D = (D / (drho * g)) ** 0.25
+    lambda_1D = 2.0 * np.pi * alpha_1D
+    lambda_2D = 2.0 * np.pi * alpha_2D
+    return {
+        "alpha_1D": alpha_1D,
+        "lambda_1D": lambda_1D,
+        "zero_crossing_1D": 0.375 * lambda_1D,
+        "alpha_2D": alpha_2D,
+        "lambda_2D": lambda_2D,
+        "zero_crossing_2D": 0.375 * lambda_2D,
+    }
+
+
 def recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
                            g=9.81, n_wavelengths=1.0):
     """
@@ -37,8 +78,9 @@ def recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
     the load so that the plate's response to the load is negligible at the
     boundary.  Half a wavelength is often sufficient in practice.
 
-    The flexural parameter α = (D / Δρ g)^(1/4) is computed from the maximum
-    Te value, giving the most conservative (widest) padding estimate.
+    The 2-D flexural wavelength is computed from the maximum Te value via
+    :func:`flexural_wavelengths`, giving the most conservative (widest)
+    padding estimate.
 
     Parameters
     ----------
@@ -65,12 +107,10 @@ def recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
     int
         Recommended padding width in grid cells.
     """
-    Te_max = float(np.max(Te))
-    D = E * Te_max**3 / (12.0 * (1.0 - nu**2))
-    drho = rho_m - rho_fill
-    alpha = (D / (drho * g)) ** 0.25       # flexural parameter [m]
-    wavelength = 2.0 * np.pi * alpha        # flexural wavelength [m]
-    return int(np.ceil(n_wavelengths * wavelength / dx))
+    r = flexural_wavelengths(
+        Te=float(np.max(Te)), rho_m=rho_m, rho_fill=rho_fill, E=E, nu=nu, g=g,
+    )
+    return int(np.ceil(n_wavelengths * r["lambda_2D"] / dx))
 
 
 def smooth_pad_Te(Te, pad_width, Te_out=None):

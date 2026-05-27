@@ -3,48 +3,7 @@
 
 import argparse
 
-import numpy as np
-
-
-def flexural_wavelengths(Te, rho_m, rho_fill, E, nu, g):
-    """
-    Compute flexural parameters and wavelengths for a thin elastic plate.
-
-    Parameters
-    ----------
-    Te : float
-        Elastic thickness [m].
-    rho_m : float
-        Mantle density [kg m^-3].
-    rho_fill : float
-        Infill density [kg m^-3] (e.g. 0 for air, 1000 for water).
-    E : float
-        Young's modulus [Pa].
-    nu : float
-        Poisson's ratio.
-    g : float
-        Gravitational acceleration [m s^-2].
-
-    Returns
-    -------
-    dict with keys:
-        alpha_1D, lambda_1D, zero_crossing_1D  (all in metres)
-        alpha_2D, lambda_2D, zero_crossing_2D
-    """
-    drho = rho_m - rho_fill
-    D = (E * Te**3) / (12.0 * (1.0 - nu**2))
-    alpha_1D = (4.0 * D / (drho * g)) ** 0.25
-    alpha_2D = (D / (drho * g)) ** 0.25
-    lambda_1D = 2.0 * np.pi * alpha_1D
-    lambda_2D = 2.0 * np.pi * alpha_2D
-    return {
-        "alpha_1D": alpha_1D,
-        "lambda_1D": lambda_1D,
-        "zero_crossing_1D": 0.375 * lambda_1D,
-        "alpha_2D": alpha_2D,
-        "lambda_2D": lambda_2D,
-        "zero_crossing_2D": 0.375 * lambda_2D,
-    }
+from gflex import flexural_wavelengths
 
 
 def main():
