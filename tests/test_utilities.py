@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from utilities.flexural_wavelength_calculator import flexural_wavelengths
+from gflex import flexural_wavelengths
 
 
 # Standard geophysical parameters used throughout
