@@ -462,6 +462,7 @@ class F2D(Flexure):
     ########################################
 
     def FD(self):
+        """Run the finite-difference solution pipeline."""
         # Only generate coefficient matrix if it is not already provided
         if self.coeff_matrix is not None:
             pass
@@ -471,13 +472,16 @@ class F2D(Flexure):
         self.fd_solve()
 
     def FFT(self):
+        """FFT solution — not yet implemented."""
         sys.exit("The fast Fourier transform solution method is not yet implemented.")
 
     def SAS(self):
+        """Run the gridded superposition-of-analytical-solutions pipeline."""
         self.spatialDomainVarsSAS()
         self.spatialDomainGridded()
 
     def SAS_NG(self):
+        """Run the ungridded (non-uniform points) SAS pipeline."""
         self.spatialDomainVarsSAS()
         self.spatialDomainNoGrid()
 
@@ -491,6 +495,7 @@ class F2D(Flexure):
     # SETUP
 
     def spatialDomainVarsSAS(self):
+        """Compute flexural rigidity D, parameter alpha, and Green's-function coefficient for SAS."""
         # Check Te:
         # * If scalar, okay.
         # * If grid, convert to scalar if a singular value
@@ -516,6 +521,7 @@ class F2D(Flexure):
     # GRIDDED
 
     def spatialDomainGridded(self):
+        """Compute deflection by summing 2D Kelvin-function Green's functions over the load grid."""
         self.nx = self.qs.shape[1]
         self.ny = self.qs.shape[0]
 
@@ -556,6 +562,7 @@ class F2D(Flexure):
     # NO GRID
 
     def spatialDomainNoGrid(self):
+        """Compute deflection by summing 2D Kelvin-function Green's functions at ungridded output points."""
         self.w = np.zeros(self.xw.shape)
         if self.Debug:
             print("w = ")
@@ -587,12 +594,7 @@ class F2D(Flexure):
     ######################
 
     def elasprep(self):
-        """
-        dx4, dy4, dx2dy2, D = elasprep(dx,dy,Te,E=1E11,nu=0.25)
-
-        Defines the variables that are required to create the 2D finite
-        difference solution coefficient matrix
-        """
+        """Precompute dx⁴, dy⁴, dx²dy², and the flexural rigidity array D for the FD solver."""
 
         if self.Method != "SAS_NG":
             self.dx4 = self.dx**4
@@ -1023,6 +1025,7 @@ class F2D(Flexure):
         self.nrowsy = self.cj0i0.shape[0]
 
     def BC_Flexure(self):
+        """Apply flexural boundary conditions to the 2D coefficient arrays."""
         # The next section of code is split over several functions for the 1D
         # case, but will be all in one function here, at least for now.
 
