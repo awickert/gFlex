@@ -22,8 +22,10 @@ Two independent analytical benchmarks are provided:
 
    where
        D     = E * Te³ / (12 * (1 - nu²))   [N·m]  flexural rigidity
-       alpha = (4D / (drho * g))^(1/4)       [m]    flexural parameter
+       alpha = (D / (drho * g))^(1/4)        [m]    2-D flexural parameter
        kei   = Im[ e^{-iπ/4} * K₀(r e^{iπ/4}) ]    Kelvin function
+
+   Note: the 2-D flexural parameter uses D, not 4*D as in the 1-D case.
 
    Because kei(x) < 0 for x ≥ 0, the deflection w is negative (downward)
    for a positive (downward) load, consistent with the Landlab component's
@@ -32,7 +34,8 @@ Two independent analytical benchmarks are provided:
    The comparison is made at several points in the interior of the grid,
    far enough from both the load and the domain boundaries that (a) the
    FD discretisation error is small and (b) boundary reflections are
-   negligible.
+   negligible.  The upper radius is kept below the forebulge onset
+   (kei zero crossing at r/alpha ≈ 3.91) where relative error is undefined.
 """
 
 import numpy as np
@@ -52,13 +55,6 @@ def _make_grid(nrows, ncols, spacing):
     mg.add_zeros("surface_load__stress", at="node")
     return mg
 
-
-def _flexural_rigidity(E, Te, nu):
-    return E * Te**3 / (12.0 * (1.0 - nu**2))
-
-
-def _flexural_parameter(D, drho, g):
-    return (4.0 * D / (drho * g)) ** 0.25
 
 
 # ---------------------------------------------------------------------------
@@ -103,14 +99,14 @@ def test_point_load_kelvin_function():
     Set-up
     ------
     * 100 × 100 grid, dx = dy = 5 km  →  500 km domain
-    * Te = 10 km  →  alpha ≈ 29 km  →  domain ≈ 17 alpha wide
+    * Te = 10 km  →  alpha ≈ 21 km  →  domain ≈ 24 alpha wide
     * Central cell loaded with q = 1e6 Pa
     * 0Moment0Shear BCs on all edges (free edges, minimal reflection)
 
-    Comparison points are chosen at radii between 1.5 and 4 alpha from
-    the load centre and at least 3 alpha from every boundary, so that
-    both near-field FD discretisation error and boundary reflections are
-    small.  A tolerance of 5 % is used.
+    Comparison points are chosen at radii between 1.5 and 3.5 alpha from
+    the load centre (below the forebulge onset at ~3.9 alpha) and at least
+    3 alpha from every boundary, so that both near-field FD discretisation
+    error and boundary reflections are small.  A tolerance of 5 % is used.
     """
     from landlab.components.gflex.flexure import gFlex
 
@@ -125,9 +121,9 @@ def test_point_load_kelvin_function():
     dx = dy = 5000.0        # m
     nrows = ncols = 100
 
-    D     = _flexural_rigidity(E, Te, nu)
+    D     = E * Te**3 / (12.0 * (1.0 - nu**2))          # flexural rigidity [N·m]
     drho  = rho_m - rho_fill
-    alpha = _flexural_parameter(D, drho, g)   # ≈ 29 km
+    alpha = (D / (drho * g)) ** 0.25                    # 2-D flexural parameter [m]
 
     # Build grid and apply a point load at the central cell
     mg = _make_grid(nrows, ncols, dx)
@@ -156,15 +152,15 @@ def test_point_load_kelvin_function():
     P = q_load * dx * dy   # N
 
     # Analytical solution:  w(r) = P * alpha² / (2π D) * kei(r/alpha)
-    # kei(x) < 0 for x > 0, so w < 0 for a downward (positive) load.
+    # kei(x) < 0 for x ≥ 0, so w < 0 for a downward (positive) load.
     def w_analytical(r):
         return P * alpha**2 / (2.0 * np.pi * D) * kei(r / alpha)
 
-    # Sample points: radii between 1.5 and 4 alpha, on the grid row
-    # passing through the load centre, to the east (index > cj).
+    # Sample points on the grid row passing through the load centre (east).
+    # Stay below 3.5 alpha to avoid the forebulge (kei zero at r/alpha ≈ 3.91).
     # Restrict to cells at least 3 alpha from the eastern boundary.
     min_r  = 1.5 * alpha
-    max_r  = 4.0 * alpha
+    max_r  = 3.5 * alpha
     min_from_boundary = 3.0 * alpha
 
     errors = []
