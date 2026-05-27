@@ -28,7 +28,7 @@ from scipy.sparse.linalg import isolve, spsolve
 from gflex.base import Flexure
 
 
-def flexural_wavelengths(Te, rho_m, rho_fill, E, nu, g):
+def flexural_wavelengths(Te, E, nu, rho_m, rho_fill, g):
     """
     Compute flexural parameters and wavelengths for a thin elastic plate.
 
@@ -36,14 +36,14 @@ def flexural_wavelengths(Te, rho_m, rho_fill, E, nu, g):
     ----------
     Te : float
         Elastic thickness [m].
-    rho_m : float
-        Mantle density [kg m^-3].
-    rho_fill : float
-        Infill density [kg m^-3] (e.g. 0 for air, 1000 for water).
     E : float
         Young's modulus [Pa].
     nu : float
         Poisson's ratio.
+    rho_m : float
+        Mantle density [kg m^-3].
+    rho_fill : float
+        Infill density [kg m^-3] (e.g. 0 for air, 1000 for water).
     g : float
         Gravitational acceleration [m s^-2].
 
