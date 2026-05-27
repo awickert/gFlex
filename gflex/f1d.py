@@ -28,13 +28,112 @@ from gflex.base import Flexure
 
 
 class F1D(Flexure):
+    """
+    One-dimensional lithospheric flexure solver.
+
+    Computes the deflection *w(x)* of a thin elastic beam overlying an
+    inviscid fluid (mantle) given a surface load stress *qs*.  Supports
+    spatially variable elastic thickness *Te*.
+
+    Set instance attributes, then call :meth:`initialize`, :meth:`run`, and
+    :meth:`finalize` in sequence.  The deflection is available as ``flex.w``
+    after :meth:`finalize`.
+
+    Attributes
+    ----------
+    Method : str
+        Solution method.  ``'FD'`` (finite difference, supports variable
+        *Te*), ``'SAS'`` (superposition of analytical solutions, constant
+        *Te* only), or ``'SAS_NG'`` (SAS on an ungridded point array).
+    Solver : str
+        Linear solver: ``'direct'`` (sparse LU, default) or
+        ``'iterative'``.
+    g : float
+        Gravitational acceleration [m s⁻²].
+    E : float
+        Young's modulus [Pa].
+    nu : float
+        Poisson's ratio.
+    rho_m : float
+        Mantle density [kg m⁻³].
+    rho_fill : float
+        Infill material density [kg m⁻³] (0 for air, ~1000 for water,
+        ~2700 for rock).
+    Te : float or ndarray of shape (N,)
+        Elastic thickness [m].  A scalar is broadcast to the full grid.
+    qs : ndarray of shape (N,)
+        Surface load stress [Pa].
+    dx : float
+        Grid spacing [m].
+    BC_W, BC_E : str
+        Boundary conditions on the west (left) and east (right) ends.
+        FD options: ``'0Displacement0Slope'``, ``'0Slope0Shear'``,
+        ``'0Moment0Shear'``, ``'Mirror'``, ``'Periodic'``.
+        SAS option: ``'NoOutsideLoads'`` (the default when unset).
+    sigma_xx : float, optional
+        Normal stress applied at the plate ends [Pa].  FD only.
+    Quiet : bool
+        Suppress timing output.  Default ``False``.
+    Verbose : bool
+        Print progress messages.  Default ``True``.
+
+    Examples
+    --------
+    Minimal finite-difference run::
+
+        import numpy as np
+        from gflex import F1D
+
+        flex = F1D()
+        flex.Quiet = True
+        flex.Method = 'FD'
+        flex.Solver = 'direct'
+        flex.g = 9.8
+        flex.E = 65e9
+        flex.nu = 0.25
+        flex.rho_m = 3300.
+        flex.rho_fill = 1000.
+        flex.Te = 30e3
+        flex.qs = np.zeros(300)
+        flex.qs[100:200] = 1e6      # 100-cell load
+        flex.dx = 4000.             # 4 km grid
+        flex.BC_W = '0Displacement0Slope'
+        flex.BC_E = '0Moment0Shear'
+        flex.initialize()
+        flex.run()
+        flex.finalize()
+        deflection = flex.w         # (300,) array, negative downward
+    """
+
     def initialize(self, filename=None):
+        """
+        Validate inputs and prepare the solver.
+
+        Must be called once before :meth:`run`.  If a configuration-file
+        path was passed to the constructor (or to this method), parameters
+        are read from that file; otherwise they are taken from the instance
+        attributes set by the caller.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to a gFlex ``.cfg`` configuration file.  Overrides any
+            filename supplied to the constructor.
+        """
         self.dimension = 1  # Set it here in case it wasn't set for selection before
         super().initialize()
         if self.Verbose:
             print("F1D initialized")
 
     def run(self):
+        """
+        Execute the flexural solution.
+
+        Selects and runs the method specified by ``self.Method``.  The
+        deflection array is stored in ``self.w`` on return.  Call
+        :meth:`finalize` afterwards to restore any internally modified
+        state.
+        """
         self.bc_check()
         self.solver_start_time = time.time()
         if self.Method == "FD":
@@ -66,6 +165,13 @@ class F1D(Flexure):
             print("Time to solve [s]:", self.time_to_solve)
 
     def finalize(self):
+        """
+        Clean up after the solver.
+
+        Restores ``self.Te`` to its pre-run value if gFlex padded it
+        internally, so the object can be reused cleanly in a
+        model-coupling loop.  Clears the cached coefficient matrix.
+        """
         # If elastic thickness has been padded, return it to its original
         # value, so this is not messed up for repeat operations in a
         # model-coupling exercise
@@ -207,7 +313,7 @@ class F1D(Flexure):
         """
         Selects the boundary conditions
         Then calls the function to build the pentadiagonal matrix to solve
-        1D flexure with variable (or constant) elsatic thickness
+        1D flexure with variable (or constant) elastic thickness
         """
 
         # Zeroth, start the timer and print the boundary conditions to the screen
@@ -509,9 +615,8 @@ class F1D(Flexure):
             self.r2[i] = np.nan
 
     def BC_0Slope0Shear(self):
-        i = 0
         """
-    This boundary condition is esentially a Neumann 0-gradient boundary
+    This boundary condition is essentially a Neumann 0-gradient boundary
     condition with that 0-gradient state extended over a longer part of
     the grid such that the third derivative also equals 0.
 
@@ -558,7 +663,7 @@ class F1D(Flexure):
         This simulates a free end (broken plate, end of a cantilevered beam:
         think diving board tip)
         It is *not* yet set up to have loads placed on the ends themselves:
-        (look up how to do this, thought Wikipdia has some info, but can't find
+        (look up how to do this, thought Wikipedia has some info, but can't find
         it... what I read said something about generalizing)
         """
 
