@@ -1011,6 +1011,15 @@ class Flexure(Utility, Plotting):
     # Output: One of the functions run by isostasy.py; not part of IRF
     # (for standalone model use)
     def output(self):
+        """
+        Save deflection to file and/or plot, based on optional attributes.
+
+        Does nothing if neither ``wOutFile`` nor ``plotChoice`` has been
+        set.  Set ``wOutFile`` to a path ending in ``'.npy'`` for a binary
+        NumPy array, or any other extension for an ASCII grid.  Set
+        ``plotChoice`` to ``'deflection'``, ``'inputs'``, or ``'both'``
+        to display plots.
+        """
         if self.Verbose:
             print("Output step")
         self.outputDeflections()
