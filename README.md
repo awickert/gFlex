@@ -384,8 +384,8 @@ The "utilities" folder currently contains only one program, `flexural_wavelength
 
 [csdms_badge]: https://custom-icon-badges.demolab.com/badge/CSDMS-Component-2473c2?logo=csdms&style=for-the-badge
 [csdms_gflex]: https://csdms.colorado.edu/wiki/Model:GFlex
-[doi_badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.5034652.svg
-[doi_link]: https://doi.org/10.5281/zenodo.5034652
+[doi_badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.5034651.svg
+[doi_link]: https://doi.org/10.5281/zenodo.5034651
 [test_badge]: https://github.com/awickert/gflex/actions/workflows/test.yml/badge.svg
 [test_workflow]: https://github.com/awickert/gflex/actions/workflows/test.yml
 [paper_doi]: https://www.geosci-model-dev.net/9/997/2016/gmd-9-997-2016.html
