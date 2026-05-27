@@ -44,9 +44,9 @@ dynamic = ["readme", "version"]
 
 [project.urls]
 homepage = "https://github.com/awickert/gflex"
-documentation = "https://github.com/awickert/gflex/blob/main/README.md"
+documentation = "https://github.com/awickert/gflex/blob/master/README.md"
 repository = "https://github.com/awickert/gflex"
-changelog = "https://github.com/awickert/gflex/blob/main/CHANGES.md"
+changelog = "https://github.com/awickert/gflex/blob/master/CHANGES.md"
 
 [project.optional-dependencies]
 bmi = ["bmipy"]
