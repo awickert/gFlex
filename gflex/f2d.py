@@ -436,26 +436,26 @@ class F2D(Flexure):
         if np.isscalar(self.Te):
             # So much simpler with constant D! And symmetrical stencil
             self.cj2i0 = D / dy4
-            self.cj1i_1 = 2 * D / dx2dy2 + 2 * self.sigma_xy * self.T_e
-            self.cj1i0 = -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.T_e
-            self.cj1i1 = 2 * D / dx2dy2 - 2 * self.sigma_xy * self.T_e
+            self.cj1i_1 = 2 * D / dx2dy2 + 2 * self.sigma_xy * self.Te
+            self.cj1i0 = -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.Te
+            self.cj1i1 = 2 * D / dx2dy2 - 2 * self.sigma_xy * self.Te
             self.cj0i_2 = D / dx4
-            self.cj0i_1 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.T_e
+            self.cj0i_1 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.Te
             self.cj0i0 = (
                 6 * D / dx4
                 + 6 * D / dy4
                 + 8 * D / dx2dy2
                 + drho * g
-                + 2 * self.sigma_xx * self.T_e
-                + 2 * self.sigma_yy * self.T_e
+                + 2 * self.sigma_xx * self.Te
+                + 2 * self.sigma_yy * self.Te
             )
             self.cj0i1 = (
-                -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.T_e
+                -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.Te
             )  # Symmetry
             self.cj0i2 = D / dx4  # Symmetry
-            self.cj_1i_1 = 2 * D / dx2dy2 - 2 * self.sigma_xy * self.T_e  # Symmetry
+            self.cj_1i_1 = 2 * D / dx2dy2 - 2 * self.sigma_xy * self.Te  # Symmetry
             self.cj_1i0 = -4 * D / dy4 - 4 * D / dx2dy2  # Symmetry
-            self.cj_1i1 = 2 * D / dx2dy2 + 2 * self.sigma_xy * self.T_e  # Symmetry
+            self.cj_1i1 = 2 * D / dx2dy2 + 2 * self.sigma_xy * self.Te  # Symmetry
             self.cj_2i0 = D / dy4  # Symmetry
             # Bring up to size
             self.cj2i0 *= np.ones(self.qs.shape)
