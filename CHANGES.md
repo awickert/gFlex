@@ -1,5 +1,19 @@
 # Release Notes
 
+## [1.2.0](https://github.com/awickert/gFlex/releases/tag/v1.2.0) - 2026-05-27
+
+- New: `BmiGflex` — CSDMS Basic Model Interface (BMI) v2 implementation;
+  `bmipy` is an optional dependency and gFlex works without it.
+- New: `F1D`, `F2D`, and `BmiGflex` are now accessible directly from the
+  `gflex` package namespace (e.g. `import gflex; gflex.F2D()`); previously
+  this raised `AttributeError`.
+- Fix: updated `scipy.sparse.linalg` import for compatibility with modern
+  scipy.
+- Fix: latent typo `self.T_e` → `self.Te` in the scalar-Te branch of
+  `get_coeff_values` (introduced 2021-06-26); would produce incorrect
+  results when tectonic stress terms (sigma_xx, sigma_yy, sigma_xy) are
+  non-zero.
+
 ## [1.1.1](https://github.com/awickert/gFlex/releases/tag/v1.1.1) - 2021-06-26
 
 - Updated PyPI support: twine upload, README.md
