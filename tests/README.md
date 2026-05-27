@@ -73,7 +73,7 @@ is 5 %.
 ## Grid-convergence results (2026-05-27)
 
 A convergence study with E = 65 GPa, Te = 10 km, ν = 0.25,
-ρ_m = 3300 kg m⁻³, ρ_fill = 0, g = 9.81 m s⁻² confirmed that the 2-D
+ρ_m = 3300 kg m⁻³, ρ_fill = 0, g = 9.8 m s⁻² confirmed that the 2-D
 FD scheme is **second-order accurate** (O(dx²)).
 
 Grid spacings tested: dx = 10 000, 5 000, 2 500, 1 250 m

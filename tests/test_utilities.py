@@ -7,7 +7,7 @@ from gflex import flexural_wavelengths
 
 
 # Standard geophysical parameters used throughout
-_PARAMS = dict(rho_m=3300.0, rho_fill=0.0, E=65e9, nu=0.25, g=9.81)
+_PARAMS = dict(rho_m=3300.0, rho_fill=0.0, E=65e9, nu=0.25, g=9.8)
 
 
 def test_lambda1D_is_sqrt2_times_lambda2D():
@@ -32,15 +32,15 @@ def test_wavelength_increases_with_Te():
 
 def test_wavelength_decreases_with_drho():
     """Larger density contrast → shorter flexural wavelength."""
-    r_low = flexural_wavelengths(Te=30e3, rho_m=3300.0, rho_fill=1000.0, E=65e9, nu=0.25, g=9.81)
-    r_high = flexural_wavelengths(Te=30e3, rho_m=3300.0, rho_fill=0.0,   E=65e9, nu=0.25, g=9.81)
+    r_low = flexural_wavelengths(Te=30e3, rho_m=3300.0, rho_fill=1000.0, E=65e9, nu=0.25, g=9.8)
+    r_high = flexural_wavelengths(Te=30e3, rho_m=3300.0, rho_fill=0.0,   E=65e9, nu=0.25, g=9.8)
     assert r_high["lambda_2D"] < r_low["lambda_2D"]
 
 
 def test_known_value_2D_alpha():
     """Check alpha_2D against a hand-computed reference value."""
     Te = 30e3
-    E, nu, rho_m, rho_fill, g = 65e9, 0.25, 3300.0, 0.0, 9.81
+    E, nu, rho_m, rho_fill, g = 65e9, 0.25, 3300.0, 0.0, 9.8
     D = E * Te**3 / (12 * (1 - nu**2))
     alpha_expected = (D / ((rho_m - rho_fill) * g)) ** 0.25
     r = flexural_wavelengths(Te=Te, rho_m=rho_m, rho_fill=rho_fill, E=E, nu=nu, g=g)
