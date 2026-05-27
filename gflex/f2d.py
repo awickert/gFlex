@@ -52,6 +52,16 @@ def flexural_wavelengths(Te, E, nu, rho_m, rho_fill, g):
     dict
         Keys ``alpha_1D``, ``lambda_1D``, ``zero_crossing_1D``,
         ``alpha_2D``, ``lambda_2D``, ``zero_crossing_2D`` — all in metres.
+
+    Examples
+    --------
+    >>> from gflex import flexural_wavelengths
+    >>> r = flexural_wavelengths(Te=30e3, E=65e9, nu=0.25,
+    ...                          rho_m=3300., rho_fill=0., g=9.8)
+    >>> round(r["alpha_2D"] / 1e3, 1)  # km
+    46.9
+    >>> round(r["lambda_1D"] / r["lambda_2D"], 6)
+    1.414214
     """
     drho = rho_m - rho_fill
     D = (E * float(Te) ** 3) / (12.0 * (1.0 - nu**2))
