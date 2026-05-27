@@ -14,6 +14,12 @@
   results when tectonic stress terms (sigma_xx, sigma_yy, sigma_xy) are
   non-zero.
 
+## [1.2.0](https://github.com/awickert/gFlex/releases/tag/v1.2.0) - 2024-01-08
+
+Published to PyPI by Eric W. H. Hutton; git tag applied retroactively
+(2026-05-27). Includes Python 3 modernisation, BmiGflex (CSDMS BMI v2
+implementation), updated pyproject.toml, and updated authorship.
+
 ## [1.1.1](https://github.com/awickert/gFlex/releases/tag/v1.1.1) - 2021-06-26
 
 - Updated PyPI support: twine upload, README.md
