@@ -186,6 +186,7 @@ class F1D(Flexure):
     ########################################
 
     def FD(self):
+        """Run the finite-difference solution pipeline."""
         self.gridded_x()
         # Only generate coefficient matrix if it is not already provided
         if self.coeff_matrix is not None:
@@ -196,16 +197,19 @@ class F1D(Flexure):
         self.fd_solve()  # Get the deflection, "w"
 
     def FFT(self):
+        """FFT solution — not yet implemented."""
         if self.plotChoice:
             self.gridded_x()
         sys.exit("The fast Fourier transform solution method is not yet implemented.")
 
     def SAS(self):
+        """Run the gridded superposition-of-analytical-solutions pipeline."""
         self.gridded_x()
         self.spatialDomainVarsSAS()
         self.spatialDomainGridded()
 
     def SAS_NG(self):
+        """Run the ungridded (non-uniform points) SAS pipeline."""
         self.spatialDomainVarsSAS()
         self.spatialDomainNoGrid()
 
@@ -217,6 +221,7 @@ class F1D(Flexure):
     ############
 
     def gridded_x(self):
+        """Build the x-coordinate array from ``qs`` shape and ``dx``."""
         self.nx = self.qs.shape[0]
         self._x_local = np.arange(0, self.dx * self.nx, self.dx)
 
@@ -226,6 +231,7 @@ class F1D(Flexure):
     # SETUP
 
     def spatialDomainVarsSAS(self):
+        """Compute flexural rigidity D, parameter alpha, and Green's-function coefficient for SAS."""
         # Check Te:
         # * If scalar, okay.
         # * If grid, convert to scalar if a singular value
@@ -254,6 +260,7 @@ class F1D(Flexure):
     # CONVERT LOAD MAGNITUDE AT A POINT INTO MASS INTEGRATED ACROSS DX
 
     def spatialDomainGridded(self):
+        """Compute deflection by summing 1D Green's functions over the load grid."""
         self.w = np.zeros(self.nx)  # Deflection array
 
         for i in range(self.nx):
@@ -299,12 +306,7 @@ class F1D(Flexure):
     ######################
 
     def elasprepFD(self):
-        """
-        dx4, D = elasprepFD(dx,Te,E=1E11,nu=0.25)
-
-        Defines the variables (except for the subset flexural rigidity) that are
-        needed to run "coeff_matrix_1d"
-        """
+        """Precompute dx⁴, dx², and the flexural rigidity array D for the FD solver."""
         self.dx4 = self.dx**4
         self.dx2 = self.dx**2  # Needed if horizontal (i.e., tectonic) stresses
         self.D = self.E * self.Te**3 / (12 * (1 - self.nu**2))
@@ -409,6 +411,7 @@ class F1D(Flexure):
             self.D[-1] = self.D[-3]
 
     def get_coeff_values(self):
+        """Build the five pentadiagonal coefficient arrays for the FD stencil."""
         ##############################
         # BUILD GENERAL COEFFICIENTS #
         ##############################
@@ -460,6 +463,7 @@ class F1D(Flexure):
         # numpy.roll. (See self.build_diagonals.)
 
     def BC_Flexure(self):
+        """Apply flexural boundary conditions to the coefficient diagonals."""
         # Some links that helped me teach myself how to set up the boundary conditions
         # in the matrix for the flexure problem:
         #
