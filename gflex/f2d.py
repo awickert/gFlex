@@ -70,7 +70,7 @@ def flexural_wavelengths(Te, E, nu, rho_m, rho_fill, g):
 
 
 def recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
-                           g=9.81, n_wavelengths=1.0):
+                           g=9.8, n_wavelengths=1.0):
     """
     Return the recommended padding width in grid cells for a variable-Te run.
 
@@ -97,7 +97,7 @@ def recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
     rho_fill : float, optional
         Infill density [kg m^-3].  Default 0 (air).
     g : float, optional
-        Gravitational acceleration [m s^-2].  Default 9.81.
+        Gravitational acceleration [m s^-2].  Default 9.8.
     n_wavelengths : float, optional
         Number of flexural wavelengths to use as the padding width.
         Default 1.0.  Use 0.5 for a less conservative estimate.
@@ -202,7 +202,7 @@ def smooth_pad_Te(Te, pad_width, Te_out=None):
 
 
 def pad_domain(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
-               E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0, g=9.81):
+               E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0, g=9.8):
     """
     Pad both the elastic thickness and surface load arrays for use with F2D.
 
@@ -237,7 +237,7 @@ def pad_domain(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
     rho_fill : float, optional
         Infill density [kg m^-3].  Default 0 (air).
     g : float, optional
-        Gravitational acceleration [m s^-2].  Default 9.81.
+        Gravitational acceleration [m s^-2].  Default 9.8.
 
     Returns
     -------

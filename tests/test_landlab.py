@@ -70,7 +70,7 @@ def test_uniform_load_isostatic_deflection():
     """
     from landlab.components.gflex.flexure import gFlex
 
-    rho_m, rho_fill, g, q = 3300.0, 0.0, 9.81, 1e4   # Pa
+    rho_m, rho_fill, g, q = 3300.0, 0.0, 9.8, 1e4   # Pa
 
     mg = _make_grid(20, 20, 25000.0)
     mg.at_node["surface_load__stress"][:] = q
@@ -116,7 +116,7 @@ def test_point_load_kelvin_function():
     nu  = 0.25
     rho_m    = 3300.0
     rho_fill = 0.0
-    g        = 9.81
+    g        = 9.8
 
     dx = dy = 5000.0        # m
     nrows = ncols = 100
