@@ -1,6 +1,6 @@
 # Release Notes
 
-## [1.2.0](https://github.com/awickert/gFlex/releases/tag/v1.2.0) - 2026-05-27
+## [1.3.0](https://github.com/awickert/gFlex/releases/tag/v1.3.0) - 2026-05-27
 
 - New: `BmiGflex` — CSDMS Basic Model Interface (BMI) v2 implementation;
   `bmipy` is an optional dependency and gFlex works without it.
