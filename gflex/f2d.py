@@ -28,6 +28,208 @@ from scipy.sparse.linalg import isolve, spsolve
 from gflex.base import Flexure
 
 
+def recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
+                           g=9.81, n_wavelengths=1.0):
+    """
+    Return the recommended padding width in grid cells for a variable-Te run.
+
+    The padded domain boundary should be at least one flexural wavelength from
+    the load so that the plate's response to the load is negligible at the
+    boundary.  Half a wavelength is often sufficient in practice.
+
+    The flexural parameter α = (D / Δρ g)^(1/4) is computed from the maximum
+    Te value, giving the most conservative (widest) padding estimate.
+
+    Parameters
+    ----------
+    Te : scalar or 2-D array
+        Elastic thickness [m].  The maximum value is used.
+    dx : float
+        Grid cell size [m].  Use the smaller of dx and dy if they differ.
+    E : float, optional
+        Young's modulus [Pa].  Default 65 GPa.
+    nu : float, optional
+        Poisson's ratio.  Default 0.25.
+    rho_m : float, optional
+        Mantle density [kg m^-3].  Default 3300.
+    rho_fill : float, optional
+        Infill density [kg m^-3].  Default 0 (air).
+    g : float, optional
+        Gravitational acceleration [m s^-2].  Default 9.81.
+    n_wavelengths : float, optional
+        Number of flexural wavelengths to use as the padding width.
+        Default 1.0.  Use 0.5 for a less conservative estimate.
+
+    Returns
+    -------
+    int
+        Recommended padding width in grid cells.
+    """
+    Te_max = float(np.max(Te))
+    D = E * Te_max**3 / (12.0 * (1.0 - nu**2))
+    drho = rho_m - rho_fill
+    alpha = (D / (drho * g)) ** 0.25       # flexural parameter [m]
+    wavelength = 2.0 * np.pi * alpha        # flexural wavelength [m]
+    return int(np.ceil(n_wavelengths * wavelength / dx))
+
+
+def smooth_pad_Te(Te, pad_width, Te_out=None):
+    """
+    Pad a 2-D elastic thickness array with a smooth linear taper.
+
+    When a spatially variable Te grid is padded with a constant value before
+    being passed to :class:`F2D`, the abrupt step in flexural rigidity D at
+    the inner/outer boundary drives spurious deflections via the D-derivative
+    terms in the vWC1994 stencil (issue #45).
+
+    This function eliminates that step by linearly blending the inner-domain
+    edge values toward *Te_out* across the padding ring, reducing the
+    rigidity gradient at the inner/outer boundary by a factor of ~pad_width
+    compared with an abrupt step.
+
+    The corresponding surface load array should be padded with zeros, e.g.::
+
+        qs_padded = numpy.pad(qs, pad_width, mode='constant')
+
+    Parameters
+    ----------
+    Te : (M, N) array
+        Elastic thickness [m] for the inner domain.
+    pad_width : int
+        Width of the padding ring in grid cells.  Use
+        :func:`recommended_pad_width` to obtain a suitable value.
+    Te_out : float, optional
+        Te value at the outer edge of the padding ring.
+        Defaults to ``Te.mean()``.
+
+    Returns
+    -------
+    Te_padded : (M + 2*pad_width, N + 2*pad_width) array
+        Padded elastic thickness with a smooth linear taper.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from gflex import F2D, smooth_pad_Te, recommended_pad_width
+    >>> p = recommended_pad_width(Te, dx=5000.)   # Te is your (M, N) array
+    >>> Te_pad = smooth_pad_Te(Te, p)
+    >>> qs_pad = np.pad(qs, p, mode='constant')
+    >>> flex = F2D()
+    >>> flex.Te = Te_pad
+    >>> flex.qs = qs_pad
+    >>> # ... set other parameters and run ...
+    >>> w_inner = flex.w[p:-p, p:-p]              # trim padding from output
+    """
+    Te = np.asarray(Te, dtype=float)
+    if Te.ndim != 2:
+        raise ValueError("Te must be a 2-D array")
+    if pad_width < 1:
+        raise ValueError("pad_width must be >= 1")
+
+    if Te_out is None:
+        Te_out = float(Te.mean())
+    Te_out = float(Te_out)
+
+    ny, nx = Te.shape
+    p = pad_width
+    ny_p, nx_p = ny + 2 * p, nx + 2 * p
+
+    Te_padded = np.full((ny_p, nx_p), Te_out)
+    Te_padded[p:-p, p:-p] = Te
+
+    for k in range(p):
+        # Linear weight: 0 at the outermost cell, (p-1)/p at the innermost.
+        # At k = p-1 the step from padding to inner domain is reduced by 1/p.
+        alpha = k / p
+        # Top and bottom rows (inner columns only; corners handled below)
+        Te_padded[k,          p:-p] = (1.0 - alpha) * Te_out + alpha * Te[0, :]
+        Te_padded[ny_p-1-k,   p:-p] = (1.0 - alpha) * Te_out + alpha * Te[-1, :]
+        # Left and right columns (inner rows only)
+        Te_padded[p:-p,       k   ] = (1.0 - alpha) * Te_out + alpha * Te[:, 0]
+        Te_padded[p:-p, nx_p-1-k  ] = (1.0 - alpha) * Te_out + alpha * Te[:, -1]
+
+    # Corner cells: blend toward the nearest inner-domain corner value using
+    # the L-infinity distance so the taper connects smoothly to both edges.
+    for ky in range(p):
+        for kx in range(p):
+            alpha = max(ky, kx) / p
+            Te_padded[ky,          kx         ] = (1-alpha)*Te_out + alpha*Te[0,  0 ]
+            Te_padded[ky,          nx_p-1-kx  ] = (1-alpha)*Te_out + alpha*Te[0,  -1]
+            Te_padded[ny_p-1-ky,   kx         ] = (1-alpha)*Te_out + alpha*Te[-1, 0 ]
+            Te_padded[ny_p-1-ky,   nx_p-1-kx  ] = (1-alpha)*Te_out + alpha*Te[-1, -1]
+
+    return Te_padded
+
+
+def pad_domain(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
+               E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0, g=9.81):
+    """
+    Pad both the elastic thickness and surface load arrays for use with F2D.
+
+    Combines :func:`recommended_pad_width` and :func:`smooth_pad_Te` into a
+    single call, and zero-pads *qs* to match.  The returned pad width *p* can
+    be used to trim the deflection output after the run::
+
+        w_inner = flex.w[p:-p, p:-p]
+
+    Parameters
+    ----------
+    Te : (M, N) array
+        Elastic thickness [m] for the inner domain.
+    qs : (M, N) array
+        Surface load [Pa] for the inner domain.
+    dx : float
+        Grid cell size in the x-direction [m].
+    dy : float, optional
+        Grid cell size in the y-direction [m].  Defaults to *dx*.
+    n_wavelengths : float, optional
+        Padding width expressed as a number of flexural wavelengths.
+        Default 1.0; use 0.5 for a less conservative (narrower) padding.
+    Te_out : float, optional
+        Te value at the outer edge of the padding ring.
+        Defaults to ``Te.mean()``.
+    E : float, optional
+        Young's modulus [Pa].  Default 65 GPa.
+    nu : float, optional
+        Poisson's ratio.  Default 0.25.
+    rho_m : float, optional
+        Mantle density [kg m^-3].  Default 3300.
+    rho_fill : float, optional
+        Infill density [kg m^-3].  Default 0 (air).
+    g : float, optional
+        Gravitational acceleration [m s^-2].  Default 9.81.
+
+    Returns
+    -------
+    Te_padded : (M + 2p, N + 2p) array
+        Smoothly tapered elastic thickness.
+    qs_padded : (M + 2p, N + 2p) array
+        Surface load zero-padded to match.
+    p : int
+        Pad width in grid cells (same on all four sides).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from gflex import F2D, pad_domain
+    >>> Te_pad, qs_pad, p = pad_domain(Te, qs, dx=5000.)
+    >>> flex = F2D()
+    >>> flex.Te = Te_pad
+    >>> flex.qs = qs_pad
+    >>> # ... set other parameters and run ...
+    >>> w_inner = flex.w[p:-p, p:-p]
+    """
+    if dy is None:
+        dy = dx
+    p = recommended_pad_width(
+        Te, min(dx, dy), E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill,
+        g=g, n_wavelengths=n_wavelengths,
+    )
+    Te_padded = smooth_pad_Te(Te, p, Te_out=Te_out)
+    qs_padded = np.pad(qs, p, mode="constant")
+    return Te_padded, qs_padded, p
+
+
 # class F2D inherits Flexure and overrides __init__ therefore setting up the same
 # three parameters as class Isostasy; and it then sets up more parameters specific
 # to its own type of simulation.
