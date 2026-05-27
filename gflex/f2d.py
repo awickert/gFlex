@@ -150,15 +150,24 @@ def smooth_pad_Te(Te, pad_width, Te_out=None):
     Examples
     --------
     >>> import numpy as np
-    >>> from gflex import F2D, smooth_pad_Te, recommended_pad_width
-    >>> p = recommended_pad_width(Te, dx=5000.)   # Te is your (M, N) array
-    >>> Te_pad = smooth_pad_Te(Te, p)
-    >>> qs_pad = np.pad(qs, p, mode='constant')
-    >>> flex = F2D()
-    >>> flex.Te = Te_pad
-    >>> flex.qs = qs_pad
-    >>> # ... set other parameters and run ...
-    >>> w_inner = flex.w[p:-p, p:-p]              # trim padding from output
+    >>> from gflex import smooth_pad_Te
+    >>> Te = 35e3 * np.ones((10, 10))
+    >>> Te_pad = smooth_pad_Te(Te, pad_width=4)
+    >>> Te_pad.shape
+    (18, 18)
+
+    To run :class:`F2D` with the padded grid::
+
+        import numpy as np
+        from gflex import F2D, smooth_pad_Te, recommended_pad_width
+        p = recommended_pad_width(Te, dx=5000.)
+        Te_pad = smooth_pad_Te(Te, p)
+        qs_pad = np.pad(qs, p, mode='constant')
+        flex = F2D()
+        flex.Te = Te_pad
+        flex.qs = qs_pad
+        # ... set other parameters and run ...
+        w_inner = flex.w[p:-p, p:-p]   # trim padding from output
     """
     Te = np.asarray(Te, dtype=float)
     if Te.ndim != 2:
@@ -251,13 +260,23 @@ def pad_domain(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
     Examples
     --------
     >>> import numpy as np
-    >>> from gflex import F2D, pad_domain
-    >>> Te_pad, qs_pad, p = pad_domain(Te, qs, dx=5000.)
-    >>> flex = F2D()
-    >>> flex.Te = Te_pad
-    >>> flex.qs = qs_pad
-    >>> # ... set other parameters and run ...
-    >>> w_inner = flex.w[p:-p, p:-p]
+    >>> from gflex import pad_domain
+    >>> Te = 10e3 * np.ones((5, 5))
+    >>> qs = np.zeros((5, 5))
+    >>> Te_pad, qs_pad, p = pad_domain(Te, qs, dx=10000.,
+    ...     E=65e9, nu=0.25, rho_m=3300., rho_fill=0., g=9.8)
+    >>> p
+    13
+    >>> Te_pad.shape
+    (31, 31)
+
+    To run :class:`F2D` with the padded grids::
+
+        flex = gflex.F2D()
+        flex.Te = Te_pad
+        flex.qs = qs_pad
+        # ... set other parameters and run ...
+        w_inner = flex.w[p:-p, p:-p]   # trim padding from output
     """
     if dy is None:
         dy = dx
