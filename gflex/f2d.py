@@ -299,17 +299,116 @@ def pad_domain(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
     return Te_padded, qs_padded, p
 
 
-# class F2D inherits Flexure and overrides __init__ therefore setting up the same
-# three parameters as class Isostasy; and it then sets up more parameters specific
-# to its own type of simulation.
 class F2D(Flexure):
+    """
+    Two-dimensional lithospheric flexure solver.
+
+    Computes the deflection *w(x, y)* of a thin elastic plate overlying an
+    inviscid fluid (mantle) given a surface load stress *qs*.  Supports
+    spatially variable elastic thickness *Te*.
+
+    Set instance attributes, then call :meth:`initialize`, :meth:`run`, and
+    :meth:`finalize` in sequence.  The deflection is available as ``flex.w``
+    after :meth:`finalize`.
+
+    Attributes
+    ----------
+    Method : str
+        Solution method.  ``'FD'`` (finite difference, supports variable
+        *Te*), ``'SAS'`` (superposition of analytical solutions, constant
+        *Te* only), or ``'SAS_NG'`` (SAS on an ungridded point cloud).
+    PlateSolutionType : str
+        FD stencil variant: ``'vWC1994'`` (van Wees & Cloetingh 1994,
+        recommended) or ``'G2009'`` (Govers et al. 2009).
+    Solver : str
+        Linear solver: ``'direct'`` (sparse LU, default) or
+        ``'iterative'``.
+    g : float
+        Gravitational acceleration [m s⁻²].
+    E : float
+        Young's modulus [Pa].
+    nu : float
+        Poisson's ratio.
+    rho_m : float
+        Mantle density [kg m⁻³].
+    rho_fill : float
+        Infill material density [kg m⁻³] (0 for air, ~1000 for water,
+        ~2700 for rock).
+    Te : float or ndarray of shape (M, N)
+        Elastic thickness [m].  A scalar is broadcast to the full grid.
+    qs : ndarray of shape (M, N)
+        Surface load stress [Pa].
+    dx : float
+        Grid spacing in the x (column) direction [m].
+    dy : float
+        Grid spacing in the y (row) direction [m].
+    BC_W, BC_E, BC_N, BC_S : str
+        Boundary conditions on the west, east, north, and south edges.
+        FD options: ``'0Displacement0Slope'``, ``'0Slope0Shear'``,
+        ``'0Moment0Shear'``, ``'Mirror'``, ``'Periodic'``.
+        SAS option: ``'NoOutsideLoads'`` (the default when unset).
+    Quiet : bool
+        Suppress timing output.  Default ``False``.
+    Verbose : bool
+        Print progress messages.  Default ``True``.
+
+    Examples
+    --------
+    Minimal finite-difference run::
+
+        import numpy as np
+        from gflex import F2D
+
+        flex = F2D()
+        flex.Quiet = True
+        flex.Method = 'FD'
+        flex.PlateSolutionType = 'vWC1994'
+        flex.Solver = 'direct'
+        flex.g = 9.8
+        flex.E = 65e9
+        flex.nu = 0.25
+        flex.rho_m = 3300.
+        flex.rho_fill = 0.
+        flex.Te = 30e3 * np.ones((50, 50))
+        flex.qs = np.zeros((50, 50))
+        flex.qs[20:30, 20:30] = 1e6   # 10 × 10 cell load
+        flex.dx = flex.dy = 5000.     # 5 km grid
+        flex.BC_W = flex.BC_E = flex.BC_S = flex.BC_N = '0Moment0Shear'
+        flex.initialize()
+        flex.run()
+        flex.finalize()
+        deflection = flex.w           # (50, 50) array, negative downward
+    """
+
     def initialize(self, filename=None):
+        """
+        Validate inputs and prepare the solver.
+
+        Must be called once before :meth:`run`.  If a configuration-file
+        path was passed to the constructor (or to this method), parameters
+        are read from that file; otherwise they are taken from the instance
+        attributes set by the caller.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to a gFlex ``.cfg`` configuration file.  Overrides any
+            filename supplied to the constructor.
+        """
         self.dimension = 2  # Set it here in case it wasn't set for selection before
         super().initialize()
         if self.Verbose:
             print("F2D initialized")
 
     def run(self):
+        """
+        Execute the flexural solution.
+
+        Selects and runs the method specified by ``self.Method``.  The
+        deflection array is stored in ``self.w`` on return.  Call
+        :meth:`finalize` afterwards to restore any internally modified
+        state.
+        """
         self.bc_check()
         self.solver_start_time = time.time()
 
@@ -342,6 +441,13 @@ class F2D(Flexure):
             print("Time to solve [s]:", self.time_to_solve)
 
     def finalize(self):
+        """
+        Clean up after the solver.
+
+        Restores ``self.Te`` to its pre-run value if gFlex padded it
+        internally, so the object can be reused cleanly in a
+        model-coupling loop.  Clears the cached coefficient matrix.
+        """
         # If elastic thickness has been padded, return it to its original
         # value, so this is not messed up for repeat operations in a
         # model-coupling exercise
