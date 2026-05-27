@@ -6,44 +6,81 @@ import argparse
 import numpy as np
 
 
+def flexural_wavelengths(Te, rho_m, rho_fill, E, nu, g):
+    """
+    Compute flexural parameters and wavelengths for a thin elastic plate.
+
+    Parameters
+    ----------
+    Te : float
+        Elastic thickness [m].
+    rho_m : float
+        Mantle density [kg m^-3].
+    rho_fill : float
+        Infill density [kg m^-3] (e.g. 0 for air, 1000 for water).
+    E : float
+        Young's modulus [Pa].
+    nu : float
+        Poisson's ratio.
+    g : float
+        Gravitational acceleration [m s^-2].
+
+    Returns
+    -------
+    dict with keys:
+        alpha_1D, lambda_1D, zero_crossing_1D  (all in metres)
+        alpha_2D, lambda_2D, zero_crossing_2D
+    """
+    drho = rho_m - rho_fill
+    D = (E * Te**3) / (12.0 * (1.0 - nu**2))
+    alpha_1D = (4.0 * D / (drho * g)) ** 0.25
+    alpha_2D = (D / (drho * g)) ** 0.25
+    lambda_1D = 2.0 * np.pi * alpha_1D
+    lambda_2D = 2.0 * np.pi * alpha_2D
+    return {
+        "alpha_1D": alpha_1D,
+        "lambda_1D": lambda_1D,
+        "zero_crossing_1D": 0.375 * lambda_1D,
+        "alpha_2D": alpha_2D,
+        "lambda_2D": lambda_2D,
+        "zero_crossing_2D": 0.375 * lambda_2D,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--Te", type=float, default=30000.0,
+    parser.add_argument("--Te", type=float, required=True,
                         metavar="m", help="Elastic thickness [m]")
-    parser.add_argument("--rho-m", type=float, default=3300.0,
+    parser.add_argument("--rho-m", type=float, required=True,
                         metavar="kg/m3", help="Mantle density [kg m⁻³]")
-    parser.add_argument("--rho-fill", type=float, default=1000.0,
-                        metavar="kg/m3", help="Infill density [kg m⁻³] (e.g. 1000 for water, 0 for air)")
-    parser.add_argument("--E", type=float, default=65e9,
+    parser.add_argument("--rho-fill", type=float, required=True,
+                        metavar="kg/m3", help="Infill density [kg m⁻³] (e.g. 0 for air, 1000 for water)")
+    parser.add_argument("--E", type=float, required=True,
                         metavar="Pa", help="Young's modulus [Pa]")
-    parser.add_argument("--nu", type=float, default=0.25,
+    parser.add_argument("--nu", type=float, required=True,
                         help="Poisson's ratio")
-    parser.add_argument("--g", type=float, default=9.8,
+    parser.add_argument("--g", type=float, required=True,
                         metavar="m/s2", help="Gravitational acceleration [m s⁻²]")
     args = parser.parse_args()
 
-    drho = args.rho_m - args.rho_fill
-    D = (args.E * args.Te**3) / (12 * (1 - args.nu**2))
-
-    alpha1D = (4 * D / (drho * args.g)) ** 0.25
-    alpha2D = (D / (drho * args.g)) ** 0.25
-
-    lambda1D = alpha1D * 2 * np.pi
-    lambda2D = alpha2D * 2 * np.pi
+    r = flexural_wavelengths(
+        Te=args.Te, rho_m=args.rho_m, rho_fill=args.rho_fill,
+        E=args.E, nu=args.nu, g=args.g,
+    )
 
     print()
     print("1D:")
-    print("  Flexural wavelength:              ", lambda1D / 1000, "km")
-    print("  Distance to first zero-crossing:  ", 0.375 * lambda1D / 1000, "km")
-    print("  Flexural parameter:               ", alpha1D / 1000, "km")
+    print("  Flexural wavelength:             ", r["lambda_1D"] / 1000, "km")
+    print("  Distance to first zero-crossing: ", r["zero_crossing_1D"] / 1000, "km")
+    print("  Flexural parameter:              ", r["alpha_1D"] / 1000, "km")
     print()
     print("2D:")
-    print("  Flexural wavelength:              ", lambda2D / 1000, "km")
-    print("  Distance to first zero-crossing:  ", 0.375 * lambda2D / 1000, "km")
-    print("  Flexural parameter:               ", alpha2D / 1000, "km")
+    print("  Flexural wavelength:             ", r["lambda_2D"] / 1000, "km")
+    print("  Distance to first zero-crossing: ", r["zero_crossing_2D"] / 1000, "km")
+    print("  Flexural parameter:              ", r["alpha_2D"] / 1000, "km")
     print()
 
 
