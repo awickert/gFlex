@@ -7,7 +7,7 @@ to Earth's lithosphere.
 To generate an input file, please see the examples in the "input"
 directory of this install.
 
-To run in a Python script or shell, follow this general pattern:")
+To run in a Python script or shell, follow this general pattern:
 
 ```
 import gflex
