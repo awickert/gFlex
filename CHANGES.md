@@ -13,12 +13,14 @@
   `get_coeff_values` (introduced 2021-06-26); would produce incorrect
   results when tectonic stress terms (sigma_xx, sigma_yy, sigma_xy) are
   non-zero.
+- Removed outdated root-level `gflex_bmi.py`.
 
 ## [1.2.0](https://github.com/awickert/gFlex/releases/tag/v1.2.0) - 2024-01-08
 
-Published to PyPI by Eric W. H. Hutton; git tag applied retroactively
-(2026-05-27). Includes Python 3 modernisation, BmiGflex (CSDMS BMI v2
-implementation), updated pyproject.toml, and updated authorship.
+- Python 3 modernisation: black formatting, isort, updated imports,
+  argparse CLI, `pyproject.toml` replacing `setup.py`.
+- GitHub Actions CI replacing Travis CI.
+- Eric W. H. Hutton added as author.
 
 ## [1.1.1](https://github.com/awickert/gFlex/releases/tag/v1.1.1) - 2021-06-26
 
