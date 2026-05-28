@@ -114,5 +114,130 @@ def test_1d_end_load_monotonicity():
     assert flex_c.w.min() < flex_0.w.min(), "compressive end load should increase subsidence"
 
 
+# ---------------------------------------------------------------------------
+# Variable elastic thickness
+# ---------------------------------------------------------------------------
+
+def test_1d_fd_uniform_te_array_equals_scalar():
+    """Uniform Te array gives the same result as scalar Te.
+
+    BC_Rigidity broadcasts a scalar D to a uniform array before building the
+    stencil, so a uniform Te array should produce bit-for-bit identical output.
+    """
+    N  = 100
+    dx = 4000.0
+    qs = np.zeros(N)
+    qs[45:55] = 1e6
+
+    flex_scalar = _run_flex_1d(Te=30e3, qs=qs, dx=dx)
+    flex_array  = _run_flex_1d(Te=np.full(N, 30e3), qs=qs, dx=dx)
+
+    np.testing.assert_allclose(flex_array.w, flex_scalar.w, rtol=1e-12)
+
+
+def test_1d_fd_variable_te_monotonicity():
+    """Higher Te everywhere reduces deflection magnitude.
+
+    Comparing two uniform-array Te runs exercises the variable-Te code path
+    (scalar D is broadcast to an array in BC_Rigidity) and confirms the
+    stencil uses D correctly.
+    """
+    N  = 200
+    dx = 4000.0
+    qs = np.zeros(N)
+    qs[90:110] = 1e6
+
+    flex_lo = _run_flex_1d(Te=np.full(N, 20e3), qs=qs, dx=dx)
+    flex_hi = _run_flex_1d(Te=np.full(N, 40e3), qs=qs, dx=dx)
+
+    assert flex_hi.w.min() > flex_lo.w.min(), (
+        "higher Te should produce less subsidence"
+    )
+
+
+def test_1d_fd_variable_te_asymmetric_deflection():
+    """Step change in Te produces an asymmetric deflection profile.
+
+    A load centred on a domain where the left half has low Te and the right
+    half has high Te must deflect more deeply on the soft (left) side than
+    on the stiff (right) side, and the profile must be asymmetric.
+    """
+    N  = 200
+    dx = 4000.0
+    qs = np.zeros(N)
+    qs[95:105] = 1e6   # load at centre
+
+    Te_arr = np.full(N, 20e3)
+    Te_arr[100:] = 40e3   # right half stiffer
+
+    flex = _run_flex_1d(Te=Te_arr, qs=qs, dx=dx)
+
+    # Left half (soft) should deflect more than the mirror of the right half
+    assert flex.w[:100].min() < flex.w[100:][::-1].min(), (
+        "deflection should be deeper on the low-Te (left) side"
+    )
+    # Profile must differ from any symmetric (uniform Te) solution
+    assert not np.allclose(flex.w[:100], flex.w[100:][::-1]), (
+        "step-Te deflection must be asymmetric"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Convergence order (Method of Manufactured Solutions)
+# ---------------------------------------------------------------------------
+
+def test_1d_fd_convergence_order():
+    """1-D FD solver achieves second-order (O(dx²)) spatial convergence.
+
+    Uses the Method of Manufactured Solutions (MMS) with:
+
+        w_exact(x) = −cos(2π x / L)
+
+    on a Periodic domain of width L = 2α (α = (4D/Δρg)^0.25).  The
+    manufactured load is:
+
+        q_mms(x) = (D kx⁴ + Δρg) · cos(kx x),   kx = 2π/L
+
+    Three grids (N = 50, 100, 200 cells) must show a convergence rate > 1.8
+    between each successive pair, confirming second-order behaviour with
+    modest tolerance for pre-asymptotic effects.
+    """
+    E_mms  = 65e9
+    nu_mms = 0.25
+    Te_mms = 30e3
+    rho_m_mms  = 3300.0
+    rho_f_mms  = 0.0
+    g_mms  = 9.8
+
+    D_mms  = E_mms * Te_mms**3 / (12.0 * (1.0 - nu_mms**2))
+    k_mms  = (rho_m_mms - rho_f_mms) * g_mms
+    alpha_mms = (4.0 * D_mms / k_mms) ** 0.25
+    L      = 2.0 * alpha_mms
+    kx     = 2.0 * np.pi / L
+    q_fac  = D_mms * kx**4 + k_mms
+
+    Ns     = [50, 100, 200]
+    dxs    = []
+    errors = []
+
+    for N in Ns:
+        dxi    = L / N
+        x      = (np.arange(N) + 0.5) * dxi
+        qs_mms = q_fac * np.cos(kx * x)
+        flex   = _run_flex_1d(Te=Te_mms, qs=qs_mms, dx=dxi,
+                               bc_w="Periodic", bc_e="Periodic")
+        err    = np.max(np.abs(flex.w - (-np.cos(kx * x))))
+        dxs.append(dxi)
+        errors.append(err)
+
+    for i in range(len(Ns) - 1):
+        rate = np.log(errors[i] / errors[i + 1]) / np.log(dxs[i] / dxs[i + 1])
+        assert rate > 1.8, (
+            f"Expected O(dx²) convergence (rate ≥ 1.8), "
+            f"got {rate:.2f} between N={Ns[i]} and N={Ns[i+1]} "
+            f"(errors: {errors[i]:.3g} → {errors[i+1]:.3g} m)"
+        )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
