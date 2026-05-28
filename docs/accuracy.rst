@@ -1,6 +1,22 @@
 Numerical Accuracy
 ==================
 
+.. figure:: _static/fig3_fd_vs_sas.png
+   :width: 90%
+   :align: center
+   :alt: Comparison of FD and analytical (SAS) deflection solutions in 1-D and 2-D
+
+   Comparison of numerical (FD) and analytical (SAS) solutions in one dimension
+   **(a)** and two dimensions **(c)**, and their differences **(b, d)**, for a
+   100 km central line load / circular load.  The 1–2 m offset in **(b)** is due
+   primarily to the ``NoOutsideLoads`` BC of the analytical solution versus the
+   ``0Displacement0Slope`` BC of the FD solution; the cross-shaped residual in
+   **(d)** reflects boundary effects along the longer diagonal boundaries.
+   Reproduced from Wickert (2016), Fig. 3;
+   `CC BY 3.0 <https://creativecommons.org/licenses/by/3.0/>`_.
+
+----
+
 2-D finite-difference solver: second-order convergence
 -------------------------------------------------------
 
