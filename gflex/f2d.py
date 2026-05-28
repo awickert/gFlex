@@ -814,28 +814,37 @@ class F2D(Flexure):
 
         if np.isscalar(self.Te):
             # So much simpler with constant D! And symmetrical stencil
-            self.cj2i0 = D / dy4
-            self.cj1i_1 = 2 * D / dx2dy2 + 2 * self.sigma_xy * self.Te
-            self.cj1i0 = -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.Te
-            self.cj1i1 = 2 * D / dx2dy2 - 2 * self.sigma_xy * self.Te
-            self.cj0i_2 = D / dx4
-            self.cj0i_1 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.Te
+            dx2 = self.dx ** 2
+            dy2 = self.dy ** 2
+            dxdy = self.dx * self.dy
+            # x±2, y=0
+            self.cj2i0 = D / dx4
+            self.cj_2i0 = D / dx4                                                    # Symmetry
+            # x=0, y±2
+            self.cj0i2 = D / dy4                                                     # Symmetry
+            self.cj0i_2 = D / dy4
+            # x±1, y=0  (σ_xx acts on x-direction: -σ_xx·Te·∂²w/∂x²)
+            self.cj1i0 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.Te / dx2
+            self.cj_1i0 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.Te / dx2  # Symmetry
+            # x=0, y±1  (σ_yy acts on y-direction: -σ_yy·Te·∂²w/∂y²)
+            self.cj0i_1 = -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.Te / dy2
+            self.cj0i1 = (
+                -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.Te / dy2
+            )                                                                         # Symmetry
+            # x±1, y±1  (σ_xy cross term: -2σ_xy·Te·∂²w/∂x∂y; sign from FD of mixed deriv)
+            self.cj1i_1 = 2 * D / dx2dy2 + self.sigma_xy * self.Te / (2 * dxdy)
+            self.cj1i1 = 2 * D / dx2dy2 - self.sigma_xy * self.Te / (2 * dxdy)
+            self.cj_1i_1 = 2 * D / dx2dy2 - self.sigma_xy * self.Te / (2 * dxdy)   # Symmetry
+            self.cj_1i1 = 2 * D / dx2dy2 + self.sigma_xy * self.Te / (2 * dxdy)    # Symmetry
+            # center
             self.cj0i0 = (
                 6 * D / dx4
                 + 6 * D / dy4
                 + 8 * D / dx2dy2
                 + drho * g
-                + 2 * self.sigma_xx * self.Te
-                + 2 * self.sigma_yy * self.Te
+                + 2 * self.sigma_xx * self.Te / dx2
+                + 2 * self.sigma_yy * self.Te / dy2
             )
-            self.cj0i1 = (
-                -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.Te
-            )  # Symmetry
-            self.cj0i2 = D / dx4  # Symmetry
-            self.cj_1i_1 = 2 * D / dx2dy2 - 2 * self.sigma_xy * self.Te  # Symmetry
-            self.cj_1i0 = -4 * D / dy4 - 4 * D / dx2dy2  # Symmetry
-            self.cj_1i1 = 2 * D / dx2dy2 + 2 * self.sigma_xy * self.Te  # Symmetry
-            self.cj_2i0 = D / dy4  # Symmetry
             # Bring up to size
             self.cj2i0 *= np.ones(self.qs.shape)
             self.cj1i_1 *= np.ones(self.qs.shape)
