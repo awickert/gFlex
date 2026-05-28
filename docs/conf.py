@@ -18,8 +18,11 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
     "myst_parser",
 ]
+
+myst_enable_extensions = ["dollarmath"]
 
 autodoc_default_options = {
     "member-order": "bysource",

@@ -21,8 +21,9 @@ Numerical Accuracy
 -------------------------------------------------------
 
 The 2-D finite-difference solver (``Method = 'FD'``, ``PlateSolutionType =
-'vWC1994'``) is second-order accurate in space: halving the grid spacing *dx*
-reduces the numerical error by a factor of approximately four (O(dx²)).
+'vWC1994'``) is second-order accurate in space: halving the grid spacing
+:math:`\Delta x` reduces the numerical error by a factor of approximately
+four (:math:`\mathcal{O}(\Delta x^2)`).
 
 This is verified two ways in gFlex:
 
@@ -44,26 +45,26 @@ Kelvin-function benchmark setup
    :widths: 30 70
    :header-rows: 0
 
-   * - Young's modulus *E*
+   * - Young's modulus :math:`E`
      - 65 GPa
-   * - Elastic thickness *Te*
+   * - Elastic thickness :math:`T_e`
      - 10 km
-   * - Poisson's ratio *ν*
+   * - Poisson's ratio :math:`\nu`
      - 0.25
-   * - Mantle density *ρ*\ :sub:`m`
+   * - Mantle density :math:`\rho_m`
      - 3300 kg m⁻³
-   * - Infill density *ρ*\ :sub:`fill`
+   * - Infill density :math:`\rho_\text{fill}`
      - 0 kg m⁻³ (air)
-   * - *g*
+   * - :math:`g`
      - 9.81 m s⁻²
-   * - Flexural parameter *α*
+   * - Flexural parameter :math:`\alpha`
      - ≈ 21 km
    * - Domain
      - 600 km × 600 km, point load at centre
    * - Boundary conditions
      - ``0Moment0Shear`` on all four sides
    * - Grid spacings tested
-     - *dx* = 10 000, 5 000, 2 500, 1 250 m
+     - :math:`\Delta x` = 10 000, 5 000, 2 500, 1 250 m
 
 Convergence orders (coarse → fine)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,10 +77,10 @@ parameter *α*.
    :header-rows: 1
    :widths: 15 20 20 20
 
-   * - *r* / *α*
-     - dx 10→5 km
-     - dx 5→2.5 km
-     - dx 2.5→1.25 km
+   * - :math:`r/\alpha`
+     - :math:`\Delta x` 10→5 km
+     - :math:`\Delta x` 5→2.5 km
+     - :math:`\Delta x` 2.5→1.25 km
    * - 0.97
      - 2.20
      - 2.07
@@ -97,20 +98,22 @@ parameter *α*.
      - 1.77
      - 1.95
 
-At the finest spacing (dx = 1 250 m, dx/α ≈ 0.06) relative errors are
-0.02–0.1 % everywhere except very close to the singularity of the point load.
+At the finest spacing (:math:`\Delta x = 1250` m,
+:math:`\Delta x/\alpha \approx 0.06`) relative errors are 0.02–0.1 %
+everywhere except very close to the singularity of the point load.
 
-The sub-second-order rates at *r/α* = 1.95 and 2.92 on the coarsest grids
-reflect pre-asymptotic effects near the forebulge zero-crossing, where the
-solution changes sign and the absolute error temporarily dominates the relative
-error.  All rates converge to ≈ 2 at finer resolution, confirming asymptotic
-second-order behaviour.
+The sub-second-order rates at :math:`r/\alpha` = 1.95 and 2.92 on the
+coarsest grids reflect pre-asymptotic effects near the forebulge
+zero-crossing, where the solution changes sign and the absolute error
+temporarily dominates the relative error.  All rates converge to ≈ 2 at
+finer resolution, confirming asymptotic second-order behaviour.
 
 Practical guidance
 ~~~~~~~~~~~~~~~~~~
 
-For most geoscience applications, **dx/α ≤ 0.1** (ten cells per flexural
-parameter) is sufficient to keep errors below 1 %.  At **dx/α ≈ 0.5** (two
-cells per flexural parameter) errors can be several percent, particularly near
-the load centre and the forebulge.  Use :func:`gflex.flexural_wavelengths` to
-estimate *α* before choosing a grid spacing.
+For most geoscience applications, :math:`\Delta x / \alpha \leq 0.1` (ten
+cells per flexural parameter) is sufficient to keep errors below 1 %.  At
+:math:`\Delta x / \alpha \approx 0.5` (two cells per flexural parameter)
+errors can be several percent, particularly near the load centre and the
+forebulge.  Use :func:`gflex.flexural_wavelengths` to estimate :math:`\alpha`
+before choosing a grid spacing.
