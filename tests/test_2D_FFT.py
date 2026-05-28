@@ -25,7 +25,7 @@ drho = rho_m - rho_fill
 
 
 def _run(qs, method="FFT", bc_w="", bc_e="", bc_n="", bc_s="",
-         dx_=dx, dy_=dy, sigma_xx=None, sigma_yy=None):
+         dx_=dx, dy_=dy, sigma_xx=None, sigma_yy=None, sigma_xy=None):
     flex = F2D()
     flex.Quiet = True
     flex.Method = method
@@ -46,6 +46,8 @@ def _run(qs, method="FFT", bc_w="", bc_e="", bc_n="", bc_s="",
         flex.sigma_xx = sigma_xx
     if sigma_yy is not None:
         flex.sigma_yy = sigma_yy
+    if sigma_xy is not None:
+        flex.sigma_xy = sigma_xy
     flex.initialize()
     flex.run()
     flex.finalize()
@@ -183,6 +185,40 @@ def test_fft_2d_sigma_yy_monotonicity():
 
     assert flex_t.w.min() > flex_0.w.min(), "tensile sigma_yy should reduce subsidence"
     assert flex_c.w.min() < flex_0.w.min(), "compressive sigma_yy should increase subsidence"
+
+
+def test_fft_2d_periodic_sigma_xy_exact():
+    """2-D FFT (Periodic) with sigma_xy matches the exact spectral formula.
+
+    For a diagonal wave q(x, y) = q0·cos(kx·x + ky·y) the rfft2 spectrum has
+    a single stored peak at (Kx=+kx, Ky=+ky), so the transfer function is
+    applied at a single well-defined wavenumber:
+
+        w(x, y) = −q0 / (D(kx²+ky²)² + 2σ_xy·Te·kx·ky + Δρg) · cos(kx·x + ky·y)
+
+    A separable cos(kx·X)·cos(ky·Y) load would have peaks at both (kx,+ky)
+    and (kx,−ky), which see different denominators when σ_xy ≠ 0 and cannot
+    be reduced to a simple closed form.  The diagonal wave avoids this by
+    sitting on a single rfft2 bin.
+    """
+    Nx, Ny = 64, 64
+    Lx, Ly = Nx * dx, Ny * dy
+    nx_waves, ny_waves = 2, 3
+    kx = 2.0 * np.pi * nx_waves / Lx
+    ky = 2.0 * np.pi * ny_waves / Ly
+    x = (np.arange(Nx) + 0.5) * dx
+    y = (np.arange(Ny) + 0.5) * dy
+    X, Y = np.meshgrid(x, y)
+    q0 = 1e6
+    sigma_xy = 2e8
+    qs = q0 * np.cos(kx * X + ky * Y)
+
+    flex = _run(qs, bc_w="Periodic", bc_e="Periodic", bc_n="Periodic", bc_s="Periodic",
+                sigma_xx=0.0, sigma_yy=0.0, sigma_xy=sigma_xy)
+
+    K2 = kx**2 + ky**2
+    w_exact = -q0 / (D * K2**2 + 2.0 * sigma_xy * Te * kx * ky + drho * g) * np.cos(kx * X + ky * Y)
+    np.testing.assert_allclose(flex.w, w_exact, rtol=1e-10)
 
 
 # ---------------------------------------------------------------------------
