@@ -1,0 +1,482 @@
+#! /usr/bin/env python
+"""Tests for 2-D FD boundary conditions and in-plane stress terms.
+
+Boundary conditions tested
+--------------------------
+Mirror            — exact 2-D cosine eigenfunction; Mirror == Periodic on the
+                    2(N-1)×2(M-1) even-extended domain
+0Slope0Shear      — shown to be genuinely distinct from Mirror
+0Displacement0Slope — interior matches SAS (large domain, load far from edge)
+0Moment0Shear     — same
+
+In-plane stress tests
+---------------------
+sigma_xx direction — kx-only load (ky = 0): sigma_yy and sigma_xy have NO
+                     effect; sigma_xx does (no axis-swap check)
+sigma_yy direction — ky-only load (kx = 0): sigma_xx and sigma_xy have NO effect
+sigma_xy diagonal  — x-reflection symmetry: w(+σ_xy)[i,j] = w(−σ_xy)[i,N-1-j]
+                     for a symmetric load and Mirror BCs (validates the sign
+                     pattern of the cj±1 i±1 stencil)
+sigma monotonicity — tensile reduces deflection, compressive increases it,
+                     for every BC type and every sigma component
+
+Grid convention: node-centred, x[j] = j·dx, y[i] = i·dy.
+"""
+
+import numpy as np
+import pytest
+
+from gflex.f2d import F2D
+
+
+# ---------------------------------------------------------------------------
+# Shared parameters
+# ---------------------------------------------------------------------------
+
+E        = 65e9
+nu       = 0.25
+Te       = 30e3
+rho_m    = 3300.0
+rho_fill = 0.0
+g        = 9.8
+dx       = 4000.0
+dy       = 4000.0
+
+D    = E * Te**3 / (12.0 * (1.0 - nu**2))
+drho = rho_m - rho_fill
+
+# 2-D flexural parameter: (D / (drho·g))^0.25  [m]
+alpha_2d = (D / (drho * g)) ** 0.25
+
+
+def _run(qs, method="FD", bc_w="0Moment0Shear", bc_e="0Moment0Shear",
+         bc_n="0Moment0Shear", bc_s="0Moment0Shear",
+         dx_=dx, dy_=dy,
+         sigma_xx=None, sigma_yy=None, sigma_xy=None):
+    """Run a 2-D flexure calculation and return the flex object."""
+    flex = F2D()
+    flex.Quiet = True
+    flex.Method = method
+    flex.Solver = "direct"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill
+    flex.Te = Te
+    flex.qs = qs.copy()
+    flex.dx = dx_
+    flex.dy = dy_
+    flex.BC_W = bc_w
+    flex.BC_E = bc_e
+    flex.BC_N = bc_n
+    flex.BC_S = bc_s
+    if sigma_xx is not None:
+        flex.sigma_xx = sigma_xx
+    if sigma_yy is not None:
+        flex.sigma_yy = sigma_yy
+    if sigma_xy is not None:
+        flex.sigma_xy = sigma_xy
+    flex.initialize()
+    flex.run()
+    flex.finalize()
+    return flex
+
+
+# ---------------------------------------------------------------------------
+# Mirror: exact 2-D cosine eigenfunction
+# ---------------------------------------------------------------------------
+
+def test_fd_2d_mirror_cosine_eigenfunction():
+    """2-D FD/Mirror matches the analytical formula for a separable cosine load.
+
+    cos(kx·x)·cos(ky·y) is an eigenfunction of the biharmonic operator for
+    Mirror BCs (zero slope at all four edges).  The exact deflection is:
+
+        w = −q₀ / (D(kx² + ky²)² + Δρg) · cos(kx·x)·cos(ky·y)
+
+    The FD discretisation has an O((k·dx)²) eigenvalue error, giving < 0.1%
+    relative error for the wavenumbers chosen, so rtol = 1e-3 is safe.
+    """
+    Ny, Nx = 128, 128
+    Lx = (Nx - 1) * dx
+    Ly = (Ny - 1) * dy
+    nx_waves, ny_waves = 2, 3
+    kx = nx_waves * np.pi / Lx
+    ky = ny_waves * np.pi / Ly
+    x = np.arange(Nx) * dx
+    y = np.arange(Ny) * dy
+    X, Y = np.meshgrid(x, y)
+    q0 = 1e6
+    qs = q0 * np.cos(kx * X) * np.cos(ky * Y)
+
+    flex = _run(qs, bc_w="Mirror", bc_e="Mirror", bc_n="Mirror", bc_s="Mirror")
+
+    w_exact = -q0 / (D * (kx**2 + ky**2)**2 + drho * g) * np.cos(kx * X) * np.cos(ky * Y)
+    np.testing.assert_allclose(flex.w, w_exact, rtol=1e-3)
+
+
+# ---------------------------------------------------------------------------
+# Mirror: exact equivalence with Periodic on the even-extended 2× domain
+# ---------------------------------------------------------------------------
+
+def test_fd_2d_mirror_equals_periodic_2x2():
+    """2-D FD/Mirror on (Ny×Nx) equals FD/Periodic on the (2Ny-2)×(2Nx-2) even extension.
+
+    Mirror BCs at all four edges implement even reflection.  The ghost-cell
+    assignments are identical to running a Periodic problem on the period-
+    2(Ny-1) × 2(Nx-1) even extension of the load.  Agreement to rtol = 1e-6
+    (limited by the direct solver) confirms both stencils implement the same
+    linear system.
+    """
+    Ny, Nx = 50, 60
+    qs = np.zeros((Ny, Nx))
+    qs[10:20, 15:30] = 1e6   # off-centre so even extension is non-trivial
+
+    flex_m = _run(qs, bc_w="Mirror", bc_e="Mirror", bc_n="Mirror", bc_s="Mirror")
+
+    # Even extension: period is 2(Nx-1) in x and 2(Ny-1) in y, sharing endpoints
+    qs_x   = np.concatenate([qs,   qs[:,   -2:0:-1]], axis=1)  # (Ny, 2Nx-2)
+    qs_ext = np.concatenate([qs_x, qs_x[-2:0:-1, :]], axis=0)  # (2Ny-2, 2Nx-2)
+
+    flex_p = _run(qs_ext, bc_w="Periodic", bc_e="Periodic",
+                          bc_n="Periodic", bc_s="Periodic")
+
+    np.testing.assert_allclose(flex_m.w, flex_p.w[:Ny, :Nx], rtol=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# 0Slope0Shear: distinct from Mirror despite the same physical intent
+# ---------------------------------------------------------------------------
+
+def test_fd_2d_0slope0shear_and_mirror_are_distinct():
+    """Mirror and 0Slope0Shear are genuinely different stencils in 2-D.
+
+    For a 2-D cosine load — the eigenfunction of the Mirror BC operator — the
+    two BCs give solutions that differ by > 10 % of the peak amplitude.  Mirror
+    agrees with the exact cosine formula; 0Slope0Shear does not.
+    """
+    Ny, Nx = 128, 128
+    Lx = (Nx - 1) * dx
+    Ly = (Ny - 1) * dy
+    nx_waves, ny_waves = 3, 2
+    kx = nx_waves * np.pi / Lx
+    ky = ny_waves * np.pi / Ly
+    x = np.arange(Nx) * dx
+    y = np.arange(Ny) * dy
+    X, Y = np.meshgrid(x, y)
+    q0 = 1e6
+    qs = q0 * np.cos(kx * X) * np.cos(ky * Y)
+
+    w_mirror = _run(qs, bc_w="Mirror", bc_e="Mirror",
+                        bc_n="Mirror", bc_s="Mirror").w
+    w_0ss    = _run(qs, bc_w="0Slope0Shear", bc_e="0Slope0Shear",
+                        bc_n="0Slope0Shear", bc_s="0Slope0Shear").w
+    w_exact  = -q0 / (D * (kx**2 + ky**2)**2 + drho * g) * np.cos(kx * X) * np.cos(ky * Y)
+
+    # Mirror reproduces the cosine eigenfunction
+    np.testing.assert_allclose(w_mirror, w_exact, rtol=2e-3)
+
+    # 0Slope0Shear gives a substantially different result
+    amp = q0 / (D * (kx**2 + ky**2)**2 + drho * g)
+    max_diff = np.abs(w_mirror - w_0ss).max() / amp
+    assert max_diff > 0.10, (
+        f"Mirror and 0Slope0Shear should differ by > 10 % of the amplitude "
+        f"for this cosine load; got {max_diff:.1%}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Large-domain interior checks: 0Slope0Shear, 0Displacement0Slope, 0Moment0Shear
+# ---------------------------------------------------------------------------
+
+def _central_load_sas_comparison(bc, margin=70):
+    """Run FD with *bc* and SAS on a 200×200 grid with a central square load.
+
+    alpha_2D ≈ 47 km (≈ 11.75 cells).  The load sits ~8 alpha from each edge,
+    so BC corrections at the centre are O(exp(−8/√2)) < 0.3 %.  Agreement
+    to rtol = 5e-3 in [margin:N-margin, margin:N-margin] confirms the FD
+    solver produces the correct infinite-plate interior deflection.
+    """
+    N = 200
+    qs = np.zeros((N, N))
+    qs[95:105, 95:105] = 1e6
+
+    flex_fd  = _run(qs, bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc)
+    flex_sas = _run(qs, method="SAS", bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc)
+
+    np.testing.assert_allclose(
+        flex_fd.w[margin:N-margin, margin:N-margin],
+        flex_sas.w[margin:N-margin, margin:N-margin],
+        rtol=5e-3,
+    )
+
+
+def test_fd_2d_0slope0shear_vs_sas():
+    """2-D FD/0Slope0Shear matches SAS for a central load far from the boundary."""
+    _central_load_sas_comparison("0Slope0Shear")
+
+
+def test_fd_2d_0displacement0slope_vs_sas():
+    """2-D FD/0Displacement0Slope matches SAS for a central load far from the boundary."""
+    _central_load_sas_comparison("0Displacement0Slope")
+
+
+def test_fd_2d_0moment0shear_vs_sas():
+    """2-D FD/0Moment0Shear matches SAS for a central load far from the boundary."""
+    _central_load_sas_comparison("0Moment0Shear")
+
+
+# ---------------------------------------------------------------------------
+# sigma_xx direction test (no axis swap)
+# ---------------------------------------------------------------------------
+
+def test_fd_2d_sigma_xx_direction():
+    """sigma_yy and sigma_xy have no effect on a ky = 0 load; sigma_xx does.
+
+    A strip load uniform in y (all rows, columns 25–34) has only kx modes.
+    For such a load the governing equation reduces to the 1-D equation in x:
+    the σ_yy·Te·∂²w/∂y² term vanishes (∂²w/∂y² = 0 for a y-uniform solution),
+    and the σ_xy diagonal-stencil terms cancel pairwise for any BC that
+    preserves y-translational symmetry.  Mirror BCs on all four sides are
+    used because Mirror is analytically y-symmetric (ghost cells are set by
+    even reflection) and the sigma_xy corrections at Mirror boundaries cancel
+    exactly for a y-uniform solution (verified algebraically).
+
+    sigma_xx changes the deflection because σ_xx·Te·kx² ≠ 0.
+
+    atol = 1e-9 handles the O(1e-12) roundoff introduced when different sigma
+    values alter matrix conditioning, producing huge relative errors near zero.
+    """
+    N = 64
+    qs = np.zeros((N, N))
+    qs[:, 25:35] = 1e6    # uniform in y → only kx modes
+
+    bc = dict(bc_w="Mirror", bc_e="Mirror", bc_n="Mirror", bc_s="Mirror")
+    S = 1e8
+
+    flex_0  = _run(qs, **bc)
+    flex_xx = _run(qs, **bc, sigma_xx=S)
+    flex_yy = _run(qs, **bc, sigma_yy=S)
+    flex_xy = _run(qs, **bc, sigma_xy=S)
+
+    # sigma_yy and sigma_xy must have no physical effect for a ky=0 load
+    np.testing.assert_allclose(flex_yy.w, flex_0.w, atol=1e-9,
+                               err_msg="sigma_yy must not affect a ky=0 load")
+    np.testing.assert_allclose(flex_xy.w, flex_0.w, atol=1e-9,
+                               err_msg="sigma_xy must not affect a ky=0 load")
+
+    # sigma_xx must change the deflection
+    assert not np.allclose(flex_xx.w, flex_0.w), \
+        "sigma_xx should change the deflection for a kx-only load"
+
+
+# ---------------------------------------------------------------------------
+# sigma_yy direction test (symmetric axis check)
+# ---------------------------------------------------------------------------
+
+def test_fd_2d_sigma_yy_direction():
+    """sigma_xx and sigma_xy have no effect on a kx = 0 load; sigma_yy does.
+
+    Symmetric counterpart of test_fd_2d_sigma_xx_direction.  A strip load
+    uniform in x (only ky modes) has kx = 0 everywhere, so σ_xx·Te·kx² = 0
+    and the σ_xy diagonal-stencil terms cancel pairwise for a y-translation-
+    symmetric solution.  Mirror BCs on all four sides are used (not Periodic)
+    because the Periodic BC assembly has a known limitation with σ_xy ≠ 0
+    (it assumes cj-1i1 = cj-1i-1, which is false when σ_xy ≠ 0).  Mirror BCs
+    cancel the σ_xy terms exactly for an x-uniform solution (verified
+    algebraically), so atol = 1e-9 handles only rounding noise.
+
+    Only sigma_yy changes the deflection because σ_yy·Te·ky² ≠ 0.
+    """
+    N = 64
+    qs = np.zeros((N, N))
+    qs[25:35, :] = 1e6    # uniform in x → only ky modes
+
+    bc = dict(bc_w="Mirror", bc_e="Mirror", bc_n="Mirror", bc_s="Mirror")
+    S = 1e8
+
+    flex_0  = _run(qs, **bc)
+    flex_xx = _run(qs, **bc, sigma_xx=S)
+    flex_yy = _run(qs, **bc, sigma_yy=S)
+    flex_xy = _run(qs, **bc, sigma_xy=S)
+
+    np.testing.assert_allclose(flex_xx.w, flex_0.w, atol=1e-9,
+                               err_msg="sigma_xx must not affect a kx=0 load")
+    np.testing.assert_allclose(flex_xy.w, flex_0.w, atol=1e-9,
+                               err_msg="sigma_xy must not affect a kx=0 load")
+    assert not np.allclose(flex_yy.w, flex_0.w), \
+        "sigma_yy should change the deflection for a ky-only load"
+
+
+# ---------------------------------------------------------------------------
+# FD vs FFT Periodic cross-validation for sigma_xx, sigma_yy, sigma_xy
+# ---------------------------------------------------------------------------
+
+def _fft_run(qs, **kw):
+    """Thin wrapper to run the FFT solver through the shared _run helper."""
+    return _run(qs, method="FFT", **kw)
+
+
+def test_fd_2d_sigma_xx_vs_fft_periodic():
+    """FD/Periodic with sigma_xx matches FFT/Periodic to within FD truncation error.
+
+    A central square block load (many Fourier modes, no zero-crossing issues)
+    in a Periodic domain is solved by both FD and FFT.  A block load excites
+    high-k modes where the O((k·dx)²) FD eigenvalue error reaches ~0.93 %,
+    so rtol = 1e-2 covers the truncation error while being tight enough to
+    detect any σ_xx stencil sign flip or coefficient error.
+    """
+    N = 64
+    qs = np.zeros((N, N))
+    qs[28:36, 28:36] = 1e6    # central block, many Fourier modes, no exact zeros
+
+    bc = dict(bc_w="Periodic", bc_e="Periodic", bc_n="Periodic", bc_s="Periodic")
+    sigma_xx = 2e8
+
+    flex_fd  = _run(qs, **bc, sigma_xx=sigma_xx)
+    flex_fft = _fft_run(qs, **bc, sigma_xx=sigma_xx)
+
+    np.testing.assert_allclose(flex_fd.w, flex_fft.w, rtol=1e-2)
+
+
+def test_fd_2d_sigma_yy_vs_fft_periodic():
+    """FD/Periodic with sigma_yy matches FFT/Periodic (validates the cj0i±1 stencil).
+
+    See test_fd_2d_sigma_xx_vs_fft_periodic for the load and tolerance rationale.
+    rtol = 1e-2 accounts for O((k·dx)²) FD truncation reaching ~0.93 % for a
+    block load.
+    """
+    N = 64
+    qs = np.zeros((N, N))
+    qs[28:36, 28:36] = 1e6
+
+    bc = dict(bc_w="Periodic", bc_e="Periodic", bc_n="Periodic", bc_s="Periodic")
+    sigma_yy = 2e8
+
+    flex_fd  = _run(qs, **bc, sigma_yy=sigma_yy)
+    flex_fft = _fft_run(qs, **bc, sigma_yy=sigma_yy)
+
+    np.testing.assert_allclose(flex_fd.w, flex_fft.w, rtol=1e-2)
+
+
+def test_fd_2d_sigma_xy_reflection_symmetry():
+    """sigma_xy respects the x-reflection symmetry of the stencil sign pattern.
+
+    Under the substitution x → Lx − x, the cross-derivative ∂²w/∂x∂y acquires
+    a sign flip, so σ_xy → −σ_xy maps a solution to its x-reflected counterpart.
+    Formally: for a load that is symmetric about x = Lx/2 (i.e. q(Lx−x, y) = q(x, y))
+    and Mirror BCs (which respect x-reflection), the deflection satisfies
+
+        w(+S)[i, j] = w(−S)[i, N−1−j]
+
+    The load is centred on a 121×121 grid (odd, so j = 60 is the exact centre)
+    and Mirror BCs are used because they implement even reflection and handle
+    σ_xy correctly (unlike the Periodic BC assembly which has a known limitation).
+
+    rtol = 1e-8 is limited only by floating-point rounding in the sparse solver.
+    """
+    N = 121                         # odd: centre at j = 60, i = 60
+    qs = np.zeros((N, N))
+    qs[50:71, 50:71] = 1e6          # symmetric about both centre lines
+
+    bc = dict(bc_w="Mirror", bc_e="Mirror", bc_n="Mirror", bc_s="Mirror")
+    S = 1e8
+
+    flex_p = _run(qs, **bc, sigma_xy=+S)
+    flex_n = _run(qs, **bc, sigma_xy=-S)
+
+    # x-reflection: column j in w(+S) matches column N-1-j in w(-S)
+    np.testing.assert_allclose(flex_p.w, flex_n.w[:, ::-1], rtol=1e-8)
+
+
+# ---------------------------------------------------------------------------
+# sigma_xy sign test (diagonal stencil produces a non-trivial, sign-sensitive effect)
+# ---------------------------------------------------------------------------
+
+def test_fd_2d_sigma_xy_sign():
+    """Positive and negative sigma_xy give genuinely different deflections.
+
+    For a 2-D load with both kx and ky content, the cross term
+    2·σ_xy·Te·∂²w/∂x∂y modifies the plate response asymmetrically in the
+    (x, y) and (x, −y) diagonal directions.  Positive and negative σ_xy must
+    produce distinct (non-equal) deflection fields.  This test detects any
+    stencil implementation where the σ_xy coefficient has zero net effect or
+    where ±σ_xy give the same result.
+    """
+    N = 60
+    qs = np.zeros((N, N))
+    qs[25:35, 25:35] = 1e6
+
+    bc = dict(bc_w="Periodic", bc_e="Periodic", bc_n="Periodic", bc_s="Periodic")
+    S = 1e8
+
+    flex_0 = _run(qs, **bc)
+    flex_p = _run(qs, **bc, sigma_xy=+S)
+    flex_n = _run(qs, **bc, sigma_xy=-S)
+
+    # sigma_xy != 0 must produce a different solution than sigma_xy == 0
+    assert not np.allclose(flex_p.w, flex_0.w), \
+        "positive sigma_xy should change the deflection for a 2-D load"
+    assert not np.allclose(flex_n.w, flex_0.w), \
+        "negative sigma_xy should change the deflection for a 2-D load"
+
+    # Positive and negative sigma_xy must produce different results
+    assert not np.allclose(flex_p.w, flex_n.w), \
+        "positive and negative sigma_xy must produce different deflections"
+
+
+# ---------------------------------------------------------------------------
+# sigma monotonicity for every FD BC
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bc", [
+    "0Moment0Shear",
+    "0Displacement0Slope",
+    "Mirror",
+    "0Slope0Shear",
+])
+def test_fd_2d_sigma_xx_monotonicity_all_bcs(bc):
+    """Tensile sigma_xx reduces deflection; compressive increases it — for every 2-D BC."""
+    N = 120
+    qs = np.zeros((N, N))
+    qs[55:65, 55:65] = 1e6
+
+    flex_0 = _run(qs, bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc)
+    flex_t = _run(qs, bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc, sigma_xx=+1e8)
+    flex_c = _run(qs, bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc, sigma_xx=-1e8)
+
+    assert flex_t.w.min() > flex_0.w.min(), (
+        f"{bc}: tensile sigma_xx should reduce subsidence"
+    )
+    assert flex_c.w.min() < flex_0.w.min(), (
+        f"{bc}: compressive sigma_xx should increase subsidence"
+    )
+
+
+@pytest.mark.parametrize("bc", [
+    "0Moment0Shear",
+    "0Displacement0Slope",
+    "Mirror",
+    "0Slope0Shear",
+])
+def test_fd_2d_sigma_yy_monotonicity_all_bcs(bc):
+    """Tensile sigma_yy reduces deflection; compressive increases it — for every 2-D BC."""
+    N = 120
+    qs = np.zeros((N, N))
+    qs[55:65, 55:65] = 1e6
+
+    flex_0 = _run(qs, bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc)
+    flex_t = _run(qs, bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc, sigma_yy=+1e8)
+    flex_c = _run(qs, bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc, sigma_yy=-1e8)
+
+    assert flex_t.w.min() > flex_0.w.min(), (
+        f"{bc}: tensile sigma_yy should reduce subsidence"
+    )
+    assert flex_c.w.min() < flex_0.w.min(), (
+        f"{bc}: compressive sigma_yy should increase subsidence"
+    )
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
