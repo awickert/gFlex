@@ -107,6 +107,9 @@ Run either format from the command line::
    gflex path/to/config.yaml   # YAML (extension required)
    gflex path/to/config        # INI (any extension)
 
+See :doc:`configuration` for a full parameter reference and annotated
+examples.
+
 The package also provides domain-padding utilities for variable-*Te* grids
 (see :func:`~gflex.pad_domain`), a flexural wavelength calculator
 (see :func:`~gflex.flexural_wavelengths`), a Landlab component, a CSDMS
@@ -120,5 +123,6 @@ point (``gflex <config_file>``).
    :caption: Contents
 
    api
+   configuration
    accuracy
    changelog
