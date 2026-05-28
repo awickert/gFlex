@@ -190,5 +190,83 @@ def test_pad_domain():
     assert np.all(qs_pad[pad_mask] == 0.0)
 
 
+def test_2d_fd_convergence_order():
+    """2-D FD solver achieves second-order (O(dx²)) spatial convergence.
+
+    Uses the Method of Manufactured Solutions (MMS) with:
+
+        w_exact(x, y) = cos(2π x / L) · cos(2π y / L)
+
+    For constant flexural rigidity D and Winkler modulus k the plate
+    equation is D∇⁴w + k·w = q.  The biharmonic of a product of cosines
+    with equal wavenumber β = 2π/L is exact:
+
+        ∇⁴w_exact = 4 β⁴ · w_exact
+
+    giving the manufactured load:
+
+        q_mms = (4 D β⁴ + k) · w_exact
+
+    Periodic boundary conditions on all four sides eliminate any
+    boundary-truncation coupling, so the measured convergence rate reflects
+    only the interior stencil accuracy.  The domain width L = 2α (α is the
+    flexural parameter) ensures both the biharmonic and Winkler terms
+    contribute meaningfully to the solution.
+
+    Three grids (N = 30, 60, 120 cells per side) are solved; the L-∞ error
+    relative to w_exact must decrease at rate > 1.8 between each pair,
+    confirming second-order convergence with a modest tolerance for
+    pre-asymptotic effects.
+    """
+    E     = 65e9
+    nu    = 0.25
+    rho_m = 3300.0
+    rho_f = 0.0
+    g     = 9.8
+    Te    = 30e3   # m
+
+    D = E * Te**3 / (12.0 * (1.0 - nu**2))
+    k = (rho_m - rho_f) * g           # Winkler restoring modulus [N/m³]
+
+    alpha = (D / k) ** 0.25            # flexural parameter [m]
+    L     = 2.0 * alpha                # domain width
+    beta  = 2.0 * np.pi / L           # cosine wavenumber
+
+    # gFlex stores w with the sign convention self.w = -w_physical (negative
+    # downward), so for a load q = (4Dβ⁴+k)·cos the physical deflection is
+    # cos(βx)cos(βy) and gFlex returns -cos(βx)cos(βy).
+    q_factor = 4.0 * D * beta**4 + k  # (D∇⁴ + k) applied to cos gives q_factor·cos
+
+    def q_mms(X, Y):
+        return q_factor * np.cos(beta * X) * np.cos(beta * Y)
+
+    def w_gflex_exact(X, Y):
+        return -np.cos(beta * X) * np.cos(beta * Y)
+
+    Ns     = [30, 60, 120]
+    dxs    = []
+    errors = []
+
+    for N in Ns:
+        dx   = dy = L / N
+        x    = (np.arange(N) + 0.5) * dx
+        y    = (np.arange(N) + 0.5) * dy
+        X, Y = np.meshgrid(x, y)
+
+        w   = _run_flex_2d(Te * np.ones((N, N)), q_mms(X, Y), dx, dy,
+                           bc="Periodic")
+        err = np.max(np.abs(w - w_gflex_exact(X, Y)))
+        dxs.append(dx)
+        errors.append(err)
+
+    for i in range(len(Ns) - 1):
+        rate = np.log(errors[i] / errors[i+1]) / np.log(dxs[i] / dxs[i+1])
+        assert rate > 1.8, (
+            f"Expected O(dx²) convergence (rate ≥ 1.8), "
+            f"got {rate:.2f} between N={Ns[i]} and N={Ns[i+1]} "
+            f"(max errors: {errors[i]:.4g} m → {errors[i+1]:.4g} m)"
+        )
+
+
 if __name__ == "__main__":
     test_main()
