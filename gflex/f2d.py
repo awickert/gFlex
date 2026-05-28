@@ -392,8 +392,8 @@ class F2D(Flexure):
         Parameters
         ----------
         filename : str, optional
-            Path to a gFlex ``.cfg`` configuration file.  Overrides any
-            filename supplied to the constructor.
+            Path to a gFlex configuration file (INI or YAML).  Overrides
+            any filename supplied to the constructor.
         """
         self.dimension = 2  # Set it here in case it wasn't set for selection before
         super().initialize()
