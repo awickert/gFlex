@@ -1415,7 +1415,6 @@ class Flexure(Utility, Plotting):
             if self.Te.any():
                 self.TeArraySizeCheck()
 
-    ### need work
     def FFT(self):
         pass
 
