@@ -817,7 +817,7 @@ class Flexure(Utility, Plotting):
         Load parameters and prepare internal state.
 
         If a configuration file path is available, reads all physical and
-        numerical parameters from it via :class:`configparser`.  Otherwise
+        numerical parameters from it (INI or YAML format).  Otherwise
         expects the caller to have set attributes directly (programmatic
         use).  Called automatically by :meth:`F1D.initialize` and
         :meth:`F2D.initialize`.
@@ -825,7 +825,7 @@ class Flexure(Utility, Plotting):
         Parameters
         ----------
         filename : str, optional
-            Path to a gFlex ``.cfg`` configuration file.
+            Path to a gFlex configuration file (INI or YAML).
         """
         # Values from configuration file
 
