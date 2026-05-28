@@ -135,6 +135,7 @@ point (``gflex <config_file>``).
    :maxdepth: 2
    :caption: Contents
 
+   theory
    api
    configuration
    accuracy
