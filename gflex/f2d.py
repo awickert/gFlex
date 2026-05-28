@@ -472,8 +472,82 @@ class F2D(Flexure):
         self.fd_solve()
 
     def FFT(self):
-        """FFT solution — not yet implemented."""
-        sys.exit("The fast Fourier transform solution method is not yet implemented.")
+        """Spectral (FFT) flexural solution for uniform elastic thickness.
+
+        Applies the analytical 2-D transfer function in the wavenumber domain::
+
+            W(kx, ky) = -Q(kx, ky) / (D(kx²+ky²)²
+                        + σ_xx·Te·kx² + σ_yy·Te·ky² + 2σ_xy·Te·kx·ky + Δρg)
+
+        **Boundary conditions and periodicity**
+
+        FFT inherently assumes a periodic domain.  Two modes are supported:
+
+        * All four BCs set to ``'Periodic'`` — the load array is used as-is.
+          The solution is exact for a load that genuinely tiles with periods
+          Lx = Nx·dx and Ly = Ny·dy.
+
+        * Any other BC (including ``'NoOutsideLoads'`` or unset) — the load
+          is zero-padded by four flexural wavelengths (α) on each side in
+          both x and y, then trimmed back to the original shape.  This is
+          the spectral equivalent of the ``'NoOutsideLoads'`` boundary
+          condition used by the SAS solver.
+
+        Requires uniform (scalar) elastic thickness; for variable *Te* use
+        the finite-difference method instead.
+        """
+        if np.isscalar(self.Te):
+            pass
+        elif np.all(self.Te == np.mean(self.Te)):
+            self.Te = float(np.mean(self.Te))
+        else:
+            sys.exit(
+                "\nINPUT VARIABLE TYPE INCONSISTENT WITH SOLUTION TYPE.\n"
+                "The FFT solution requires a scalar (uniform) Te.\n"
+                "For spatially variable Te, use the finite difference method.\n"
+                "EXITING."
+            )
+
+        D = self.E * self.Te**3 / (12.0 * (1.0 - self.nu**2))
+        alpha = (4.0 * D / (self.drho * self.g)) ** 0.25
+
+        ny, nx = self.qs.shape
+        periodic = (
+            self.BC_W == "Periodic"
+            and self.BC_E == "Periodic"
+            and self.BC_N == "Periodic"
+            and self.BC_S == "Periodic"
+        )
+
+        if periodic:
+            qs_work = self.qs
+        else:
+            pad_x = int(np.ceil(4.0 * alpha / self.dx))
+            pad_y = int(np.ceil(4.0 * alpha / self.dy))
+            qs_work = np.pad(
+                self.qs, ((pad_y, pad_y), (pad_x, pad_x)), mode="constant"
+            )
+
+        ny_work, nx_work = qs_work.shape
+        kx = np.fft.rfftfreq(nx_work, d=self.dx) * 2.0 * np.pi
+        ky = np.fft.fftfreq(ny_work, d=self.dy) * 2.0 * np.pi
+        Kx, Ky = np.meshgrid(kx, ky)
+
+        Q = np.fft.rfft2(qs_work)
+        K2 = Kx**2 + Ky**2
+        denom = (
+            D * K2**2
+            + self.sigma_xx * self.Te * Kx**2
+            + self.sigma_yy * self.Te * Ky**2
+            + 2.0 * self.sigma_xy * self.Te * Kx * Ky
+            + self.drho * self.g
+        )
+        w_work = np.fft.irfft2(-Q / denom, s=qs_work.shape)
+
+        if periodic:
+            self.w = w_work
+        else:
+            self.w = w_work[pad_y : pad_y + ny, pad_x : pad_x + nx]
 
     def SAS(self):
         """Run the gridded superposition-of-analytical-solutions pipeline."""
