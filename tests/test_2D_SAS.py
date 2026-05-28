@@ -139,5 +139,89 @@ def test_2d_sas_vs_fd_large_domain():
     )
 
 
+# ---------------------------------------------------------------------------
+# SAS_NG: non-gridded (arbitrary point-load) solver
+# ---------------------------------------------------------------------------
+
+def _run_sas_ng(x, y, q, xw, yw):
+    """Run a 2-D SAS_NG (non-gridded) flexure calculation."""
+    flex = F2D()
+    flex.Quiet   = True
+    flex.Method  = "SAS_NG"
+    flex.g        = g
+    flex.E        = E
+    flex.nu       = nu
+    flex.rho_m    = rho_m
+    flex.rho_fill = rho_fill
+    flex.Te       = Te
+    flex.x        = x.copy()
+    flex.y        = y.copy()
+    flex.q        = q.copy()
+    flex.xw       = xw.copy()
+    flex.yw       = yw.copy()
+    flex.initialize()
+    flex.run()
+    flex.finalize()
+    return flex
+
+
+def test_2d_sas_ng_green_function_exact():
+    """2-D SAS_NG matches the analytical Kelvin-function Green's function exactly.
+
+    SAS_NG takes total load q [N] directly (no dx·dy multiplication), so a
+    single point load P at (x₀, y₀) gives:
+
+        w(r) = P · (α²/2πD) · kei(r/α)
+
+    Agreement to rtol = 1e-10 confirms α, the coefficient α²/2πD, and the
+    kei normalisation are all correct for the non-gridded 2-D code path.
+    """
+    x_load = np.array([50.0 * dx])   # single load at (200 km, 200 km)
+    y_load = np.array([50.0 * dy])
+    P      = 1e6 * dx * dy            # total load [N]
+    q      = np.array([P])
+
+    N  = 100
+    xw = np.arange(N, dtype=float) * dx
+    yw = np.arange(N, dtype=float) * dy
+    Xw, Yw = np.meshgrid(xw, yw)
+    xw_flat = Xw.ravel()
+    yw_flat = Yw.ravel()
+
+    flex = _run_sas_ng(x_load, y_load, q, xw_flat, yw_flat)
+
+    r       = np.sqrt((xw_flat - x_load[0])**2 + (yw_flat - y_load[0])**2)
+    w_exact = P * coeff * kei(r / alpha)
+    np.testing.assert_allclose(flex.w, w_exact, rtol=1e-10)
+
+
+def test_2d_sas_ng_equals_sas():
+    """2-D SAS_NG equals gridded SAS when point loads are placed at cell centres.
+
+    SAS_NG with q[k] = qs[j,i]·dx·dy placed at grid-cell positions (i·dx, j·dy)
+    performs the same superposition as gridded SAS (which multiplies qs by dx·dy
+    internally), so the two outputs must be identical to floating-point precision.
+    """
+    N  = 60
+    qs = np.zeros((N, N))
+    qs[25:35, 25:35] = 1e6   # block load
+
+    flex_sas = _run(qs)   # gridded SAS
+
+    i_grid, j_grid = np.meshgrid(np.arange(N), np.arange(N))
+    x_centres = (i_grid * dx).ravel()
+    y_centres = (j_grid * dy).ravel()
+    mask      = qs.ravel() != 0
+    x_load    = x_centres[mask]
+    y_load    = y_centres[mask]
+    q_load    = qs.ravel()[mask] * dx * dy   # Pa → N
+
+    flex_ng = _run_sas_ng(x_load, y_load, q_load, x_centres, y_centres)
+
+    np.testing.assert_allclose(
+        flex_ng.w.reshape(N, N), flex_sas.w, rtol=1e-10
+    )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
