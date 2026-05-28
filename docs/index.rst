@@ -125,4 +125,5 @@ point (``gflex <config_file>``).
    api
    configuration
    accuracy
+   references
    changelog
