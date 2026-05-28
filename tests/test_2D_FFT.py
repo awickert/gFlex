@@ -185,5 +185,41 @@ def test_fft_2d_sigma_yy_monotonicity():
     assert flex_c.w.min() < flex_0.w.min(), "compressive sigma_yy should increase subsidence"
 
 
+# ---------------------------------------------------------------------------
+# Zero-padded: internal auto-padding equals explicit manual padding
+# ---------------------------------------------------------------------------
+
+def test_fft_2d_padded_matches_manual_padding():
+    """2-D auto-padded FFT matches FFT/Periodic on the manually padded domain.
+
+    The FFT solver pads by 4α in both x and y when BCs are not Periodic
+    (where α = (4D/Δρg)^0.25 is the 1-D flexural parameter used for the
+    padding estimate).  This test verifies that the internal padding produces
+    bit-for-bit the same result as running FFT/Periodic on an explicitly
+    constructed padded domain — i.e., the two code paths are equivalent.
+    """
+    N  = 60
+    qs = np.zeros((N, N))
+    qs[25:35, 25:35] = 1e6
+
+    flex_auto = _run(qs)   # non-Periodic BCs → internal zero-padding
+
+    # Replicate the padding formula used inside f2d.FFT
+    D_val = E * Te**3 / (12.0 * (1.0 - nu**2))
+    alpha = (4.0 * D_val / (drho * g)) ** 0.25   # 1-D alpha for padding estimate
+    pad_x = int(np.ceil(4.0 * alpha / dx))
+    pad_y = int(np.ceil(4.0 * alpha / dy))
+    qs_padded = np.pad(qs, ((pad_y, pad_y), (pad_x, pad_x)), mode="constant")
+
+    flex_manual = _run(qs_padded, bc_w="Periodic", bc_e="Periodic",
+                                  bc_n="Periodic", bc_s="Periodic")
+
+    np.testing.assert_allclose(
+        flex_auto.w,
+        flex_manual.w[pad_y : pad_y + N, pad_x : pad_x + N],
+        rtol=1e-10,
+    )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
