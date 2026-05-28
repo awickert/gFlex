@@ -2248,8 +2248,9 @@ class F2D(Flexure):
                     self.iterative_ConvergenceTolerance,
                     "m between iterations",
                 )
+            M = scipy.sparse.diags(1.0 / self.coeff_matrix.diagonal())
             wvector = isolve.lgmres(
-                self.coeff_matrix, q0vector, rtol=self.iterative_ConvergenceTolerance
+                self.coeff_matrix, q0vector, M=M, rtol=self.iterative_ConvergenceTolerance
             )
             wvector = wvector[0]  # Reach into tuple to get my array back
         else:
