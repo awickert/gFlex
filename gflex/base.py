@@ -1322,9 +1322,9 @@ class Flexure(Utility, Plotting):
                 sys.exit("No solver defined!")
         # Check consistency of size if coeff array was loaded
         if self.filename:
-            # In the case that it is iterative, find the convergence criterion
+            # Only needed for iterative solver; direct-solver configs may omit it
             self.iterative_ConvergenceTolerance = self.configGet(
-                "float", "numerical", "ConvergenceTolerance"
+                "float", "numerical", "ConvergenceTolerance", optional=True
             )
             # Try to import Te grid or scalar for the finite difference solution
             try:
