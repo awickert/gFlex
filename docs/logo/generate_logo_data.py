@@ -2,17 +2,20 @@
 """Generate gFlex deflection data for logo rendering.
 
 Variable Te: smooth sigmoid transition from Te=15 km (west/soft) to
-Te=50 km (east/stiff), so the deflection is asymmetric — deeper and
+Te=35 km (east/stiff), so the deflection is asymmetric — deeper and
 sharper on the soft side, broader and shallower with a more prominent
 forebulge on the stiff side.
+
+Domain is 150×150 cells at 5 km spacing (750 km), giving ≥7α coverage
+on the stiff side and avoiding boundary-condition artefacts.
 """
 
 import numpy as np
 from gflex import F2D
 
 # ── Grid ──────────────────────────────────────────────────────────────────────
-nrows = ncols = 120
-dx = dy = 5000.0   # 5 km → 600 km domain
+nrows = ncols = 150
+dx = dy = 5000.0   # 5 km → 750 km domain
 
 # ── Physical parameters ───────────────────────────────────────────────────────
 E        = 65e9
@@ -28,7 +31,7 @@ yi = (np.arange(nrows) + 0.5) * dy
 XX, YY = np.meshgrid(xi, yi)
 
 # ── Variable Te: sigmoid from 15 km (west) → 50 km (east) ────────────────────
-Te_min, Te_max = 15e3, 50e3
+Te_min, Te_max = 15e3, 35e3
 x_norm = (XX - cx) / (8 * dx)                    # 8-cell (~40 km) transition
 Te_grid = Te_min + (Te_max - Te_min) * 0.5 * (1.0 + np.tanh(x_norm))
 

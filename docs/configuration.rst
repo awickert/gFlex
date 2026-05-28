@@ -323,3 +323,118 @@ Equivalent 1-D example in INI:
     Verbose=false
     Debug=false
     Quiet=false
+
+----
+
+Annotated reference file (``input/input_help``)
+------------------------------------------------
+
+The file ``input/input_help`` in the repository is an annotated INI
+template showing every parameter with inline comments.  It is reproduced
+here (with corrections) for quick reference.
+
+.. code-block:: ini
+
+    ; input_help
+    ; All units are SI. Not all entries are needed.
+    ; Standard parameter values for Earth are included.
+
+    [mode]
+    ; 1 (line) or 2 (surface) dimensions
+    dimension=2
+    ; Solution method: FD (Finite Difference), SAS (Spatial domain
+    ; analytical solutions), or SAS_NG (SAS, but on an unstructured
+    ; grid — NG = "no grid").
+    ; For SAS_NG, 1D data must be provided and will be returned in
+    ; two columns: (x,q0) --> (x,w). 2D data are similar, except
+    ; will be of the form (x,y,[q0/in or w/out]).
+    method=SAS
+    ; Plate solutions can be:
+    ;  * vWC1994 (best), or
+    ;  * G2009 (from Govers et al., 2009; not bad, but not
+    ;           as robust as vWC1994)
+    PlateSolutionType=vWC1994
+
+    [parameter]
+    YoungsModulus=65E9
+    PoissonsRatio=0.25
+    GravAccel=9.8
+    MantleDensity=3300
+    ; This is the density of material (e.g., air, water)
+    ; that is filling (or leaving) the hole that was
+    ; created by flexure. If you do not have a constant
+    ; density of infilling material, for example, at a
+    ; subsiding shoreline, you must instead iterate.
+    InfillMaterialDensity=0
+
+    [input]
+    ; space-delimited array of loads
+    ; stresses (rho*g*h) if gridded — dx (and if applicable, dy) will be
+    ;   applied to convert them into forces
+    ; forces (rho*g*h*Area) if not gridded (SAS_NG)
+    ; If the solution method is SAS_NG, this file should be of the format
+    ; (x,[y],q0) and the code will sort it out.
+    Loads=q0_sample/2D/central_square_load.txt
+    ;
+    ; scalar value or space-delimited array of elastic thickness(es) [m]
+    ; array required for finite difference solutions with variable Te
+    ElasticThickness=Te_sample/2D/10km_const.txt
+    ;
+    ; xw and yw are vectors of desired output points for the SAS_NG method.
+    ; If not specified, the solution is calculated at the load points.
+    ; Ignored for other solution methods.
+    xw=
+    yw=
+
+    [output]
+    ; DeflectionOut is for writing an output file.
+    ; If blank, no output file is written.
+    ; Otherwise, a space-delimited ASCII file of deflections is written
+    ; to this path.
+    DeflectionOut=tmpout.txt
+    ;
+    ; Acceptable inputs to "Plot" are q0 (loads), w (deflection), or both;
+    ; any other entry results in no plotting.
+    ; Automatically plots a 1D line or 2D surface based on "dimension".
+    Plot=both
+
+    [numerical]
+    ; dx [m]
+    GridSpacing_x=
+    ;
+    ; Boundary conditions can be:
+    ; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
+    ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
+    BoundaryCondition_West=
+    BoundaryCondition_East=
+    ;
+    ; Solver can be direct or iterative
+    Solver=
+    ; Tolerance between iterations [m]
+    ; If you have chosen an iterative solution type, gFlex will iterate
+    ; until the change between two subsequent iterations is below this value.
+    ; Set as 0 if you don't want to iterate.
+    ConvergenceTolerance=1E-3
+
+    [numerical2D]
+    ; dy [m]
+    GridSpacing_y=
+    ;
+    ; Boundary conditions can be:
+    ; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
+    ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
+    BoundaryCondition_North=
+    BoundaryCondition_South=
+    ;
+    ; Flag to enable lat/lon input (true/false). By default, this is false.
+    latlon=
+    ; radius of planet [m], for lat/lon solutions
+    PlanetaryRadius=
+
+    [verbosity]
+    ; true/false. Defaults to true.
+    Verbose=
+    ; true/false. Defaults to false.
+    Debug=
+    ; true/false -- total silence if true. Defaults to false.
+    Quiet=

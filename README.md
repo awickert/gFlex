@@ -1,12 +1,10 @@
-[![CSDMS Component][csdms_badge]][csdms_gflex]<br/>
-[![DOI][doi_badge]][doi_link]<br/>
-[![Test][test_badge]][test_workflow]
+[![CSDMS Component][csdms_badge]][csdms_gflex] [![DOI][doi_badge]][doi_link] [![Test][test_badge]][test_workflow]
 
 # gFlex
 
 ***Multiple methods to solve elastic plate flexure, designed for applications to Earth's lithosphere.***
 
-These instructions are meant to take an user familiar with computers but new to (or a beginner with) Python through the basics of how to get gFlex to work. The Python scripting part towards the end should be pretty straightforward as well, insofar as information is provided on how to get and set the chosen values inside gFlex. *Please leave a message if you have trouble working with gFlex; your comments could assist both you and the more general improvement of this documentation.*
+These instructions are meant to take a user familiar with computers but new to (or a beginner with) Python through the basics of how to get gFlex to work. The Python scripting part towards the end should be pretty straightforward as well, insofar as information is provided on how to get and set the chosen values inside gFlex. *Please leave a message if you have trouble working with gFlex; your comments could assist both you and the more general improvement of this documentation.*
 
 When you use gFlex, please cite:
 
@@ -14,98 +12,24 @@ When you use gFlex, please cite:
 
 If you additionally want an up-to-date citation for the latest source-code release, please see that given in [CITATION.cff](CITATION.cff).
 
-## Download and Installation
+## Documentation
 
-#### Python
+Full documentation, including a configuration file parameter reference, accuracy benchmarks, and the full API, is available at **[gflex.readthedocs.io](https://gflex.readthedocs.io)**.
 
-gFlex has been tested on **Python 3.10+**.
-
-In order to run properly, gFlex requires the following Python dependencies:
-* numpy
-* scipy
-* matplotlib
-
-*For users who are new to Python, follow these directions to install the Python interpreters onto your computer.*
-
-###### Linux
-
-Use your package manager to download and install the required Python packages. For Debian/Ubuntu, it will be something like:
+## Installation
 
 ```bash
-# Basic packages
-sudo apt-get install \
-python python-numpy python-scipy \
-python-setuptools python-matplotlib
-
-# pip (recommended for automatic installs via setuptools)
-sudo apt-get install python-pip
-
-# iPython console -- very useful (optional)
-sudo apt-get install ipython
-
-# Sypder IDE (I don't personally use it but many others like it: optional)
-sudo apt-get install spyder
-```
-
-###### Windows
-
-Download [**python(x,y)**](https://code.google.com/p/pythonxy/wiki/Downloads) or another full-featured distribution such as **Anaconda**; both of these distributions have been tested successfully with gFlex. Python(x,y) and several others also contain the required packages (including the numerical libraries), the iPython console, and the Spyder IDE; [**Spyder**](https://code.google.com/p/spyderlib/) is a nice IDE that will provide a familiar-looking interface for users accustomed to Matlab.
-
-###### Mac
-
-The current recommendation is to use a package manager like [**homebrew**](http://brew.sh/). With this you can install Python, and then move on to using **pip** (or **homebrew**) to install the Python modules. A good introduction to this can be found here: http://www.thisisthegreenroom.com/2011/installing-python-numpy-scipy-matplotlib-and-ipython-on-lion. See the **Linux** instructions for the list of packages that you will need; after installing pip, these commands can be substituted as follows, e.g.,
-```bash
-# Homebrew
-sudo brew install python-numpy
-# Pip
-pip install -r requirements.txt
-```
-
-Recent efforts to download Python distributions (both **Anaconda** and **Enthought**) have not met with success with both gFlex and GRASS, though **Anaconda** has been tested successfully with Windows. As a result, it should be more successful to keep the Python packages managed better by something like **homebrew** with **pip**.
-
-#### gFlex
-
-##### Downloading and Installing in One Step from PyPI using pip
-
-gFlex is downloadable from the Python Package Index ([PyPI](https://pypi.python.org/pypi)); see https://pypi.python.org/pypi/gFlex.
-
-If you have **pip**, you may simply type:
-```bash
-pip install
 pip install gflex
-# Or if the destination install folder requires sudo access
-# (for UNIX-like systems)
-sudo pip install gflex
-# pip install gFlex works too -- install is caps-insensitive
 ```
-and you will have a full, running copy of the latest release version of gFlex.
 
-##### Downloading
+gFlex requires **Python ≥ 3.10**. Dependencies (numpy, scipy, matplotlib, pyyaml) are installed automatically.
 
-gFlex may be downloaded here at GitHub, by either:
-* Copying the link at right and pasting it into the command prompt as follows:
-```bash
-git clone <LINK>
-```
-* Downloading and extracting the compressed ZIP file (link at right)
-* Clicking on the link to add gFlex to your local GitHub desktop app (for Windows or Mac)
-
-# Installing
-
-Install gFlex at the command prompt using [setuptools](https://pypi.python.org/pypi/setuptools). If you have administrator privileges, which *is often also the case when doing this install under Windows*, you may drop the "sudo". For standard Linux or Mac users, the "sudo" will remain necessary, and you will have to enter your administrator password for the program to be added to your local set of applications (e.g., as "/usr/local/bin/gflex").
+For a development install from source:
 
 ```bash
-# For standard Linux/Mac users:
-sudo python setup.py install
-# OR
-sudo python setup.py develop # If you want the install to see instantly
-                             # any changes made in the source repository
-
-# For Windows users or Unix-type users with SuperUser privileges:
-python setup.py install
-# OR
-python setup.py develop # If you want the install to see instantly
-                        # any changes made in the source repository
+git clone https://github.com/awickert/gFlex.git
+cd gFlex
+pip install -e .
 ```
 
 ## Running
@@ -114,9 +38,9 @@ Once gFlex is installed, it is possible to run it in four ways:
  1. With a configuration file
  2. Within a Python script
  3. Within GRASS GIS
- 4. As part of the Landlab Earth-surface modeling framework, including an interface to the the Community Surface Dynamics Modeling System [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description)
+ 4. As part of the Landlab Earth-surface modeling framework, with a CSDMS Basic Model Interface (BMI)
 
-For options 1 and 2, there are pre-built methods that can be selected along the way to visualize results. These use Python's Matplotlib plotting library. For option 3, GRASS GIS is used for visualization. In Option 4, output from Landlab can be visualized with Matplotlib, and output from CSDMS sets of models can be visualized using tools such as [VisIt](https://wci.llnl.gov/simulation/computer-codes/visit/) ([CSDMS page about VisIt](http://csdms.colorado.edu/wiki/CMT_visualization)) and [ParaView](http://www.paraview.org/). ParaView also now has [Python bindings](http://www.paraview.org/python/), which can further be used to visualize outputs produced with any of these methods.
+For options 1 and 2, there are pre-built methods that can be selected along the way to visualize results. These use Python's Matplotlib plotting library. For option 3, GRASS GIS is used for visualization. In option 4, output from Landlab can be visualized with Matplotlib.
 
 #### With configuration file
 
@@ -163,9 +87,9 @@ numerical2D:
   BoundaryCondition_South: 0Slope0Shear
 ```
 
-For help constructing configuration files, see the other examples found in the **input/** directory. **input/input_help** provides a longer explanation of what the parameters are, and is therefore reproduced immediately below for reference:
+For a full parameter reference, see the [Configuration Files](https://gflex.readthedocs.io/en/latest/configuration.html) page on ReadTheDocs. The annotated INI template **input/input_help** is also reproduced below for quick reference:
 
-```Lisp
+```ini
 ; input_help
 ; All units are SI. Not all entries are needed.
 ; Standard parameter values for Earth are included.
@@ -173,19 +97,13 @@ For help constructing configuration files, see the other examples found in the *
 [mode]
 ; 1 (line) or 2 (surface) dimensions
 dimension=2
-; Solution method: FD (Finite Difference), FFT (Fast Fourier
-; Transform, not yet implemented), SAS (Spatial domain analytical
-; solutions), or SAS_NG (SPA, but do not require a uniform grid
-; - NG = "no grid")
+; Solution method: FD (Finite Difference), SAS (Spatial domain
+; analytical solutions), or SAS_NG (SAS, but on an unstructured
+; grid — NG = "no grid").
 ; For SAS_NG, 1D data must be provided and will be returned in
 ; two columns: (x,q0) --> (x,w). 2D data are similar, except
-; will be of the form (x,y,[q0/in or w/out])
-; I am working on gridded output for these, so this might change
-; in the future.
-; Both the FFT and SPA techniques rely on superposition
-; of solutions, because they can be combined linearly, whether in
-; the spectral or the spatial domain)
-method=SPA
+; will be of the form (x,y,[q0/in or w/out]).
+method=SAS
 ; Plate solutions can be:
 ;  * vWC1994 (best), or
 ;  * G2009 (from Govers et al., 2009; not bad, but not
@@ -201,21 +119,20 @@ MantleDensity=3300
 ; that is filling (or leaving) the hole that was
 ; created by flexure. If you do not have a constant
 ; density of infilling material, for example, at a
-; subsiding shoreline, you must instead iterate (see
-; [numerical], below).
+; subsiding shoreline, you must instead iterate.
 InfillMaterialDensity=0
+
 [input]
 ; space-delimited array of loads
 ; stresses (rho*g*h) if gridded (dx (and if applicable, dy)) will be applied
-;   to convert them into masses
+;   to convert them into forces
 ; forces (rho*g*h*Area) if not gridded (SAS_NG)
 ; If the solution method (above) is selected as "SAS_NG", then this file
 ; will actually be of the format (x,[y],q0) and the code will sort it out.
-; (Once again, working on a gridded output option for ungridded inputs)
 Loads=q0_sample/2D/central_square_load.txt
 ;
-; scalar value or space-delimited array of elastic thickness(es)
-; array used for finite difference solutions
+; scalar value or space-delimited array of elastic thickness(es) [m]
+; array required for finite difference solutions with variable Te
 ElasticThickness=Te_sample/2D/10km_const.txt
 ;
 ; xw and yw are vectors of desired output points for the SAS_NG method.
@@ -253,8 +170,8 @@ Solver=
 ; Tolerance between iterations [m]
 ; If you have chosen an iterative solution type ("Solver"), it will iterate
 ; until this is the difference between two subsequent iterations.
-; Set as 0 if you don't want to iterate
-convergence=1E-3
+; Set as 0 if you don't want to iterate.
+ConvergenceTolerance=1E-3
 
 [numerical2D]
 ; dy [m]
@@ -292,7 +209,6 @@ You may run gFlex from other Python programs. When you install it (above), this 
 
 import gflex
 import numpy as np
-from matplotlib import pyplot as plt
 
 flex = gflex.F2D()
 
@@ -311,7 +227,7 @@ flex.g = 9.8 # acceleration due to gravity
 flex.E = 65E9 # Young's Modulus
 flex.nu = 0.25 # Poisson's Ratio
 flex.rho_m = 3300. # MantleDensity
-flex.rho_fill = 0. # InfiillMaterialDensity
+flex.rho_fill = 0. # InfillMaterialDensity
 
 flex.Te = 35000.*np.ones((50, 50)) # Elastic thickness [m] -- scalar but may be an array
 flex.Te[:,-3:] = 0.
@@ -354,8 +270,8 @@ If you would like to use a Python script with a configuration file, this is also
 ```python
 import gflex
 
-# To use a configuration file:
-filename = '../gflex/input/input_f1d_test' # it works for usage (1) and (2)
+# To use a configuration file (INI or YAML):
+filename = 'input/input_f1d.yaml'
 obj = gflex.WhichModel(filename)
 
 ## SET MODEL TYPE AND DIMENSIONS HERE ##
@@ -371,49 +287,53 @@ obj.run()
 obj.finalize()
 
 # Standalone plotting output if you so desire
-flex.plotChoice='w'
+obj.plotChoice='w'
 obj.output()
 ```
 
 
 #### Within GRASS GIS
 
-To run gFlex inside of GRASS GIS 7, run the following commands from within a GRASS GIS session:
+To run gFlex inside of GRASS GIS 8, install the addons from within a GRASS GIS session:
 
 ```bash
 g.extension r.flexure
 g.extension v.flexure
 ```
 
-This will reach into the GRASS GIS subversion repository, download the source code, and install the packages. **r.flexure** is used for raster grids by either finite difference or analytical methods. **v.flexure** takes advantage of the ungridded analytical method to solve for flexure at an aribtrary set of load points, albeit limited to cases with constant elastic thickness. These are stored at and have help files located at, respectively:
-
-* **r.flexure**
- * Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/raster/r.flexure
- * Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/r.flexure.html
-* **v.flexure**
- * Source: http://trac.osgeo.org/grass/browser/grass-addons/grass7/vector/v.flexure
- * Manual page (HTML): http://grass.osgeo.org/grass70/manuals/addons/v.flexure.html
+**r.flexure** is used for raster grids by either finite difference or analytical methods. **v.flexure** takes advantage of the ungridded analytical method to solve for flexure at an arbitrary set of load points, albeit limited to cases with constant elastic thickness. The source code and manual pages are available in the [GRASS GIS addons repository](https://github.com/OSGeo/grass-addons).
 
 When running **r.flexure**, it is important to ensure that the elastic thickness map is at or properly interpolated to the computational region (**g.region**) resolution before solving. A nearest-neighbor interpolated Te map will cause perceived gradients in elastic thickness to be very sharp, and this will strongly affect (and misdirect) the flexural solutions.
 
-#### As part of Landlab and the CSDMS CMI
+#### As part of Landlab and CSDMS
 
-Landlab is an in-development (but nearing release) Earth-surface modeling framework built to facilitate easy integration of geomorphic, ecological, hydrological, geological, etc. Earth-surface related models to simulate and investigate the links between multiple processes. gFlex can be linked with Landlab, and the code to do this is available within the Landlab repository at https://github.com/landlab/landlab/tree/master/landlab/components/gFlex.
+[Landlab](https://landlab.github.io) is an Earth-surface modeling framework built to facilitate easy integration of geomorphic, ecological, hydrological, geological, and other Earth-surface models. gFlex can be used as a Landlab component; see the [Landlab repository](https://github.com/landlab/landlab) for details.
 
-The Landlab interface to gFlex also provides gFlex with the Community Surface Dynamics Modeling System (CSDMS) [Component Model Interface (CMI)](http://csdms.colorado.edu/wiki/CMI_Description) interface. This allows it to be run as a coupled component across multiple programming languages and paradigms as part of the CSDMS community of models. For more information on model coupling with CSDMS, see the example presentation at http://csdms.colorado.edu/w/images/CSDMS_lecture7.pdf and the paper on the model coupling published by [Peckham et al., "A component-based approach to integrated modeling in the geosciences: The design of CSDMS"](http://www.sciencedirect.com/science/article/pii/S0098300412001252).
+gFlex also implements the [CSDMS Basic Model Interface (BMI)](https://bmi.readthedocs.io), enabling it to be coupled with other models in the CSDMS framework. The BMI wrapper is available as `gflex.BmiGflex` and requires the optional `bmipy` dependency:
+
+```bash
+pip install gflex[bmi]
+```
 
 ### Plotting
 
 There are four plot choices, defined via `self.plotChoice`:
-* `'q'`: plots the load in mantle-density-equivalent units of length
+* `'q0'`: plots the load in mantle-density-equivalent units of length
 * `'w'`: plots the deflection in units of length
 * `'both'`: plots both deflection and loads in separate panels of a 2-subplot figure
 * `'combo'`: (1D only): plots lithospheric deflections and the deflected mantle-density-equivalent load atop it.
-  * Note that the load does not affect the area above/below the datum filled when `rho_fill != 0`. This affects the buoyant balance associated with the motion of the plate, with no additional considerations for topogrpahy. If you would like to include topogrpahy, an iterative approach (e.g., finding areas below sea level, filling them, flexing, finding new areas below sea level, and so on) is recommended.
+  * Note that the load does not affect the area above/below the datum filled when `rho_fill != 0`. This affects the buoyant balance associated with the motion of the plate, with no additional considerations for topography. If you would like to include topography, an iterative approach (e.g., finding areas below sea level, filling them, flexing, finding new areas below sea level, and so on) is recommended.
 
 ## Utilities
 
-The "utilities" folder currently contains only one program, `flexural_wavelength_calculator.py`. Operating it is simple and fairly rudimentary: just edit the input variables directly in the calculator Python file, and then run it to see what the flexural parameter, first zero-crossing point (on the load-side of the forebulge), and the flexural wavelength.
+The **input/** directory contains several example scripts. The public API also provides standalone utility functions importable from `gflex`:
+
+* `flexural_wavelengths(Te, ...)` — computes the flexural parameter α, first zero-crossing, and flexural wavelength for a given elastic thickness.
+* `recommended_pad_width(Te, dx, ...)` — returns the recommended padding width (in cells) to avoid boundary artefacts when using a variable-*Te* grid.
+* `smooth_pad_Te(Te, pad_width, ...)` — extends a variable-*Te* array with a smooth linear taper, reducing spurious deflections at the domain edge.
+* `pad_domain(Te, qs, pad_width, ...)` — pads both the elastic thickness and load arrays together.
+
+See the [API reference](https://gflex.readthedocs.io/en/latest/api.html) for full documentation of these functions.
 
 
 [csdms_badge]: https://custom-icon-badges.demolab.com/badge/CSDMS-Component-2473c2?logo=csdms&style=for-the-badge
