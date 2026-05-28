@@ -197,6 +197,22 @@ Debug=
 Quiet=
 ```
 
+#### Finite-difference boundary conditions
+
+Five boundary conditions are available for FD solutions (see also Table 1 in Wickert, 2016):
+
+| Name | Condition | Physical interpretation |
+|------|-----------|------------------------|
+| `0Displacement0Slope` | w = 0 | Plate is pinned to zero deflection at the boundary |
+| `0Moment0Shear` | d²w/dx² = d³w/dx³ = 0 | Broken plate: free cantilever end with no moment or shear |
+| `0Slope0Shear` | dw/dx = d³w/dx³ = 0 | Plate is level at the boundary but free to deflect there; no shear transmitted |
+| `Mirror` | w(b − x) = w(b + x) | Mirror-symmetry plane — model only half of a symmetric system |
+| `Periodic` | w(0) = w(L) | Wrap-around: the domain tiles infinitely in both directions |
+
+For SAS and SAS_NG, `NoOutsideLoads` (or a blank entry) is used instead; the plate is assumed undeflected at infinity.
+
+**A note on `0Slope0Shear`:** the label in Wickert (2016) is "free displacement of a horizontally clamped boundary." The plate is forced to be exactly level at the boundary (dw/dx = 0) — as if it were clamped against rotation — while its vertical position is unconstrained and no shear force is transmitted (d³w/dx³ = 0). This is superficially similar to `Mirror` (both enforce zero slope at the boundary), but `0Slope0Shear` uses a different finite-difference stencil and the two produce noticeably different solutions even far from the boundary. For symmetry problems — e.g., modelling half of a symmetric mountain range or ice sheet — `Mirror` is the more accurate choice.
+
 #### Within a Python script (with or without a configuration file)
 
 You may run gFlex from other Python programs. When you install it (above), this also produces a Python module that you may import to access it while scripting.
