@@ -1029,10 +1029,10 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.sigma_xx = 0
         else:
-            if self.Method != "FD":
+            if self.Method not in ("FD", "FFT"):
                 warnings.warn(
                     "End loads have been set but will not be implemented because the"
-                    " solution method is not finite difference",
+                    " solution method is not finite difference or FFT",
                     category=RuntimeWarning,
                     stacklevel=2,
                 )
@@ -1041,10 +1041,10 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.sigma_xy = 0
         else:
-            if self.Method != "FD":
+            if self.Method not in ("FD", "FFT"):
                 warnings.warn(
                     "End loads have been set but will not be implemented because the"
-                    " solution method is not finite difference",
+                    " solution method is not finite difference or FFT",
                     category=RuntimeWarning,
                     stacklevel=2,
                 )
@@ -1053,10 +1053,10 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.sigma_yy = 0
         else:
-            if self.Method != "FD":
+            if self.Method not in ("FD", "FFT"):
                 warnings.warn(
                     "End loads have been set but will not be implemented because the"
-                    " solution method is not finite difference",
+                    " solution method is not finite difference or FFT",
                     category=RuntimeWarning,
                     stacklevel=2,
                 )
@@ -1143,7 +1143,20 @@ class Flexure(Utility, Plotting):
     def bc_check(self):
         # Check that boundary conditions are acceptable with code implementation
         # Acceptable b.c.'s
-        if self.Method == "FD":
+        if self.Method == "FFT":
+            # Ensure BC attributes exist; FFT handles them internally
+            # 'Periodic' → exact transform; anything else → zero-padded (NoOutsideLoads)
+            for attr in ("BC_E", "BC_W"):
+                if not hasattr(self, attr):
+                    setattr(self, attr, "")
+            if self.dimension == 2:
+                for attr in ("BC_N", "BC_S"):
+                    if not hasattr(self, attr):
+                        setattr(self, attr, "")
+            else:
+                self.BC_S = None
+                self.BC_N = None
+        elif self.Method == "FD":
             # Check if a coefficient array has been defined
             # It would only be by a getter or setter;
             # no way to do I/O with this with present configuration files

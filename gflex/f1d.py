@@ -197,10 +197,75 @@ class F1D(Flexure):
         self.fd_solve()  # Get the deflection, "w"
 
     def FFT(self):
-        """FFT solution — not yet implemented."""
-        if self.plotChoice:
-            self.gridded_x()
-        sys.exit("The fast Fourier transform solution method is not yet implemented.")
+        """Spectral (FFT) flexural solution for uniform elastic thickness.
+
+        Applies the analytical transfer function in the wavenumber domain::
+
+            W(k) = -Q(k) / (D k⁴ + σ_xx T_e k² + Δρ g)
+
+        **Boundary conditions and periodicity**
+
+        FFT inherently assumes a periodic domain.  Two modes are supported:
+
+        * ``BC_W = BC_E = 'Periodic'`` — the load array is used as-is.
+          The solution is exact for a load that genuinely repeats with
+          period L = N · dx.
+
+        * Any other BC (including ``'NoOutsideLoads'`` or unset) — the
+          load array is zero-padded by four flexural wavelengths (α) on
+          each side before the transform, then trimmed back to the original
+          length afterwards.  This is mathematically identical to the
+          periodic case, but with a padded domain large enough that the
+          periodic images of the load are separated by ~8α of zeros and
+          therefore do not influence the interior solution.  It is the
+          spectral equivalent of the ``'NoOutsideLoads'`` boundary
+          condition used by the SAS solver.
+
+        In both cases the solution is spectral (no spatial discretisation
+        error in the transfer function itself); any residual error comes
+        from representing a continuous load on a discrete grid.
+
+        Requires uniform (scalar) elastic thickness; for variable *Te* use
+        the finite-difference method instead.
+        """
+        self.gridded_x()
+
+        # Te must be scalar or a uniform array
+        if np.isscalar(self.Te):
+            pass
+        elif np.all(self.Te == np.mean(self.Te)):
+            self.Te = float(np.mean(self.Te))
+        else:
+            sys.exit(
+                "\nINPUT VARIABLE TYPE INCONSISTENT WITH SOLUTION TYPE.\n"
+                "The FFT solution requires a scalar (uniform) Te.\n"
+                "For spatially variable Te, use the finite difference method.\n"
+                "EXITING."
+            )
+
+        D = self.E * self.Te**3 / (12.0 * (1.0 - self.nu**2))
+        # 1-D flexural parameter α = (4D / Δρg)^0.25
+        alpha = (4.0 * D / (self.drho * self.g)) ** 0.25
+
+        periodic = (self.BC_W == "Periodic") and (self.BC_E == "Periodic")
+
+        if periodic:
+            qs_work = self.qs
+        else:
+            # Zero-pad by 4α on each side (NoOutsideLoads assumption)
+            pad = int(np.ceil(4.0 * alpha / self.dx))
+            qs_work = np.pad(self.qs, pad, mode="constant")
+
+        N_work = len(qs_work)
+        k = np.fft.rfftfreq(N_work, d=self.dx) * 2.0 * np.pi
+        Q = np.fft.rfft(qs_work)
+        denom = D * k**4 + self.sigma_xx * self.Te * k**2 + self.drho * self.g
+        w_work = np.fft.irfft(-Q / denom, n=N_work)
+
+        if periodic:
+            self.w = w_work
+        else:
+            self.w = w_work[pad : pad + self.nx]
 
     def SAS(self):
         """Run the gridded superposition-of-analytical-solutions pipeline."""
