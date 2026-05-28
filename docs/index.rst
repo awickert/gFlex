@@ -71,4 +71,5 @@ point (``gflex <config_file>``).
    :caption: Contents
 
    api
+   accuracy
    changelog
