@@ -132,12 +132,20 @@ Parameters
 
     For FD solutions:
 
-    * ``0Slope0Shear`` — free end; zero slope and shear force.
-    * ``0Moment0Shear`` — free end; zero bending moment and shear force.
-      This is the natural (Neumann) boundary condition.
-    * ``0Displacement0Slope`` — clamped; zero displacement and slope.
-    * ``Mirror`` — mirror the domain at this edge.
-    * ``Periodic`` — wrap-around (useful for convergence testing).
+    * ``0Displacement0Slope`` — zero displacement and slope; plate is pinned
+      to zero deflection at the boundary.
+    * ``0Moment0Shear`` — zero bending moment and shear force; broken plate
+      with a free cantilever end (Wickert, 2016, Table 1).
+    * ``0Slope0Shear`` — zero slope and shear force; the plate is level at
+      the boundary but free to deflect there, with no shear transmitted.
+      Wickert (2016) calls this "free displacement of a horizontally clamped
+      boundary."  It is superficially similar to ``Mirror`` (both enforce zero
+      slope), but uses a different finite-difference stencil and produces
+      noticeably different solutions; prefer ``Mirror`` for symmetry problems.
+    * ``Mirror`` — even reflection at the boundary; model only half of a
+      symmetric system (e.g., one flank of a mountain range or ice sheet).
+    * ``Periodic`` — wrap-around; the domain tiles infinitely in both
+      directions.
 
     For SAS / SAS_NG: ``NoOutsideLoads`` (assumed if left blank).
 
