@@ -190,6 +190,25 @@ def test_pad_domain():
     assert np.all(qs_pad[pad_mask] == 0.0)
 
 
+def test_2d_fd_uniform_te_array_equals_scalar():
+    """Uniform Te array (variable-Te stencil) gives same result as scalar Te (constant stencil).
+
+    In 2-D, scalar Te enters the constant-Te 13-point stencil while an ndarray
+    enters the vWC1994 variable-Te stencil — genuinely different code paths.
+    For uniform D both stencils are mathematically identical, so their outputs
+    must agree to within floating-point rounding (rtol = 1e-6).
+    """
+    N  = 60
+    dx = dy = 4000.0
+    qs = np.zeros((N, N))
+    qs[25:35, 25:35] = 1e6
+
+    w_scalar = _run_flex_2d(30e3,               qs, dx, dy)
+    w_array  = _run_flex_2d(np.full((N, N), 30e3), qs, dx, dy)
+
+    np.testing.assert_allclose(w_array, w_scalar, rtol=1e-6)
+
+
 def test_2d_fd_convergence_order():
     """2-D FD solver achieves second-order (O(dx²)) spatial convergence.
 
