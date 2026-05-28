@@ -188,18 +188,19 @@ def test_fft_2d_sigma_yy_monotonicity():
 
 
 def test_fft_2d_periodic_sigma_xy_exact():
-    """2-D FFT (Periodic) with sigma_xy matches the exact spectral formula.
+    """2-D FFT (Periodic) with sigma_xy matches the exact spectral formula for both diagonals.
 
-    For a diagonal wave q(x, y) = q0·cos(kx·x + ky·y) the rfft2 spectrum has
-    a single stored peak at (Kx=+kx, Ky=+ky), so the transfer function is
-    applied at a single well-defined wavenumber:
-
-        w(x, y) = −q0 / (D(kx²+ky²)² + 2σ_xy·Te·kx·ky + Δρg) · cos(kx·x + ky·y)
-
-    A separable cos(kx·X)·cos(ky·Y) load would have peaks at both (kx,+ky)
+    A separable cos(kx·X)·cos(ky·Y) load has rfft2 peaks at both (kx,+ky)
     and (kx,−ky), which see different denominators when σ_xy ≠ 0 and cannot
-    be reduced to a simple closed form.  The diagonal wave avoids this by
-    sitting on a single rfft2 bin.
+    be reduced to a simple closed form.  The two orthogonal diagonal waves
+    each sit at a single rfft2 bin and avoid this:
+
+      cos(kx·X + ky·Y): peak at (Kx=+kx, Ky=+ky) → denom gets +2σ_xy·Te·kx·ky
+      cos(kx·X − ky·Y): peak at (Kx=+kx, Ky=−ky) → denom gets −2σ_xy·Te·kx·ky
+
+    Testing both diagonals confirms the sign of 2σ_xy·Te·Kx·Ky is directional
+    (not symmetric), which a sign error in the stencil or transfer function
+    would break for one diagonal but not the other.
     """
     Nx, Ny = 64, 64
     Lx, Ly = Nx * dx, Ny * dy
@@ -211,14 +212,30 @@ def test_fft_2d_periodic_sigma_xy_exact():
     X, Y = np.meshgrid(x, y)
     q0 = 1e6
     sigma_xy = 2e8
-    qs = q0 * np.cos(kx * X + ky * Y)
-
-    flex = _run(qs, bc_w="Periodic", bc_e="Periodic", bc_n="Periodic", bc_s="Periodic",
-                sigma_xx=0.0, sigma_yy=0.0, sigma_xy=sigma_xy)
-
     K2 = kx**2 + ky**2
-    w_exact = -q0 / (D * K2**2 + 2.0 * sigma_xy * Te * kx * ky + drho * g) * np.cos(kx * X + ky * Y)
-    np.testing.assert_allclose(flex.w, w_exact, rtol=1e-10)
+
+    # Diagonal (+): Kx=+kx, Ky=+ky → denom includes +2σ_xy·Te·kx·ky
+    qs_plus = q0 * np.cos(kx * X + ky * Y)
+    flex_plus = _run(qs_plus, bc_w="Periodic", bc_e="Periodic",
+                     bc_n="Periodic", bc_s="Periodic",
+                     sigma_xx=0.0, sigma_yy=0.0, sigma_xy=sigma_xy)
+    denom_plus  = D * K2**2 + 2.0 * sigma_xy * Te * kx * ky + drho * g
+    w_exact_plus = -q0 / denom_plus * np.cos(kx * X + ky * Y)
+    np.testing.assert_allclose(flex_plus.w, w_exact_plus, rtol=1e-10)
+
+    # Diagonal (−): Kx=+kx, Ky=−ky → denom includes −2σ_xy·Te·kx·ky
+    qs_minus = q0 * np.cos(kx * X - ky * Y)
+    flex_minus = _run(qs_minus, bc_w="Periodic", bc_e="Periodic",
+                      bc_n="Periodic", bc_s="Periodic",
+                      sigma_xx=0.0, sigma_yy=0.0, sigma_xy=sigma_xy)
+    denom_minus  = D * K2**2 - 2.0 * sigma_xy * Te * kx * ky + drho * g
+    w_exact_minus = -q0 / denom_minus * np.cos(kx * X - ky * Y)
+    np.testing.assert_allclose(flex_minus.w, w_exact_minus, rtol=1e-10)
+
+    # The two diagonals must give different deflection amplitudes when σ_xy ≠ 0
+    assert not np.allclose(flex_plus.w, flex_minus.w), (
+        "orthogonal diagonals should differ when sigma_xy != 0"
+    )
 
 
 # ---------------------------------------------------------------------------
