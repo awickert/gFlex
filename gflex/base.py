@@ -1489,7 +1489,7 @@ class Flexure(Utility, Plotting):
             try:
                 # If these have already been set, e.g., by getters/setters, great!
                 self.x
-                self.u
+                self.y
                 self.q
             except AttributeError:
                 # Using [x, y, w] configuration file
