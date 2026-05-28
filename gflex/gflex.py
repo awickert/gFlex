@@ -52,7 +52,7 @@ def main():
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("filename", nargs=1, help="gflex configuration file.")
+    parser.add_argument("filename", help="gflex configuration file.")
     parser.add_argument("--version", action="version", version=f"gflex {__version__}")
     parser.add_argument(
         "--verbose", action="store_true", help="print debugging information."
