@@ -912,13 +912,11 @@ class Flexure(Utility, Plotting):
                 if self.dimension == 2:
                     self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
 
-            # Mode: solution method and type of plate solution (if applicable)
-            if self.filename:
-                self.Method = self.configGet("string", "mode", "method")
-                if self.dimension == 2:
-                    self.PlateSolutionType = self.configGet(
-                        "string", "mode", "PlateSolutionType"
-                    )
+            # Plate solution type (only meaningful for FD)
+            if self.dimension == 2:
+                self.PlateSolutionType = self.configGet(
+                    "string", "mode", "PlateSolutionType"
+                )
 
             # Loading grid
             # q0 is either a load array or an x,y,q array.
