@@ -123,13 +123,47 @@ For options 1 and 2, there are pre-built methods that can be selected along the 
 A configuration file can be generated to run gFlex; see examples in the **input/** directory. To run gFlex using this file, one simply opens a terminal window and types:
 
 ```bash
-# run like this:
 gflex <path-to-configuration-file>
 ```
 
 This can be run from any directory, as the installation of gFlex adds the program "gflex" to the system path.
 
-For help constructing configuration files, see the blank template files **input/template1D** and **input/template2D**, as well as the other examples found in the **input/** directory. The **input/** directory also contains **input/README.md**, which provides a further local description of the files available. **input/input_help** provides a longer explanation of what the parameters are, and is therefore reproduced immediately below for reference:
+Two configuration file formats are supported:
+
+* **YAML** (`.yaml` / `.yml` extension) — recommended for new workflows. See **input/input_f1d.yaml** and **input/input_f2d.yaml** for complete examples.
+* **INI** (any extension) — the original legacy format.
+
+A minimal 2-D YAML configuration file looks like:
+
+```yaml
+mode:
+  dimension: 2
+  method: FD
+  PlateSolutionType: vWC1994
+parameter:
+  YoungsModulus: 6.5e10
+  PoissonsRatio: 0.25
+  GravAccel: 9.8
+  MantleDensity: 3300
+  InfillMaterialDensity: 0
+input:
+  Loads: path/to/loads.txt
+  ElasticThickness: path/to/Te.txt
+output:
+  Plot: both
+numerical:
+  GridSpacing_x: 4000
+  BoundaryCondition_West: 0Moment0Shear
+  BoundaryCondition_East: 0Displacement0Slope
+  Solver: direct
+  ConvergenceTolerance: 1.0e-3
+numerical2D:
+  GridSpacing_y: 4000
+  BoundaryCondition_North: Mirror
+  BoundaryCondition_South: 0Slope0Shear
+```
+
+For help constructing configuration files, see the other examples found in the **input/** directory. **input/input_help** provides a longer explanation of what the parameters are, and is therefore reproduced immediately below for reference:
 
 ```Lisp
 ; input_help

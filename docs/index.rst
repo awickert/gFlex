@@ -58,6 +58,55 @@ Quick start
 
    deflection = flex.w   # (50, 50) array; negative values = downward
 
+Configuration files
+-------------------
+
+As an alternative to the programmatic API, gFlex can be driven by a
+configuration file — passed to the ``gflex`` CLI or to the
+:class:`~gflex.F1D` / :class:`~gflex.F2D` constructor.  Two formats
+are supported:
+
+* **YAML** (``.yaml`` / ``.yml``) — recommended for new workflows.
+  See ``input/input_f1d.yaml`` and ``input/input_f2d.yaml`` for
+  complete 1-D and 2-D examples.
+* **INI** (any extension) — the legacy format; see ``input/input_f1d``
+  and ``input/input_f2d``.
+
+A minimal 2-D YAML configuration:
+
+.. code-block:: yaml
+
+   mode:
+     dimension: 2
+     method: FD
+     PlateSolutionType: vWC1994
+   parameter:
+     YoungsModulus: 6.5e10
+     PoissonsRatio: 0.25
+     GravAccel: 9.8
+     MantleDensity: 3300
+     InfillMaterialDensity: 0
+   input:
+     Loads: path/to/loads.txt
+     ElasticThickness: path/to/Te.txt
+   output:
+     Plot: both
+   numerical:
+     GridSpacing_x: 4000
+     BoundaryCondition_West: 0Moment0Shear
+     BoundaryCondition_East: 0Displacement0Slope
+     Solver: direct
+     ConvergenceTolerance: 1.0e-3
+   numerical2D:
+     GridSpacing_y: 4000
+     BoundaryCondition_North: Mirror
+     BoundaryCondition_South: 0Slope0Shear
+
+Run either format from the command line::
+
+   gflex path/to/config.yaml   # YAML (extension required)
+   gflex path/to/config        # INI (any extension)
+
 The package also provides domain-padding utilities for variable-*Te* grids
 (see :func:`~gflex.pad_domain`), a flexural wavelength calculator
 (see :func:`~gflex.flexural_wavelengths`), a Landlab component, a CSDMS
