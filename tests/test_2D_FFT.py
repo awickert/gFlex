@@ -82,6 +82,60 @@ def test_fft_2d_periodic_exact():
 
 
 # ---------------------------------------------------------------------------
+# Periodic with non-zero rho_fill: exact match
+# ---------------------------------------------------------------------------
+
+def test_fft_2d_periodic_rho_fill_exact():
+    """2-D FFT (Periodic) with rho_fill ≠ 0 matches the exact spectral formula.
+
+    The Winkler restoring term uses Δρ = rho_m − rho_fill, not bare rho_m.
+    With rho_fill = 1030 kg/m³ (seawater) the effective restoring modulus
+    is weaker, so deflections are deeper.  Agreement to rtol = 1e-10
+    against the formula with the correct Δρ confirms the subtraction is
+    applied throughout the solver.
+    """
+    Nx, Ny = 64, 64
+    Lx, Ly = Nx * dx, Ny * dy
+    nx_waves, ny_waves = 2, 3
+    kx = 2.0 * np.pi * nx_waves / Lx
+    ky = 2.0 * np.pi * ny_waves / Ly
+    x = (np.arange(Nx) + 0.5) * dx
+    y = (np.arange(Ny) + 0.5) * dy
+    X, Y = np.meshgrid(x, y)
+    q0 = 1e6
+    rho_fill_water = 1030.0
+    drho_water = rho_m - rho_fill_water
+    qs = q0 * np.cos(kx * X) * np.cos(ky * Y)
+
+    flex = F2D()
+    flex.Quiet = True
+    flex.Method = "FFT"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill_water
+    flex.Te = Te
+    flex.qs = qs.copy()
+    flex.dx = dx
+    flex.dy = dy
+    flex.BC_W = flex.BC_E = flex.BC_N = flex.BC_S = "Periodic"
+    flex.initialize()
+    flex.run()
+    flex.finalize()
+
+    K2 = kx**2 + ky**2
+    w_exact = -q0 / (D * K2**2 + drho_water * g) * np.cos(kx * X) * np.cos(ky * Y)
+    np.testing.assert_allclose(flex.w, w_exact, rtol=1e-10)
+
+    # Deflection must be deeper (more negative) than with air fill (rho_fill=0)
+    flex_air = _run(qs, bc_w="Periodic", bc_e="Periodic", bc_n="Periodic", bc_s="Periodic")
+    assert flex.w.min() < flex_air.w.min(), (
+        "water fill (weaker Winkler restoring) should produce deeper deflection than air fill"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Periodic with sigma_xx: exact match
 # ---------------------------------------------------------------------------
 
