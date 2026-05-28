@@ -857,7 +857,7 @@ class F1D(Flexure):
             # qs negative so bends down with positive load, bends up with neative load
             # (i.e. material removed)
             w = isolve.lgmres(
-                self.coeff_matrix, -self.qs, tol=self.iterative_ConvergenceTolerance
+                self.coeff_matrix, -self.qs, rtol=self.iterative_ConvergenceTolerance
             )
             self.w = w[0]  # Reach into tuple to get my array back
         else:

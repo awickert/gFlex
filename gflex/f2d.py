@@ -2249,8 +2249,8 @@ class F2D(Flexure):
                     "m between iterations",
                 )
             wvector = isolve.lgmres(
-                self.coeff_matrix, q0vector
-            )  # , tol=1E-10)#,x0=woldvector)#,x0=wvector,tol=1E-15)
+                self.coeff_matrix, q0vector, rtol=self.iterative_ConvergenceTolerance
+            )
             wvector = wvector[0]  # Reach into tuple to get my array back
         else:
             if self.Solver == "direct" or self.Solver == "Direct":
