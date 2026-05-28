@@ -109,6 +109,36 @@ class Utility:
                     print(specialReturnMessage)
                 sys.exit("Exiting.")
 
+    def _load_config(self, filename):
+        """Return a :class:`configparser.ConfigParser` populated from *filename*.
+
+        Accepts both INI (any extension) and YAML (``.yaml`` / ``.yml``).
+        YAML files must use the same section names as the INI format
+        (``mode``, ``parameter``, ``input``, ``output``, ``numerical``,
+        ``numerical2D``, ``verbosity``).
+        """
+        config = configparser.ConfigParser()
+        ext = os.path.splitext(filename)[1].lower()
+        if ext in (".yaml", ".yml"):
+            try:
+                import yaml
+            except ImportError:
+                sys.exit(
+                    "PyYAML is required to read YAML configuration files.\n"
+                    "Install it with: pip install pyyaml"
+                )
+            with open(filename) as fh:
+                data = yaml.safe_load(fh)
+            for section, values in data.items():
+                if not isinstance(values, dict):
+                    continue
+                config.add_section(section)
+                for key, val in values.items():
+                    config.set(section, key, "" if val is None else str(val))
+        else:
+            config.read(filename)
+        return config
+
     def readyCoeff(self):
         from scipy import sparse
 
@@ -717,21 +747,18 @@ class WhichModel(Utility):
                 self.whichModel_AlreadyRun
             except AttributeError:
                 # Open parser and get what kind of model
-                _fileisvalid = self.config = configparser.ConfigParser()
-                _fileisvalid = len(_fileisvalid)
-                if _fileisvalid:
-                    try:
-                        self.config.read(filename)
-                        # Need to change this and all slashes to be Windows compatible
-                        self.inpath = os.path.dirname(os.path.realpath(filename)) + "/"
-                        # Need to have these guys inside "try" to make sure it is set up OK
-                        # (at least for them)
-                        self.dimension = self.configGet("integer", "mode", "dimension")
-                        self.whichModel_AlreadyRun = True
-                    except:
-                        sys.exit(
-                            ">>>> Error: cannot locate specified configuration file. <<<<"
-                        )
+                try:
+                    self.config = self._load_config(filename)
+                    # Need to change this and all slashes to be Windows compatible
+                    self.inpath = os.path.dirname(os.path.realpath(filename)) + "/"
+                    # Need to have these guys inside "try" to make sure it is set up OK
+                    # (at least for them)
+                    self.dimension = self.configGet("integer", "mode", "dimension")
+                    self.whichModel_AlreadyRun = True
+                except:
+                    sys.exit(
+                        ">>>> Error: cannot locate specified configuration file. <<<<"
+                    )
 
 
 class Flexure(Utility, Plotting):
@@ -815,10 +842,8 @@ class Flexure(Utility, Plotting):
                 self.filename = filename
 
         if self.filename:
-            # Set up ConfigParser
-            self.config = configparser.ConfigParser()
             try:
-                self.config.read(self.filename)
+                self.config = self._load_config(self.filename)
                 self.inpath = os.path.dirname(os.path.realpath(self.filename)) + "/"
                 # Need to have these guys inside "try" to make sure it is set up OK
                 # (at least for them)
