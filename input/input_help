@@ -5,19 +5,13 @@
 [mode]
 ; 1 (line) or 2 (surface) dimensions
 dimension=2
-; Solution method: FD (Finite Difference), FFT (Fast Fourier
-; Transform, not yet implemented), SAS (Spatial domain analytical
-; solutions), or SAS_NG (SPA, but do not require a uniform grid
-; - NG = "no grid")
+; Solution method: FD (Finite Difference), SAS (Spatial domain
+; analytical solutions), or SAS_NG (SAS, but on an unstructured
+; grid — NG = "no grid").
 ; For SAS_NG, 1D data must be provided and will be returned in
 ; two columns: (x,q0) --> (x,w). 2D data are similar, except
-; will be of the form (x,y,[q0/in or w/out])
-; I am working on gridded output for these, so this might change
-; in the future.
-; Both the FFT and SPA techniques rely on superposition
-; of solutions, because they can be combined linearly, whether in
-; the spectral or the spatial domain)
-method=SPA
+; will be of the form (x,y,[q0/in or w/out]).
+method=SAS
 ; Plate solutions can be:
 ;  * vWC1994 (best), or
 ;  * G2009 (from Govers et al., 2009; not bad, but not
