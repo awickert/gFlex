@@ -48,20 +48,21 @@ Parameters
 ~~~~~~~~~~~~~~~~~~~~~
 
 ``YoungsModulus``
-    Young's modulus [Pa].  Typical lithospheric value: 65 GPa (``6.5e10``).
+    Young's modulus :math:`E` [Pa].  Typical lithospheric value: 65 GPa
+    (``6.5e10``).
 
 ``PoissonsRatio``
-    Poisson's ratio [dimensionless].  Typical value: 0.25.
+    Poisson's ratio :math:`\nu` [dimensionless].  Typical value: 0.25.
 
 ``GravAccel``
-    Gravitational acceleration [m s⁻²].  Earth standard: 9.8.
+    Gravitational acceleration :math:`g` [m s⁻²].  Earth standard: 9.8.
 
 ``MantleDensity``
-    Density of the mantle [kg m⁻³].  Typical value: 3300.
+    Density of the mantle :math:`\rho_m` [kg m⁻³].  Typical value: 3300.
 
 ``InfillMaterialDensity``
     Density of the material that fills (or vacates) the flexural depression
-    [kg m⁻³].  Common values:
+    :math:`\rho_\text{fill}` [kg m⁻³].  Common values:
 
     * ``0`` — air (no infill)
     * ``1030`` — seawater
@@ -80,8 +81,9 @@ Parameters
     Path to the load file.
 
     * *Gridded methods (FD, SAS)*: a space-delimited array of surface
-      normal stresses [Pa] (ρ × g × h).  Grid cell area (dx × dy) is
-      applied internally to convert stress to force.
+      normal stresses [Pa] (:math:`\rho g h`).  Grid cell area
+      (:math:`\Delta x \times \Delta y`) is applied internally to convert
+      stress to force.
     * *SAS_NG*: a space-delimited file with columns ``(x, q0)`` in 1-D or
       ``(x, y, q0)`` in 2-D, where q0 is a point force [N].
 

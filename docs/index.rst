@@ -11,6 +11,19 @@ view) solutions are supported, using either a finite-difference method (which
 handles spatially variable elastic thickness) or superposition of analytical
 solutions (fast, for constant elastic thickness).
 
+The deflection :math:`w` satisfies
+
+.. math::
+
+   D \nabla^4 w + \left(\rho_m - \rho_\text{fill}\right) g\, w = q,
+
+where :math:`q` is the applied surface normal stress [Pa],
+:math:`\rho_m` and :math:`\rho_\text{fill}` are the mantle and infill
+densities [kg m⁻³], :math:`g` is gravitational acceleration [m s⁻²], and
+:math:`D = E T_e^3 / \bigl[12(1 - \nu^2)\bigr]` is the flexural rigidity
+(:math:`E` = Young's modulus, :math:`T_e` = elastic thickness,
+:math:`\nu` = Poisson's ratio).
+
 .. note::
 
    When you use gFlex, please cite:
