@@ -132,6 +132,15 @@ Parameters
 
     For FD solutions:
 
+    .. figure:: _static/fig4_bc_schematics.png
+       :width: 55%
+       :align: center
+       :alt: Schematics of the five finite-difference boundary condition types
+
+       Schematics of the five FD boundary condition types (a–e).
+       Reproduced from Wickert (2016), Fig. 4;
+       `CC BY 3.0 <https://creativecommons.org/licenses/by/3.0/>`_.
+
     * ``0Displacement0Slope`` — zero displacement and slope; plate is pinned
       to zero deflection at the boundary.
     * ``0Moment0Shear`` — zero bending moment and shear force; broken plate
