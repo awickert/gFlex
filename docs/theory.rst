@@ -1,126 +1,178 @@
 Theory
 ======
 
-gFlex solves the thin elastic plate equation governing lithospheric flexural
-isostasy: the downward (or upward) bending of Earth's rigid outer shell in
-response to an applied surface load.
+Flexure of the lithosphere is the process by which loads bend the elastic
+outer shell of Earth or other planets (Watts, 2001; Watters and McGovern,
+2006).  The sources of these loads are wide-ranging, encompassing volcanic
+islands and seamounts, mountain-belt-forming thrust sheets, sedimentary
+basins, continental ice sheets, lakes, seas and oceans, erosional unloading,
+and mantle plumes — among others.  By bending over distances of several tens
+to hundreds of kilometers, the lithosphere low-pass filters a discontinuous
+surface loading field into a smoothed solid-Earth response.
 
-Governing equation
-------------------
+Governing equations
+-------------------
 
-For a two-dimensional plate, the deflection :math:`w(x, y)` [m] satisfies
+gFlex solves the thin elastic plate (Kirchhoff–Love) equation for flexural
+isostasy.  The analytical solution imposes the assumption that the scalar
+flexural rigidity, :math:`D`, is uniform.  This leads to biharmonic
+expressions for plate bending in one and two dimensions, respectively
+(Wickert, 2016, Eqs. 1–2):
 
 .. math::
 
-   \nabla^2 \!\left(D\, \nabla^2 w\right)
-   - \frac{\partial^2}{\partial x^2}\!\left(\sigma_{xx}\,\frac{\partial w}{\partial x}\right)
-   - \frac{\partial^2}{\partial y^2}\!\left(\sigma_{yy}\,\frac{\partial w}{\partial y}\right)
-   - 2\frac{\partial^2}{\partial x\,\partial y}\!\left(\sigma_{xy}\,\frac{\partial w}{\partial x}\right)
+   D \frac{\mathrm{d}^4 w}{\mathrm{d}x^4} + \Delta\rho\,g\,w = q,
+
+.. math::
+
+   D \nabla^4 w + \Delta\rho\,g\,w = q.
+
+Here, :math:`w` [m] is vertical deflection of the plate (:math:`w < 0` is
+downward into the mantle), :math:`q` [Pa] is the applied surface normal
+stress, :math:`\Delta\rho = \rho_m - \rho_f` [kg m⁻³] is the density of the
+mantle minus the density of the infilling material, and :math:`g` [m s⁻²] is
+gravitational acceleration.  The :math:`\Delta\rho\,g\,w` term represents the
+feedback by which flexural subsidence can lead a depression to be filled by
+material — for example, seawater or sediment — which leads to additional
+flexural subsidence.  If the infilling material is not uniform in density or
+spatial extent, one may solve for the flexural response with
+:math:`\rho_f = \rho_\text{air} \approx 0`, add loads based on conditions
+that match a given inundation or deposition rule, and then re-calculate
+flexure iteratively until convergence is achieved.
+
+For finite difference solutions, where :math:`D` may vary spatially, the
+full one-dimensional expansion is
+
+.. math::
+
+   D \frac{\partial^4 w}{\partial x^4}
+   + 2 \frac{\partial D}{\partial x} \frac{\partial^3 w}{\partial x^3}
+   + \frac{\partial^2 D}{\partial x^2} \frac{\partial^2 w}{\partial x^2}
    + \Delta\rho\,g\,w = q,
 
-where :math:`q(x,y)` [Pa] is the applied surface normal stress,
-:math:`\Delta\rho = \rho_m - \rho_\text{fill}` [kg m⁻³] is the density
-contrast between mantle and infill material, :math:`g` [m s⁻²] is
-gravitational acceleration, and :math:`\sigma_{xx}`, :math:`\sigma_{yy}`,
-:math:`\sigma_{xy}` [Pa] are depth-integrated tectonic stresses in the plate
-(Wickert, 2016, after van Wees & Cloetingh, 1994).
-
-In the common case of no in-plane tectonic stresses and constant flexural
-rigidity, this reduces to the isotropic biharmonic equation
+and the two-dimensional equivalent follows van Wees and Cloetingh (1994).
+Both are discretized using a second-order centered finite difference
+approximation, reducing the problem to the sparse linear matrix equation
 
 .. math::
 
-   D\,\nabla^4 w + \Delta\rho\,g\,w = q.
+   \mathbf{A}\mathbf{W} = \mathbf{Q},
 
-The one-dimensional (profile) form is
+where :math:`\mathbf{A}` is a sparse matrix of finite difference operators,
+:math:`\mathbf{W}` is a vector of deflections, and :math:`\mathbf{Q}` is a
+vector of imposed loads.
+
+Flexural rigidity and elastic thickness
+---------------------------------------
+
+The scalar flexural rigidity :math:`D` [N m] is the key parameter that
+controls the flexural response, and is a function of :math:`T_e`, :math:`E`,
+and :math:`\nu` (Turcotte and Schubert, 2002):
 
 .. math::
 
-   D\,\frac{\mathrm{d}^4 w}{\mathrm{d}x^4} + \Delta\rho\,g\,w = q(x).
+   D = \frac{E\,T_e^3}{12\!\left(1 - \nu^2\right)}.
 
-Flexural rigidity
------------------
-
-The flexural rigidity :math:`D` [N m] depends on the elastic properties of
-the plate:
-
-.. math::
-
-   D = \frac{E\,T_e^3}{12\!\left(1 - \nu^2\right)},
-
-where :math:`E` [Pa] is Young's modulus, :math:`T_e` [m] is the elastic
-thickness, and :math:`\nu` is Poisson's ratio.  :math:`D` may vary spatially
-when :math:`T_e` varies, as is common in the real lithosphere.
+Here, :math:`E` [Pa] is Young's modulus, :math:`T_e` [m] is the elastic
+thickness, and :math:`\nu` is Poisson's ratio.  Because :math:`D` scales as
+:math:`T_e^3`, changes in the effective elastic thickness of the lithosphere,
+cubed, are more significant than changes in Poisson's ratio, squared, or
+Young's modulus.  gFlex contains the additional simplifying assumption that
+:math:`E` and :math:`\nu` are uniform constants, permitting variations in
+scalar flexural rigidity to map to variations in effective elastic thickness
+via this equation.
 
 Flexural parameter
 ------------------
 
-For a constant-rigidity plate the characteristic length scale of the
-deflection — the *flexural parameter* :math:`\alpha` — is
+For a plate of constant :math:`T_e`, the *flexural parameter* :math:`\alpha`
+[m] provides the characteristic length scale of the deflection.  Following
+Vening Meinesz (1931, after Hertz, 1884):
 
 .. math::
 
-   \alpha_\text{1D} = \left(\frac{4D}{\Delta\rho\,g}\right)^{1/4}, \qquad
-   \alpha_\text{2D} = \left(\frac{D}{\Delta\rho\,g}\right)^{1/4}.
+   \alpha_\text{1D} = \left[\frac{4D}{\Delta\rho\,g}\right]^{1/4}, \qquad
+   \alpha_\text{2D} = \left[\frac{D}{\Delta\rho\,g}\right]^{1/4}.
 
-The corresponding *flexural wavelength* is
-:math:`\lambda = 2\pi\alpha`, and the first zero-crossing of the deflection
-(the forebulge) falls near :math:`\pi\alpha`.
+The significance of the flexural parameter is that the flexural wavelength
+:math:`\lambda_\alpha` is related to it as :math:`\lambda_\alpha = 2\pi\alpha`.
+The distance from a point load to the first flexural bulge (forebulge) that it
+creates around its local depression, for example, is a flexural half-wavelength,
+:math:`\pi\alpha`.  This nature of plate bending as an exponentially decaying
+periodic function can be seen most easily in the one-dimensional analytical
+(constant :math:`T_e`) solution, Eq. (3) below.
 
 Use :func:`gflex.flexural_wavelengths` to compute :math:`\alpha`,
-:math:`\lambda`, and the first zero-crossing for a given set of elastic
-parameters.
+:math:`\lambda_\alpha`, and the first zero-crossing for a given set of elastic
+parameters before choosing a grid spacing or domain size.
 
 Solution methods
 ----------------
 
-gFlex offers three methods, selectable via ``Method`` in the configuration or
-Python API.
-
-Finite Difference (``FD``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The finite-difference method discretises the governing PDE on a regular
-Cartesian grid and solves the resulting linear system.  Spatially variable
-:math:`T_e` (and hence variable :math:`D`) is fully supported.  Five boundary
-conditions are available (see :doc:`configuration`).  The direct sparse
-solver is recommended; an iterative solver is available for very large grids.
+gFlex solves for lithospheric flexure in two major ways.  First, it can
+produce analytical solutions to flexural isostasy generated by superposition
+of local solutions to point loads in the spatial domain.  Second, it can
+compute finite difference solutions for both constant and arbitrarily varying
+lithospheric elastic thickness structures.  These solutions are formulated for
+both one-dimensional (line load, assumed to extend infinitely in an orientation
+orthogonal to the line along which the equation is solved) and two-dimensional
+(point load) cases (Wickert, 2016).
 
 Superposition of Analytical Solutions (``SAS``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For a plate with *constant* :math:`T_e`, the deflection at any point is the
-superposition of responses from individual load elements.
+The first solution type takes advantage of the linear nature of the analytical
+solution for flexure of a plate of constant thickness and elastic properties
+when subjected to a point or line load.  Because the flexure equation is
+linear, these solutions may be superposed (i.e., summed) in space to compute
+the full flexural response to any arbitrary load.
 
-In one dimension, the response to a line load :math:`F` [N m⁻¹] at distance
-:math:`r` is
-
-.. math::
-
-   w(r) = \frac{\alpha^3}{8D}\,F\,
-          e^{-r/\alpha}\!\left(\cos\frac{r}{\alpha} + \sin\frac{r}{\alpha}\right).
-
-In two dimensions, the response to a point load :math:`F` [N] at distance
-:math:`r` involves the Kelvin function :math:`\mathrm{kei}`:
+In one dimension, the response at position :math:`x` to a line load
+:math:`q` [Pa] at position :math:`x_i` is (Wickert, 2016, Eq. 3)
 
 .. math::
 
-   w(r) = \frac{\alpha^2}{2\pi D}\,F\;\mathrm{kei}\!\left(\frac{r}{\alpha}\right).
+   w_i = q\,\frac{\alpha_\text{1D}^3}{8D}\,
+         e^{-|x - x_i| / \alpha_\text{1D}}
+         \!\left[
+           \cos\!\frac{|x - x_i|}{\alpha_\text{1D}}
+         + \sin\!\frac{|x - x_i|}{\alpha_\text{1D}}
+         \right].
 
-Because SAS bypasses sparse-matrix assembly, it is fast and avoids
-boundary-condition artefacts.  The implicit boundary condition is
-``NoOutsideLoads``: the plate is undeflected at infinity.
+In two dimensions, the response at :math:`(x, y)` to a point load at
+:math:`(x_i, y_j)` involves the zeroth-order Kelvin function
+:math:`\mathrm{kei}` (Brotchie and Silvester, 1969; Abramowitz and Stegun,
+1972):
+
+.. math::
+
+   w_{i,j} = q\,\frac{\alpha_\text{2D}^2}{2\pi D}\,
+              \mathrm{kei}\!\left(
+                \frac{\sqrt{(x - x_i)^2 + (y - y_j)^2}}{\,\alpha_\text{2D}}
+              \right).
+
+The implicit boundary condition for all analytical solutions is
+``NoOutsideLoads``: the plate is undeflected at infinity
+(:math:`w_\infty = 0`).
 
 Superposition of Analytical Solutions, No Grid (``SAS_NG``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The same analytical superposition as ``SAS``, but load and output locations
-are supplied as arbitrary (x, q₀) or (x, y, q₀) point sets rather than a
-regular grid.  Useful when load data are sparsely or irregularly distributed.
+are supplied as an arbitrary (x, q₀) or (x, y, q₀) point set rather than a
+regular grid.  This solution type is termed SAS_NG — superposition of
+analytical solutions, no grid — because it lacks the grid uniformity that
+permits a solution template to be used, and so its computational time is not
+optimized in the same way (Wickert, 2016, Sect. 2.5).
 
-Sign convention
----------------
+Finite Difference (``FD``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Positive :math:`w` is *upward*; negative :math:`w` is *downward* (into the
-mantle).  A surface load applied downward (:math:`q > 0`) produces
-:math:`w < 0`.  The output array ``flex.w`` follows this convention.
+Finite difference solutions employ the variable-:math:`D` expansions of the
+governing equations on a regular Cartesian grid and, following van Wees and
+Cloetingh (1994), permit computations with spatially varying flexural rigidity.
+The grid spacings :math:`\Delta x` and :math:`\Delta y` may differ from one
+another, but each must be constant.  The resulting sparse linear system is
+solved directly using a sparse LU factorization or, at the user's choice,
+iteratively.  Five boundary conditions are available; see :doc:`configuration`
+for details and physical interpretations.
