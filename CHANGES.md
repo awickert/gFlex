@@ -1,5 +1,59 @@
 # Release Notes
 
+## [Unreleased]
+
+### New features
+
+- **FFT spectral solver** for 1-D and 2-D problems.  Exact for periodic
+  boundaries; other boundary conditions are handled with 4α zero-padding
+  (NoOutsideLoads approximation).  Requires scalar (uniform) elastic
+  thickness.  In-plane stresses (`sigma_xx`, `sigma_yy`, `sigma_xy`) are
+  fully supported.
+- **YAML configuration file format** alongside the legacy INI format.  Pass
+  a `.yaml` / `.yml` file to the CLI or to the `F1D` / `F2D` constructor.
+- **Domain-padding utilities** to reduce spurious boundary effects when
+  using spatially variable elastic thickness:
+  - 2-D: `pad_domain`, `smooth_pad_Te`, `recommended_pad_width`
+  - 1-D: `pad_domain_1d`, `smooth_pad_Te_1d`, `recommended_pad_width_1d`
+- **FD boundary-condition warnings** — `F1D` and `F2D` now issue
+  `UserWarning` messages for `'0Moment0Shear'` (free broken end — verify
+  a rifted margin is intended), `'0Slope0Shear'` (no clear geological
+  analog), and when the nearest loaded cell is within one flexural
+  wavelength of a `'0Displacement0Slope'` boundary (forebulge suppression).
+
+### Improvements
+
+- Iterative FD solver (`Solver = iterative`) upgraded from Jacobi to ILU
+  preconditioning; falls back to a direct solve if LGMRES does not converge.
+  The `ConvergenceTolerance` parameter is now passed as `rtol` (relative
+  residual) to SciPy's LGMRES; default remains `1e-3`.
+- In-plane membrane stresses (`sigma_xx`, `sigma_yy`, `sigma_xy`) now
+  supported by all FD and FFT solvers in both 1-D and 2-D.
+
+### Bug fixes
+
+- Fixed 2-D FD constant-Te stencil: corrected dx/dy swap, σ swap, and
+  missing `/dx²` factors that produced incorrect results for asymmetric grids.
+- Fixed 2-D FFT `sigma_xy` assembly: double-wrapped corner entries and wrong
+  coefficient in the Periodic right-roll buffer.
+- Fixed `0Slope0Shear` description in configuration reference and README.
+
+### Documentation
+
+- New Sphinx / Read the Docs site with a theory page (governing equations,
+  solution methods, in-plane stresses), an accuracy page, a configuration
+  reference, API reference, and changelog.
+- Theory page covers the full governing PDE with in-plane stress terms for
+  both 1-D and 2-D, the variable-D FD expansion, and the FFT transfer
+  function.
+
+### Tests
+
+- Comprehensive new test suites for 1-D SAS/SAS_NG, 2-D SAS/SAS_NG,
+  1-D FFT, 2-D FFT (including sigma_xy), 1-D FD boundary conditions with
+  analytical cross-validation, 2-D FD, FD boundary-condition warnings, and
+  all domain-padding utilities.
+
 ## [1.3.0](https://github.com/awickert/gFlex/releases/tag/v1.3.0) - 2026-05-27
 
 - New: `BmiGflex` — CSDMS Basic Model Interface (BMI) v2 implementation;
