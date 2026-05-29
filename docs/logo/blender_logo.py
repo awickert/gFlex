@@ -343,7 +343,11 @@ def build_te_floor():
 def build_te_grid(step=12):
     """Subsampled wireframe sitting on the deflection surface."""
     j_vals = list(range(0, nrows, step))
+    if j_vals[-1] != nrows - 1:
+        j_vals.append(nrows - 1)
     i_vals = list(range(0, ncols, step))
+    if i_vals[-1] != ncols - 1:
+        i_vals.append(ncols - 1)
 
     idx_map = {}
     gverts  = []
