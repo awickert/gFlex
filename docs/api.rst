@@ -24,6 +24,36 @@ Output
 
 .. automethod:: gflex.base.Flexure.output
 
+In-plane stresses
+-----------------
+
+In-plane stresses are set as attributes directly on the solver instance
+before calling :meth:`initialize`.  They are not available as configuration
+file keys.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 15 65
+
+   * - Attribute
+     - Solvers
+     - Description
+   * - ``sigma_xx``
+     - FD, FFT (1-D and 2-D)
+     - Normal stress in the x-direction :math:`\sigma_{xx}` [Pa].
+       Default ``0``.
+   * - ``sigma_yy``
+     - FD, FFT (2-D only)
+     - Normal stress in the y-direction :math:`\sigma_{yy}` [Pa].
+       Default ``0``.
+   * - ``sigma_xy``
+     - FD, FFT (2-D only)
+     - Shear stress :math:`\sigma_{xy}` [Pa].  Default ``0``.
+
+All three default to zero if not assigned; setting any of them with
+``SAS`` or ``SAS_NG`` raises a :exc:`RuntimeWarning` and has no effect.
+See :doc:`theory` for the governing equations that include these terms.
+
 Domain-padding utilities
 ------------------------
 
