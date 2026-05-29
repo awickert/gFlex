@@ -140,4 +140,4 @@ point (``gflex <config_file>``).
    configuration
    accuracy
    references
-   releases
+   changelog
