@@ -41,7 +41,6 @@ def test_main():
     #                  * SAS (superposition of analytical solutions)
     #                  * SAS_NG (ungridded SAS)
     flex.PlateSolutionType = "vWC1994"  # van Wees and Cloetingh (1994)
-    # The other option is 'G2009': Govers et al. (2009)
     flex.Solver = "direct"  # direct or iterative
     # convergence = 1E-3 # convergence between iterations, if an iterative solution
     # method is chosen

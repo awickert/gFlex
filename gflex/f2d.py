@@ -320,8 +320,7 @@ class F2D(Flexure):
         ``'SAS'`` (superposition of analytical solutions, constant *Te*
         only), or ``'SAS_NG'`` (SAS on an ungridded point cloud).
     PlateSolutionType : str
-        FD stencil variant: ``'vWC1994'`` (van Wees & Cloetingh 1994,
-        recommended) or ``'G2009'`` (Govers et al. 2009).
+        FD stencil variant: ``'vWC1994'`` (van Wees & Cloetingh 1994).
     Solver : str
         Linear solver: ``'direct'`` (sparse LU, default) or
         ``'iterative'``.
@@ -1046,12 +1045,6 @@ class F2D(Flexure):
             self.cj_2i0_coeff_ij = self.cj_2i0.copy()
 
         elif isinstance(self.Te, np.ndarray):
-            #######################################################
-            # GENERATE COEFFICIENT VALUES FOR EACH SOLUTION TYPE. #
-            #    "vWC1994" IS THE BEST: LOOSEST ASSUMPTIONS.      #
-            #        OTHERS HERE LARGELY FOR COMPARISON           #
-            #######################################################
-
             # All derivatives here, to make reading the equations below easier
             D00 = D[1:-1, 1:-1]
             D10 = D[1:-1, 2:]
@@ -1073,7 +1066,6 @@ class F2D(Flexure):
             if self.PlateSolutionType == "vWC1994":
                 # van Wees and Cloetingh (1994) solution, re-discretized by me
                 # using a central difference approx. to 2nd order precision
-                # NEW STENCIL
                 # x = -2, y = 0
                 self.cj_2i0_coeff_ij = (D0 - Dx) / dx4
                 # x = 0, y = -2
@@ -1121,53 +1113,10 @@ class F2D(Flexure):
                     + (8.0 * D0 - 2.0 * nu * Dxx - 2.0 * nu * Dyy) / dx2dy2
                     + drho * g
                 )
-
-            elif self.PlateSolutionType == "G2009":
-                # STENCIL FROM GOVERS ET AL. 2009 -- first-order differences
-                # x is j and y is i b/c matrix row/column notation
-                # Note that this breaks down with b.c.'s that place too much control
-                # on the solution -- harmonic wavetrains
-                # x = -2, y = 0
-                self.cj_2i0_coeff_ij = D_10 / dx4
-                # x = -1, y = -1
-                self.cj_1i_1_coeff_ij = (D_10 + D0_1) / dx2dy2
-                # x = -1, y = 0
-                self.cj_1i0_coeff_ij = -2.0 * (
-                    (D0_1 + D00) / dx2dy2 + (D00 + D_10) / dx4
-                )
-                # x = -1, y = 1
-                self.cj_1i1_coeff_ij = (D_10 + D01) / dx2dy2
-                # x = 0, y = -2
-                self.cj0i_2_coeff_ij = D0_1 / dy4
-                # x = 0, y = -1
-                self.cj0i_1_coeff_ij = -2.0 * (
-                    (D0_1 + D00) / dx2dy2 + (D00 + D0_1) / dy4
-                )
-                # x = 0, y = 0
-                self.cj0i0_coeff_ij = (
-                    (D10 + 4.0 * D00 + D_10) / dx4
-                    + (D01 + 4.0 * D00 + D0_1) / dy4
-                    + (8.0 * D00 / dx2dy2)
-                    + drho * g
-                )
-                # x = 0, y = 1
-                self.cj0i1_coeff_ij = -2.0 * ((D01 + D00) / dy4 + (D00 + D01) / dx2dy2)
-                # x = 0, y = 2
-                self.cj0i2_coeff_ij = D0_1 / dy4
-                # x = 1, y = -1
-                self.cj1i_1_coeff_ij = (D10 + D0_1) / dx2dy2
-                # x = 1, y = 0
-                self.cj1i0_coeff_ij = -2.0 * ((D10 + D00) / dx4 + (D10 + D00) / dx2dy2)
-                # x = 1, y = 1
-                self.cj1i1_coeff_ij = (D10 + D01) / dx2dy2
-                # x = 2, y = 0
-                self.cj2i0_coeff_ij = D10 / dx4
             else:
                 sys.exit(
                     "Not an acceptable plate solution type. Please choose from:\n"
                     + "* vWC1994\n"
-                    + "* G2009\n"
-                    + ""
                 )
 
             ################################################################
