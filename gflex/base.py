@@ -1145,6 +1145,23 @@ class Flexure(Utility, Plotting):
                     print("Saving deflections --> " + self.wOutFile)
 
     def bc_check(self):
+        """
+        Validate boundary conditions and prepare BC state for the chosen solver.
+
+        For ``FD``: checks that every edge BC is one of the five accepted
+        strings (``'0Displacement0Slope'``, ``'0Moment0Shear'``,
+        ``'0Slope0Shear'``, ``'Mirror'``, ``'Periodic'``) and exits with an
+        informative message if not.  A pre-built ``coeff_matrix`` bypasses
+        the check (coupled-model use case).
+
+        For ``FFT``: ensures the BC attributes exist; the FFT solver
+        interprets ``'Periodic'`` on all sides as an exact periodic transform
+        and treats any other value as a request for zero-padded
+        ``NoOutsideLoads`` behaviour.
+
+        For ``SAS`` / ``SAS_NG``: sets missing BC attributes to an empty
+        string, which the analytical solvers treat as ``'NoOutsideLoads'``.
+        """
         # Check that boundary conditions are acceptable with code implementation
         # Acceptable b.c.'s
         if self.Method == "FFT":
