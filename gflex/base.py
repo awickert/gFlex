@@ -32,8 +32,8 @@ from ._version import __version__
 # Install with:  pip install cmcrameri
 try:
     from cmcrameri import cm as _cmc
-    _cmap_deflection = _cmc.vik      # blue → white → red; diverging, zero-centred
-    _cmap_load = _cmc.lajolla        # pale sand → deep warm brown; heavier = darker
+    _cmap_deflection = _cmc.vik        # blue → white → red; diverging, zero-centred
+    _cmap_load = _cmc.lajolla_r       # pale cream (zero) → deep warm brown; heavier = darker
     _HAVE_CRAMERI = True
 except ImportError:
     _cmap_deflection = plt.cm.RdBu
