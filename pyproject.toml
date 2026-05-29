@@ -51,6 +51,7 @@ changelog = "https://github.com/awickert/gflex/blob/master/CHANGES.md"
 
 [project.optional-dependencies]
 bmi = ["bmipy"]
+plot = ["cmcrameri"]
 dev = ["nox"]
 testing = ["pytest"]
 docs = [
