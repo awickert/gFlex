@@ -863,10 +863,17 @@ class F1D(Flexure):
                 if not self.Quiet:
                     print("ILU preconditioner failed; falling back to Jacobi.")
                 M = diags(1.0 / self.coeff_matrix.diagonal())
-            w = lgmres(
+            w, info = lgmres(
                 self.coeff_matrix, -self.qs, M=M, rtol=self.iterative_ConvergenceTolerance
             )
-            self.w = w[0]  # Reach into tuple to get my array back
+            if info != 0:
+                if not self.Quiet:
+                    print(
+                        f"lgmres did not converge (info={info}); "
+                        "falling back to direct solver."
+                    )
+                w = spsolve(self.coeff_matrix, -self.qs)
+            self.w = w
         else:
             if self.Solver == "direct" or self.Solver == "Direct":
                 if self.Debug:
