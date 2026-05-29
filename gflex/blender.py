@@ -21,6 +21,8 @@ def export_for_blender(
     plate_size_bu=10.0,
     qs=None,
     Te=None,
+    rho_m=3300.0,
+    g=9.8,
 ):
     """Export a gFlex deflection surface as a Blender-ready mesh file.
 
@@ -59,12 +61,21 @@ def export_for_blender(
     qs : array_like, optional
         Surface load array [Pa], same shape as *w*.  When supplied,
         per-vertex ``qs_val`` (raw Pa) and ``qs_norm`` (normalised to
-        [0, 1]) attributes are written to the mesh file.
+        [0, 1]) attributes are written to the mesh file.  If *rho_m*
+        and *g* are also provided, the load cylinder geometry
+        (``load_radius_bu``, ``load_height_bu``, ``load_height_m_eq``,
+        ``base_z_bu``) is written for use by the companion Blender script.
     Te : array_like or float, optional
         Elastic thickness [m], either a scalar or an array of the same
         shape as *w*.  When supplied, per-vertex ``te_val`` attributes
         and the scalar ``te_min`` / ``te_max`` bounds are written to the
         mesh file.
+    rho_m : float, optional
+        Mantle density [kg m⁻³] used to convert load pressure to
+        mantle-equivalent height for the extruded load cylinder.
+        Default 3300.
+    g : float, optional
+        Gravitational acceleration [m s⁻²].  Default 9.8.
 
     Returns
     -------
@@ -91,6 +102,13 @@ def export_for_blender(
     * ``vertices`` — list of ``(bx, by, bz)`` tuples.
     * ``faces`` — list of ``(v0, v1, v2, v3)`` quad-face index tuples.
     * ``qs_verts``, ``qs_norm`` — per-vertex load values *(if qs given)*.
+    * ``load_radius_bu`` — footprint radius of the load in Blender units
+      *(if qs given and load is approximately circular)*.
+    * ``load_height_m_eq`` — mantle-equivalent height of the load [m]
+      (``qs_max / (rho_m * g)``).
+    * ``load_height_bu`` — load height in Blender units.
+    * ``base_z_bu`` — z-coordinate of the plate surface at its centre [BU],
+      used as the base of the extruded load cylinder.
     * ``te_verts``, ``te_min``, ``te_max`` — per-vertex Te *(if Te given)*.
 
     Examples
@@ -139,8 +157,23 @@ def export_for_blender(
     w_bu = w * z_scale
     w_min_bu = float(w_bu.min())
     w_max_bu = float(w_bu.max())
-    # Symmetric clip for a zero-centred diverging colormap (vik / RdBu)
-    clip_bu = max(abs(w_min_bu), abs(w_max_bu))
+
+    # Asymmetric clip: when the forebulge is small compared to the subsidence
+    # give the positive arm enough range so it is visible on the colour ramp.
+    # When the two sides are comparable, fall back to symmetric.
+    if w_max_bu > 0 and w_max_bu < 0.2 * abs(w_min_bu):
+        vmax_bu = max(w_max_bu, 0.1 * abs(w_min_bu))
+    else:
+        vmax_bu = max(w_max_bu, abs(w_min_bu))
+    clip_bu = max(abs(w_min_bu), vmax_bu)   # kept for backward compat
+
+    # Pre-normalise deflection to [0, 1] with zero mapped to 0.5
+    # (TwoSlopeNorm equivalent; stored as a vertex attribute in the mesh file)
+    def _w_norm(val):
+        if val <= 0.0:
+            return 0.5 * (val - w_min_bu) / (0.0 - w_min_bu) if w_min_bu < 0 else 0.5
+        else:
+            return 0.5 + 0.5 * val / vmax_bu
 
     # Cell-centre coordinates in Blender units
     xi = (np.arange(nx) + 0.5) * dx
@@ -154,6 +187,7 @@ def export_for_blender(
         for j in range(ny)
         for i in range(nx)
     ]
+    w_norm = [_w_norm(float(w_bu[j, i])) for j in range(ny) for i in range(nx)]
 
     # Quad faces with consistent counter-clockwise winding
     faces = [
@@ -163,13 +197,32 @@ def export_for_blender(
         for i in range(nx - 1)
     ]
 
-    # Optional per-vertex load attribute
+    # Optional per-vertex load attribute and cylinder geometry
     qs_verts = qs_norm = None
+    load_radius_bu = load_height_bu = load_height_m_eq = base_z_bu = None
     if qs is not None:
         qs_arr = np.asarray(qs, dtype=float)
         qs_max = float(qs_arr.max()) if qs_arr.max() > 0.0 else 1.0
         qs_verts = [float(qs_arr[j, i]) for j in range(ny) for i in range(nx)]
         qs_norm  = [v / qs_max for v in qs_verts]
+
+        # Load cylinder geometry — infer radius from the loaded footprint
+        loaded = qs_arr > 0.0
+        if loaded.any():
+            # Approximate circular radius from loaded area
+            load_area_m2 = float(loaded.sum()) * dx * dy
+            load_radius_m = np.sqrt(load_area_m2 / np.pi)
+            load_radius_bu = float(load_radius_m / m_per_bu)
+        else:
+            load_radius_bu = 0.0
+
+        load_height_m_eq = float(qs_max / (rho_m * g))
+        load_height_bu   = float(load_height_m_eq * z_scale)
+
+        # Centre of the plate in Blender units — z of nearest vertex to (0, 0)
+        cx_bu = 0.0;  cy_bu = 0.0
+        cx_idx = int(nx / 2);  cy_idx = int(ny / 2)
+        base_z_bu = float(w_bu[cy_idx, cx_idx])
 
     # Optional per-vertex elastic-thickness attribute
     te_verts = te_min_val = te_max_val = None
@@ -192,13 +245,20 @@ def export_for_blender(
         fh.write(f"dy_m          = {dy}\n")
         fh.write(f"w_min_bu      = {w_min_bu}\n")
         fh.write(f"w_max_bu      = {w_max_bu}\n")
+        fh.write(f"vmax_bu       = {vmax_bu}\n")
         fh.write(f"clip_bu       = {clip_bu}\n")
         fh.write(f"plate_size_bu = {plate_size_bu}\n")
         fh.write(f"vertices      = {verts!r}\n")
         fh.write(f"faces         = {faces!r}\n")
+        fh.write(f"w_norm        = {w_norm!r}\n")
         if qs_verts is not None:
             fh.write(f"qs_verts      = {qs_verts!r}\n")
             fh.write(f"qs_norm       = {qs_norm!r}\n")
+            if load_radius_bu is not None:
+                fh.write(f"load_radius_bu    = {load_radius_bu}\n")
+                fh.write(f"load_height_m_eq  = {load_height_m_eq}\n")
+                fh.write(f"load_height_bu    = {load_height_bu}\n")
+                fh.write(f"base_z_bu         = {base_z_bu}\n")
         if te_verts is not None:
             fh.write(f"te_verts      = {te_verts!r}\n")
             fh.write(f"te_min        = {te_min_val}\n")
