@@ -22,7 +22,7 @@ import time
 
 import numpy as np
 from scipy.sparse import diags, spdiags
-from scipy.sparse.linalg import lgmres, spsolve
+from scipy.sparse.linalg import LinearOperator, lgmres, spilu, spsolve
 
 from gflex.base import Flexure
 
@@ -856,7 +856,13 @@ class F1D(Flexure):
                 )
             # qs negative so bends down with positive load, bends up with neative load
             # (i.e. material removed)
-            M = diags(1.0 / self.coeff_matrix.diagonal())
+            try:
+                ilu = spilu(self.coeff_matrix.tocsc(), fill_factor=20, drop_tol=1e-4)
+                M = LinearOperator(self.coeff_matrix.shape, ilu.solve)
+            except RuntimeError:
+                if not self.Quiet:
+                    print("ILU preconditioner failed; falling back to Jacobi.")
+                M = diags(1.0 / self.coeff_matrix.diagonal())
             w = lgmres(
                 self.coeff_matrix, -self.qs, M=M, rtol=self.iterative_ConvergenceTolerance
             )
