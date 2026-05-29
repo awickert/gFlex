@@ -35,7 +35,7 @@ base  = Image.open(LOGO_IN).convert("RGBA")
 W, H  = base.size
 fsize = int(H * 0.12)
 px    = int(W * 0.03)
-py    = int(H * 0.07)   # more breathing room: sit in transparent area below plate
+py    = int(H * 0.03)
 
 add_text(base, FONT_PATH, fsize, px, py).save(LOGO_IN)
 print(f"✓  logo.png written  ({W}×{H}, {fsize}px)")

@@ -140,7 +140,7 @@ def build_cylinder():
 def build_camera():
     cam_data = bpy.data.cameras.new("Camera")
     cam_data.lens    = 40
-    cam_data.shift_y = -0.13   # push plate up, trimming dead space above
+    cam_data.shift_y = -0.07   # shift plate up slightly, leaving space for text
     cam_obj = bpy.data.objects.new("Camera", cam_data)
     bpy.context.collection.objects.link(cam_obj)
     bpy.context.scene.camera = cam_obj
