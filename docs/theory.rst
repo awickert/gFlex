@@ -3,9 +3,13 @@ Theory
 
 .. note::
 
-   This page is an AI-generated distillation of `Wickert (2016)
-   <https://doi.org/10.5194/gmd-9-997-2016>`_.  Please refer to that paper
-   for the full derivations, figures, and authoritative treatment.
+   The derivations and notation follow `Wickert (2016)
+   <https://doi.org/10.5194/gmd-9-997-2016>`_ for the methods present at
+   v1.0 (SAS, SAS_NG, FD without in-plane stresses).  In-plane stress
+   support and the FFT spectral solver, added in later versions, are
+   synthesized here following the same conventions.  Please refer to
+   Wickert (2016) for the full derivations, figures, and authoritative
+   treatment of the v1.0 methods.  This page is AI-generated.
 
 Flexure of the lithosphere is the process by which loads bend the elastic
 outer shell of Earth or other planets (Watts, 2001; Watters and McGovern,
@@ -45,6 +49,25 @@ spatial extent, one may solve for the flexural response with
 :math:`\rho_f = \rho_\text{air} \approx 0`, add loads based on conditions
 that match a given inundation or deposition rule, and then re-calculate
 flexure iteratively until convergence is achieved.
+
+In two dimensions, gFlex also supports in-plane stresses
+(:math:`\sigma_{xx}`, :math:`\sigma_{yy}`, :math:`\sigma_{xy}` [Pa]),
+which extend the biharmonic equation to
+
+.. math::
+
+   D \nabla^4 w
+   - \sigma_{xx}\,T_e\,\frac{\partial^2 w}{\partial x^2}
+   - \sigma_{yy}\,T_e\,\frac{\partial^2 w}{\partial y^2}
+   - 2\sigma_{xy}\,T_e\,\frac{\partial^2 w}{\partial x \partial y}
+   + \Delta\rho\,g\,w = q.
+
+Here, :math:`\sigma_{xx}` and :math:`\sigma_{yy}` are the normal components
+of the in-plane stress tensor and :math:`\sigma_{xy}` is the shear component,
+each multiplied by the local elastic thickness :math:`T_e` [m] to convert a
+depth-averaged stress to a force per unit width.  Wickert (2016) set all
+in-plane stress terms to zero; they are available in the two-dimensional
+finite difference and FFT solvers in later versions of gFlex.
 
 For finite difference solutions, where :math:`D` may vary spatially, the
 full one-dimensional expansion is
@@ -182,3 +205,36 @@ another, but each must be constant.  The resulting sparse linear system is
 solved directly using a sparse LU factorization or, at the user's choice,
 iteratively.  Five boundary conditions are available; see :doc:`configuration`
 for details and physical interpretations.
+
+Fast Fourier Transform (``FFT``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The FFT spectral solver (two dimensions only) exploits the fact that, for a
+uniform flexural rigidity :math:`D`, the thin plate equation is a convolution
+in the spatial domain — and therefore diagonal in the wavenumber domain.
+Taking the two-dimensional Fourier transform of the governing equation with
+in-plane stresses yields an algebraic expression for the deflection spectrum:
+
+.. math::
+
+   \hat{W}(k_x, k_y) =
+   \frac{-\hat{Q}(k_x,k_y)}{%
+     D\!\left(k_x^2 + k_y^2\right)^{\!2}
+     + \sigma_{xx}\,T_e\,k_x^2
+     + \sigma_{yy}\,T_e\,k_y^2
+     + 2\sigma_{xy}\,T_e\,k_x k_y
+     + \Delta\rho\,g},
+
+where :math:`k_x` and :math:`k_y` are angular wavenumbers [m⁻¹].  The
+deflection field :math:`w` is recovered by the inverse FFT.
+
+Two boundary condition modes are available.  When all four sides are set to
+``Periodic``, the load array is transformed as-is and the solution is
+inherently periodic.  For all other boundary conditions, the load is
+zero-padded by four flexural parameters (:math:`4\alpha`) on each side before
+the transform and trimmed back afterward, producing a result equivalent to the
+``NoOutsideLoads`` condition of the analytical solutions.
+
+Because the transfer function assumes a single, spatially uniform value of
+:math:`D`, the FFT solver requires scalar (constant) :math:`T_e`.  Spatially
+variable elastic thickness requires the finite difference solver.
