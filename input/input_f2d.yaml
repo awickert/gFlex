@@ -4,7 +4,6 @@
 mode:
   dimension: 2
   method: FD
-  # Plate solutions: vWC1994 (best) or G2009
   PlateSolutionType: vWC1994
 
 parameter:

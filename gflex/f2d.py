@@ -1063,61 +1063,65 @@ class F2D(Flexure):
             Dyy = D0_1 - 2.0 * D00 + D01
             Dxy = (D_1_1 - D_11 - D1_1 + D11) / 4.0
 
-            if self.PlateSolutionType == "vWC1994":
-                # van Wees and Cloetingh (1994) solution, re-discretized by me
-                # using a central difference approx. to 2nd order precision
-                # x = -2, y = 0
-                self.cj_2i0_coeff_ij = (D0 - Dx) / dx4
-                # x = 0, y = -2
-                self.cj0i_2_coeff_ij = (D0 - Dy) / dy4
-                # x = 0, y = 2
-                self.cj0i2_coeff_ij = (D0 + Dy) / dy4
-                # x = 2, y = 0
-                self.cj2i0_coeff_ij = (D0 + Dx) / dx4
-                # x = -1, y = -1
-                self.cj_1i_1_coeff_ij = (
-                    2.0 * D0 - Dx - Dy + Dxy * (1 - nu) / 2.0
-                ) / dx2dy2
-                # x = -1, y = 1
-                self.cj_1i1_coeff_ij = (
-                    2.0 * D0 - Dx + Dy - Dxy * (1 - nu) / 2.0
-                ) / dx2dy2
-                # x = 1, y = -1
-                self.cj1i_1_coeff_ij = (
-                    2.0 * D0 + Dx - Dy - Dxy * (1 - nu) / 2.0
-                ) / dx2dy2
-                # x = 1, y = 1
-                self.cj1i1_coeff_ij = (
-                    2.0 * D0 + Dx + Dy + Dxy * (1 - nu) / 2.0
-                ) / dx2dy2
-                # x = -1, y = 0
-                self.cj_1i0_coeff_ij = (-4.0 * D0 + 2.0 * Dx + Dxx) / dx4 + (
-                    -4.0 * D0 + 2.0 * Dx + nu * Dyy
-                ) / dx2dy2
-                # x = 0, y = -1
-                self.cj0i_1_coeff_ij = (-4.0 * D0 + 2.0 * Dy + Dyy) / dy4 + (
-                    -4.0 * D0 + 2.0 * Dy + nu * Dxx
-                ) / dx2dy2
-                # x = 0, y = 1
-                self.cj0i1_coeff_ij = (-4.0 * D0 - 2.0 * Dy + Dyy) / dy4 + (
-                    -4.0 * D0 - 2.0 * Dy + nu * Dxx
-                ) / dx2dy2
-                # x = 1, y = 0
-                self.cj1i0_coeff_ij = (-4.0 * D0 - 2.0 * Dx + Dxx) / dx4 + (
-                    -4.0 * D0 - 2.0 * Dx + nu * Dyy
-                ) / dx2dy2
-                # x = 0, y = 0
-                self.cj0i0_coeff_ij = (
-                    (6.0 * D0 - 2.0 * Dxx) / dx4
-                    + (6.0 * D0 - 2.0 * Dyy) / dy4
-                    + (8.0 * D0 - 2.0 * nu * Dxx - 2.0 * nu * Dyy) / dx2dy2
-                    + drho * g
+            if self.PlateSolutionType != "vWC1994":
+                import warnings
+                warnings.warn(
+                    "PlateSolutionType '{}' is no longer supported; "
+                    "using vWC1994 (van Wees & Cloetingh, 1994).".format(
+                        self.PlateSolutionType
+                    ),
+                    FutureWarning,
+                    stacklevel=2,
                 )
-            else:
-                sys.exit(
-                    "Not an acceptable plate solution type. Please choose from:\n"
-                    + "* vWC1994\n"
-                )
+            # van Wees and Cloetingh (1994) solution, re-discretized by me
+            # using a central difference approx. to 2nd order precision
+            # x = -2, y = 0
+            self.cj_2i0_coeff_ij = (D0 - Dx) / dx4
+            # x = 0, y = -2
+            self.cj0i_2_coeff_ij = (D0 - Dy) / dy4
+            # x = 0, y = 2
+            self.cj0i2_coeff_ij = (D0 + Dy) / dy4
+            # x = 2, y = 0
+            self.cj2i0_coeff_ij = (D0 + Dx) / dx4
+            # x = -1, y = -1
+            self.cj_1i_1_coeff_ij = (
+                2.0 * D0 - Dx - Dy + Dxy * (1 - nu) / 2.0
+            ) / dx2dy2
+            # x = -1, y = 1
+            self.cj_1i1_coeff_ij = (
+                2.0 * D0 - Dx + Dy - Dxy * (1 - nu) / 2.0
+            ) / dx2dy2
+            # x = 1, y = -1
+            self.cj1i_1_coeff_ij = (
+                2.0 * D0 + Dx - Dy - Dxy * (1 - nu) / 2.0
+            ) / dx2dy2
+            # x = 1, y = 1
+            self.cj1i1_coeff_ij = (
+                2.0 * D0 + Dx + Dy + Dxy * (1 - nu) / 2.0
+            ) / dx2dy2
+            # x = -1, y = 0
+            self.cj_1i0_coeff_ij = (-4.0 * D0 + 2.0 * Dx + Dxx) / dx4 + (
+                -4.0 * D0 + 2.0 * Dx + nu * Dyy
+            ) / dx2dy2
+            # x = 0, y = -1
+            self.cj0i_1_coeff_ij = (-4.0 * D0 + 2.0 * Dy + Dyy) / dy4 + (
+                -4.0 * D0 + 2.0 * Dy + nu * Dxx
+            ) / dx2dy2
+            # x = 0, y = 1
+            self.cj0i1_coeff_ij = (-4.0 * D0 - 2.0 * Dy + Dyy) / dy4 + (
+                -4.0 * D0 - 2.0 * Dy + nu * Dxx
+            ) / dx2dy2
+            # x = 1, y = 0
+            self.cj1i0_coeff_ij = (-4.0 * D0 - 2.0 * Dx + Dxx) / dx4 + (
+                -4.0 * D0 - 2.0 * Dx + nu * Dyy
+            ) / dx2dy2
+            # x = 0, y = 0
+            self.cj0i0_coeff_ij = (
+                (6.0 * D0 - 2.0 * Dxx) / dx4
+                + (6.0 * D0 - 2.0 * Dyy) / dy4
+                + (8.0 * D0 - 2.0 * nu * Dxx - 2.0 * nu * Dyy) / dx2dy2
+                + drho * g
+            )
 
             ################################################################
             # CREATE COEFFICIENT ARRAYS: PLAIN, WITH NO B.C.'S YET APPLIED #
