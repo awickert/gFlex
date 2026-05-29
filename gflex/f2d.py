@@ -2044,6 +2044,19 @@ class F2D(Flexure):
                 format="csr",
             )
 
+            # The double-wrap corner diagonals reuse cj_1i1_Periodic_right and
+            # cj1i_1_Periodic_left, which hold the (j-1,i+1) and (j+1,i-1)
+            # coefficients respectively.  The two matrix entries that connect
+            # cell (0,0)↔(ny-1,nx-1) wrap in BOTH the x and y directions
+            # simultaneously, so they need the (j-1,i-1) and (j+1,i+1)
+            # coefficients instead.  For sigma_xy=0 these are equal, so the
+            # error is silent in the zero-stress case.
+            N = self.ny * self.nx
+            A_lil = self.coeff_matrix.tolil()
+            A_lil[0, N - 1] = self.cj_1i_1_coeff_ij[0, 0]
+            A_lil[N - 1, 0] = self.cj1i1_coeff_ij[-1, -1]
+            self.coeff_matrix = A_lil.tocsr()
+
         elif self.BC_W == "Periodic" and self.BC_E == "Periodic":
             # Additional vector creation
             # West
