@@ -15,7 +15,7 @@ The deflection :math:`w` satisfies
 
 .. math::
 
-   D \nabla^4 w - T_e\,\boldsymbol{\sigma} : \nabla\nabla w + \Delta\rho\, g\, w = q,
+   \nabla^2(D\,\nabla^2 w) - T_e\,\boldsymbol{\sigma} : \nabla\nabla w + \Delta\rho\, g\, w = q,
 
 where :math:`\boldsymbol{\sigma} : \nabla\nabla w` is the double contraction of the
 in-plane stress tensor with the Hessian of :math:`w`, :math:`q` [Pa] is the applied

@@ -28,13 +28,14 @@ isostasy.  In compact tensor form the two-dimensional governing equation is
 
 .. math::
 
-   D \nabla^4 w - T_e\,\boldsymbol{\sigma} : \nabla\nabla w + \Delta\rho\,g\,w = q,
+   \nabla^2(D\,\nabla^2 w) - T_e\,\boldsymbol{\sigma} : \nabla\nabla w + \Delta\rho\,g\,w = q,
 
 where :math:`\boldsymbol{\sigma} : \nabla\nabla w` is the double contraction
 (Frobenius inner product) of the in-plane stress tensor with the Hessian of
-:math:`w`.  Expanding the stress term, and writing the one- and two-dimensional
-equations explicitly (Wickert, 2016, Eqs. 1–2, extended to include in-plane
-stresses):
+:math:`w`.  For spatially uniform :math:`D`,
+:math:`\nabla^2(D\,\nabla^2 w) = D\nabla^4 w`; expanding the stress term and
+writing the one- and two-dimensional forms for uniform :math:`D`
+(Wickert, 2016, Eqs. 1–2, extended to include in-plane stresses):
 
 .. math::
 
@@ -76,7 +77,15 @@ add loads based on conditions that match a given inundation or deposition
 rule, and then re-calculate flexure iteratively until convergence is achieved.
 
 For finite difference solutions, where :math:`D` may vary spatially, the
-full one-dimensional expansion is
+compact one-dimensional form is
+
+.. math::
+
+   \frac{\partial^2}{\partial x^2}\!\left(D\,\frac{\partial^2 w}{\partial x^2}\right)
+   - \sigma_{xx}\,T_e\,\frac{\partial^2 w}{\partial x^2}
+   + \Delta\rho\,g\,w = q,
+
+which expands by the product rule to
 
 .. math::
 
@@ -84,11 +93,29 @@ full one-dimensional expansion is
    + 2 \frac{\partial D}{\partial x} \frac{\partial^3 w}{\partial x^3}
    + \frac{\partial^2 D}{\partial x^2} \frac{\partial^2 w}{\partial x^2}
    - \sigma_{xx}\,T_e\,\frac{\partial^2 w}{\partial x^2}
+   + \Delta\rho\,g\,w = q.
+
+The two-dimensional variable-:math:`D` form (van Wees and Cloetingh, 1994) adds
+cross-derivative coupling between gradients of :math:`D` and the Hessian of
+:math:`w`:
+
+.. math::
+
+   \nabla^2(D\,\nabla^2 w)
+   - (1 - \nu)\!\left[
+     \frac{\partial^2 D}{\partial x^2}\frac{\partial^2 w}{\partial y^2}
+     - 2\frac{\partial^2 D}{\partial x\,\partial y}\frac{\partial^2 w}{\partial x\,\partial y}
+     + \frac{\partial^2 D}{\partial y^2}\frac{\partial^2 w}{\partial x^2}
+   \right]
+   - \sigma_{xx}\,T_e\,\frac{\partial^2 w}{\partial x^2}
+   - \sigma_{yy}\,T_e\,\frac{\partial^2 w}{\partial y^2}
+   - 2\sigma_{xy}\,T_e\,\frac{\partial^2 w}{\partial x\,\partial y}
    + \Delta\rho\,g\,w = q,
 
-and the two-dimensional equivalent follows van Wees and Cloetingh (1994).
-Both are discretized using a second-order centered finite difference
-approximation, reducing the problem to the sparse linear matrix equation
+where the bracketed term vanishes when :math:`D` is uniform, recovering
+:math:`D\nabla^4 w`.  Both the 1-D and 2-D variable-:math:`D` equations are
+discretized using a second-order centered finite difference approximation,
+reducing the problem to the sparse linear matrix equation
 
 .. math::
 
