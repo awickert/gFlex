@@ -2255,10 +2255,16 @@ class F2D(Flexure):
                 if not self.Quiet:
                     print("ILU preconditioner failed; falling back to Jacobi.")
                 M = scipy.sparse.diags(1.0 / self.coeff_matrix.diagonal())
-            wvector = lgmres(
+            wvector, info = lgmres(
                 self.coeff_matrix, q0vector, M=M, rtol=self.iterative_ConvergenceTolerance
             )
-            wvector = wvector[0]  # Reach into tuple to get my array back
+            if info != 0:
+                if not self.Quiet:
+                    print(
+                        f"lgmres did not converge (info={info}); "
+                        "falling back to direct solver."
+                    )
+                wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
         else:
             if self.Solver == "direct" or self.Solver == "Direct":
                 if self.Debug:
