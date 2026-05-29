@@ -82,3 +82,29 @@ or incorporated gFlex.
   isostatic and dynamic surface changes
   <https://doi.org/10.1016/j.geomorph.2024.109276>`_,
   *Geomorphology*, **460**, 109276.
+
+----
+
+Scientific background and dependencies
+---------------------------------------
+
+The following works underpin gFlex's methods or are required to reproduce
+its visualisations.
+
+* van Wees, J.-D. and Cloetingh, S. (1994),
+  `A finite-difference technique to incorporate spatial variations in
+  rigidity and planar faults into 3-D models for lithospheric flexure
+  <https://doi.org/10.1111/j.1365-246X.1994.tb03311.x>`_,
+  *Geophys. J. Int.*, **117**\(1), 179–195.
+
+* Turcotte, D. L. and Schubert, G. (2002),
+  *Geodynamics* (2nd ed.), Cambridge University Press.
+
+* Crameri, F., Shephard, G. E., and Heron, P. J. (2020),
+  `The misuse of colour in science communication
+  <https://doi.org/10.1038/s41467-020-19160-7>`_,
+  *Nature Commun.*, **11**, 5444.
+
+* Crameri, F. (2023),
+  *Scientific colour maps* (v8.0.0) [software],
+  Zenodo, `doi:10.5281/zenodo.1243862 <https://doi.org/10.5281/zenodo.1243862>`_.
