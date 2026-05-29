@@ -9,7 +9,6 @@ flex = gflex.F2D()
 flex.Quiet = False
 
 flex.Method = "FD"
-flex.PlateSolutionType = "vWC1994"
 flex.Solver = "direct"
 
 flex.g = 9.8  # acceleration due to gravity

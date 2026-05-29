@@ -4,7 +4,6 @@
 mode:
   dimension: 2
   method: FD
-  PlateSolutionType: vWC1994
 
 parameter:
   YoungsModulus: 6.5e10

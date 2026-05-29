@@ -12,11 +12,6 @@ dimension=2
 ; two columns: (x,q0) --> (x,w). 2D data are similar, except
 ; will be of the form (x,y,[q0/in or w/out]).
 method=SAS
-; Plate solutions can be:
-;  * vWC1994 (best), or
-;  * G2009 (from Govers et al., 2009; not bad, but not
-;           as robust as vWC1994)
-PlateSolutionType=vWC1994
 
 [parameter]
 YoungsModulus=65E9

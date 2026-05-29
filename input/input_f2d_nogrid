@@ -5,7 +5,6 @@
 dimension=2
 ; Solution method: FD, FFT (not yet included), SAS, SAS_NG
 method=SAS_NG
-PlateSolutionType=vWC1994
 
 [parameter]
 YoungsModulus=6.5E10
