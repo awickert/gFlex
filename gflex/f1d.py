@@ -19,6 +19,7 @@ along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 import contextlib
 import sys
 import time
+import warnings
 
 import numpy as np
 from scipy.sparse import diags, spdiags
@@ -186,8 +187,66 @@ class F1D(Flexure):
     ## FUNCTIONS FOR EACH SOLUTION METHOD ##
     ########################################
 
+    def _check_warnings_FD(self):
+        """Issue UserWarnings for potentially problematic FD boundary conditions."""
+        bc_sides = {"W": self.BC_W, "E": self.BC_E}
+        for side, bc in bc_sides.items():
+            if bc == "0Moment0Shear":
+                warnings.warn(
+                    f"BC_{side} = '0Moment0Shear': assumes a free broken plate end "
+                    "(zero moment and shear force). Verify this represents a rifted "
+                    "margin, spreading ridge, or similar physically broken-plate setting.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+            elif bc == "0Slope0Shear":
+                warnings.warn(
+                    f"BC_{side} = '0Slope0Shear': requires the plate to be horizontal "
+                    "and experience no shear force at the boundary. No clear geological "
+                    "analog is known where both conditions hold simultaneously in a "
+                    "nontrivial (nonzero deflection) setting.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+        # Load-proximity warning: only for 0Displacement0Slope boundaries
+        loaded = np.nonzero(self.qs)[0]
+        if loaded.size == 0:
+            return
+        nx = self.qs.shape[0]
+        Te_arr = (
+            self.Te
+            if isinstance(self.Te, np.ndarray)
+            else np.full(nx, float(self.Te))
+        )
+        Te_loaded = Te_arr[loaded]
+        D_loaded = self.E * Te_loaded**3 / (12 * (1 - self.nu**2))
+        alpha_loaded = (4 * D_loaded / (self.drho * self.g)) ** 0.25
+        dist_fns = {
+            "W": lambda: (loaded + 0.5) * self.dx,
+            "E": lambda: (nx - loaded - 0.5) * self.dx,
+        }
+        for side, bc in bc_sides.items():
+            if bc != "0Displacement0Slope":
+                continue
+            distances = dist_fns[side]()
+            ratio = distances / alpha_loaded
+            worst = np.argmin(ratio)
+            if ratio[worst] < 1.0:
+                i = loaded[worst]
+                warnings.warn(
+                    f"BC_{side} = '0Displacement0Slope': nearest loaded cell "
+                    f"(index {i}) is {distances[worst]/1e3:.1f} km from the "
+                    f"boundary, less than one flexural parameter "
+                    f"({alpha_loaded[worst]/1e3:.1f} km, "
+                    f"Te = {Te_loaded[worst]/1e3:.1f} km). "
+                    "Boundary effects may contaminate the solution.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+
     def FD(self):
         """Run the finite-difference solution pipeline."""
+        self._check_warnings_FD()
         self.gridded_x()
         # Only generate coefficient matrix if it is not already provided
         if self.coeff_matrix is not None:
