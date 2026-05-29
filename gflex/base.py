@@ -34,10 +34,12 @@ try:
     from cmcrameri import cm as _cmc
     _cmap_deflection = _cmc.vik        # blue → white → red; diverging, zero-centred
     _cmap_load = _cmc.lajolla_r       # pale cream (zero) → deep warm brown; heavier = darker
+    _cmap_te   = _cmc.roma            # warm red (thin) → cool blue-green (thick)
     _HAVE_CRAMERI = True
 except ImportError:
     _cmap_deflection = plt.cm.RdBu
     _cmap_load = plt.cm.YlOrBr
+    _cmap_te   = plt.cm.RdBu_r        # warm red (thin) → cool blue (thick)
     _HAVE_CRAMERI = False
     warnings.warn(
         "cmcrameri is not installed — using matplotlib fallback colormaps for gFlex "
@@ -623,57 +625,83 @@ class Plotting:
         # And also could include xyzinterp as an option inside surfplot.
         # Noted here in case anyone wants to take that on in the future...
 
-        w_abs = float(np.abs(self.w).max())
+        from matplotlib.colors import TwoSlopeNorm
 
-        plt.subplot(211)
-        plt.title("Load thickness, mantle equivalent [m]", fontsize=16)
-        if self.latlon:
-            plt.imshow(
-                self.qs / (self.rho_m * self.g),
-                extent=(0, self.dx * self.qs.shape[1], self.dy * self.qs.shape[0], 0),
-                cmap=_cmap_load,
-            )
-            plt.xlabel("longitude [deg E]", fontsize=12, fontweight="bold")
-            plt.ylabel("latitude [deg N]", fontsize=12, fontweight="bold")
-        else:
-            plt.imshow(
-                self.qs / (self.rho_m * self.g),
-                extent=(
-                    0,
-                    self.dx / 1000.0 * self.qs.shape[1],
-                    self.dy / 1000.0 * self.qs.shape[0],
-                    0,
-                ),
-                cmap=_cmap_load,
-            )
-            plt.xlabel("x [km]", fontsize=12, fontweight="bold")
-            plt.ylabel("y [km]", fontsize=12, fontweight="bold")
-        plt.colorbar()
+        w_min = float(self.w.min())
+        w_max = float(self.w.max())
+        w_abs = max(abs(w_min), abs(w_max))
 
-        plt.subplot(212)
-        plt.title("Deflection [m]")
-        if self.latlon:
-            plt.imshow(
-                self.w,
-                extent=(0, self.dx * self.w.shape[1], self.dy * self.w.shape[0], 0),
-                cmap=_cmap_deflection, vmin=-w_abs, vmax=w_abs,
+        # When forebulge << subsidence the forebulge is invisible with a
+        # symmetric clim.  TwoSlopeNorm keeps white at zero while giving the
+        # positive arm enough range to show the forebulge.
+        if w_max > 0 and w_max < 0.2 * abs(w_min):
+            _defl_norm = TwoSlopeNorm(
+                vmin=w_min, vcenter=0.0,
+                vmax=max(w_max, 0.1 * abs(w_min)),
             )
-            plt.xlabel("longitude [deg E]", fontsize=12, fontweight="bold")
-            plt.ylabel("latitude [deg N]", fontsize=12, fontweight="bold")
+            _defl_vmin = _defl_vmax = None
         else:
-            plt.imshow(
-                self.w,
-                extent=(
-                    0,
-                    self.dx / 1000.0 * self.w.shape[1],
-                    self.dy / 1000.0 * self.w.shape[0],
-                    0,
-                ),
-                cmap=_cmap_deflection, vmin=-w_abs, vmax=w_abs,
+            _defl_norm = None
+            _defl_vmin, _defl_vmax = -w_abs, w_abs
+
+        _has_te_grid = isinstance(self.Te, np.ndarray) and self.Te.ndim == 2
+
+        xlabel = "longitude [deg E]" if self.latlon else "x [km]"
+        ylabel = "latitude [deg N]" if self.latlon else "y [km]"
+
+        def _ext(arr):
+            if self.latlon:
+                return (0, self.dx * arr.shape[1], self.dy * arr.shape[0], 0)
+            return (0, self.dx / 1000. * arr.shape[1],
+                       self.dy / 1000. * arr.shape[0], 0)
+
+        if _has_te_grid:
+            # Three-panel horizontal layout: load | Te | deflection
+            plt.gcf().set_size_inches(14, 4.5)
+            ax_load = plt.subplot(1, 3, 1)
+            ax_te   = plt.subplot(1, 3, 2)
+            ax_defl = plt.subplot(1, 3, 3)
+        else:
+            ax_load = plt.subplot(2, 1, 1)
+            ax_te   = None
+            ax_defl = plt.subplot(2, 1, 2)
+
+        # Load panel
+        ax_load.set_title("Load thickness, mantle equivalent [m]", fontsize=16)
+        im_load = ax_load.imshow(
+            self.qs / (self.rho_m * self.g), extent=_ext(self.qs), cmap=_cmap_load,
+        )
+        ax_load.set_xlabel(xlabel, fontsize=12, fontweight="bold")
+        ax_load.set_ylabel(ylabel, fontsize=12, fontweight="bold")
+        plt.colorbar(im_load, ax=ax_load)
+
+        # Elastic thickness panel (only when Te is a 2-D array)
+        if _has_te_grid:
+            ax_te.set_title(r"Elastic thickness $T_e$ [km]", fontsize=16)
+            im_te = ax_te.imshow(
+                self.Te / 1e3, extent=_ext(self.Te), cmap=_cmap_te,
             )
-            plt.xlabel("x [km]", fontsize=12, fontweight="bold")
-            plt.ylabel("y [km]", fontsize=12, fontweight="bold")
-        plt.colorbar()
+            ax_te.set_xlabel(xlabel, fontsize=12, fontweight="bold")
+            ax_te.set_ylabel(ylabel, fontsize=12, fontweight="bold")
+            plt.colorbar(im_te, ax=ax_te)
+
+        # Deflection panel
+        ax_defl.set_title("Deflection [m]", fontsize=16)
+        im_defl = ax_defl.imshow(
+            self.w, extent=_ext(self.w), cmap=_cmap_deflection,
+            norm=_defl_norm, vmin=_defl_vmin, vmax=_defl_vmax,
+        )
+        ax_defl.set_xlabel(xlabel, fontsize=12, fontweight="bold")
+        ax_defl.set_ylabel(ylabel, fontsize=12, fontweight="bold")
+        cb = plt.colorbar(im_defl, ax=ax_defl)
+        if _defl_norm is not None:
+            step = 10 ** int(np.log10(abs(w_min)))
+            neg_ticks = list(range(0, int(w_min) - 1, -step))
+            vmax_norm = _defl_norm.vmax
+            pos_ticks = list(range(10, int(vmax_norm), 10))
+            cb.set_ticks(sorted(neg_ticks + pos_ticks))
+
+        plt.tight_layout()
 
     def xyzinterp(self, x, y, z, titletext, cmap=None, vmin=None, vmax=None):
         """
