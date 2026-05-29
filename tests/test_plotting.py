@@ -86,8 +86,7 @@ def _2d_fd():
     N = 20
     qs = np.zeros((N, N)); qs[7:13, 7:13] = 1e6
     flex = F2D()
-    flex.Quiet = True;  flex.Method = "FD"
-    flex.PlateSolutionType = "vWC1994";  flex.Solver = "direct"
+    flex.Quiet = True;  flex.Method = "FD";  flex.Solver = "direct"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.Te = _Te * np.ones((N, N));  flex.qs = qs

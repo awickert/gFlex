@@ -11,7 +11,6 @@ def _run_flex_2d(Te, qs, dx, dy, bc="0Displacement0Slope"):
     flex = F2D()
     flex.Quiet = True
     flex.Method = "FD"
-    flex.PlateSolutionType = "vWC1994"
     flex.Solver = "direct"
     flex.g = 9.8
     flex.E = 65e9
@@ -40,7 +39,6 @@ def test_main():
     flex.Method = "FD"  # Solution method: * FD (finite difference)
     #                  * SAS (superposition of analytical solutions)
     #                  * SAS_NG (ungridded SAS)
-    flex.PlateSolutionType = "vWC1994"  # van Wees and Cloetingh (1994)
     flex.Solver = "direct"  # direct or iterative
     # convergence = 1E-3 # convergence between iterations, if an iterative solution
     # method is chosen
@@ -303,7 +301,6 @@ def test_2d_fd_iterative_agrees_with_direct():
         flex = F2D()
         flex.Quiet = True
         flex.Method = "FD"
-        flex.PlateSolutionType = "vWC1994"
         flex.Solver = solver
         flex.g = 9.8
         flex.E = 65e9

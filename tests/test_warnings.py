@@ -62,7 +62,6 @@ def _run_2d(qs, bc_w, bc_e, bc_n, bc_s):
     flex = F2D()
     flex.Quiet = True
     flex.Method = "FD"
-    flex.PlateSolutionType = "vWC1994"
     flex.Solver = "direct"
     flex.g = g
     flex.E = E
