@@ -28,6 +28,25 @@ from matplotlib import pyplot as plt
 
 from ._version import __version__
 
+# Scientific colour maps (optional but strongly recommended).
+# Install with:  pip install cmcrameri
+try:
+    from cmcrameri import cm as _cmc
+    _cmap_deflection = _cmc.vik      # blue → white → red; diverging, zero-centred
+    _cmap_load = _cmc.lajolla        # pale sand → deep warm brown; heavier = darker
+    _HAVE_CRAMERI = True
+except ImportError:
+    _cmap_deflection = plt.cm.RdBu
+    _cmap_load = plt.cm.YlOrBr
+    _HAVE_CRAMERI = False
+    warnings.warn(
+        "cmcrameri is not installed — using matplotlib fallback colormaps for gFlex "
+        "plots.\nFor perceptually uniform scientific colormaps (vik for deflection, "
+        "lajolla for load), install it with:\n    pip install cmcrameri",
+        UserWarning,
+        stacklevel=2,
+    )
+
 
 class Utility:
 
@@ -509,6 +528,7 @@ class Plotting:
                         self.surfplot(
                             self.qs / (self.rho_m * self.g),
                             "Load thickness, mantle equivalent [m]",
+                            cmap=_cmap_load,
                         )
                         plt.show()
                     else:
@@ -517,16 +537,20 @@ class Plotting:
                             self.y,
                             self.q,
                             "Load volume, mantle equivalent [m$^3$]",
+                            cmap=_cmap_load,
                         )
                     plt.tight_layout()
                     plt.show()
                 elif self.plotChoice == "w":
                     fig = plt.figure(1, figsize=(8, 6))
+                    w_abs = float(np.abs(self.w).max())
                     if self.Method != "SAS_NG":
-                        self.surfplot(self.w, "Deflection [m]")
+                        self.surfplot(self.w, "Deflection [m]",
+                                      cmap=_cmap_deflection, vmin=-w_abs, vmax=w_abs)
                         plt.show()
                     else:
-                        self.xyzinterp(self.xw, self.yw, self.w, "Deflection [m]")
+                        self.xyzinterp(self.xw, self.yw, self.w, "Deflection [m]",
+                                       cmap=_cmap_deflection, vmin=-w_abs, vmax=w_abs)
                     plt.tight_layout()
                     plt.show()
                 elif self.plotChoice == "both":
@@ -535,15 +559,18 @@ class Plotting:
                         self.twoSurfplots()
                         plt.show()
                     else:
+                        w_abs = float(np.abs(self.w).max())
                         plt.subplot(211)
                         self.xyzinterp(
                             self.x,
                             self.y,
                             self.q,
                             "Load volume, mantle equivalent [m$^3$]",
+                            cmap=_cmap_load,
                         )
                         plt.subplot(212)
-                        self.xyzinterp(self.xw, self.yw, self.w, "Deflection [m]")
+                        self.xyzinterp(self.xw, self.yw, self.w, "Deflection [m]",
+                                       cmap=_cmap_deflection, vmin=-w_abs, vmax=w_abs)
                         plt.tight_layout()
                         plt.show()
                 else:
@@ -558,13 +585,16 @@ class Plotting:
                         )
                         print("Unable to produce plot.")
 
-    def surfplot(self, z, titletext):
+    def surfplot(self, z, titletext, cmap=None, vmin=None, vmax=None):
         """
         Plot if you want to - for troubleshooting - 1 figure
         """
+        if cmap is None:
+            cmap = _cmap_load
         if self.latlon:
             plt.imshow(
-                z, extent=(0, self.dx * z.shape[0], self.dy * z.shape[1], 0)
+                z, extent=(0, self.dx * z.shape[1], self.dy * z.shape[0], 0),
+                cmap=cmap, vmin=vmin, vmax=vmax,
             )  # ,interpolation='nearest'
             plt.xlabel("longitude [deg E]", fontsize=12, fontweight="bold")
             plt.ylabel("latitude [deg N]", fontsize=12, fontweight="bold")
@@ -573,10 +603,11 @@ class Plotting:
                 z,
                 extent=(
                     0,
-                    self.dx / 1000.0 * z.shape[0],
-                    self.dy / 1000.0 * z.shape[1],
+                    self.dx / 1000.0 * z.shape[1],
+                    self.dy / 1000.0 * z.shape[0],
                     0,
                 ),
+                cmap=cmap, vmin=vmin, vmax=vmax,
             )  # ,interpolation='nearest'
             plt.xlabel("x [km]", fontsize=12, fontweight="bold")
             plt.ylabel("y [km]", fontsize=12, fontweight="bold")
@@ -592,12 +623,15 @@ class Plotting:
         # And also could include xyzinterp as an option inside surfplot.
         # Noted here in case anyone wants to take that on in the future...
 
+        w_abs = float(np.abs(self.w).max())
+
         plt.subplot(211)
         plt.title("Load thickness, mantle equivalent [m]", fontsize=16)
         if self.latlon:
             plt.imshow(
                 self.qs / (self.rho_m * self.g),
-                extent=(0, self.dx * self.qs.shape[0], self.dy * self.qs.shape[1], 0),
+                extent=(0, self.dx * self.qs.shape[1], self.dy * self.qs.shape[0], 0),
+                cmap=_cmap_load,
             )
             plt.xlabel("longitude [deg E]", fontsize=12, fontweight="bold")
             plt.ylabel("latitude [deg N]", fontsize=12, fontweight="bold")
@@ -606,10 +640,11 @@ class Plotting:
                 self.qs / (self.rho_m * self.g),
                 extent=(
                     0,
-                    self.dx / 1000.0 * self.qs.shape[0],
-                    self.dy / 1000.0 * self.qs.shape[1],
+                    self.dx / 1000.0 * self.qs.shape[1],
+                    self.dy / 1000.0 * self.qs.shape[0],
                     0,
                 ),
+                cmap=_cmap_load,
             )
             plt.xlabel("x [km]", fontsize=12, fontweight="bold")
             plt.ylabel("y [km]", fontsize=12, fontweight="bold")
@@ -620,7 +655,8 @@ class Plotting:
         if self.latlon:
             plt.imshow(
                 self.w,
-                extent=(0, self.dx * self.w.shape[0], self.dy * self.w.shape[1], 0),
+                extent=(0, self.dx * self.w.shape[1], self.dy * self.w.shape[0], 0),
+                cmap=_cmap_deflection, vmin=-w_abs, vmax=w_abs,
             )
             plt.xlabel("longitude [deg E]", fontsize=12, fontweight="bold")
             plt.ylabel("latitude [deg N]", fontsize=12, fontweight="bold")
@@ -629,16 +665,17 @@ class Plotting:
                 self.w,
                 extent=(
                     0,
-                    self.dx / 1000.0 * self.w.shape[0],
-                    self.dy / 1000.0 * self.w.shape[1],
+                    self.dx / 1000.0 * self.w.shape[1],
+                    self.dy / 1000.0 * self.w.shape[0],
                     0,
                 ),
+                cmap=_cmap_deflection, vmin=-w_abs, vmax=w_abs,
             )
             plt.xlabel("x [km]", fontsize=12, fontweight="bold")
             plt.ylabel("y [km]", fontsize=12, fontweight="bold")
         plt.colorbar()
 
-    def xyzinterp(self, x, y, z, titletext):
+    def xyzinterp(self, x, y, z, titletext, cmap=None, vmin=None, vmax=None):
         """
         Interpolates and plots ungridded model outputs from SAS_NG solution
         """
@@ -672,10 +709,12 @@ class Plotting:
         zi[np.isnan(zi)] = 0
         # contour the gridded outputs, plotting dots at the randomly spaced data points.
         # CS = plt.contour(xi,yi,zi,15,linewidths=0.5,colors='k') -- don't need lines
+        if cmap is None:
+            cmap = _cmap_load
         if self.latlon:
-            plt.contourf(xi, yi, zi, 100, cmap=plt.cm.jet)
+            plt.contourf(xi, yi, zi, 100, cmap=cmap, vmin=vmin, vmax=vmax)
         else:
-            plt.contourf(xi / 1000.0, yi / 1000.0, zi, 100, cmap=plt.cm.jet)
+            plt.contourf(xi / 1000.0, yi / 1000.0, zi, 100, cmap=cmap, vmin=vmin, vmax=vmax)
         plt.colorbar()  # draw colorbar
         # plot model points.
         # Computed at
