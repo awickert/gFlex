@@ -57,15 +57,14 @@ SAMPLES      = 256        # Cycles samples; 64 for drafts, 512+ for final
 
 # Scene options
 SHOW_GRID    = True       # wireframe grid coloured by Te (requires te_verts)
-SHOW_TE_FLOOR = True      # flat plane below the plate coloured by Te
 SHOW_LOAD    = True       # load surface above the plate (requires qs_norm)
 GRID_STEP    = 12         # subsample every N rows/cols for the wireframe
 
 # Camera — adjust these to frame your scene
 # (x forward, y left-right, z up in Blender world space)
-CAM_OFFSET   = (0.15, -1.4, 0.40)   # as fractions of plate_size_bu
-CAM_LENS     = 40                    # focal length [mm]; larger = more telephoto
-CAM_SHIFT_Y  = -0.07                 # sensor shift; negative pushes plate up
+CAM_OFFSET   = (0.0, -1.8, 0.75)    # centred in x; pulled back and up to frame scene
+CAM_LENS     = 35                    # slightly wider to capture more vertical extent
+CAM_SHIFT_Y  = 0.0                   # no film shift — target computed from scene bounds
 
 # ── Load mesh data ─────────────────────────────────────────────────────────────
 _ns = {}
@@ -76,15 +75,20 @@ faces         = _ns["faces"]
 w_min_bu      = _ns["w_min_bu"]
 w_max_bu      = _ns["w_max_bu"]
 clip_bu       = _ns["clip_bu"]
+vmax_bu       = _ns.get("vmax_bu", clip_bu)   # asymmetric positive clip for forebulge
 nrows         = _ns["nrows"]
 ncols         = _ns["ncols"]
 plate_size_bu = _ns["plate_size_bu"]
 
 # Optional attributes (None if not written by export_for_blender)
-qs_norm  = _ns.get("qs_norm")
-te_verts = _ns.get("te_verts")
-te_min   = _ns.get("te_min")
-te_max   = _ns.get("te_max")
+qs_norm          = _ns.get("qs_norm")
+te_verts         = _ns.get("te_verts")
+te_min           = _ns.get("te_min")
+te_max           = _ns.get("te_max")
+load_radius_bu   = _ns.get("load_radius_bu")
+load_height_bu   = _ns.get("load_height_bu")
+load_height_m_eq = _ns.get("load_height_m_eq")
+base_z_bu        = _ns.get("base_z_bu", 0.0)
 
 print(f"Mesh: {len(vertices)} verts, {len(faces)} quads")
 print(f"Z range: {w_min_bu:.3f} … {w_max_bu:.3f} BU  |  clip: ±{clip_bu:.3f} BU")
@@ -117,13 +121,52 @@ def _vik_ramp(cramp):
 
 # ── Deflection surface ─────────────────────────────────────────────────────────
 
+def _vik_color(fac):
+    """Return linear-interpolated (R, G, B) from the vik colour ramp."""
+    stops = [
+        (0.00, (0.10, 0.16, 0.51)),
+        (0.25, (0.24, 0.53, 0.80)),
+        (0.40, (0.53, 0.77, 0.92)),
+        (0.50, (0.97, 0.97, 0.97)),
+        (0.60, (0.91, 0.53, 0.37)),
+        (0.75, (0.82, 0.25, 0.16)),
+        (1.00, (0.52, 0.04, 0.06)),
+    ]
+    fac = max(0.0, min(1.0, fac))
+    for k in range(len(stops) - 1):
+        p0, c0 = stops[k]
+        p1, c1 = stops[k + 1]
+        if p0 <= fac <= p1:
+            t = (fac - p0) / (p1 - p0)
+            return tuple(c0[j] + t * (c1[j] - c0[j]) for j in range(3))
+    return stops[-1][1]
+
+
+def _tsn_fac(z):
+    """TwoSlopeNorm: z → [0, 1] with z=0 → 0.5 and asymmetric arms."""
+    if z <= 0.0:
+        return (0.5 * (z - w_min_bu) / (-w_min_bu)) if w_min_bu < 0.0 else 0.5
+    return (0.5 + 0.5 * z / vmax_bu) if vmax_bu > 0.0 else 0.5
+
+
 def build_plate():
-    """Deflection surface coloured by Z position via the vik ramp."""
+    """Deflection surface coloured with vik (TwoSlopeNorm, z=0 → white).
+
+    Colours are pre-computed in Python and stored as a FLOAT_COLOR vertex
+    attribute, which Cycles reads reliably via ShaderNodeAttribute → Color.
+    This avoids issues with geometry-position node access in headless mode.
+    """
     mesh = bpy.data.meshes.new("FlexureMesh")
     mesh.from_pydata(vertices, [], faces)
     mesh.update()
     for p in mesh.polygons:
         p.use_smooth = True
+
+    # Pre-compute per-vertex vik colours with TwoSlopeNorm
+    col_attr = mesh.color_attributes.new("w_col", "FLOAT_COLOR", "POINT")
+    for k, v in enumerate(vertices):
+        r, g, b = _vik_color(_tsn_fac(v[2]))
+        col_attr.data[k].color = (r, g, b, 1.0)
 
     plate = bpy.data.objects.new("FlexurePlate", mesh)
     bpy.context.collection.objects.link(plate)
@@ -133,31 +176,16 @@ def build_plate():
     nt = mat.node_tree
     nt.nodes.clear()
 
-    geom   = nt.nodes.new("ShaderNodeNewGeometry")
-    sep    = nt.nodes.new("ShaderNodeSeparateXYZ")
-    mrange = nt.nodes.new("ShaderNodeMapRange")
-    cramp  = nt.nodes.new("ShaderNodeValToRGB")
-    bsdf   = nt.nodes.new("ShaderNodeBsdfPrincipled")
-    out    = nt.nodes.new("ShaderNodeOutputMaterial")
+    vcol = nt.nodes.new("ShaderNodeVertexColor")
+    vcol.layer_name = "w_col"
+    bsdf = nt.nodes.new("ShaderNodeBsdfPrincipled")
+    out  = nt.nodes.new("ShaderNodeOutputMaterial")
 
-    for node, loc in zip([geom, sep, mrange, cramp, bsdf, out],
-                         [(-900,0), (-700,0), (-500,0), (-300,0), (0,0), (300,0)]):
+    for node, loc in zip([vcol, bsdf, out], [(-300, 0), (0, 0), (300, 0)]):
         node.location = loc
 
-    nt.links.new(geom.outputs["Position"], sep.inputs["Vector"])
-    nt.links.new(sep.outputs["Z"],         mrange.inputs["Value"])
-    nt.links.new(mrange.outputs["Result"], cramp.inputs["Fac"])
-    nt.links.new(cramp.outputs["Color"],   bsdf.inputs["Base Color"])
-    nt.links.new(bsdf.outputs["BSDF"],     out.inputs["Surface"])
-
-    # Map [-clip_bu, +clip_bu] → [0, 1] for the vik ramp
-    mrange.inputs["From Min"].default_value = -clip_bu
-    mrange.inputs["From Max"].default_value =  clip_bu
-    mrange.inputs["To Min"].default_value   = 0.0
-    mrange.inputs["To Max"].default_value   = 1.0
-    mrange.clamp = True
-
-    _vik_ramp(cramp)
+    nt.links.new(vcol.outputs["Color"], bsdf.inputs["Base Color"])
+    nt.links.new(bsdf.outputs["BSDF"],  out.inputs["Surface"])
 
     bsdf.inputs["Roughness"].default_value          = 0.55
     bsdf.inputs["Specular IOR Level"].default_value = 0.4
@@ -165,104 +193,145 @@ def build_plate():
     return plate
 
 
-# ── Load surface (optional) ────────────────────────────────────────────────────
+# ── Load cylinder (optional) ───────────────────────────────────────────────────
 
-def build_load_surface():
-    """Flat surface slightly above the plate, opacity driven by qs_norm."""
-    if qs_norm is None:
+def build_load_cylinder():
+    """Extruded cylinder representing the surface load in mantle-equivalent height.
+
+    The cylinder base follows the deflected plate surface so the edifice sits
+    naturally in the bowl it creates.  The top is offset uniformly by
+    ``load_height_bu`` above each base vertex (same vertical exaggeration as
+    the plate).  Its radius matches the inferred circular load footprint.
+    """
+    if load_radius_bu is None or load_height_bu is None:
         return None
 
-    # Flat surface at the plate's zero level, same xy footprint
-    load_verts = [(v[0], v[1], 0.0) for v in vertices]
-    mesh = bpy.data.meshes.new("LoadMesh")
-    mesh.from_pydata(load_verts, [], faces)
+    # Grid cell pitch in Blender units (from first two vertices in each direction)
+    dx_bu = plate_size_bu / ncols
+    dy_bu = vertices[ncols][1] - vertices[0][1]
+
+    def plate_z_at(bx, by):
+        """Nearest-neighbour deflection lookup at a Blender-unit (bx, by) position."""
+        col = int(round((bx - vertices[0][0]) / dx_bu))
+        row = int(round((by - vertices[0][1]) / dy_bu))
+        col = max(0, min(ncols - 1, col))
+        row = max(0, min(nrows - 1, row))
+        return vertices[row * ncols + col][2]
+
+    n_seg  = 64
+    a_step = 2.0 * math.pi / n_seg
+    r      = load_radius_bu
+
+    # Bottom ring: base follows the deflected plate surface
+    bot_ring_xy = [(r * math.cos(k * a_step), r * math.sin(k * a_step))
+                   for k in range(n_seg)]
+    bot_ring = [(x, y, plate_z_at(x, y)) for x, y in bot_ring_xy]
+
+    # Top ring: uniformly above each bottom vertex by load_height_bu
+    top_ring = [(x, y, z + load_height_bu) for x, y, z in bot_ring]
+
+    bot_z_c = plate_z_at(0.0, 0.0)
+    top_c   = (0.0, 0.0, bot_z_c + load_height_bu)
+    bot_c   = (0.0, 0.0, bot_z_c)
+
+    # Index layout: top_ring[0..n-1], top_c=n, bot_ring[n+1..2n], bot_c=2n+1
+    i_tc  = n_seg
+    i_br0 = n_seg + 1
+    i_bc  = 2 * n_seg + 1
+    all_verts = top_ring + [top_c] + bot_ring + [bot_c]
+
+    all_faces = []
+    for k in range(n_seg):
+        k1 = (k + 1) % n_seg
+        # Side quad — winding gives outward normal (validated analytically)
+        all_faces.append((k1, k, i_br0 + k, i_br0 + k1))
+        # Top cap — normal points +Z
+        all_faces.append((i_tc, k, k1))
+        # Bottom cap — normal points -Z
+        all_faces.append((i_bc, i_br0 + k1, i_br0 + k))
+
+    mesh = bpy.data.meshes.new("LoadCylMesh")
+    mesh.from_pydata(all_verts, [], all_faces)
+    mesh.validate()
     mesh.update()
+    for p in mesh.polygons:
+        p.use_smooth = True
 
-    # Per-vertex qs_norm as a colour attribute
-    col_attr = mesh.color_attributes.new("qs_col", "FLOAT_COLOR", "POINT")
-    for i, val in enumerate(qs_norm):
-        col_attr.data[i].color = (val, val, val, 1.0)
-
-    obj = bpy.data.objects.new("LoadSurface", mesh)
+    obj = bpy.data.objects.new("LoadCylinder", mesh)
     bpy.context.collection.objects.link(obj)
 
-    mat = bpy.data.materials.new("LoadMat")
+    mat = bpy.data.materials.new("LoadCylMat")
     mat.use_nodes = True
-    mat.blend_method = "BLEND"
-    nt = mat.node_tree
-    nt.nodes.clear()
+    pb = mat.node_tree.nodes["Principled BSDF"]
 
-    attr   = nt.nodes.new("ShaderNodeAttribute")
-    attr.attribute_name = "qs_col"
-    attr.attribute_type = "GEOMETRY"
-    bsdf   = nt.nodes.new("ShaderNodeBsdfPrincipled")
-    out    = nt.nodes.new("ShaderNodeOutputMaterial")
-
-    nt.links.new(attr.outputs["Fac"],  bsdf.inputs["Alpha"])
-    nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
-
-    bsdf.inputs["Base Color"].default_value         = (0.06, 0.05, 0.04, 1)
-    bsdf.inputs["Roughness"].default_value          = 0.80
-    bsdf.inputs["Specular IOR Level"].default_value = 0.05
-
+    # Dark basalt — clearly distinct from both the blue subsidence and vik forebulge reds
+    pb.inputs["Base Color"].default_value         = (0.18, 0.12, 0.08, 1)
+    pb.inputs["Roughness"].default_value          = 0.85
+    pb.inputs["Specular IOR Level"].default_value = 0.05
     obj.data.materials.append(mat)
     return obj
 
 
-# ── Te floor (optional) ────────────────────────────────────────────────────────
+# ── Plate body (solid slab) ────────────────────────────────────────────────────
 
 def _attach_float_attr(mesh, name, values):
     attr = mesh.attributes.new(name, "FLOAT", "POINT")
     attr.data.foreach_set("value", values)
 
 
-def build_te_floor():
-    """Flat plane below the plate, grey-shaded by elastic thickness."""
-    if te_verts is None:
-        return None
+def build_te_slab():
+    """Solid slab: bottom surface + perimeter side walls, exactly as in the logo.
 
-    floor_z     = w_min_bu * 1.8
-    floor_verts = [(v[0], v[1], floor_z) for v in vertices]
+    Each bottom vertex is offset from its corresponding top (deflection) vertex
+    by a Te-proportional depth, so the bottom surface follows the same curvature
+    as the deflection and the plate has physically variable thickness.  Falls back
+    to a uniform thickness equal to 12 % of plate_size_bu when te_verts is None.
+    """
+    if te_verts is not None and te_max is not None:
+        te_z_scale = 2.0 * abs(w_min_bu) / te_max
+        depth = [t * te_z_scale for t in te_verts]
+    else:
+        uniform = plate_size_bu * 0.12
+        depth = [uniform] * len(vertices)
 
-    mesh = bpy.data.meshes.new("TeFloorMesh")
-    mesh.from_pydata(floor_verts, [], faces)
+    n_top     = len(vertices)
+    bot_verts = [(v[0], v[1], v[2] - depth[k]) for k, v in enumerate(vertices)]
+    all_verts = list(vertices) + bot_verts
+
+    # Bottom faces — reversed winding so normals point downward
+    bot_faces = [(f[3] + n_top, f[2] + n_top, f[1] + n_top, f[0] + n_top)
+                 for f in faces]
+
+    # Perimeter side faces
+    side_faces = []
+    for i in range(ncols - 1):           # south edge  (j = 0)
+        t0, t1 = i, i + 1
+        side_faces.append((t0, t1, t1 + n_top, t0 + n_top))
+    for i in range(ncols - 1):           # north edge  (j = nrows-1)
+        t0 = (nrows - 1) * ncols + i;  t1 = t0 + 1
+        side_faces.append((t1, t0, t0 + n_top, t1 + n_top))
+    for j in range(nrows - 1):           # west edge   (i = 0)
+        t0 = j * ncols;  t1 = (j + 1) * ncols
+        side_faces.append((t1, t0, t0 + n_top, t1 + n_top))
+    for j in range(nrows - 1):           # east edge   (i = ncols-1)
+        t0 = j * ncols + (ncols - 1);  t1 = (j + 1) * ncols + (ncols - 1)
+        side_faces.append((t0, t1, t1 + n_top, t0 + n_top))
+
+    mesh = bpy.data.meshes.new("TeSlabMesh")
+    mesh.from_pydata(all_verts, [], bot_faces + side_faces)
     mesh.update()
-    _attach_float_attr(mesh, "te_val", te_verts)
+    for p in mesh.polygons:
+        p.use_smooth = True
 
-    obj = bpy.data.objects.new("TeFloor", mesh)
+    obj = bpy.data.objects.new("TeSlab", mesh)
     bpy.context.collection.objects.link(obj)
 
-    mat = bpy.data.materials.new("TeFloorMat")
+    mat = bpy.data.materials.new("TeSlabMat")
     mat.use_nodes = True
-    nt = mat.node_tree
-    nt.nodes.clear()
-
-    attr   = nt.nodes.new("ShaderNodeAttribute");  attr.attribute_name = "te_val"
-    mrange = nt.nodes.new("ShaderNodeMapRange")
-    cramp  = nt.nodes.new("ShaderNodeValToRGB")
-    bsdf   = nt.nodes.new("ShaderNodeBsdfPrincipled")
-    out    = nt.nodes.new("ShaderNodeOutputMaterial")
-
-    mrange.inputs["From Min"].default_value = te_min
-    mrange.inputs["From Max"].default_value = te_max
-    mrange.inputs["To Min"].default_value   = 0.0
-    mrange.inputs["To Max"].default_value   = 1.0
-    mrange.clamp = True
-
-    cr = cramp.color_ramp
-    cr.color_mode    = "RGB"
-    cr.interpolation = "LINEAR"
-    cr.elements[0].position = 0.0;  cr.elements[0].color = (0.85, 0.85, 0.85, 1)
-    cr.elements[1].position = 1.0;  cr.elements[1].color = (0.20, 0.20, 0.20, 1)
-
-    nt.links.new(attr.outputs["Fac"],      mrange.inputs["Value"])
-    nt.links.new(mrange.outputs["Result"], cramp.inputs["Fac"])
-    nt.links.new(cramp.outputs["Color"],   bsdf.inputs["Base Color"])
-    nt.links.new(bsdf.outputs["BSDF"],     out.inputs["Surface"])
-
-    bsdf.inputs["Roughness"].default_value          = 0.85
-    bsdf.inputs["Specular IOR Level"].default_value = 0.1
-
+    pb = mat.node_tree.nodes["Principled BSDF"]
+    pb.inputs["Base Color"].default_value         = (0.72, 0.70, 0.67, 1)
+    pb.inputs["Roughness"].default_value          = 0.80
+    pb.inputs["Specular IOR Level"].default_value = 0.10
     obj.data.materials.append(mat)
     return obj
 
@@ -337,7 +406,13 @@ def build_camera():
         s * CAM_OFFSET[2],
     ))
     cam_obj.location = cam_loc
-    target    = mathutils.Vector((0.0, 0.0, w_min_bu * 0.25))
+    # Target the geometric centre of the scene (between slab bottom and cylinder top).
+    # Cylinder top = deepest deflection + load height (base deforms with plate).
+    # Slab bottom  ≈ 2 × |w_min| below z=0 (thickest-Te edge, w≈0).
+    cyl_top_z  = (w_min_bu + load_height_bu) if load_height_bu is not None else 0.0
+    slab_bot_z = -2.0 * abs(w_min_bu)
+    target_z   = 0.5 * (cyl_top_z + slab_bot_z)
+    target     = mathutils.Vector((0.0, 0.0, target_z))
     direction = target - cam_loc
     cam_obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
     return cam_obj
@@ -394,14 +469,13 @@ def render_to(path):
 
 clear_scene()
 build_plate()
+build_te_slab()
 build_camera()
 build_lights()
 build_world()
 
 if SHOW_LOAD:
-    build_load_surface()
-if SHOW_TE_FLOOR:
-    build_te_floor()
+    build_load_cylinder()
 if SHOW_GRID:
     build_te_grid()
 
