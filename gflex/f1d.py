@@ -43,8 +43,9 @@ class F1D(Flexure):
     ----------
     Method : str
         Solution method.  ``'FD'`` (finite difference, supports variable
-        *Te*), ``'SAS'`` (superposition of analytical solutions, constant
-        *Te* only), or ``'SAS_NG'`` (SAS on an ungridded point array).
+        *Te*), ``'FFT'`` (spectral, requires scalar *Te*),
+        ``'SAS'`` (superposition of analytical solutions, constant *Te*
+        only), or ``'SAS_NG'`` (SAS on an ungridded point array).
     Solver : str
         Linear solver: ``'direct'`` (sparse LU, default) or
         ``'iterative'``.

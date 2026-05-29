@@ -315,8 +315,9 @@ class F2D(Flexure):
     ----------
     Method : str
         Solution method.  ``'FD'`` (finite difference, supports variable
-        *Te*), ``'SAS'`` (superposition of analytical solutions, constant
-        *Te* only), or ``'SAS_NG'`` (SAS on an ungridded point cloud).
+        *Te*), ``'FFT'`` (spectral, requires scalar *Te*; 2-D only),
+        ``'SAS'`` (superposition of analytical solutions, constant *Te*
+        only), or ``'SAS_NG'`` (SAS on an ungridded point cloud).
     PlateSolutionType : str
         FD stencil variant: ``'vWC1994'`` (van Wees & Cloetingh 1994,
         recommended) or ``'G2009'`` (Govers et al. 2009).
@@ -347,6 +348,15 @@ class F2D(Flexure):
         FD options: ``'0Displacement0Slope'``, ``'0Slope0Shear'``,
         ``'0Moment0Shear'``, ``'Mirror'``, ``'Periodic'``.
         SAS option: ``'NoOutsideLoads'`` (the default when unset).
+    sigma_xx : float, optional
+        Normal in-plane stress in the x-direction :math:`\sigma_{xx}` [Pa].
+        Supported by ``FD`` and ``FFT``.  Default ``0``.
+    sigma_yy : float, optional
+        Normal in-plane stress in the y-direction :math:`\sigma_{yy}` [Pa].
+        Supported by ``FD`` and ``FFT``.  Default ``0``.
+    sigma_xy : float, optional
+        In-plane shear stress :math:`\sigma_{xy}` [Pa].
+        Supported by ``FD`` and ``FFT``.  Default ``0``.
     Quiet : bool
         Suppress timing output.  Default ``False``.
     Verbose : bool
