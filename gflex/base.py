@@ -773,6 +773,12 @@ class Flexure(Utility, Plotting):
     """
 
     def __init__(self, filename=None):
+        """Set verbosity defaults and record the optional config filename.
+
+        All parameter loading and solver setup is deferred to :meth:`initialize`
+        so that attributes can be set programmatically between construction and
+        the initialize–run–finalize call sequence.
+        """
         # 17 Nov 2014: Splitting out initialize from __init__ to allow space
         # to use getters and setters to define values
 
