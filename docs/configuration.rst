@@ -101,8 +101,9 @@ Parameters
     Elastic thickness [m].  Either a scalar value or a path to a
     space-delimited array.  Arrays are required for FD solutions with
     spatially variable *Te*.  Use :func:`~gflex.smooth_pad_Te` and
-    :func:`~gflex.pad_domain` to extend a variable-*Te* grid with a smooth
-    boundary buffer before running.
+    :func:`~gflex.pad_domain` (2-D) or :func:`~gflex.smooth_pad_Te_1d` and
+    :func:`~gflex.pad_domain_1d` (1-D) to extend a variable-*Te* grid with a
+    smooth boundary buffer before running.
 
 ``xw``, ``yw``
     *(SAS_NG only)*  Vectors of x (and y for 2-D) coordinates at which to
@@ -168,8 +169,9 @@ Parameters
     For SAS / SAS_NG: ``NoOutsideLoads`` (assumed if left blank).
 
     Flexural solutions can be sensitive to boundary conditions; choose
-    carefully and consider using :func:`~gflex.pad_domain` to push
-    boundaries away from the region of interest.
+    carefully and consider using :func:`~gflex.pad_domain` (2-D) or
+    :func:`~gflex.pad_domain_1d` (1-D) to push boundaries away from the
+    region of interest.
 
 ``Solver``
     Linear system solver for FD:
