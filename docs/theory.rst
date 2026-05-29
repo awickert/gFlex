@@ -24,35 +24,14 @@ Governing equations
 -------------------
 
 gFlex solves the thin elastic plate (Kirchhoff–Love) equation for flexural
-isostasy.  The analytical solution imposes the assumption that the scalar
-flexural rigidity, :math:`D`, is uniform.  This leads to biharmonic
-expressions for plate bending in one and two dimensions, respectively
-(Wickert, 2016, Eqs. 1–2):
+isostasy.  In one and two dimensions, respectively, the governing equations
+are (Wickert, 2016, Eqs. 1–2, extended here to include in-plane stresses):
 
 .. math::
 
-   D \frac{\mathrm{d}^4 w}{\mathrm{d}x^4} + \Delta\rho\,g\,w = q,
-
-.. math::
-
-   D \nabla^4 w + \Delta\rho\,g\,w = q.
-
-Here, :math:`w` [m] is vertical deflection of the plate (:math:`w < 0` is
-downward into the mantle), :math:`q` [Pa] is the applied surface normal
-stress, :math:`\Delta\rho = \rho_m - \rho_f` [kg m⁻³] is the density of the
-mantle minus the density of the infilling material, and :math:`g` [m s⁻²] is
-gravitational acceleration.  The :math:`\Delta\rho\,g\,w` term represents the
-feedback by which flexural subsidence can lead a depression to be filled by
-material — for example, seawater or sediment — which leads to additional
-flexural subsidence.  If the infilling material is not uniform in density or
-spatial extent, one may solve for the flexural response with
-:math:`\rho_f = \rho_\text{air} \approx 0`, add loads based on conditions
-that match a given inundation or deposition rule, and then re-calculate
-flexure iteratively until convergence is achieved.
-
-In two dimensions, gFlex also supports in-plane stresses
-(:math:`\sigma_{xx}`, :math:`\sigma_{yy}`, :math:`\sigma_{xy}` [Pa]),
-which extend the biharmonic equation to
+   D \frac{\mathrm{d}^4 w}{\mathrm{d}x^4}
+   - \sigma_{xx}\,T_e\,\frac{\mathrm{d}^2 w}{\mathrm{d}x^2}
+   + \Delta\rho\,g\,w = q,
 
 .. math::
 
@@ -62,12 +41,30 @@ which extend the biharmonic equation to
    - 2\sigma_{xy}\,T_e\,\frac{\partial^2 w}{\partial x \partial y}
    + \Delta\rho\,g\,w = q.
 
-Here, :math:`\sigma_{xx}` and :math:`\sigma_{yy}` are the normal components
-of the in-plane stress tensor and :math:`\sigma_{xy}` is the shear component,
-each multiplied by the local elastic thickness :math:`T_e` [m] to convert a
-depth-averaged stress to a force per unit width.  Wickert (2016) set all
-in-plane stress terms to zero; they are available in the two-dimensional
-finite difference and FFT solvers in later versions of gFlex.
+Here, :math:`w` [m] is vertical deflection of the plate (:math:`w < 0` is
+downward into the mantle), :math:`q` [Pa] is the applied surface normal
+stress, :math:`\Delta\rho = \rho_m - \rho_f` [kg m⁻³] is the density of the
+mantle minus the density of the infilling material, :math:`g` [m s⁻²] is
+gravitational acceleration, and :math:`D` [N m] is the flexural rigidity
+(uniform for the analytical solutions, spatially variable for the finite
+difference solver).  The terms :math:`\sigma_{xx}`, :math:`\sigma_{yy}` [Pa]
+are the normal components of the in-plane stress tensor and
+:math:`\sigma_{xy}` [Pa] is its shear component; each is multiplied by the
+elastic thickness :math:`T_e` [m] to convert a depth-averaged stress to a
+force per unit width acting on the plate edge.  In one dimension only
+:math:`\sigma_{xx}` enters; :math:`\sigma_{yy}` and :math:`\sigma_{xy}` are
+absent.  All three stress terms default to zero, recovering the purely
+biharmonic equations of Wickert (2016); they are supported by the
+finite difference and FFT solvers but not by the analytical (SAS/SAS\_NG)
+solutions.
+
+The :math:`\Delta\rho\,g\,w` term represents the feedback by which flexural
+subsidence can lead a depression to be filled by material — for example,
+seawater or sediment — which leads to additional flexural subsidence.  If the
+infilling material is not uniform in density or spatial extent, one may solve
+for the flexural response with :math:`\rho_f = \rho_\text{air} \approx 0`,
+add loads based on conditions that match a given inundation or deposition
+rule, and then re-calculate flexure iteratively until convergence is achieved.
 
 For finite difference solutions, where :math:`D` may vary spatially, the
 full one-dimensional expansion is
