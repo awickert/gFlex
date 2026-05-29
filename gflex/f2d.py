@@ -23,7 +23,7 @@ import time
 import numpy as np
 import scipy
 from scipy.special import kei
-from scipy.sparse.linalg import isolve, spsolve
+from scipy.sparse.linalg import lgmres, spsolve
 
 from gflex.base import Flexure
 
@@ -2249,7 +2249,7 @@ class F2D(Flexure):
                     "m between iterations",
                 )
             M = scipy.sparse.diags(1.0 / self.coeff_matrix.diagonal())
-            wvector = isolve.lgmres(
+            wvector = lgmres(
                 self.coeff_matrix, q0vector, M=M, rtol=self.iterative_ConvergenceTolerance
             )
             wvector = wvector[0]  # Reach into tuple to get my array back
