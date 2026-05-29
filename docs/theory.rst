@@ -24,8 +24,17 @@ Governing equations
 -------------------
 
 gFlex solves the thin elastic plate (Kirchhoff–Love) equation for flexural
-isostasy.  In one and two dimensions, respectively, the governing equations
-are (Wickert, 2016, Eqs. 1–2, extended here to include in-plane stresses):
+isostasy.  In compact tensor form the two-dimensional governing equation is
+
+.. math::
+
+   D \nabla^4 w - T_e\,\boldsymbol{\sigma} : \nabla\nabla w + \Delta\rho\,g\,w = q,
+
+where :math:`\boldsymbol{\sigma} : \nabla\nabla w` is the double contraction
+(Frobenius inner product) of the in-plane stress tensor with the Hessian of
+:math:`w`.  Expanding the stress term, and writing the one- and two-dimensional
+equations explicitly (Wickert, 2016, Eqs. 1–2, extended to include in-plane
+stresses):
 
 .. math::
 
