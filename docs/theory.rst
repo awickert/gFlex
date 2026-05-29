@@ -1,6 +1,12 @@
 Theory
 ======
 
+.. note::
+
+   This page is an AI-generated distillation of `Wickert (2016)
+   <https://doi.org/10.5194/gmd-9-997-2016>`_.  Please refer to that paper
+   for the full derivations, figures, and authoritative treatment.
+
 Flexure of the lithosphere is the process by which loads bend the elastic
 outer shell of Earth or other planets (Watts, 2001; Watters and McGovern,
 2006).  The sources of these loads are wide-ranging, encompassing volcanic
