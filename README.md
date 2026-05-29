@@ -263,6 +263,11 @@ flex.BC_N = '0Displacement0Slope' # north boundary condition
 #latlon = # true/false: flag to enable lat/lon input. Defaults False.
 #PlanetaryRadius = # radius of planet [m], for lat/lon solutions
 
+# Optional: in-plane stresses [Pa] (supported by FD and FFT solvers)
+#flex.sigma_xx = 0.  # east–west compression/tension
+#flex.sigma_yy = 0.  # north–south compression/tension
+#flex.sigma_xy = 0.  # shear — couples x and y deflection
+
 flex.initialize()
 flex.run()
 flex.finalize()
