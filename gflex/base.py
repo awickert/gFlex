@@ -1485,11 +1485,38 @@ class Flexure(Utility, Plotting):
 
     def FFT(self):
         """
-        Base stub for the FFT spectral solver; overridden by :class:`F1D`
-        and :class:`F2D`.  Has no effect when called directly on
-        :class:`Flexure`.
+        Set-up for the FFT spectral solution method.
+
+        Resolves the load array from ``q0`` if needed, assigns the ``x``
+        (and, in two dimensions, ``y``) coordinate arrays for plotting
+        utilities, and loads a scalar elastic thickness from the
+        configuration file when one is present.  Mirrors the set-up
+        performed by :meth:`FD` and :meth:`SAS`; the scalar-:math:`T_e`
+        requirement is enforced in :class:`F1D` and :class:`F2D`.
         """
-        pass
+        if self.Verbose:
+            print("FFT Spectral Solution Technique")
+        # Define qs from q0 if not already set by a getter/setter
+        try:
+            self.qs
+        except AttributeError:
+            self.qs = self.q0.copy()
+            # Remove self.q0 to avoid issues with multiply-defined inputs
+            del self.q0
+        # Give it x (and y) dimensions for help with plotting tools
+        self.x = np.arange(self.dx / 2.0, self.dx * self.qs.shape[0], self.dx)
+        if self.dimension == 2:
+            self.y = np.arange(self.dy / 2.0, self.dy * self.qs.shape[1], self.dy)
+        # Config-file parameter loading
+        # FFT requires scalar (uniform) Te; that check is performed in F1D/F2D
+        if self.filename:
+            self.Te = self.configGet("float", "input", "ElasticThickness")
+            # qs may still be coming from q0 when driven by a config file
+            try:
+                self.qs
+            except AttributeError:
+                self.qs = self.q0.copy()
+                del self.q0
 
     # SAS and SAS_NG are the exact same here; leaving separate just for symmetry
     # with other functions
