@@ -139,6 +139,7 @@ point (``gflex <config_file>``).
    :caption: Contents
 
    theory
+   example
    api
    configuration
    accuracy
