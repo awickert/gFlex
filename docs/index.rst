@@ -15,19 +15,16 @@ The deflection :math:`w` satisfies
 
 .. math::
 
-   D \nabla^4 w + \left(\rho_m - \rho_\text{fill}\right) g\, w = q,
+   D \nabla^4 w - T_e\,\boldsymbol{\sigma} : \nabla\nabla w + \Delta\rho\, g\, w = q,
 
-where :math:`q` is the applied surface normal stress [Pa],
-:math:`\rho_m` and :math:`\rho_\text{fill}` are the mantle and infill
-densities [kg m⁻³], :math:`g` is gravitational acceleration [m s⁻²], and
-:math:`D = E T_e^3 / \bigl[12(1 - \nu^2)\bigr]` is the flexural rigidity
+where :math:`\boldsymbol{\sigma} : \nabla\nabla w` is the double contraction of the
+in-plane stress tensor with the Hessian of :math:`w`, :math:`q` [Pa] is the applied
+surface normal stress, :math:`\Delta\rho = \rho_m - \rho_\text{fill}` [kg m⁻³] is
+the mantle minus infill density, :math:`g` [m s⁻²] is gravitational acceleration,
+and :math:`D = E T_e^3 / \bigl[12(1 - \nu^2)\bigr]` is the flexural rigidity
 (:math:`E` = Young's modulus, :math:`T_e` = elastic thickness,
-:math:`\nu` = Poisson's ratio).  The biharmonic term :math:`D \nabla^4 w`
-is the plate's resistance to bending; :math:`(\rho_m - \rho_\text{fill})\,g\,w`
-is the isostatic restoring force from the displaced mantle, reduced by the
-weight of any material that fills the depression; and :math:`q` is the
-applied load.  See :doc:`theory` for the full equations including in-plane
-stresses and spatially variable rigidity.
+:math:`\nu` = Poisson's ratio).  See :doc:`theory` for the full expanded equations
+and physical interpretation of each term.
 
 .. note::
 
