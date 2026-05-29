@@ -281,11 +281,9 @@ def test_fd_2d_sigma_yy_direction():
     Symmetric counterpart of test_fd_2d_sigma_xx_direction.  A strip load
     uniform in x (only ky modes) has kx = 0 everywhere, so σ_xx·Te·kx² = 0
     and the σ_xy diagonal-stencil terms cancel pairwise for a y-translation-
-    symmetric solution.  Mirror BCs on all four sides are used (not Periodic)
-    because the Periodic BC assembly has a known limitation with σ_xy ≠ 0
-    (it assumes cj-1i1 = cj-1i-1, which is false when σ_xy ≠ 0).  Mirror BCs
-    cancel the σ_xy terms exactly for an x-uniform solution (verified
-    algebraically), so atol = 1e-9 handles only rounding noise.
+    symmetric solution.  Mirror BCs on all four sides are used because the
+    σ_xy diagonal-stencil terms cancel exactly for an x-uniform solution
+    (verified algebraically), giving atol = 1e-9 to handle only rounding noise.
 
     Only sigma_yy changes the deflection because σ_yy·Te·ky² ≠ 0.
     """
@@ -360,6 +358,35 @@ def test_fd_2d_sigma_yy_vs_fft_periodic():
     np.testing.assert_allclose(flex_fd.w, flex_fft.w, rtol=1e-2)
 
 
+def test_fd_2d_sigma_xy_vs_fft_periodic():
+    """FD/Periodic with sigma_xy matches FFT/Periodic to within FD truncation error.
+
+    Validates the fixes to the all-Periodic coefficient-matrix assembly:
+    (1) the NW coefficient is saved before the west-boundary shuffle overwrites
+        the cj_1i1 slot; (2) the two double-wrap corner entries A[0, N-1] and
+        A[N-1, 0] (which link cell (0,0)↔(ny-1, nx-1) diagonally across the
+        domain) use the SW/NE coefficients rather than the NW/SE coefficients
+        that the spdiags diagonals would otherwise supply.
+
+    A central square block load (many Fourier modes) is used.  The σ_xy
+    cross-stencil adds an additional O((k·dx)²) error compared with the
+    σ_xx / σ_yy cases, so the combined truncation reaches ~1.35 % for the
+    highest modes in this 64×64 grid; rtol = 2e-2 is still tight enough to
+    detect any sign flip or coefficient error.
+    """
+    N = 64
+    qs = np.zeros((N, N))
+    qs[28:36, 28:36] = 1e6
+
+    bc = dict(bc_w="Periodic", bc_e="Periodic", bc_n="Periodic", bc_s="Periodic")
+    sigma_xy = 2e8
+
+    flex_fd  = _run(qs, **bc, sigma_xy=sigma_xy)
+    flex_fft = _fft_run(qs, **bc, sigma_xy=sigma_xy)
+
+    np.testing.assert_allclose(flex_fd.w, flex_fft.w, rtol=2e-2)
+
+
 def test_fd_2d_sigma_xy_reflection_symmetry():
     """sigma_xy respects the x-reflection symmetry of the stencil sign pattern.
 
@@ -371,8 +398,8 @@ def test_fd_2d_sigma_xy_reflection_symmetry():
         w(+S)[i, j] = w(−S)[i, N−1−j]
 
     The load is centred on a 121×121 grid (odd, so j = 60 is the exact centre)
-    and Mirror BCs are used because they implement even reflection and handle
-    σ_xy correctly (unlike the Periodic BC assembly which has a known limitation).
+    Mirror BCs are used because they implement even reflection, making the
+    x-reflection identity exact at the discrete level.
 
     rtol = 1e-8 is limited only by floating-point rounding in the sparse solver.
     """
