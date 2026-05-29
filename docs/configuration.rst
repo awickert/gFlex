@@ -178,9 +178,10 @@ Parameters
     * ``iterative`` — lower peak memory on very large grids; slower.
 
 ``ConvergenceTolerance``
-    Maximum allowable change between successive iterative solver steps [m].
-    Only used when ``Solver = iterative``.  Set to ``0`` to run a fixed
-    number of iterations without a tolerance check.
+    Relative residual tolerance passed as ``rtol`` to the LGMRES solver.
+    Only used when ``Solver = iterative``.  Default: ``1.0e-3``.  Decrease
+    for higher accuracy at the cost of more iterations; the solver falls back
+    to a direct solve if LGMRES does not converge.
 
 .. note::
 
