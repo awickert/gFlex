@@ -22,7 +22,7 @@ import time
 
 import numpy as np
 from scipy.sparse import diags, spdiags
-from scipy.sparse.linalg import isolve, spsolve
+from scipy.sparse.linalg import lgmres, spsolve
 
 from gflex.base import Flexure
 
@@ -857,7 +857,7 @@ class F1D(Flexure):
             # qs negative so bends down with positive load, bends up with neative load
             # (i.e. material removed)
             M = diags(1.0 / self.coeff_matrix.diagonal())
-            w = isolve.lgmres(
+            w = lgmres(
                 self.coeff_matrix, -self.qs, M=M, rtol=self.iterative_ConvergenceTolerance
             )
             self.w = w[0]  # Reach into tuple to get my array back

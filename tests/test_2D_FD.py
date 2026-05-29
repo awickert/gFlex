@@ -287,5 +287,46 @@ def test_2d_fd_convergence_order():
         )
 
 
+def test_2d_fd_iterative_runs():
+    """2-D iterative solver runs without crashing and produces finite output.
+
+    The 2-D biharmonic stiffness matrix has a condition number on the order
+    of 10⁶ for typical grid spacings, which makes lgmres with a Jacobi
+    preconditioner converge very slowly — often not reaching the requested
+    tolerance within the default iteration limit.  This test therefore only
+    checks that the solver completes without error and returns finite
+    deflections; it does not assert accuracy relative to the direct solver.
+
+    Improving 2-D iterative convergence would require a stronger
+    preconditioner (e.g., incomplete LU or algebraic multigrid).
+    """
+    N = 30
+    dx = dy = 5000.0
+    qs = np.zeros((N, N))
+    qs[10:20, 10:20] = 1e6
+
+    flex = F2D()
+    flex.Quiet = True
+    flex.Method = "FD"
+    flex.PlateSolutionType = "vWC1994"
+    flex.Solver = "iterative"
+    flex.g = 9.8
+    flex.E = 65e9
+    flex.nu = 0.25
+    flex.rho_m = 3300.0
+    flex.rho_fill = 0.0
+    flex.Te = 30e3
+    flex.qs = qs.copy()
+    flex.dx = dx
+    flex.dy = dy
+    flex.BC_W = flex.BC_E = flex.BC_S = flex.BC_N = "0Moment0Shear"
+    flex.initialize()
+    flex.run()
+    flex.finalize()
+
+    assert flex.w.shape == (N, N)
+    assert np.all(np.isfinite(flex.w)), "iterative solver returned non-finite deflections"
+
+
 if __name__ == "__main__":
     test_main()
