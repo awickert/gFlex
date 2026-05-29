@@ -11,9 +11,12 @@ When you use gFlex, please cite the model description paper:
    *Geosci. Model Dev.*, *9*\(3), 997–1017.
 
 To cite a specific version of the source code, use the Zenodo record for the
-version you ran.  The record for the current release (v1.3.0) is:
+version you ran.  The concept DOI
+`doi:10.5281/zenodo.5034651 <https://doi.org/10.5281/zenodo.5034651>`_
+always resolves to the latest deposited release; version-specific DOIs are
+listed on that page.  For example, for v1.2.0:
 
-   Wickert, A. D. and Hutton, E. W. H. (2026), *gFlex* v1.3.0 [software],
+   Wickert, A. D. and Hutton, E. W. H. (2024), *gFlex* v1.2.0 [software],
    Zenodo, `doi:10.5281/zenodo.5034651 <https://doi.org/10.5281/zenodo.5034651>`_.
 
 ----
