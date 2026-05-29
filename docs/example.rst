@@ -71,7 +71,7 @@ A sigmoid transition from :math:`T_e = 15` km (west) to
 Circular load
 -------------
 
-The load radius is set to :math:`0.4\alpha`, where :math:`\alpha` is the
+The load radius is set to :math:`1.5\alpha`, where :math:`\alpha` is the
 flexural parameter computed from the mean :math:`T_e`:
 
 .. math::
@@ -85,12 +85,13 @@ flexural parameter computed from the mean :math:`T_e`:
    D_mean   = E * Te_mean**3 / (12.0 * (1.0 - nu**2))
    alpha    = (D_mean / ((rho_m - rho_fill) * g))**0.25
 
-   load_radius = 0.4 * alpha
+   load_radius = 1.5 * alpha
    R  = np.sqrt((XX - cx)**2 + (YY - cy)**2)
    qs = np.where(R <= load_radius, 3e7, 0.0)   # 30 MPa inside, 0 outside
 
-A 30 MPa load over a ~100 km-radius circle is equivalent to roughly
-930 m of mantle-density rock — a substantial volcanic edifice.
+A 30 MPa load over a ~60 km-radius circle is equivalent to roughly
+930 m of mantle-density rock — comparable to a large volcanic plateau
+or the distal part of a sedimentary basin.
 
 
 Running gFlex
@@ -156,7 +157,7 @@ deflection side by side), plot the arrays directly:
 
    axes[1].imshow(flex.Te / 1e3,
        extent=(0, dx/1000*ncols, dy/1000*nrows, 0),
-       cmap='viridis', aspect='equal')
+       cmap=cmc.roma, aspect='equal')
    axes[1].set_title(r"Elastic thickness $T_e$ [km]")
 
    axes[2].imshow(flex.w,
@@ -174,7 +175,8 @@ deflection side by side), plot the arrays directly:
    :width: 100%
 
    *Left*: circular load (dark = heavier; lajolla_r colormap).
-   *Centre*: sigmoid :math:`T_e` transition from 15 km (west) to 35 km (east).
+   *Centre*: sigmoid :math:`T_e` transition from 15 km (west, warm red) to
+   35 km (east, cool blue-green); roma colormap.
    *Right*: deflection coloured with the *vik* diverging colormap
    (blue = subsidence, red = uplift); the asymmetry between soft and stiff
    sides is clearly visible.
@@ -193,10 +195,12 @@ NumPy or gFlex installed:
 
    export_for_blender(
        flex.w, flex.dx,
-       path='/tmp/gflex_mesh.py',
-       z_exaggeration=1000.0,
+       path='/tmp/gflex_blender_mesh.py',
+       z_exaggeration=200.0,
        qs=flex.qs,
        Te=flex.Te,
+       rho_m=rho_m,
+       g=g,
    )
 
 Then render headless with the companion scene script:
@@ -205,9 +209,9 @@ Then render headless with the companion scene script:
 
    blender --background --python docs/examples/blender_flexure.py
 
-The script reads ``/tmp/gflex_mesh.py`` by default (edit the ``MESH_FILE``
-constant at the top to change the path) and writes a PNG with a transparent
-background, ready to composite into a paper or presentation.
+The script reads ``/tmp/gflex_blender_mesh.py`` by default (edit the
+``MESH_FILE`` constant at the top to change the path) and writes a PNG with a
+transparent background, ready to composite into a paper or presentation.
 
 .. figure:: _static/example_blender.png
    :alt: Blender 3-D render of the flexure scenario
@@ -215,9 +219,9 @@ background, ready to composite into a paper or presentation.
    :width: 80%
 
    Blender render of the same scenario: *vik*-coloured deflection surface,
-   wireframe :math:`T_e` grid, and :math:`T_e` floor slab.  The vertical
-   relief is exaggerated 1000× relative to horizontal scale; the domain
-   is 750 × 750 km.
+   wireframe :math:`T_e` grid, :math:`T_e` floor slab, and dark basalt load
+   cylinder whose base deforms with the plate.  Vertical exaggeration is 200×;
+   the domain is 750 × 750 km.
 
 
 Logo scripts
