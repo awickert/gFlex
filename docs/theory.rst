@@ -76,8 +76,19 @@ for the flexural response with :math:`\rho_f = \rho_\text{air} \approx 0`,
 add loads based on conditions that match a given inundation or deposition
 rule, and then re-calculate flexure iteratively until convergence is achieved.
 
-For finite difference solutions, where :math:`D` may vary spatially, the
-compact one-dimensional form is
+For finite difference solutions, where :math:`D` may vary spatially,
+expanding :math:`\nabla^2(D\,\nabla^2 w)` by the chain rule gives
+
+.. math::
+
+   \nabla^2(D\,\nabla^2 w)
+   = D\nabla^4 w
+   + 2\,\nabla D \cdot \nabla(\nabla^2 w)
+   + \nabla^2 D \cdot \nabla^2 w,
+
+showing that spatial variation in :math:`D` contributes correction terms
+proportional to the gradient and Laplacian of :math:`D`; these vanish for
+uniform :math:`D`.  In one dimension the compact form is
 
 .. math::
 
@@ -95,9 +106,10 @@ which expands by the product rule to
    - \sigma_{xx}\,T_e\,\frac{\partial^2 w}{\partial x^2}
    + \Delta\rho\,g\,w = q.
 
-The two-dimensional variable-:math:`D` form (van Wees and Cloetingh, 1994) adds
-cross-derivative coupling between gradients of :math:`D` and the Hessian of
-:math:`w`:
+The two-dimensional variable-:math:`D` form (van Wees and Cloetingh, 1994)
+includes the chain-rule terms above and adds a further cross-derivative
+coupling between the second derivatives of :math:`D` and the Hessian of
+:math:`w` that arises from the plate bending constitutive relations:
 
 .. math::
 
