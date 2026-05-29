@@ -553,7 +553,12 @@ class F2D(Flexure):
                 )
 
     def FD(self):
-        """Run the finite-difference solution pipeline."""
+        """Run the finite-difference solution pipeline.
+
+        Calls :meth:`_check_warnings_FD` first to flag potentially problematic
+        boundary conditions, then assembles and solves the sparse banded system.
+        After the call, the deflection is available in ``self.w``.
+        """
         self._check_warnings_FD()
         # Only generate coefficient matrix if it is not already provided
         if self.coeff_matrix is not None:
