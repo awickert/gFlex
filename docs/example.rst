@@ -13,11 +13,6 @@ The workflow covers:
 * visualising results with the built-in matplotlib plots; and
 * exporting to Blender for a publication-quality 3-D render.
 
-.. contents:: Steps
-   :local:
-   :depth: 1
-
-
 Physical scenario
 -----------------
 
