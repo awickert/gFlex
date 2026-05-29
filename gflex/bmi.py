@@ -82,6 +82,12 @@ class BmiGflex(_BmiBase):
     }
 
     def __init__(self) -> None:
+        """Initialize internal BMI state arrays.
+
+        Requires the optional ``bmipy`` dependency (``pip install gflex[bmi]``).
+        Call :meth:`initialize` with a configuration file before calling
+        :meth:`update`.
+        """
         if _bmipy_import_error is not None:
             raise ImportError(
                 "bmipy is required to use BmiGflex. "
@@ -174,18 +180,23 @@ class BmiGflex(_BmiBase):
     # ------------------------------------------------------------------
 
     def get_component_name(self) -> str:
+        """Return the human-readable name of this BMI component."""
         return self._name
 
     def get_input_item_count(self) -> int:
+        """Return the number of input variables."""
         return len(self._input_var_names)
 
     def get_output_item_count(self) -> int:
+        """Return the number of output variables."""
         return len(self._output_var_names)
 
     def get_input_var_names(self) -> tuple[str, ...]:
+        """Return CSDMS Standard Names for all input variables."""
         return self._input_var_names
 
     def get_output_var_names(self) -> tuple[str, ...]:
+        """Return CSDMS Standard Names for all output variables."""
         return self._output_var_names
 
     # ------------------------------------------------------------------
@@ -193,21 +204,27 @@ class BmiGflex(_BmiBase):
     # ------------------------------------------------------------------
 
     def get_var_grid(self, name: str) -> int:
+        """Return the grid identifier for variable *name*."""
         return self._var_grids[name]
 
     def get_var_type(self, name: str) -> str:
+        """Return the NumPy dtype string for variable *name*."""
         return str(self.get_value_ptr(name).dtype)
 
     def get_var_units(self, name: str) -> str:
+        """Return the UDUNITS-compatible unit string for variable *name*."""
         return self._var_units[name]
 
     def get_var_itemsize(self, name: str) -> int:
+        """Return the size in bytes of one element of variable *name*."""
         return self.get_value_ptr(name).itemsize
 
     def get_var_nbytes(self, name: str) -> int:
+        """Return the total number of bytes used by variable *name*."""
         return self.get_value_ptr(name).nbytes
 
     def get_var_location(self, name: str) -> str:
+        """Return the grid location ('node', 'edge', or 'face') of variable *name*."""
         return self._var_loc[name]
 
     # ------------------------------------------------------------------
@@ -215,18 +232,23 @@ class BmiGflex(_BmiBase):
     # ------------------------------------------------------------------
 
     def get_start_time(self) -> float:
+        """Return the model start time (always 0.0)."""
         return 0.0
 
     def get_end_time(self) -> float:
+        """Return the model end time (unbounded; returns ``inf``)."""
         return float("inf")
 
     def get_current_time(self) -> float:
+        """Return the current model time (incremented by 1 each update)."""
         return self._current_time
 
     def get_time_step(self) -> float:
+        """Return the model time step (always 1.0)."""
         return 1.0
 
     def get_time_units(self) -> str:
+        """Return the time-unit string (``'s'``)."""
         return "s"
 
     # ------------------------------------------------------------------
@@ -234,10 +256,12 @@ class BmiGflex(_BmiBase):
     # ------------------------------------------------------------------
 
     def get_value(self, name: str, dest: NDArray[Any]) -> NDArray[Any]:
+        """Copy the flattened values of variable *name* into *dest* and return it."""
         dest[:] = self.get_value_ptr(name).flat
         return dest
 
     def get_value_ptr(self, name: str) -> NDArray[Any]:
+        """Return a live reference to the internal array for variable *name*."""
         return self._values[name]
 
     def get_value_at_indices(
@@ -246,10 +270,12 @@ class BmiGflex(_BmiBase):
         dest: NDArray[Any],
         inds: NDArray[np.intp],
     ) -> NDArray[Any]:
+        """Copy selected flat-indexed elements of variable *name* into *dest*."""
         dest[:] = self.get_value_ptr(name).flat[inds]
         return dest
 
     def set_value(self, name: str, src: NDArray[Any]) -> None:
+        """Overwrite the entire array for variable *name* with values from *src*."""
         self.get_value_ptr(name)[:] = src
 
     def set_value_at_indices(
@@ -258,6 +284,7 @@ class BmiGflex(_BmiBase):
         inds: NDArray[np.intp],
         src: NDArray[Any],
     ) -> None:
+        """Set selected flat-indexed elements of variable *name* from *src*."""
         self.get_value_ptr(name).flat[inds] = src
 
     # ------------------------------------------------------------------
@@ -265,29 +292,35 @@ class BmiGflex(_BmiBase):
     # ------------------------------------------------------------------
 
     def get_grid_rank(self, grid: int) -> int:
+        """Return the number of dimensions of grid *grid*."""
         return len(self._shape)
 
     def get_grid_size(self, grid: int) -> int:
+        """Return the total number of nodes in grid *grid*."""
         return int(np.prod(self._shape))
 
     def get_grid_type(self, grid: int) -> str:
+        """Return the grid type string (``'uniform_rectilinear'``)."""
         return "uniform_rectilinear"
 
     def get_grid_shape(
         self, grid: int, shape: NDArray[np.intp]
     ) -> NDArray[np.intp]:
+        """Fill *shape* with the grid dimensions and return it."""
         shape[:] = self._shape
         return shape
 
     def get_grid_spacing(
         self, grid: int, spacing: NDArray[np.float64]
     ) -> NDArray[np.float64]:
+        """Fill *spacing* with the grid cell spacings [m] and return it."""
         spacing[:] = self._spacing
         return spacing
 
     def get_grid_origin(
         self, grid: int, origin: NDArray[np.float64]
     ) -> NDArray[np.float64]:
+        """Fill *origin* with the grid origin coordinates [m] and return it."""
         origin[:] = self._origin
         return origin
 
@@ -298,43 +331,53 @@ class BmiGflex(_BmiBase):
     def get_grid_x(
         self, grid: int, x: NDArray[np.float64]
     ) -> NDArray[np.float64]:
+        """Not implemented — uniform rectilinear grids have no unstructured node coordinates."""
         raise NotImplementedError("get_grid_x")
 
     def get_grid_y(
         self, grid: int, y: NDArray[np.float64]
     ) -> NDArray[np.float64]:
+        """Not implemented — uniform rectilinear grids have no unstructured node coordinates."""
         raise NotImplementedError("get_grid_y")
 
     def get_grid_z(
         self, grid: int, z: NDArray[np.float64]
     ) -> NDArray[np.float64]:
+        """Not implemented — uniform rectilinear grids have no unstructured node coordinates."""
         raise NotImplementedError("get_grid_z")
 
     def get_grid_node_count(self, grid: int) -> int:
+        """Not implemented — use :meth:`get_grid_size` for uniform rectilinear grids."""
         raise NotImplementedError("get_grid_node_count")
 
     def get_grid_edge_count(self, grid: int) -> int:
+        """Not implemented — uniform rectilinear grids have no explicit edge topology."""
         raise NotImplementedError("get_grid_edge_count")
 
     def get_grid_face_count(self, grid: int) -> int:
+        """Not implemented — uniform rectilinear grids have no explicit face topology."""
         raise NotImplementedError("get_grid_face_count")
 
     def get_grid_edge_nodes(
         self, grid: int, edge_nodes: NDArray[np.intp]
     ) -> NDArray[np.intp]:
+        """Not implemented — uniform rectilinear grids have no unstructured edge topology."""
         raise NotImplementedError("get_grid_edge_nodes")
 
     def get_grid_face_edges(
         self, grid: int, face_edges: NDArray[np.intp]
     ) -> NDArray[np.intp]:
+        """Not implemented — uniform rectilinear grids have no unstructured face topology."""
         raise NotImplementedError("get_grid_face_edges")
 
     def get_grid_face_nodes(
         self, grid: int, face_nodes: NDArray[np.intp]
     ) -> NDArray[np.intp]:
+        """Not implemented — uniform rectilinear grids have no unstructured face topology."""
         raise NotImplementedError("get_grid_face_nodes")
 
     def get_grid_nodes_per_face(
         self, grid: int, nodes_per_face: NDArray[np.intp]
     ) -> NDArray[np.intp]:
+        """Not implemented — uniform rectilinear grids have no unstructured face topology."""
         raise NotImplementedError("get_grid_nodes_per_face")
