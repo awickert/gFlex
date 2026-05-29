@@ -349,13 +349,13 @@ class F2D(Flexure):
         ``'0Moment0Shear'``, ``'Mirror'``, ``'Periodic'``.
         SAS option: ``'NoOutsideLoads'`` (the default when unset).
     sigma_xx : float, optional
-        Normal in-plane stress in the x-direction :math:`\sigma_{xx}` [Pa].
+        Normal in-plane stress in the x-direction :math:`\\sigma_{xx}` [Pa].
         Supported by ``FD`` and ``FFT``.  Default ``0``.
     sigma_yy : float, optional
-        Normal in-plane stress in the y-direction :math:`\sigma_{yy}` [Pa].
+        Normal in-plane stress in the y-direction :math:`\\sigma_{yy}` [Pa].
         Supported by ``FD`` and ``FFT``.  Default ``0``.
     sigma_xy : float, optional
-        In-plane shear stress :math:`\sigma_{xy}` [Pa].
+        In-plane shear stress :math:`\\sigma_{xy}` [Pa].
         Supported by ``FD`` and ``FFT``.  Default ``0``.
     Quiet : bool
         Suppress timing output.  Default ``False``.
