@@ -514,8 +514,6 @@ class F1D(Flexure):
         the finite-difference method instead.
         """
         self.gridded_x()
-        if self.x is None:
-            self.x = np.arange(self.dx / 2.0, self.dx * self.qs.shape[0], self.dx)
 
         # Te must be scalar or a uniform array
         if np.isscalar(self.Te):
