@@ -23,7 +23,7 @@ import time
 import numpy as np
 import scipy
 from scipy.special import kei
-from scipy.sparse.linalg import lgmres, spsolve
+from scipy.sparse.linalg import LinearOperator, lgmres, spilu, spsolve
 
 from gflex.base import Flexure
 
@@ -2248,7 +2248,13 @@ class F2D(Flexure):
                     self.iterative_ConvergenceTolerance,
                     "m between iterations",
                 )
-            M = scipy.sparse.diags(1.0 / self.coeff_matrix.diagonal())
+            try:
+                ilu = spilu(self.coeff_matrix.tocsc(), fill_factor=20, drop_tol=1e-4)
+                M = LinearOperator(self.coeff_matrix.shape, ilu.solve)
+            except RuntimeError:
+                if not self.Quiet:
+                    print("ILU preconditioner failed; falling back to Jacobi.")
+                M = scipy.sparse.diags(1.0 / self.coeff_matrix.diagonal())
             wvector = lgmres(
                 self.coeff_matrix, q0vector, M=M, rtol=self.iterative_ConvergenceTolerance
             )
