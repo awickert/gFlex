@@ -30,8 +30,15 @@ Parameters
 
     * ``FD`` — Finite Difference.  Supports spatially variable elastic
       thickness.  Requires a grid (``dx``, and ``dy`` in 2-D).
+    * ``FFT`` — Spectral (Fast Fourier Transform).  *2-D only.*  Requires
+      scalar (uniform) :math:`T_e`.  Spectrally accurate and fast.  When
+      all boundary conditions are ``Periodic`` the domain tiles exactly;
+      for any other boundary condition the load is zero-padded by
+      :math:`4\alpha` on each side, approximating the ``NoOutsideLoads``
+      condition.  In-plane stresses (:math:`\sigma_{xx}`, :math:`\sigma_{yy}`,
+      :math:`\sigma_{xy}`) are supported.
     * ``SAS`` — Superposition of Analytical Solutions.  Constant elastic
-      thickness only; fast and highly accurate.
+      thickness only; fast and analytically exact.
     * ``SAS_NG`` — SAS on an unstructured point set (NG = "no grid").
       Load and output locations are arbitrary (x, q0) or (x, y, q0)
       columns; see ``Loads`` below.
@@ -174,6 +181,22 @@ Parameters
     Maximum allowable change between successive iterative solver steps [m].
     Only used when ``Solver = iterative``.  Set to ``0`` to run a fixed
     number of iterations without a tolerance check.
+
+.. note::
+
+   **In-plane stresses** (:math:`\sigma_{xx}`, :math:`\sigma_{yy}`,
+   :math:`\sigma_{xy}` [Pa]) cannot be set from a configuration file.
+   They must be assigned programmatically before calling
+   :meth:`~gflex.F2D.initialize`::
+
+       flex.sigma_xx = 1e6   # east–west compression [Pa]
+       flex.sigma_yy = 0.
+       flex.sigma_xy = 0.
+
+   All three default to zero if not set.  They are supported by ``FD``
+   and ``FFT`` in 2-D, and by ``FD`` and ``FFT`` in 1-D (``sigma_xx``
+   only).  Setting them with ``SAS`` or ``SAS_NG`` raises a warning and
+   has no effect.  See :doc:`theory` for the governing equations.
 
 ----
 
