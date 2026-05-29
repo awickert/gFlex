@@ -94,16 +94,18 @@ def build_plate():
     mrange.inputs["To Max"].default_value   = 1.0
     mrange.clamp = True
 
+    # Colour ramp matched to Crameri's "vik" scientific diverging colormap:
+    # deep navy blue (large depression) → white (zero) → deep crimson (forebulge)
     cr = cramp.color_ramp
     cr.color_mode     = "RGB"
     cr.interpolation  = "LINEAR"
-    cr.elements[0].position = 0.00;  cr.elements[0].color = (0.02, 0.07, 0.45, 1)
-    cr.elements[1].position = 1.00;  cr.elements[1].color = (0.55, 0.02, 0.06, 1)
-    e1 = cr.elements.new(0.20);  e1.color = (0.08, 0.25, 0.75, 1)
-    e2 = cr.elements.new(0.38);  e2.color = (0.45, 0.65, 0.90, 1)
-    e3 = cr.elements.new(0.50);  e3.color = (0.96, 0.96, 0.96, 1)
-    e4 = cr.elements.new(0.62);  e4.color = (0.90, 0.45, 0.30, 1)
-    e5 = cr.elements.new(0.80);  e5.color = (0.80, 0.10, 0.08, 1)
+    cr.elements[0].position = 0.00;  cr.elements[0].color = (0.10, 0.16, 0.51, 1)  # deep navy
+    cr.elements[1].position = 1.00;  cr.elements[1].color = (0.52, 0.04, 0.06, 1)  # deep crimson
+    e1 = cr.elements.new(0.25);  e1.color = (0.24, 0.53, 0.80, 1)  # sky blue
+    e2 = cr.elements.new(0.40);  e2.color = (0.53, 0.77, 0.92, 1)  # pale blue
+    e3 = cr.elements.new(0.50);  e3.color = (0.97, 0.97, 0.97, 1)  # near-white (zero crossing)
+    e4 = cr.elements.new(0.60);  e4.color = (0.91, 0.53, 0.37, 1)  # warm orange
+    e5 = cr.elements.new(0.75);  e5.color = (0.82, 0.25, 0.16, 1)  # warm red
 
     bsdf.inputs["Roughness"].default_value          = 0.55
     bsdf.inputs["Specular IOR Level"].default_value = 0.4
