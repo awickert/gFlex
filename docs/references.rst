@@ -12,12 +12,9 @@ When you use gFlex, please cite the model description paper:
 
 To cite a specific version of the source code, use the Zenodo record for the
 version you ran.  The concept DOI
-`doi:10.5281/zenodo.5034651 <https://doi.org/10.5281/zenodo.5034651>`_
+`doi:10.5281/zenodo.10471939 <https://doi.org/10.5281/zenodo.10471939>`_
 always resolves to the latest deposited release; version-specific DOIs are
-listed on that page.  For example, for v1.2.0:
-
-   Wickert, A. D. and Hutton, E. W. H. (2024), *gFlex* v1.2.0 [software],
-   Zenodo, `doi:10.5281/zenodo.5034651 <https://doi.org/10.5281/zenodo.5034651>`_.
+listed on that page.
 
 ----
 
