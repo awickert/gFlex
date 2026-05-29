@@ -1864,6 +1864,21 @@ class F2D(Flexure):
         # Nothing to be done here.
 
     def build_diagonals(self):
+        """
+        Assemble the sparse coefficient matrix from the 2-D stencil arrays.
+
+        Takes the per-cell coefficient arrays populated by
+        ``get_coeff_values`` (``cj0i0``, ``cj1i0``, ``cj_1i0``, etc., named
+        by column offset *j* and row offset *i*) and shifts each array by the
+        appropriate number of rows/columns using :func:`numpy.roll` so that
+        off-diagonal contributions land on the correct diagonals when the 2-D
+        grid is flattened in row-major (C) order.  Infinite values arising
+        from boundary ghost cells are zeroed before assembly.
+
+        The result is stored in ``self.coeff_matrix`` as a
+        :class:`scipy.sparse.dia_matrix`, ready for the direct or iterative
+        solver called by :meth:`F2D.FD`.
+        """
         ##########################################################
         # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
         ##########################################################
