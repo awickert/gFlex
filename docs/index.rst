@@ -54,7 +54,6 @@ Quick start
    flex = F2D()
    flex.Quiet = True
    flex.Method = 'FD'
-   flex.PlateSolutionType = 'vWC1994'
    flex.Solver = 'direct'
    flex.g = 9.8
    flex.E = 65e9
@@ -94,7 +93,6 @@ A minimal 2-D YAML configuration:
    mode:
      dimension: 2
      method: FD
-     PlateSolutionType: vWC1994
    parameter:
      YoungsModulus: 6.5e10
      PoissonsRatio: 0.25

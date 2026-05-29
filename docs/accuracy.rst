@@ -64,8 +64,7 @@ Finite difference solver (``FD``)
 2-D finite-difference solver: second-order convergence
 -------------------------------------------------------
 
-The 2-D finite-difference solver (``Method = 'FD'``, ``PlateSolutionType =
-'vWC1994'``) is second-order accurate in space: halving the grid spacing
+The 2-D finite-difference solver (``Method = 'FD'``) is second-order accurate in space: halving the grid spacing
 :math:`\Delta x` reduces the numerical error by a factor of approximately
 four (:math:`\mathcal{O}(\Delta x^2)`).
 

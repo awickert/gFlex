@@ -54,7 +54,6 @@ qs = np.where(R <= load_radius, 3e7, 0.0)   # 30 MPa flat-topped load
 flex = F2D()
 flex.Quiet = True
 flex.Method = "FD"
-flex.PlateSolutionType = "vWC1994"
 flex.Solver = "direct"
 flex.g = g;  flex.E = E;  flex.nu = nu
 flex.rho_m = rho_m;  flex.rho_fill = rho_fill

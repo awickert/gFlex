@@ -43,11 +43,6 @@ Parameters
       Load and output locations are arbitrary (x, q0) or (x, y, q0)
       columns; see ``Loads`` below.
 
-``PlateSolutionType``
-    *(2-D only)*  Plate bending equation variant:
-
-    * ``vWC1994`` — van Wees & Cloetingh (1994); recommended.
-
 ----
 
 ``parameter`` section
@@ -289,7 +284,6 @@ Complete examples
     mode:
       dimension: 2
       method: FD
-      PlateSolutionType: vWC1994   # van Wees & Cloetingh (1994); recommended
 
     parameter:
       YoungsModulus: 6.5e10
@@ -393,9 +387,6 @@ here (with corrections) for quick reference.
     ; two columns: (x,q0) --> (x,w). 2D data are similar, except
     ; will be of the form (x,y,[q0/in or w/out]).
     method=SAS
-    ; Plate solutions: vWC1994 (van Wees & Cloetingh, 1994)
-    PlateSolutionType=vWC1994
-
     [parameter]
     YoungsModulus=65E9
     PoissonsRatio=0.25
