@@ -74,6 +74,7 @@ full one-dimensional expansion is
    D \frac{\partial^4 w}{\partial x^4}
    + 2 \frac{\partial D}{\partial x} \frac{\partial^3 w}{\partial x^3}
    + \frac{\partial^2 D}{\partial x^2} \frac{\partial^2 w}{\partial x^2}
+   - \sigma_{xx}\,T_e\,\frac{\partial^2 w}{\partial x^2}
    + \Delta\rho\,g\,w = q,
 
 and the two-dimensional equivalent follows van Wees and Cloetingh (1994).
