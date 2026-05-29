@@ -1139,7 +1139,7 @@ class F2D(Flexure):
                 self.cj_1i1_Periodic_right = np.zeros(self.qs.shape)
                 self.cj_2i0_Periodic_right = np.zeros(self.qs.shape)
                 j = 0
-                self.cj_1i1_Periodic_right[:, j] = self.cj_1i_1[:, j]
+                self.cj_1i1_Periodic_right[:, j] = self.cj_1i1[:, j]
                 self.cj_2i0_Periodic_right[:, j] = self.cj_2i0[:, j]
                 j = 1
                 self.cj_2i0_Periodic_right[:, j] = self.cj_2i0[:, j]
