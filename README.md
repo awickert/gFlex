@@ -97,9 +97,9 @@ For a full parameter reference, see the [Configuration Files](https://gflex.read
 [mode]
 ; 1 (line) or 2 (surface) dimensions
 dimension=2
-; Solution method: FD (Finite Difference), SAS (Spatial domain
-; analytical solutions), or SAS_NG (SAS, but on an unstructured
-; grid — NG = "no grid").
+; Solution method: FD (Finite Difference), FFT (spectral, 2-D only),
+; SAS (Superposition of Analytical Solutions), or SAS_NG (SAS, but
+; on an unstructured grid — NG = "no grid").
 ; For SAS_NG, 1D data must be provided and will be returned in
 ; two columns: (x,q0) --> (x,w). 2D data are similar, except
 ; will be of the form (x,y,[q0/in or w/out]).
@@ -203,13 +203,15 @@ Five boundary conditions are available for FD solutions (see also Table 1 in Wic
 
 | Name | Condition | Physical interpretation |
 |------|-----------|------------------------|
-| `0Displacement0Slope` | w = 0 | Plate is pinned to zero deflection at the boundary |
+| `0Displacement0Slope` | w = 0, dw/dx = 0 | Plate is pinned to zero deflection and zero slope at the boundary |
 | `0Moment0Shear` | d²w/dx² = d³w/dx³ = 0 | Broken plate: free cantilever end with no moment or shear |
 | `0Slope0Shear` | dw/dx = d³w/dx³ = 0 | Plate is level at the boundary but free to deflect there; no shear transmitted |
 | `Mirror` | w(b − x) = w(b + x) | Mirror-symmetry plane — model only half of a symmetric system |
 | `Periodic` | w(0) = w(L) | Wrap-around: the domain tiles infinitely in both directions |
 
 For SAS and SAS_NG, `NoOutsideLoads` (or a blank entry) is used instead; the plate is assumed undeflected at infinity.
+
+**FD boundary-condition warnings:** when running F1D or F2D with the finite-difference solver, gFlex issues `UserWarning` messages for `'0Moment0Shear'` (free broken plate end — verify a rifted margin is intended), `'0Slope0Shear'` (no clear geological analog), and when the nearest loaded cell is within one flexural wavelength of a `'0Displacement0Slope'` boundary (the forebulge would be suppressed). See the [API reference](https://gflex.readthedocs.io/en/latest/api.html#fd-boundary-condition-warnings) for how to suppress or re-enable these warnings.
 
 **A note on `0Slope0Shear`:** the label in Wickert (2016) is "free displacement of a horizontally clamped boundary." The plate is forced to be exactly level at the boundary (dw/dx = 0) — as if it were clamped against rotation — while its vertical position is unconstrained and no shear force is transmitted (d³w/dx³ = 0). This is superficially similar to `Mirror` (both enforce zero slope at the boundary), but `0Slope0Shear` uses a different finite-difference stencil and the two produce noticeably different solutions even far from the boundary. For symmetry problems — e.g., modelling half of a symmetric mountain range or ice sheet — `Mirror` is the more accurate choice.
 
@@ -231,6 +233,7 @@ flex = gflex.F2D()
 flex.Quiet = False
 
 flex.Method = 'FD' # Solution method: * FD (finite difference)
+                   #                  * FFT (spectral, 2-D only)
                    #                  * SAS (superposition of analytical solutions)
                    #                  * SAS_NG (ungridded SAS)
 flex.PlateSolutionType = 'vWC1994' # van Wees and Cloetingh (1994)
@@ -349,10 +352,19 @@ There are four plot choices, defined via `self.plotChoice`:
 
 The **input/** directory contains several example scripts. The public API also provides standalone utility functions importable from `gflex`:
 
-* `flexural_wavelengths(Te, ...)` — computes the flexural parameter α, first zero-crossing, and flexural wavelength for a given elastic thickness.
-* `recommended_pad_width(Te, dx, ...)` — returns the recommended padding width (in cells) to avoid boundary artefacts when using a variable-*Te* grid.
-* `smooth_pad_Te(Te, pad_width, ...)` — extends a variable-*Te* array with a smooth linear taper, reducing spurious deflections at the domain edge.
-* `pad_domain(Te, qs, pad_width, ...)` — pads both the elastic thickness and load arrays together.
+* `flexural_wavelengths(Te, ...)` — computes the flexural parameter α, first zero-crossing, and flexural wavelength for a given elastic thickness; useful for choosing grid spacing and domain size.
+
+Domain-padding utilities (reduce spurious boundary effects when using variable *Te*):
+
+*2-D (F2D):*
+* `recommended_pad_width(Te, dx, ...)` — returns the recommended padding width (in cells).
+* `smooth_pad_Te(Te, pad_width, ...)` — extends a 2-D variable-*Te* array with a smooth linear taper.
+* `pad_domain(Te, qs, dx, ...)` — pads both the 2-D elastic thickness and load arrays and returns the padding width.
+
+*1-D (F1D):*
+* `recommended_pad_width_1d(Te, dx, ...)` — returns the recommended 1-D padding width (in cells).
+* `smooth_pad_Te_1d(Te, pad_width, ...)` — extends a 1-D variable-*Te* array with a smooth linear taper.
+* `pad_domain_1d(Te, qs, dx, ...)` — pads both the 1-D elastic thickness and load arrays and returns the padding width.
 
 See the [API reference](https://gflex.readthedocs.io/en/latest/api.html) for full documentation of these functions.
 
