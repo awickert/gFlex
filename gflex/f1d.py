@@ -388,7 +388,23 @@ class F1D(Flexure):
     ########################################
 
     def _check_warnings_FD(self):
-        """Issue UserWarnings for potentially problematic FD boundary conditions."""
+        """Issue UserWarnings for potentially problematic FD boundary conditions.
+
+        Two categories of warning are raised:
+
+        **BC-type warnings** — fired for boundary types whose physical meaning
+        deserves verification: ``'0Moment0Shear'`` (free broken end; check that
+        a rifted margin is intended) and ``'0Slope0Shear'`` (no clear geological
+        analog).
+
+        **Proximity warnings** — fired for ``'0Displacement0Slope'`` boundaries
+        when the nearest loaded cell is within one flexural wavelength
+        (:math:`\\lambda = 2\\pi\\alpha`, :math:`\\alpha = (4D/\\Delta\\rho g)^{1/4}`)
+        of that boundary.  Within this distance the flexural forebulge is
+        suppressed by the zero-displacement condition.  The warning message
+        reports the distance as a fraction of the local flexural wavelength and
+        points to the domain-padding utilities.
+        """
         bc_sides = {"W": self.BC_W, "E": self.BC_E}
         for side, bc in bc_sides.items():
             if bc == "0Moment0Shear":
