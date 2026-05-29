@@ -507,6 +507,7 @@ class F2D(Flexure):
         Te_loaded = Te_arr[rows, cols]
         D_loaded = self.E * Te_loaded**3 / (12 * (1 - self.nu**2))
         alpha_loaded = (4 * D_loaded / (self.drho * self.g)) ** 0.25
+        wavelength_loaded = 2 * np.pi * alpha_loaded
         dist_fns = {
             "W": lambda: (cols + 0.5) * self.dx,
             "E": lambda: (nx - cols - 0.5) * self.dx,
@@ -517,17 +518,20 @@ class F2D(Flexure):
             if bc != "0Displacement0Slope":
                 continue
             distances = dist_fns[side]()
-            ratio = distances / alpha_loaded
-            worst = np.argmin(ratio)
-            if ratio[worst] < 1.0:
+            frac = distances / wavelength_loaded
+            worst = np.argmin(frac)
+            if frac[worst] < 1.0:
                 r, c = rows[worst], cols[worst]
                 warnings.warn(
                     f"BC_{side} = '0Displacement0Slope': nearest loaded cell "
-                    f"(row {r}, col {c}) is {distances[worst]/1e3:.1f} km from the "
-                    f"boundary, less than one flexural parameter "
-                    f"({alpha_loaded[worst]/1e3:.1f} km, "
-                    f"Te = {Te_loaded[worst]/1e3:.1f} km). "
-                    "Boundary effects may contaminate the solution.",
+                    f"(row {r}, col {c}) is {distances[worst]/1e3:.1f} km from the boundary "
+                    f"({frac[worst]:.2f} flexural wavelengths; "
+                    f"wavelength ≈ {wavelength_loaded[worst]/1e3:.1f} km "
+                    f"at Te = {Te_loaded[worst]/1e3:.1f} km). "
+                    "The flexural forebulge peaks near one wavelength from the load "
+                    "and will be suppressed by this boundary. "
+                    "Use pad_domain() to extend the domain before solving, "
+                    "then trim w to the original extent.",
                     UserWarning,
                     stacklevel=4,
                 )
