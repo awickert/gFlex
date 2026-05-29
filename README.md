@@ -63,7 +63,6 @@ A minimal 2-D YAML configuration file looks like:
 mode:
   dimension: 2
   method: FD
-  PlateSolutionType: vWC1994
 parameter:
   YoungsModulus: 6.5e10
   PoissonsRatio: 0.25
@@ -104,9 +103,6 @@ dimension=2
 ; two columns: (x,q0) --> (x,w). 2D data are similar, except
 ; will be of the form (x,y,[q0/in or w/out]).
 method=SAS
-; Plate solutions: vWC1994 (van Wees & Cloetingh, 1994)
-PlateSolutionType=vWC1994
-
 [parameter]
 YoungsModulus=65E9
 PoissonsRatio=0.25
@@ -233,7 +229,6 @@ flex.Method = 'FD' # Solution method: * FD (finite difference)
                    #                  * FFT (spectral, 2-D only)
                    #                  * SAS (superposition of analytical solutions)
                    #                  * SAS_NG (ungridded SAS)
-flex.PlateSolutionType = 'vWC1994' # van Wees and Cloetingh (1994)
 flex.Solver = 'direct' # direct or iterative
 # convergence = 1E-3 # convergence between iterations, if an iterative solution
                      # method is chosen
