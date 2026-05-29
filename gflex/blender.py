@@ -121,7 +121,6 @@ def export_for_blender(
         flex = F2D()
         flex.Quiet = True
         flex.Method = 'FD'
-        flex.PlateSolutionType = 'vWC1994'
         flex.Solver = 'direct'
         flex.g = 9.8;  flex.E = 65e9;  flex.nu = 0.25
         flex.rho_m = 3300.;  flex.rho_fill = 0.

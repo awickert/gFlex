@@ -319,8 +319,6 @@ class F2D(Flexure):
         *Te*), ``'FFT'`` (spectral, requires scalar *Te*; 2-D only),
         ``'SAS'`` (superposition of analytical solutions, constant *Te*
         only), or ``'SAS_NG'`` (SAS on an ungridded point cloud).
-    PlateSolutionType : str
-        FD stencil variant: ``'vWC1994'`` (van Wees & Cloetingh 1994).
     Solver : str
         Linear solver: ``'direct'`` (sparse LU, default) or
         ``'iterative'``.
@@ -372,7 +370,6 @@ class F2D(Flexure):
         flex = F2D()
         flex.Quiet = True
         flex.Method = 'FD'
-        flex.PlateSolutionType = 'vWC1994'
         flex.Solver = 'direct'
         flex.g = 9.8
         flex.E = 65e9
@@ -1063,16 +1060,6 @@ class F2D(Flexure):
             Dyy = D0_1 - 2.0 * D00 + D01
             Dxy = (D_1_1 - D_11 - D1_1 + D11) / 4.0
 
-            if self.PlateSolutionType != "vWC1994":
-                import warnings
-                warnings.warn(
-                    "PlateSolutionType '{}' is no longer supported; "
-                    "using vWC1994 (van Wees & Cloetingh, 1994).".format(
-                        self.PlateSolutionType
-                    ),
-                    FutureWarning,
-                    stacklevel=2,
-                )
             # van Wees and Cloetingh (1994) solution, re-discretized by me
             # using a central difference approx. to 2nd order precision
             # x = -2, y = 0

@@ -1014,12 +1014,6 @@ class Flexure(Utility, Plotting):
                 if self.dimension == 2:
                     self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
 
-            # Plate solution type (only meaningful for FD)
-            if self.dimension == 2:
-                self.PlateSolutionType = self.configGet(
-                    "string", "mode", "PlateSolutionType"
-                )
-
             # Loading grid
             # q0 is either a load array or an x,y,q array.
             # Therefore q_0, initial q, before figuring out what it really is
