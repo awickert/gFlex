@@ -122,7 +122,7 @@ Parameters
 ``Plot``
     Controls inline plotting after the run:
 
-    * ``q0`` — plot the applied load.
+    * ``q`` — plot the applied load.
     * ``w`` — plot the deflection.
     * ``both`` — deflection and load in separate subplots.
     * ``combo`` — *(1-D only)* deflection with the load overlaid.

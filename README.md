@@ -342,7 +342,7 @@ pip install gflex[bmi]
 ### Plotting
 
 There are four plot choices, defined via `self.plotChoice`:
-* `'q0'`: plots the load in mantle-density-equivalent units of length
+* `'q'`: plots the load in mantle-density-equivalent units of length
 * `'w'`: plots the deflection in units of length
 * `'both'`: plots both deflection and loads in separate panels of a 2-subplot figure
 * `'combo'`: (1D only): plots lithospheric deflections and the deflected mantle-density-equivalent load atop it.
