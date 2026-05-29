@@ -104,10 +104,7 @@ dimension=2
 ; two columns: (x,q0) --> (x,w). 2D data are similar, except
 ; will be of the form (x,y,[q0/in or w/out]).
 method=SAS
-; Plate solutions can be:
-;  * vWC1994 (best), or
-;  * G2009 (from Govers et al., 2009; not bad, but not
-;           as robust as vWC1994)
+; Plate solutions: vWC1994 (van Wees & Cloetingh, 1994)
 PlateSolutionType=vWC1994
 
 [parameter]
@@ -237,7 +234,6 @@ flex.Method = 'FD' # Solution method: * FD (finite difference)
                    #                  * SAS (superposition of analytical solutions)
                    #                  * SAS_NG (ungridded SAS)
 flex.PlateSolutionType = 'vWC1994' # van Wees and Cloetingh (1994)
-                                   # The other option is 'G2009': Govers et al. (2009)
 flex.Solver = 'direct' # direct or iterative
 # convergence = 1E-3 # convergence between iterations, if an iterative solution
                      # method is chosen

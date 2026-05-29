@@ -47,7 +47,6 @@ Parameters
     *(2-D only)*  Plate bending equation variant:
 
     * ``vWC1994`` — van Wees & Cloetingh (1994); recommended.
-    * ``G2009`` — Govers et al. (2009); less robust near boundaries.
 
 ----
 
@@ -394,10 +393,7 @@ here (with corrections) for quick reference.
     ; two columns: (x,q0) --> (x,w). 2D data are similar, except
     ; will be of the form (x,y,[q0/in or w/out]).
     method=SAS
-    ; Plate solutions can be:
-    ;  * vWC1994 (best), or
-    ;  * G2009 (from Govers et al., 2009; not bad, but not
-    ;           as robust as vWC1994)
+    ; Plate solutions: vWC1994 (van Wees & Cloetingh, 1994)
     PlateSolutionType=vWC1994
 
     [parameter]
