@@ -1422,6 +1422,11 @@ class Flexure(Utility, Plotting):
                 self.TeArraySizeCheck()
 
     def FFT(self):
+        """
+        Base stub for the FFT spectral solver; overridden by :class:`F1D`
+        and :class:`F2D`.  Has no effect when called directly on
+        :class:`Flexure`.
+        """
         pass
 
     # SAS and SAS_NG are the exact same here; leaving separate just for symmetry
