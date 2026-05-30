@@ -310,30 +310,30 @@ def run():
     )
 
     # ------------------------------------------------------------------
-    # Mirror — even reflection; symmetry boundary
-    # Boundary at cell face (x = −0.5).  w₀ = +w₂,  w₋₁ = +w₃.
-    # At w₁ the stencil drops the i−2 slot (w₋₁); only w₀ enters.
+    # Mirror — even reflection; correct discrete symmetry BC.
+    # Ghost values: w₀ = +w₂, w₋₁ = +w₃ (even reflection about boundary
+    # node w₁).  Exactly equivalent to Periodic on the 2× even-extended
+    # domain.
     # ------------------------------------------------------------------
     ry = [0.58, 0.72, 0.68, 0.52]
     real = list(zip([0, 1, 2, 3], ry))
     draw_bc(
         name        = "Mirror",
         title       = "Mirror",
-        subtitle    = "symmetry (even reflection):\n  dw/dx = 0 at boundary face",
+        subtitle    = "symmetry (even reflection):\n  dw/dx = 0 at boundary",
         bdy_x       = -0.5,
         real_xy     = real,
         ghost_xy    = [(-2, ry[2]), (-1, ry[1])],
         ghost_kinds = ["ghost", "ghost"],
         ghost_equations = [r"$= +w_3$", r"$= +w_2$"],
         pins        = [],
-        stencil_note = "w₋₁ dropped from\nstencil at w₁",
     )
 
     # ------------------------------------------------------------------
     # 0Slope0Shear — level, shear-free boundary
-    # Same reflection as Mirror (w₀ = +w₂, w₋₁ = +w₃), but at w₁ the
-    # outer ghost w₋₁ also contributes to the w₃ stencil coefficient
-    # (orange arc), giving an extra +w₃ term absent in Mirror.
+    # Same ghost equations as Mirror (w₀ = +w₂, w₋₁ = +w₃), but uses a
+    # different stencil at the second boundary row.  An approximation to
+    # the symmetry condition; Mirror is the exact discrete implementation.
     # ------------------------------------------------------------------
     ry = [0.58, 0.72, 0.68, 0.52]
     real = list(zip([0, 1, 2, 3], ry))
@@ -347,11 +347,6 @@ def run():
         ghost_kinds = ["ghost", "ghost"],
         ghost_equations = [r"$= +w_3$", r"$= +w_2$"],
         pins        = [],
-        stencil_note = "w₋₁ also adds to\nw₃ slot  (≠ Mirror)",
-        # Arc from outer ghost w₋₁ (x=−2, y=ry[2]) to w₃ (x=2, y=ry[2]).
-        # Both sit at the same height because w₋₁ = w₃ by even reflection.
-        stencil_arcs = [{'x0': -2, 'y0': ry[2], 'x1': 2, 'y1': ry[2],
-                         'label': 'extra', 'color': C_ARC, 'rad': 0.22}],
     )
 
     # ------------------------------------------------------------------
