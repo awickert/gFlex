@@ -34,6 +34,18 @@ and physical interpretation of each term.
    isostasy: gFlex v1.0 <https://doi.org/10.5194/gmd-9-997-2016>`_,
    *Geosci. Model Dev.*, *9*\(3), 997–1017.
 
+Workflow
+--------
+
+.. figure:: _static/flowchart.*
+   :alt: gFlex computational workflow
+   :align: center
+   :width: 90%
+
+   gFlex computational workflow.  Bold-bordered nodes are CSDMS Basic Model
+   Interface (BMI) methods.  Boundary conditions apply to finite-difference
+   solutions; padding-based approximations are also shown.
+
 Installation
 ------------
 
