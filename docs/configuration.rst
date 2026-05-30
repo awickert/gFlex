@@ -174,8 +174,44 @@ Parameters
          - :math:`D\,\mathrm{d}^3w/\mathrm{d}x^3`
          - 3rd
 
+    Standard structural-mechanics names for each boundary condition:
+
+    .. list-table::
+       :widths: 35 25 40
+       :header-rows: 1
+
+       * - gFlex name
+         - Standard name
+         - Physical meaning
+       * - ``0Displacement0Slope``
+         - clamped end
+         - Plate is fixed: no deflection, no rotation
+       * - ``0Displacement0Moment``
+         - simply supported
+         - Plate is pinned: no deflection, free to rotate
+       * - ``0Moment0Shear``
+         - free end
+         - Broken-plate edge: no moment, no shear
+       * - ``0Slope0Shear``
+         - guided end
+         - Plate is level, free to deflect vertically; no shear
+       * - ``Mirror``
+         - symmetry plane
+         - Even reflection; model half of a symmetric system
+       * - ``Periodic``
+         - periodic
+         - Domain tiles infinitely in both directions
+
     * ``0Displacement0Slope`` — zero displacement and slope; plate is pinned
       to zero deflection at the boundary.
+
+      .. figure:: _static/bc_diagram_0Displacement0Slope.svg
+         :width: 80%
+         :align: center
+         :alt: Diagram of the 0Displacement0Slope (clamped end) boundary condition
+
+         *Clamped end* — zero deflection and zero slope at the boundary.
+
     * ``0Displacement0Moment`` — zero displacement and bending moment; the
       classical simply-supported (pinned) plate end.  The plate is held at
       zero deflection but is free to rotate, so no moment is transmitted.
@@ -194,20 +230,59 @@ Parameters
       point of the reflection, so w = 0 there by definition, and the plate is
       free to rotate — the simply-supported end.  Sine modes satisfy
       ``0Displacement0Moment``; cosine modes satisfy ``Mirror``.
+
+      .. figure:: _static/bc_diagram_0Displacement0Moment.svg
+         :width: 80%
+         :align: center
+         :alt: Diagram of the 0Displacement0Moment (simply supported) boundary condition
+
+         *Simply supported* — zero deflection, free to rotate; no bending moment transmitted.
+
     * ``0Moment0Shear`` — zero bending moment and shear force; broken plate
       with a free cantilever end (Wickert, 2016, Table 1).
+
+      .. figure:: _static/bc_diagram_0Moment0Shear.svg
+         :width: 80%
+         :align: center
+         :alt: Diagram of the 0Moment0Shear (free end) boundary condition
+
+         *Free end* — no bending moment and no shear force; the plate ends freely ("broken plate").
+
     * ``0Slope0Shear`` — zero slope and shear force; the plate is level at
       the boundary but free to deflect there, with no shear transmitted.
       Wickert (2016) calls this "free displacement of a horizontally clamped
       boundary."  It is superficially similar to ``Mirror`` (both enforce zero
       slope), but uses a different finite-difference stencil and produces
       noticeably different solutions; prefer ``Mirror`` for symmetry problems.
+
+      .. figure:: _static/bc_diagram_0Slope0Shear.svg
+         :width: 80%
+         :align: center
+         :alt: Diagram of the 0Slope0Shear (guided end) boundary condition
+
+         *Guided end* — zero slope, no shear force; plate is level and free to deflect.
+
     * ``Mirror`` — even reflection at the boundary; model only half of a
       symmetric system (e.g., one flank of a mountain range or ice sheet).
       See the ``0Displacement0Moment`` entry above for the contrast with the
       odd-reflection simply-supported condition.
+
+      .. figure:: _static/bc_diagram_Mirror.svg
+         :width: 80%
+         :align: center
+         :alt: Diagram of the Mirror (symmetry plane) boundary condition
+
+         *Symmetry plane* — even reflection; use when the system is symmetric about the boundary.
+
     * ``Periodic`` — wrap-around; the domain tiles infinitely in both
       directions.
+
+      .. figure:: _static/bc_diagram_Periodic.svg
+         :width: 80%
+         :align: center
+         :alt: Diagram of the Periodic boundary condition
+
+         *Periodic* — the domain wraps around; east and west edges are connected.
 
     For SAS / SAS_NG: ``NoOutsideLoads`` (assumed if left blank).
 
