@@ -1,105 +1,105 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1035" height="765" viewBox="0 0 1035 765">
+<svg xmlns="http://www.w3.org/2000/svg" width="1725" height="765" viewBox="0 0 1725 765">
   <defs>
     <marker id="arr" markerWidth="11" markerHeight="8" refX="0" refY="4"
             orient="auto" markerUnits="userSpaceOnUse">
       <polygon points="0,0 11,4 0,8" fill="#000000"/>
     </marker>
   </defs>
-  <rect width="1035" height="765" fill="white"/>
-  <rect x="90.50" y="311.66" width="854.0" height="100.0" rx="10.00" ry="10.00" fill="#F2F2F2" stroke="#BBBBBB" stroke-width="1.0"/>
+  <rect width="1725" height="765" fill="white"/>
+  <rect x="43.00" y="311.66" width="1009.0" height="100.0" rx="10.00" ry="10.00" fill="#F2F2F2" stroke="#BBBBBB" stroke-width="1.0"/>
   <text font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="normal" font-style="italic" fill="#888888">
-    <tspan x="95.50" y="316.66" dominant-baseline="hanging">Solution Method</tspan>
+    <tspan x="48.00" y="316.66" dominant-baseline="hanging">Solution Method</tspan>
   </text>
-  <rect x="43.00" y="447.45" width="949.0" height="84.0" rx="10.00" ry="10.00" fill="#F2F2F2" stroke="#BBBBBB" stroke-width="1.0"/>
+  <rect x="218.00" y="447.45" width="1464.0" height="84.0" rx="10.00" ry="10.00" fill="#F2F2F2" stroke="#BBBBBB" stroke-width="1.0"/>
   <text font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="normal" font-style="italic" fill="#888888">
-    <tspan x="48.00" y="452.45" dominant-baseline="hanging">Boundary Condition</tspan>
+    <tspan x="223.00" y="452.45" dominant-baseline="hanging">Boundary Condition</tspan>
   </text>
-  <line x1="517.50" y1="143.66" x2="517.50" y2="192.89" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="517.50" y1="263.89" x2="220.80" y2="321.56" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="517.50" y1="263.89" x2="467.63" y2="315.73" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="517.50" y1="263.89" x2="652.33" y2="319.47" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="517.50" y1="263.89" x2="836.68" y2="321.70" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="210.00" y1="399.66" x2="141.21" y2="452.73" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="460.00" y1="399.66" x2="143.32" y2="457.47" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="662.50" y1="399.66" x2="310.85" y2="457.66" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="847.50" y1="399.66" x2="310.93" y2="458.26" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="847.50" y1="399.66" x2="445.89" y2="457.87" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="847.50" y1="399.66" x2="583.25" y2="457.11" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="847.50" y1="399.66" x2="734.89" y2="454.63" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="847.50" y1="399.66" x2="895.05" y2="451.35" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="132.50" y1="519.45" x2="506.62" y2="575.81" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="300.00" y1="519.45" x2="506.87" y2="574.62" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="435.00" y1="519.45" x2="508.50" y2="571.12" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="572.50" y1="519.45" x2="525.07" y2="569.47" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="725.00" y1="519.45" x2="528.09" y2="574.49" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="902.50" y1="519.45" x2="528.38" y2="575.81" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="517.50" y1="621.45" x2="517.50" y2="667.56" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <polygon points="517.50,59.66 622.50,101.66 517.50,143.66 412.50,101.66" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <line x1="547.50" y1="143.66" x2="547.50" y2="192.89" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="547.50,263.89 547.50,293.78 162.50,293.78 162.50,312.66" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="547.50,263.89 547.50,293.78 452.50,293.78 452.50,312.66" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="547.50,263.89 547.50,293.78 710.00,293.78 710.00,312.66" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="547.50,263.89 547.50,293.78 955.00,293.78 955.00,312.66" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="162.50,399.66 162.50,429.56 307.50,429.56 307.50,448.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="452.50,399.66 452.50,429.56 307.50,429.56 307.50,448.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="710.00,399.66 710.00,429.56 832.50,429.56 832.50,448.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="955.00,399.66 955.00,429.56 832.50,429.56 832.50,448.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="955.00,399.66 955.00,429.56 1125.00,429.56 1125.00,448.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="955.00,399.66 955.00,429.56 1262.50,429.56 1262.50,448.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="955.00,399.66 955.00,429.56 1415.00,429.56 1415.00,448.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="955.00,399.66 955.00,429.56 1592.50,429.56 1592.50,448.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="307.50,519.45 307.50,548.45 950.00,548.45 950.00,566.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="832.50,519.45 832.50,548.45 950.00,548.45 950.00,566.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="1125.00,519.45 1125.00,548.45 950.00,548.45 950.00,566.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="1262.50,519.45 1262.50,548.45 950.00,548.45 950.00,566.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="1415.00,519.45 1415.00,548.45 950.00,548.45 950.00,566.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="1592.50,519.45 1592.50,548.45 950.00,548.45 950.00,566.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="950.00" y1="621.45" x2="950.00" y2="667.56" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polygon points="547.50,59.66 652.50,101.66 547.50,143.66 442.50,101.66" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="normal">
-    <tspan x="517.50" y="91.53" dominant-baseline="central">Loads,</tspan>
-    <tspan x="517.50" y="111.78" dominant-baseline="central">elastic properties</tspan>
+    <tspan x="547.50" y="91.53" dominant-baseline="central">Loads,</tspan>
+    <tspan x="547.50" y="111.78" dominant-baseline="central">elastic properties</tspan>
   </text>
-  <ellipse cx="517.50" cy="233.89" rx="74.00" ry="30.00" fill="#E8E8E8" stroke="#000000" stroke-width="2.5"/>
+  <ellipse cx="547.50" cy="233.89" rx="74.00" ry="30.00" fill="#E8E8E8" stroke="#000000" stroke-width="2.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="bold">
-    <tspan x="517.50" y="223.76" dominant-baseline="central">Initialize</tspan>
-    <tspan x="517.50" y="244.01" dominant-baseline="central">(1D or 2D)</tspan>
+    <tspan x="547.50" y="223.76" dominant-baseline="central">Initialize</tspan>
+    <tspan x="547.50" y="244.01" dominant-baseline="central">(1D or 2D)</tspan>
   </text>
-  <rect x="102.50" y="323.66" width="215.0" height="76.0" rx="10.00" ry="10.00" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <rect x="55.00" y="323.66" width="215.0" height="76.0" rx="10.00" ry="10.00" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="normal">
-    <tspan x="210.00" y="341.41" dominant-baseline="central">Superposition of</tspan>
-    <tspan x="210.00" y="361.66" dominant-baseline="central">Analytical Solutions,</tspan>
-    <tspan x="210.00" y="381.91" dominant-baseline="central">no grid (SAS_NG)</tspan>
+    <tspan x="162.50" y="341.41" dominant-baseline="central">Superposition of</tspan>
+    <tspan x="162.50" y="361.66" dominant-baseline="central">Analytical Solutions,</tspan>
+    <tspan x="162.50" y="381.91" dominant-baseline="central">no grid (SAS_NG)</tspan>
   </text>
-  <rect x="357.50" y="323.66" width="205.0" height="76.0" rx="10.00" ry="10.00" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <rect x="350.00" y="323.66" width="205.0" height="76.0" rx="10.00" ry="10.00" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="normal">
-    <tspan x="460.00" y="341.41" dominant-baseline="central">Superposition of</tspan>
-    <tspan x="460.00" y="361.66" dominant-baseline="central">Analytical Solutions</tspan>
-    <tspan x="460.00" y="381.91" dominant-baseline="central">(SAS)</tspan>
+    <tspan x="452.50" y="341.41" dominant-baseline="central">Superposition of</tspan>
+    <tspan x="452.50" y="361.66" dominant-baseline="central">Analytical Solutions</tspan>
+    <tspan x="452.50" y="381.91" dominant-baseline="central">(SAS)</tspan>
   </text>
-  <rect x="602.50" y="323.66" width="120.0" height="76.0" rx="10.00" ry="10.00" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <rect x="650.00" y="323.66" width="120.0" height="76.0" rx="10.00" ry="10.00" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="normal">
-    <tspan x="662.50" y="351.54" dominant-baseline="central">Spectral</tspan>
-    <tspan x="662.50" y="371.79" dominant-baseline="central">(FFT)</tspan>
+    <tspan x="710.00" y="351.54" dominant-baseline="central">Spectral</tspan>
+    <tspan x="710.00" y="371.79" dominant-baseline="central">(FFT)</tspan>
   </text>
-  <rect x="762.50" y="323.66" width="170.0" height="76.0" rx="10.00" ry="10.00" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <rect x="870.00" y="323.66" width="170.0" height="76.0" rx="10.00" ry="10.00" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="normal">
-    <tspan x="847.50" y="351.54" dominant-baseline="central">Finite Difference</tspan>
-    <tspan x="847.50" y="371.79" dominant-baseline="central">(FD)</tspan>
+    <tspan x="955.00" y="351.54" dominant-baseline="central">Finite Difference</tspan>
+    <tspan x="955.00" y="371.79" dominant-baseline="central">(FD)</tspan>
   </text>
-  <rect x="55.00" y="459.45" width="155.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <rect x="230.00" y="459.45" width="155.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="normal">
-    <tspan x="132.50" y="489.45" dominant-baseline="central">NoOutsideLoads</tspan>
+    <tspan x="307.50" y="489.45" dominant-baseline="central">NoOutsideLoads</tspan>
   </text>
-  <rect x="250.00" y="459.45" width="100.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <rect x="782.50" y="459.45" width="100.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="normal">
-    <tspan x="300.00" y="489.45" dominant-baseline="central">Periodic</tspan>
+    <tspan x="832.50" y="489.45" dominant-baseline="central">Periodic</tspan>
   </text>
-  <rect x="390.00" y="459.45" width="90.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <rect x="1080.00" y="459.45" width="90.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="normal">
-    <tspan x="435.00" y="489.45" dominant-baseline="central">Mirror</tspan>
+    <tspan x="1125.00" y="489.45" dominant-baseline="central">Mirror</tspan>
   </text>
-  <rect x="520.00" y="459.45" width="105.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <rect x="1210.00" y="459.45" width="105.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="normal">
-    <tspan x="572.50" y="480.68" dominant-baseline="central">0Slope</tspan>
-    <tspan x="572.50" y="498.23" dominant-baseline="central">0Shear</tspan>
+    <tspan x="1262.50" y="480.68" dominant-baseline="central">0Slope</tspan>
+    <tspan x="1262.50" y="498.23" dominant-baseline="central">0Shear</tspan>
   </text>
-  <rect x="665.00" y="459.45" width="120.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <rect x="1355.00" y="459.45" width="120.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="normal">
-    <tspan x="725.00" y="480.68" dominant-baseline="central">0Moment</tspan>
-    <tspan x="725.00" y="498.23" dominant-baseline="central">0Shear</tspan>
+    <tspan x="1415.00" y="480.68" dominant-baseline="central">0Moment</tspan>
+    <tspan x="1415.00" y="498.23" dominant-baseline="central">0Shear</tspan>
   </text>
-  <rect x="825.00" y="459.45" width="155.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
+  <rect x="1515.00" y="459.45" width="155.0" height="60.0" rx="8.40" ry="8.40" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="normal">
-    <tspan x="902.50" y="480.68" dominant-baseline="central">0Displacement</tspan>
-    <tspan x="902.50" y="498.23" dominant-baseline="central">0Slope</tspan>
+    <tspan x="1592.50" y="480.68" dominant-baseline="central">0Displacement</tspan>
+    <tspan x="1592.50" y="498.23" dominant-baseline="central">0Slope</tspan>
   </text>
-  <ellipse cx="517.50" cy="599.45" rx="55.00" ry="22.00" fill="#E8E8E8" stroke="#000000" stroke-width="2.5"/>
+  <ellipse cx="950.00" cy="599.45" rx="55.00" ry="22.00" fill="#E8E8E8" stroke="#000000" stroke-width="2.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="bold">
-    <tspan x="517.50" y="599.45" dominant-baseline="central">Run</tspan>
+    <tspan x="950.00" y="599.45" dominant-baseline="central">Run</tspan>
   </text>
-  <ellipse cx="517.50" cy="700.56" rx="55.00" ry="22.00" fill="#E8E8E8" stroke="#000000" stroke-width="2.5"/>
+  <ellipse cx="950.00" cy="700.56" rx="55.00" ry="22.00" fill="#E8E8E8" stroke="#000000" stroke-width="2.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="bold">
-    <tspan x="517.50" y="700.56" dominant-baseline="central">Finalize</tspan>
+    <tspan x="950.00" y="700.56" dominant-baseline="central">Finalize</tspan>
   </text>
 </svg>
