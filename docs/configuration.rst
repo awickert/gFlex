@@ -141,12 +141,30 @@ Parameters
        :align: center
        :alt: Schematics of the five finite-difference boundary condition types
 
-       Schematics of the five FD boundary condition types (a–e).
-       Reproduced from Wickert (2016), Fig. 4;
-       `CC BY 3.0 <https://creativecommons.org/licenses/by/3.0/>`_.
+       Schematics of five FD boundary condition types (a–e) from Wickert (2016),
+       Fig. 4 (`CC BY 3.0 <https://creativecommons.org/licenses/by/3.0/>`_).
+       ``0Displacement0Moment`` (added post-publication) is not shown.
 
     * ``0Displacement0Slope`` — zero displacement and slope; plate is pinned
       to zero deflection at the boundary.
+    * ``0Displacement0Moment`` — zero displacement and bending moment; the
+      classical simply-supported (pinned) plate end.  The plate is held at
+      zero deflection but is free to rotate, so no moment is transmitted.
+      Implemented as a Dirichlet condition (w = 0) at the boundary node and
+      an odd-reflection ghost (w\ :sub:`ghost` = −w\ :sub:`interior`) at the
+      first interior node to enforce zero curvature.
+
+      ``Mirror`` and ``0Displacement0Moment`` are reflection boundary
+      conditions but encode opposite parities.  ``Mirror`` uses an *even*
+      reflection (w\ :sub:`ghost` = +w\ :sub:`interior`): the symmetry plane
+      lies between the last real node and its ghost, the plate is horizontal
+      at the boundary, and the deflection there is generally non-zero —
+      making it the correct choice for modelling one half of a symmetric
+      system.  ``0Displacement0Moment`` uses an *odd* reflection
+      (w\ :sub:`ghost` = −w\ :sub:`interior`): the boundary node is the fixed
+      point of the reflection, so w = 0 there by definition, and the plate is
+      free to rotate — the simply-supported end.  Sine modes satisfy
+      ``0Displacement0Moment``; cosine modes satisfy ``Mirror``.
     * ``0Moment0Shear`` — zero bending moment and shear force; broken plate
       with a free cantilever end (Wickert, 2016, Table 1).
     * ``0Slope0Shear`` — zero slope and shear force; the plate is level at
@@ -157,6 +175,8 @@ Parameters
       noticeably different solutions; prefer ``Mirror`` for symmetry problems.
     * ``Mirror`` — even reflection at the boundary; model only half of a
       symmetric system (e.g., one flank of a mountain range or ice sheet).
+      See the ``0Displacement0Moment`` entry above for the contrast with the
+      odd-reflection simply-supported condition.
     * ``Periodic`` — wrap-around; the domain tiles infinitely in both
       directions.
 
@@ -435,7 +455,7 @@ here (with corrections) for quick reference.
     GridSpacing_x=
     ;
     ; Boundary conditions can be:
-    ; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
+    ; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, 0Displacement0Moment, Mirror, or Periodic
     ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
     BoundaryCondition_West=
     BoundaryCondition_East=
@@ -453,7 +473,7 @@ here (with corrections) for quick reference.
     GridSpacing_y=
     ;
     ; Boundary conditions can be:
-    ; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
+    ; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, 0Displacement0Moment, Mirror, or Periodic
     ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
     BoundaryCondition_North=
     BoundaryCondition_South=
