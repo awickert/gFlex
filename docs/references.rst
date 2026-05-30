@@ -17,8 +17,7 @@ always resolves to the latest deposited release; version-specific DOIs are
 listed on that page.  For the current release (v1.4.0):
 
    Wickert, A. D. and Hutton, E. W. H. (2026), *gFlex* v1.4.0 [software],
-   Zenodo, `doi:10.5281/zenodo.10471939 <https://doi.org/10.5281/zenodo.10471939>`_
-   (concept DOI; version-specific DOI will appear on Zenodo after deposit).
+   Zenodo, `doi:10.5281/zenodo.10471939 <https://doi.org/10.5281/zenodo.10471939>`_.
 
 ----
 
