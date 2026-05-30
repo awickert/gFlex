@@ -5,11 +5,11 @@
   <key id="d10" for="edge" yfiles.type="edgegraphics"/>
   <graph id="G" edgedefault="directed">
 
-    <!-- Input -->
+    <!-- Input  cx=516 -->
     <node id="n8">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="470.00" y="59.66" width="210" height="84"/>
+          <y:Geometry x="411.00" y="59.66" width="210" height="84"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="1.5" color="#000000"/>
           <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
@@ -20,11 +20,11 @@ elastic properties</y:NodeLabel>
       </data>
     </node>
 
-    <!-- BMI: initialize  cx=575 -->
+    <!-- BMI: initialize  cx=516 -->
     <node id="n7">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="501.00" y="203.89" width="148" height="60"/>
+          <y:Geometry x="442.00" y="203.89" width="148" height="60"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="2.5" color="#000000"/>
           <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="bold"
@@ -36,11 +36,11 @@ elastic properties</y:NodeLabel>
     </node>
 
     <!-- Background band: solution method row
-         SAS_NG cx=200 w=215 → left=92.5; FD cx=950 w=170 → right=1035 -->
+         SAS_NG cx=200 w=215 → left=92.5; FD cx=825 w=170 → right=910 -->
     <node id="bg_methods">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="80.00" y="311.66" width="965.00" height="100.00"/>
+          <y:Geometry x="80.00" y="311.66" width="840.00" height="100.00"/>
           <y:Fill color="#F2F2F2" transparent="false"/>
           <y:BorderStyle type="line" width="1.0" color="#BBBBBB"/>
           <y:NodeLabel fontFamily="Arial" fontSize="11" fontStyle="italic"
@@ -82,11 +82,11 @@ Analytical Solutions
       </data>
     </node>
 
-    <!-- FFT cx=680: left=620, SAS right=552.5 → 67.5px gap, no overlap -->
+    <!-- FFT cx=660: left=600, SAS right=552.5 → 47.5px gap -->
     <node id="n4">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="620.00" y="323.66" width="120" height="76"/>
+          <y:Geometry x="600.00" y="323.66" width="120" height="76"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="1.5" color="#000000"/>
           <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
@@ -97,10 +97,11 @@ Analytical Solutions
       </data>
     </node>
 
+    <!-- FD cx=825: left=740, right=910. FFT right=720 → 20px gap. -->
     <node id="n1">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="865.00" y="323.66" width="170" height="76"/>
+          <y:Geometry x="740.00" y="323.66" width="170" height="76"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="1.5" color="#000000"/>
           <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
@@ -111,15 +112,15 @@ Analytical Solutions
       </data>
     </node>
 
-    <!-- Outer BC band: spans both Row 1 and Row 2, drawn first so inner bands render on top.
-         Left anchor: bc_nol x=247.5; right anchor: bc_0ms right=1560.
-         Top: 10px above bg_bcs (y=447.45); Bottom: 10px below bg_nol (bottom=631.45). -->
+    <!-- Single BC band.
+         Left: bc_nol left=255 − 10=245; Right: bc_0ms right=1065 + 10=1075.
+         Top: 15px above Row 1 (y=459.45). Bottom: 10px below Row 2 (bottom=619.45). -->
     <node id="bg_all_bcs">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="237.00" y="437.00" width="1333.00" height="205.00"/>
-          <y:Fill color="#EBEBEB" transparent="false"/>
-          <y:BorderStyle type="line" width="1.0" color="#AAAAAA"/>
+          <y:Geometry x="245.00" y="444.00" width="830.00" height="186.00"/>
+          <y:Fill color="#F2F2F2" transparent="false"/>
+          <y:BorderStyle type="line" width="1.0" color="#BBBBBB"/>
           <y:NodeLabel fontFamily="Arial" fontSize="11" fontStyle="italic"
                        alignment="left" textColor="#888888"
                        modelName="internal" modelPosition="tl">Boundary Condition</y:NodeLabel>
@@ -128,36 +129,20 @@ Analytical Solutions
       </data>
     </node>
 
-    <!-- Inner band: named BCs (Row 1)
-         bc_per cx=850 w=100 → left=800; bc_0ms cx=1500 w=120 → right=1560 -->
-    <node id="bg_bcs">
-      <data key="d6">
-        <y:ShapeNode>
-          <y:Geometry x="795.00" y="447.45" width="770.00" height="84.00"/>
-          <y:Fill color="#F2F2F2" transparent="false"/>
-          <y:BorderStyle type="line" width="1.0" color="#BBBBBB"/>
-          <y:NodeLabel fontFamily="Arial" fontSize="11" fontStyle="italic"
-                       alignment="left" textColor="#888888"
-                       modelName="internal" modelPosition="tl">Named BCs</y:NodeLabel>
-          <y:Shape type="roundrectangle"/>
-        </y:ShapeNode>
-      </data>
-    </node>
-
-    <!-- Row 1 BCs.
-         bc_per (cx=850) between FFT (cx=680) and FD (cx=950):
-           FFT→right, FD→left — opposite directions, meet at bc_per. No overlap.
-         bc_0ds (cx=1050): FD→right 100px, symmetric to bc_per about FD. No overlap.
-         bc_per and bc_0ds are BOTH right of bc_nol_pad (cx=750); their Row1→Row2
-           bus arrows both go leftward, forming a shared T-bar with one drop to bc_nol_pad.
-         bc_mir, bc_0ss, bc_0ms: right of bc_0ds, arrows pass right of bg_nol. -->
+    <!-- Row 1 BCs — spine column at cx=516 aligns bc_per with Init and Run.
+         bc_per  cx=516: left=471,  right=561.  (FFT→left 144px; FD→left 309px)
+         bc_0ds  cx=660: left=590,  right=730.  gap from bc_per: 29px.
+         bc_mir  cx=800: left=760,  right=840.  gap from bc_0ds: 30px.
+         bc_0ss  cx=900: left=852.5,right=947.5. gap from bc_mir: 12.5px.
+         bc_0ms  cx=1010:left=955,  right=1065. gap from bc_0ss: 7.5px.
+         bc_nol_pad (Row 2, cx=588) = midpoint(516,660): 72px each side — perfect pyramid. -->
     <node id="bc_per">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="800.00" y="459.45" width="100" height="60"/>
+          <y:Geometry x="471.00" y="459.45" width="90" height="60"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="1.5" color="#000000"/>
-          <y:NodeLabel fontFamily="Arial" fontSize="13" fontStyle="plain"
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
                        alignment="center">Periodic</y:NodeLabel>
           <y:Shape type="roundrectangle"/>
         </y:ShapeNode>
@@ -167,10 +152,10 @@ Analytical Solutions
     <node id="bc_0ds">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="972.50" y="459.45" width="155" height="60"/>
+          <y:Geometry x="590.00" y="459.45" width="140" height="60"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="1.5" color="#000000"/>
-          <y:NodeLabel fontFamily="Arial" fontSize="13" fontStyle="plain"
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
                        alignment="center">0Displacement
 0Slope</y:NodeLabel>
           <y:Shape type="roundrectangle"/>
@@ -181,10 +166,10 @@ Analytical Solutions
     <node id="bc_mir">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="1155.00" y="459.45" width="90" height="60"/>
+          <y:Geometry x="760.00" y="459.45" width="80" height="60"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="1.5" color="#000000"/>
-          <y:NodeLabel fontFamily="Arial" fontSize="13" fontStyle="plain"
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
                        alignment="center">Mirror</y:NodeLabel>
           <y:Shape type="roundrectangle"/>
         </y:ShapeNode>
@@ -194,10 +179,10 @@ Analytical Solutions
     <node id="bc_0ss">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="1297.50" y="459.45" width="105" height="60"/>
+          <y:Geometry x="852.50" y="459.45" width="95" height="60"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="1.5" color="#000000"/>
-          <y:NodeLabel fontFamily="Arial" fontSize="13" fontStyle="plain"
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
                        alignment="center">0Slope
 0Shear</y:NodeLabel>
           <y:Shape type="roundrectangle"/>
@@ -208,10 +193,10 @@ Analytical Solutions
     <node id="bc_0ms">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="1440.00" y="459.45" width="120" height="60"/>
+          <y:Geometry x="955.00" y="459.45" width="110" height="60"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="1.5" color="#000000"/>
-          <y:NodeLabel fontFamily="Arial" fontSize="13" fontStyle="plain"
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
                        alignment="center">0Moment
 0Shear</y:NodeLabel>
           <y:Shape type="roundrectangle"/>
@@ -219,34 +204,15 @@ Analytical Solutions
       </data>
     </node>
 
-    <!-- Inner band: NoOutsideLoads (Row 2)
-         bc_nol cx=325 w=155 → left=247.5; bc_nol_pad cx=750 w=155 → right=827.5 -->
-    <node id="bg_nol">
-      <data key="d6">
-        <y:ShapeNode>
-          <y:Geometry x="242.00" y="547.45" width="590.00" height="84.00"/>
-          <y:Fill color="#F2F2F2" transparent="false"/>
-          <y:BorderStyle type="line" width="1.0" color="#BBBBBB"/>
-          <y:NodeLabel fontFamily="Arial" fontSize="11" fontStyle="italic"
-                       alignment="left" textColor="#888888"
-                       modelName="internal" modelPosition="tl">No Outside Loads</y:NodeLabel>
-          <y:Shape type="roundrectangle"/>
-        </y:ShapeNode>
-      </data>
-    </node>
-
-    <!-- Row 2: NoOutsideLoads exact (SAS/SAS_NG) and via padding (bc_per, bc_0ds).
-         bc_nol cx=325: SAS_NG→right, SAS→left — opposite directions, no overlap.
-           Arrows continue straight down at x=325 through Row 1 gap to Row 2.
-         bc_nol_pad cx=750: left of bc_per (850) and bc_0ds (1050).
-           Both send leftward arrows forming a T-bar; one trunk drops to bc_nol_pad. -->
+    <!-- Row 2: NoOutsideLoads exact (cx=325, between SAS_NG 200 and SAS 450)
+                NoOutsideLoads via padding (cx=588, midpoint of bc_per 516 and bc_0ds 660). -->
     <node id="bc_nol">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="247.50" y="559.45" width="155" height="60"/>
+          <y:Geometry x="255.00" y="559.45" width="140" height="60"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="1.5" color="#000000"/>
-          <y:NodeLabel fontFamily="Arial" fontSize="13" fontStyle="plain"
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
                        alignment="center">NoOutsideLoads</y:NodeLabel>
           <y:Shape type="roundrectangle"/>
         </y:ShapeNode>
@@ -256,10 +222,10 @@ Analytical Solutions
     <node id="bc_nol_pad">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="672.50" y="559.45" width="155" height="60"/>
+          <y:Geometry x="523.00" y="559.45" width="130" height="60"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="1.5" color="#000000"/>
-          <y:NodeLabel fontFamily="Arial" fontSize="13" fontStyle="plain"
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
                        alignment="center">NoOutsideLoads
 (via padding)</y:NodeLabel>
           <y:Shape type="roundrectangle"/>
@@ -267,12 +233,12 @@ Analytical Solutions
       </data>
     </node>
 
-    <!-- BMI: run — cx=750 aligns with bc_nol_pad → straight vertical drop.
-         BCs→Run bus y = (619.45 + 677.45) / 2 = 648.45 -->
+    <!-- BMI: run — cx=516 aligns with Input, Init, bc_per, Finalize (straight spine).
+         bc_per→Run is a straight vertical. BCs→Run bus y=648.45. -->
     <node id="n0">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="695.00" y="677.45" width="110" height="44"/>
+          <y:Geometry x="461.00" y="677.45" width="110" height="44"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="2.5" color="#000000"/>
           <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="bold"
@@ -282,11 +248,11 @@ Analytical Solutions
       </data>
     </node>
 
-    <!-- BMI: finalize -->
+    <!-- BMI: finalize  cx=516 -->
     <node id="n14">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="695.00" y="778.56" width="110" height="44"/>
+          <y:Geometry x="461.00" y="778.56" width="110" height="44"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="2.5" color="#000000"/>
           <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="bold"
@@ -298,7 +264,7 @@ Analytical Solutions
 
     <!-- ── Edges ─────────────────────────────────────────────────────────────── -->
 
-    <!-- Input → Initialize (straight vertical, both cx=575) -->
+    <!-- Input → Initialize (straight vertical, both cx=516) -->
     <edge id="e0" source="n8" target="n7">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
@@ -306,13 +272,13 @@ Analytical Solutions
       </y:PolyLineEdge></data>
     </edge>
 
-    <!-- Initialize (cx=575) → solution methods
+    <!-- Initialize (cx=516) → solution methods
          bus y = (263.89 + 323.66) / 2 = 293.78 -->
     <edge id="e1" source="n7" target="n3">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="575.00" y="293.78"/>
+        <y:Point x="516.00" y="293.78"/>
         <y:Point x="200.00" y="293.78"/>
       </y:PolyLineEdge></data>
     </edge>
@@ -320,7 +286,7 @@ Analytical Solutions
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="575.00" y="293.78"/>
+        <y:Point x="516.00" y="293.78"/>
         <y:Point x="450.00" y="293.78"/>
       </y:PolyLineEdge></data>
     </edge>
@@ -328,29 +294,29 @@ Analytical Solutions
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="575.00" y="293.78"/>
-        <y:Point x="680.00" y="293.78"/>
+        <y:Point x="516.00" y="293.78"/>
+        <y:Point x="660.00" y="293.78"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e4" source="n7" target="n1">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="575.00" y="293.78"/>
-        <y:Point x="950.00" y="293.78"/>
+        <y:Point x="516.00" y="293.78"/>
+        <y:Point x="825.00" y="293.78"/>
       </y:PolyLineEdge></data>
     </edge>
 
     <!-- Solution methods → BCs
          Methods→BCs bus y = (399.66 + 459.45) / 2 = 429.56
 
-         SAS_NG (200) ←→ SAS (450) converge on bc_nol (325): opposite dirs, no overlap.
-         Arrows at x=325 continue down through Row-1 area (no node there) into Row 2.
-
-         FFT (680) →right→ bc_per (850): 170px.
-         FD  (950) →left→  bc_per (850): 100px. Opposite — no overlap.
-         FD  (950) →right→ bc_0ds (1050): 100px. Symmetric to bc_per about FD.
-         FD  (950) →right→ bc_mir/bc_0ss/bc_0ms: rightward fan, single-source — unambiguous. -->
+         SAS_NG (200) and SAS (450) converge on bc_nol (325): opposite dirs.
+         FFT (660) →left→ bc_per (516): 144px.
+         FD  (825) →left→ bc_per (516): 309px. Shared segment 516–660 with FFT→bc_per.
+         FD  (825) →left→ bc_0ds (660): 165px.
+         FD  (825) →left→ bc_mir (800): 25px.
+         FD  (825) →right→ bc_0ss (900): 75px.
+         FD  (825) →right→ bc_0ms (1010): 185px. -->
     <edge id="e5" source="n3" target="bc_nol">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
@@ -371,99 +337,89 @@ Analytical Solutions
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="680.00" y="429.56"/>
-        <y:Point x="850.00" y="429.56"/>
+        <y:Point x="660.00" y="429.56"/>
+        <y:Point x="516.00" y="429.56"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e8" source="n1" target="bc_per">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="950.00" y="429.56"/>
-        <y:Point x="850.00" y="429.56"/>
+        <y:Point x="825.00" y="429.56"/>
+        <y:Point x="516.00" y="429.56"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e9" source="n1" target="bc_0ds">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="950.00" y="429.56"/>
-        <y:Point x="1050.00" y="429.56"/>
+        <y:Point x="825.00" y="429.56"/>
+        <y:Point x="660.00" y="429.56"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e10" source="n1" target="bc_mir">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="950.00" y="429.56"/>
-        <y:Point x="1200.00" y="429.56"/>
+        <y:Point x="825.00" y="429.56"/>
+        <y:Point x="800.00" y="429.56"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e11" source="n1" target="bc_0ss">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="950.00" y="429.56"/>
-        <y:Point x="1350.00" y="429.56"/>
+        <y:Point x="825.00" y="429.56"/>
+        <y:Point x="900.00" y="429.56"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e12" source="n1" target="bc_0ms">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="950.00" y="429.56"/>
-        <y:Point x="1500.00" y="429.56"/>
+        <y:Point x="825.00" y="429.56"/>
+        <y:Point x="1010.00" y="429.56"/>
       </y:PolyLineEdge></data>
     </edge>
 
     <!-- Row 1 BCs → bc_nol_pad (Row 2)
          Row1→Row2 bus y = (519.45 + 559.45) / 2 = 539.45
-         bc_per (850) and bc_0ds (1050) are both RIGHT of bc_nol_pad (750).
-         Both arrows go leftward: 850→750 (100px) and 1050→750 (300px, containing bc_per).
-         Combined visual: a T-bar from 750 to 1050, with one trunk dropping to bc_nol_pad. -->
+         bc_per (516) →right 72px→ bc_nol_pad (588).
+         bc_0ds (660) →left  72px→ bc_nol_pad (588). Perfectly symmetric pyramid. -->
     <edge id="e20" source="bc_per" target="bc_nol_pad">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="850.00" y="539.45"/>
-        <y:Point x="750.00" y="539.45"/>
+        <y:Point x="516.00" y="539.45"/>
+        <y:Point x="588.00" y="539.45"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e21" source="bc_0ds" target="bc_nol_pad">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="1050.00" y="539.45"/>
-        <y:Point x="750.00" y="539.45"/>
+        <y:Point x="660.00" y="539.45"/>
+        <y:Point x="588.00" y="539.45"/>
       </y:PolyLineEdge></data>
     </edge>
 
-    <!-- BCs → Run
-         BCs→Run bus y = (619.45 + 677.45) / 2 = 648.45
-         bc_nol_pad (750) → Run (750): straight vertical, same cx.
-         bc_per (850) and bc_0ds (1050): direct-to-Run arrows, leftward.
-         bc_nol (325) → Run (750): rightward.
-         bc_mir/bc_0ss/bc_0ms: leftward fan-in. -->
-    <edge id="e22" source="bc_nol_pad" target="n0">
-      <data key="d10"><y:PolyLineEdge>
-        <y:LineStyle type="line" width="1.5" color="#000000"/>
-        <y:Arrows source="none" target="standard"/>
-      </y:PolyLineEdge></data>
-    </edge>
+    <!-- BCs → Run  (Run cx=516; bus y=648.45)
+         bc_per (516) → Run (516): straight vertical — no bends.
+         bc_nol_pad (588) →left 72px→ Run (516).
+         bc_nol (325)  →right→ Run (516).
+         All others →left→ Run (516). -->
     <edge id="e14" source="bc_per" target="n0">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="850.00" y="648.45"/>
-        <y:Point x="750.00" y="648.45"/>
       </y:PolyLineEdge></data>
     </edge>
-    <edge id="e18" source="bc_0ds" target="n0">
+    <edge id="e22" source="bc_nol_pad" target="n0">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="1050.00" y="648.45"/>
-        <y:Point x="750.00" y="648.45"/>
+        <y:Point x="588.00" y="648.45"/>
+        <y:Point x="516.00" y="648.45"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e13" source="bc_nol" target="n0">
@@ -471,35 +427,43 @@ Analytical Solutions
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
         <y:Point x="325.00" y="648.45"/>
-        <y:Point x="750.00" y="648.45"/>
+        <y:Point x="516.00" y="648.45"/>
+      </y:PolyLineEdge></data>
+    </edge>
+    <edge id="e18" source="bc_0ds" target="n0">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+        <y:Point x="660.00" y="648.45"/>
+        <y:Point x="516.00" y="648.45"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e15" source="bc_mir" target="n0">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="1200.00" y="648.45"/>
-        <y:Point x="750.00" y="648.45"/>
+        <y:Point x="800.00" y="648.45"/>
+        <y:Point x="516.00" y="648.45"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e16" source="bc_0ss" target="n0">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="1350.00" y="648.45"/>
-        <y:Point x="750.00" y="648.45"/>
+        <y:Point x="900.00" y="648.45"/>
+        <y:Point x="516.00" y="648.45"/>
       </y:PolyLineEdge></data>
     </edge>
     <edge id="e17" source="bc_0ms" target="n0">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
-        <y:Point x="1500.00" y="648.45"/>
-        <y:Point x="750.00" y="648.45"/>
+        <y:Point x="1010.00" y="648.45"/>
+        <y:Point x="516.00" y="648.45"/>
       </y:PolyLineEdge></data>
     </edge>
 
-    <!-- Run → Finalize (straight vertical, both cx=750) -->
+    <!-- Run → Finalize (straight vertical, both cx=516) -->
     <edge id="e19" source="n0" target="n14">
       <data key="d10"><y:PolyLineEdge>
         <y:LineStyle type="line" width="1.5" color="#000000"/>
