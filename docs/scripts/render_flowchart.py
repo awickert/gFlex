@@ -56,7 +56,9 @@ def parse():
         poly   = el.find(f'.//{{{YNS}}}PolyLineEdge')
         ls     = poly.find(f'{{{YNS}}}LineStyle') if poly is not None else None
         dashed = (ls.get('type') == 'dashed') if ls is not None else False
-        edges.append(dict(src=el.get('source'), dst=el.get('target'), dashed=dashed))
+        bends = [(float(pt.get('x')), float(pt.get('y')))
+                 for pt in (poly.findall(f'{{{YNS}}}Point') if poly is not None else [])]
+        edges.append(dict(src=el.get('source'), dst=el.get('target'), dashed=dashed, bends=bends))
 
     return nodes, edges
 
@@ -116,15 +118,26 @@ def svg_node(nd, background=False):
     return lines
 
 
-def svg_edge(nodes, src_id, dst_id, dashed):
+def svg_edge(nodes, src_id, dst_id, dashed, bends=None):
     sn = nodes[src_id];  dn = nodes[dst_id]
     x0 = sn['x'] + sn['w']/2;  y0 = sn['y'] + sn['h']
     x1 = dn['x'] + dn['w']/2;  y1 = dn['y']
+    da = ' stroke-dasharray="13,8"' if dashed else ''
+
+    if bends:
+        lx, ly = bends[-1]
+        ex, ey = x1 - lx, y1 - ly
+        el = np.hypot(ex, ey)
+        ux, uy = ex / el, ey / el
+        xe, ye = x1 - ux * ALEN, y1 - uy * ALEN
+        pts = ' '.join(f'{q(px)},{q(py)}' for px, py in [(x0, y0)] + list(bends) + [(xe, ye)])
+        return (f'  <polyline points="{pts}" fill="none"'
+                f' stroke="#000000" stroke-width="1.5"{da} marker-end="url(#arr)"/>')
+
     ex, ey = x1 - x0, y1 - y0
     el = np.hypot(ex, ey)
     ux, uy = ex / el, ey / el
     xe, ye = x1 - ux * ALEN, y1 - uy * ALEN
-    da = ' stroke-dasharray="13,8"' if dashed else ''
     return (f'  <line x1="{q(x0)}" y1="{q(y0)}" x2="{q(xe)}" y2="{q(ye)}"'
             f' stroke="#000000" stroke-width="1.5"{da} marker-end="url(#arr)"/>')
 
@@ -156,7 +169,7 @@ def main():
         if nd['background']:
             o.extend(svg_node(nd, background=True))
     for e in edges:
-        o.append(svg_edge(nodes, e['src'], e['dst'], e['dashed']))
+        o.append(svg_edge(nodes, e['src'], e['dst'], e['dashed'], e['bends'] or None))
     for nd in nodes.values():               # regular nodes on top
         if not nd['background']:
             o.extend(svg_node(nd))
