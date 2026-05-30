@@ -505,5 +505,73 @@ def test_fd_2d_sigma_yy_monotonicity_all_bcs(bc):
     )
 
 
+# ---------------------------------------------------------------------------
+# 0Displacement0Moment: 2-D sine eigenfunction
+# ---------------------------------------------------------------------------
+
+def test_fd_2d_0displacement0moment_sine_eigenfunction():
+    """2-D FD/0Displacement0Moment matches the analytical formula for a separable sine load.
+
+    sin(kx·x)·sin(ky·y) is an eigenfunction of the 2-D biharmonic operator for
+    0Displacement0Moment BCs at all four edges (zero displacement and zero moment
+    at every boundary).  The exact deflection is:
+
+        w = −q₀ / (D·(kx²+ky²)² + Δρg) · sin(kx·x)·sin(ky·y)
+
+    The load vanishes at all boundary nodes, which is the necessary condition for
+    the simply-supported BC to be consistent.  The FD discretisation has an
+    O((k·dx)²) error; rtol = 1e-3 is safe for the wavenumbers chosen.
+    """
+    Ny, Nx = 128, 128
+    Lx = (Nx - 1) * dx
+    Ly = (Ny - 1) * dy
+    nx_waves, ny_waves = 2, 3
+    kx = nx_waves * np.pi / Lx
+    ky = ny_waves * np.pi / Ly
+    x = np.arange(Nx) * dx
+    y = np.arange(Ny) * dy
+    X, Y = np.meshgrid(x, y)
+    q0 = 1e6
+    qs = q0 * np.sin(kx * X) * np.sin(ky * Y)
+
+    flex = _run(qs, bc_w="0Displacement0Moment", bc_e="0Displacement0Moment",
+                    bc_n="0Displacement0Moment", bc_s="0Displacement0Moment")
+
+    w_exact = (-q0 / (D * (kx**2 + ky**2)**2 + drho * g)
+               * np.sin(kx * X) * np.sin(ky * Y))
+    np.testing.assert_allclose(flex.w, w_exact, rtol=1e-3, atol=1e-5)
+
+
+# ---------------------------------------------------------------------------
+# 0Displacement0Moment: 2-D half-domain antisymmetric equivalence
+# ---------------------------------------------------------------------------
+
+def test_fd_2d_0displacement0moment_half_domain_antisymmetric():
+    """2-D half-domain with 0Displacement0Moment at the symmetry edge matches the full domain.
+
+    For a load antisymmetric in the x-direction (q[:, j] = -q[:, Nx-1-j]) on a
+    uniform-Te domain with free (0Moment0Shear) boundary conditions, the solution
+    is exactly antisymmetric in x.  Running the left x-half with 0Moment0Shear
+    at three edges and 0Displacement0Moment at the (virtual) symmetry edge must
+    reproduce the left half of the full-domain solution.  Agreement is exact to
+    floating-point precision (rtol = 1e-6).
+    """
+    Ny, Nx = 40, 101   # Nx odd: x-centre at column 50
+
+    qs_full = np.zeros((Ny, Nx))
+    qs_full[:, 20] = +1e6 / Ny
+    qs_full[:, 80] = -1e6 / Ny    # antisymmetric: 100 - 20 = 80
+
+    flex_full = _run(qs_full, bc_w="0Moment0Shear", bc_e="0Moment0Shear",
+                              bc_n="0Moment0Shear", bc_s="0Moment0Shear")
+
+    Nx_half = 51   # columns 0..50
+    qs_half = qs_full[:, :Nx_half].copy()
+    flex_half = _run(qs_half, bc_w="0Moment0Shear", bc_e="0Displacement0Moment",
+                              bc_n="0Moment0Shear", bc_s="0Moment0Shear")
+
+    np.testing.assert_allclose(flex_half.w, flex_full.w[:, :Nx_half], rtol=1e-6, atol=1e-10)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
