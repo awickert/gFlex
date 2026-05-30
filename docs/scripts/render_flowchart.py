@@ -33,18 +33,22 @@ def parse():
         bdr   = sn.find(f'{{{YNS}}}BorderStyle')
         lbl   = sn.find(f'{{{YNS}}}NodeLabel')
         shp   = sn.find(f'{{{YNS}}}Shape')
+        style = lbl.get('fontStyle', 'plain') if lbl is not None else 'plain'
         nodes[nid] = dict(
-            x     = float(geom.get('x')),
-            y     = float(geom.get('y')),
-            w     = float(geom.get('width')),
-            h     = float(geom.get('height')),
-            fill  = fill.get('color', '#E8E8E8') if fill is not None else '#E8E8E8',
-            lw    = float(bdr.get('width', 1.5))  if bdr  is not None else 1.5,
-            ec    = bdr.get('color', '#000000')    if bdr  is not None else '#000000',
-            label = lbl.text or ''                 if lbl  is not None else '',
-            fs    = int(lbl.get('fontSize', 12))   if lbl  is not None else 12,
-            bold  = (lbl.get('fontStyle','plain') == 'bold') if lbl is not None else False,
-            shape = shp.get('type', 'rectangle')   if shp  is not None else 'rectangle',
+            x          = float(geom.get('x')),
+            y          = float(geom.get('y')),
+            w          = float(geom.get('width')),
+            h          = float(geom.get('height')),
+            fill       = fill.get('color', '#E8E8E8') if fill is not None else '#E8E8E8',
+            lw         = float(bdr.get('width', 1.5))  if bdr  is not None else 1.5,
+            ec         = bdr.get('color', '#000000')    if bdr  is not None else '#000000',
+            label      = lbl.text or ''                 if lbl  is not None else '',
+            fs         = int(lbl.get('fontSize', 12))   if lbl  is not None else 12,
+            bold       = ('bold'   in style),
+            italic     = ('italic' in style),
+            text_color = lbl.get('textColor', '#000000') if lbl is not None else '#000000',
+            shape      = shp.get('type', 'rectangle')   if shp  is not None else 'rectangle',
+            background = nid.startswith('bg_'),
         )
 
     edges = []
@@ -62,7 +66,7 @@ def q(v):
     return f'{v:.2f}'
 
 
-def svg_node(nd):
+def svg_node(nd, background=False):
     x, y, w, h = nd['x'], nd['y'], nd['w'], nd['h']
     cx, cy = x + w/2, y + h/2
     fill = nd['fill'];  ec = nd['ec'];  sw = nd['lw']
@@ -89,12 +93,26 @@ def svg_node(nd):
     fs = nd['fs']
     lh = fs * 1.35
     fw = 'bold' if nd['bold'] else 'normal'
-    lines.append(f'  <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif"'
-                 f' font-size="{fs}" font-weight="{fw}">')
-    for i, txt in enumerate(label_lines):
-        ty = cy - (nl - 1) * lh / 2 + i * lh
-        lines.append(f'    <tspan x="{q(cx)}" y="{q(ty)}" dominant-baseline="central">{txt}</tspan>')
-    lines.append('  </text>')
+    tc = nd.get('text_color', '#000000')
+    fi = 'italic' if nd.get('italic') else 'normal'
+
+    if background:
+        # top-left label: small, italic, muted
+        pad = 5
+        lines.append(f'  <text font-family="Arial,Helvetica,sans-serif"'
+                     f' font-size="{fs}" font-weight="{fw}" font-style="{fi}" fill="{tc}">')
+        for i, txt in enumerate(label_lines):
+            tx = x + pad
+            ty = y + pad + i * lh
+            lines.append(f'    <tspan x="{q(tx)}" y="{q(ty)}" dominant-baseline="hanging">{txt}</tspan>')
+        lines.append('  </text>')
+    else:
+        lines.append(f'  <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif"'
+                     f' font-size="{fs}" font-weight="{fw}">')
+        for i, txt in enumerate(label_lines):
+            ty = cy - (nl - 1) * lh / 2 + i * lh
+            lines.append(f'    <tspan x="{q(cx)}" y="{q(ty)}" dominant-baseline="central">{txt}</tspan>')
+        lines.append('  </text>')
     return lines
 
 
@@ -134,10 +152,14 @@ def main():
         f'  <rect width="{W}" height="{H}" fill="white"/>',
     ]
 
+    for nd in nodes.values():               # background bands first
+        if nd['background']:
+            o.extend(svg_node(nd, background=True))
     for e in edges:
         o.append(svg_edge(nodes, e['src'], e['dst'], e['dashed']))
-    for nd in nodes.values():
-        o.extend(svg_node(nd))
+    for nd in nodes.values():               # regular nodes on top
+        if not nd['background']:
+            o.extend(svg_node(nd))
 
     o.append('</svg>')
 
