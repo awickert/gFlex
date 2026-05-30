@@ -1149,10 +1149,14 @@ class F2D(Flexure):
         # The next section of code is split over several functions for the 1D
         # case, but will be all in one function here, at least for now.
 
-        # Inf for E-W to separate from nan for N-S. N-S will spill off ends
-        # of array (C order, in rows), while E-W will be internal, so I will
-        # later change np.inf to 0 to represent where internal boundaries
-        # occur.
+        # np.inf is used as the exclusion flag rather than 0 because subsequent
+        # stencil additions cannot accidentally un-flag a slot: inf + any finite
+        # value = inf. After np.roll along axis=1 (E–W), wrapped ghost-column
+        # values land at valid matrix positions; because they remain inf
+        # regardless of what is added to them, the isinf→0 pass below zeros
+        # them all cleanly before matrix assembly. N–S ghost rows roll off the
+        # array ends in C-order and are naturally excluded by spdiags, so no
+        # special flag is needed for them.
 
         #######################################################################
         # DEFINE COEFFICIENTS TO W_j-2 -- W_j+2 WITH B.C.'S APPLIED (x: W, E) #
@@ -2146,6 +2150,10 @@ class F2D(Flexure):
             self.cj0i0,
         ]
         for array in coeff_array_list:
+            # np.inf flags excluded stencil slots. Because inf + finite = inf,
+            # flagged slots stay flagged regardless of subsequent stencil
+            # additions; setting them to 0 here enforces those exclusions
+            # before sparse-matrix assembly.
             array[np.isinf(array)] = 0
         # array[np.isnan(array)] = 0 # had been used for testing
 
