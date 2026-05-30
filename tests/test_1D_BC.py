@@ -294,5 +294,109 @@ def test_sigma_xx_monotonicity_all_bcs(bc):
     )
 
 
+# ---------------------------------------------------------------------------
+# 0Displacement0Moment: sine eigenfunction
+# ---------------------------------------------------------------------------
+
+def test_fd_0displacement0moment_sine_eigenfunction():
+    """FD/0Displacement0Moment matches the analytical formula for a sine load.
+
+    sin(nπx/L) is an eigenfunction of the biharmonic operator for
+    0Displacement0Moment BCs (zero displacement and zero moment at both ends).
+    The exact deflection is:
+
+        w = −q₀ / (D·k⁴ + Δρg) · sin(k·x)
+
+    The FD discretisation has an O((k·dx)²) eigenvalue error; rtol = 1e-3 is
+    safe for the wavenumber chosen here.  The load vanishes at both boundary
+    nodes (sin(0) = sin(nπ) = 0), which is the necessary condition for the
+    simply-supported BC to be consistent.
+    """
+    N = 256
+    L = (N - 1) * dx
+    n_waves = 2
+    k = n_waves * np.pi / L
+    x = np.arange(N) * dx
+    q0 = 1e6
+    qs = q0 * np.sin(k * x)
+
+    flex = _run(qs, bc_w="0Displacement0Moment", bc_e="0Displacement0Moment")
+
+    w_exact = -q0 / (D * k**4 + drho * g) * np.sin(k * x)
+    # Near-zero boundary nodes (sin(0)=sin(nπ)≈0 in float) need atol for the
+    # tiny residual the FD solver leaves there; rtol governs the interior.
+    np.testing.assert_allclose(flex.w, w_exact, rtol=1e-3, atol=1e-5)
+
+
+# ---------------------------------------------------------------------------
+# 0Displacement0Moment: equivalence with Periodic on odd-extended 2× domain
+# ---------------------------------------------------------------------------
+
+def test_fd_0displacement0moment_equals_periodic_odd_2x():
+    """FD/0Displacement0Moment on [0, L] equals FD/Periodic on [0, 2L] with odd load.
+
+    0Displacement0Moment BCs at both endpoints implement odd reflection about
+    x = 0 and x = L.  The ghost-cell assignments are identical to running a
+    Periodic problem on the period-2(N-1) odd extension of the load.  Agreement
+    to rtol = 1e-8 (limited by the direct solver) confirms both stencils
+    implement the same linear system.
+
+    The odd extension requires q[0] = q[N-1] = 0 at the boundary nodes; a sine
+    load satisfies this naturally.
+    """
+    N = 80
+    L = (N - 1) * dx
+    k = np.pi / L     # fundamental sine mode: zero at both endpoints
+    x = np.arange(N) * dx
+    qs = np.sin(k * x)   # q[0] = q[N-1] = 0 by construction
+
+    flex_d = _run(qs, bc_w="0Displacement0Moment", bc_e="0Displacement0Moment")
+
+    # Odd extension on a node-centred grid: period = 2(N-1), sharing endpoints.
+    # qs_ext = [qs[0], ..., qs[N-1], -qs[N-2], ..., -qs[1]]  (length 2N-2)
+    qs_ext = np.concatenate([qs, -qs[-2:0:-1]])
+    flex_p = _run(qs_ext, bc_w="Periodic", bc_e="Periodic")
+
+    # Both boundary nodes sit at the periodic zero-crossing; the FD values
+    # there are ~1e-17 (numerical noise) while the Periodic result is 0.0,
+    # so atol is needed to avoid a spurious 100 % relative-difference failure.
+    np.testing.assert_allclose(flex_d.w, flex_p.w[:N], atol=1e-12)
+
+
+# ---------------------------------------------------------------------------
+# 0Displacement0Moment: half-domain antisymmetric equivalence
+# ---------------------------------------------------------------------------
+
+def test_fd_0displacement0moment_half_domain_antisymmetric():
+    """Half-domain with 0Displacement0Moment at the symmetry edge matches the full domain.
+
+    For an antisymmetric load (q[i] = -q[N-1-i]) on a uniform-Te domain with
+    free (0Moment0Shear) ends, the solution is exactly antisymmetric:
+    w[i] = -w[N-1-i] and in particular w[(N-1)//2] = 0.
+
+    Running the left half alone, with 0Moment0Shear at the free end and
+    0Displacement0Moment at the (virtual) symmetry edge, must produce the same
+    deflection as the left half of the full-domain solution.  Agreement is exact
+    to floating-point precision (rtol = 1e-6 to allow for rounding in the two
+    different sparse-system solves).
+    """
+    N = 101   # odd: centre cell at index 50
+    qs_full = np.zeros(N)
+    qs_full[20] = +1e6
+    qs_full[80] = -1e6   # antisymmetric: 100 - 20 = 80
+
+    flex_full = _run(qs_full, bc_w="0Moment0Shear", bc_e="0Moment0Shear")
+
+    N_half = 51   # cells 0..50
+    qs_half = qs_full[:N_half].copy()
+    flex_half = _run(qs_half, bc_w="0Moment0Shear", bc_e="0Displacement0Moment")
+
+    # The boundary node w[50] is ~1e-14 in the full domain (exact antisymmetry
+    # produces 0 analytically but not to machine precision in two different
+    # linear-system solves).  atol handles the near-zero endpoint; rtol governs
+    # the interior.
+    np.testing.assert_allclose(flex_half.w, flex_full.w[:N_half], rtol=1e-8, atol=1e-10)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
