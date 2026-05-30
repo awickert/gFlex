@@ -1259,6 +1259,7 @@ class Flexure(Utility, Plotting):
                 self.bc1D = np.array(
                     [
                         "0Displacement0Slope",
+                        "0Displacement0Moment",
                         "Periodic",
                         "Mirror",
                         "0Moment0Shear",
@@ -1268,6 +1269,7 @@ class Flexure(Utility, Plotting):
                 self.bc2D = np.array(
                     [
                         "0Displacement0Slope",
+                        "0Displacement0Moment",
                         "Periodic",
                         "Mirror",
                         "0Moment0Shear",
