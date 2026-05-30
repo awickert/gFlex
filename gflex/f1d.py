@@ -713,7 +713,7 @@ class F1D(Flexure):
             == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
         ).any():
             self.BC_Rigidity_W = "0 curvature"
-        elif self.BC_W == "Mirror":
+        elif self.BC_W in ("Mirror", "0Displacement0Moment"):
             self.BC_Rigidity_W = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
@@ -725,7 +725,7 @@ class F1D(Flexure):
             == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
         ).any():
             self.BC_Rigidity_E = "0 curvature"
-        elif self.BC_E == "Mirror":
+        elif self.BC_E in ("Mirror", "0Displacement0Moment"):
             self.BC_Rigidity_E = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
@@ -842,6 +842,8 @@ class F1D(Flexure):
             self.BC_0Moment0Shear()
         if self.BC_E == "Mirror" or self.BC_W == "Mirror":
             self.BC_Mirror()
+        if self.BC_E == "0Displacement0Moment" or self.BC_W == "0Displacement0Moment":
+            self.BC_0Displacement0Moment()
         if self.BC_E == "Periodic" and self.BC_W == "Periodic":
             self.BC_Periodic()
         if self.BC_E == "Sandbox" or self.BC_W == "Sandbox":
@@ -1092,6 +1094,35 @@ class F1D(Flexure):
             self.c0[i] += 0
             # self.r1[i] += np.nan
             # self.r2[i] += np.nan
+
+    def BC_0Displacement0Moment(self):
+        """
+        Simply-supported (pinned) BC: zero displacement and zero bending moment
+        at the boundary.  Odd-reflection sibling of :meth:`BC_Mirror`: the ghost
+        cell is the *negative* of the interior cell at the same distance from the
+        edge (w[-1] = -w[+1]), which enforces w = 0 and d²w/dx² = 0.
+        """
+        if self.BC_W == "0Displacement0Moment":
+            i = 0
+            self.c0[i] += 0
+            self.r1[i] -= self.l1_coeff_i[i]
+            self.r2[i] -= self.l2_coeff_i[i]
+            i = 1
+            self.l1[i] += 0
+            self.c0[i] -= self.l2_coeff_i[i]
+            self.r1[i] += 0
+            self.r2[i] += 0
+
+        if self.BC_E == "0Displacement0Moment":
+            i = -2
+            self.l2[i] += 0
+            self.l1[i] += 0
+            self.c0[i] -= self.r2_coeff_i[i]
+            self.r1[i] += 0
+            i = -1
+            self.l2[i] -= self.r2_coeff_i[i]
+            self.l1[i] -= self.r1_coeff_i[i]
+            self.c0[i] += 0
 
     def calc_max_flexural_wavelength(self):
         """
