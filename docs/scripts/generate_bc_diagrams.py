@@ -151,7 +151,7 @@ def draw_bc(*, name, title, subtitle,
             ax.text(x, label_y - 0.20, eqs[i],
                     ha="center", va="top", fontsize=8, color=C_EQN)
     for i, (x, _) in enumerate(real_xy):
-        lbl = rf"$w_{i}$" if i > 0 else r"$w_0$"
+        lbl = rf"$w_{{{i+1}}}$"
         ax.text(x, label_y, lbl, ha="center", va="top", fontsize=9, color=C_EDGE)
 
     # title
@@ -212,7 +212,7 @@ def run():
         real_xy     = real,
         ghost_xy    = [(-2, -ry[2]), (-1, -ry[1])],   # odd reflection
         ghost_kinds = ["ghost", "ghost"],
-        ghost_equations = [r"$= -w_2$", r"$= -w_1$"],
+        ghost_equations = [r"$= -w_3$", r"$= -w_2$"],
         pins        = [0],
     )
 
@@ -232,7 +232,7 @@ def run():
         real_xy     = real,
         ghost_xy    = [(-2, ry[2]), (-1, ry[1])],   # even reflection
         ghost_kinds = ["ghost", "ghost"],
-        ghost_equations = [r"$= +w_2$", r"$= +w_1$"],
+        ghost_equations = [r"$= +w_3$", r"$= +w_2$"],
         pins        = [],
         stencil_note = "stencil at w₁: ghost\nexcluded from i−1 slot",
     )
@@ -252,7 +252,7 @@ def run():
         real_xy     = real,
         ghost_xy    = [(-2, ry[2]), (-1, ry[1])],
         ghost_kinds = ["ghost", "ghost"],
-        ghost_equations = [r"$= +w_2$", r"$= +w_1$"],
+        ghost_equations = [r"$= +w_3$", r"$= +w_2$"],
         pins        = [],
         stencil_note = "stencil at w₁: ghost also\nadds to w₃ slot\n(≠ Mirror)",
     )
@@ -274,7 +274,7 @@ def run():
         real_xy     = real,
         ghost_xy    = [(-2, gy2), (-1, gy1)],
         ghost_kinds = ["ghost", "ghost"],
-        ghost_equations = [r"$= 4w_0 - 4w_1 + w_2$", r"$= 2w_0 - w_1$"],
+        ghost_equations = [r"$= 4w_1 - 4w_2 + w_3$", r"$= 2w_1 - w_2$"],
         pins        = [],
     )
 
@@ -295,7 +295,7 @@ def run():
         real_xy     = real,
         ghost_xy    = [(-2, gy2), (-1, gy1)],
         ghost_kinds = ["ghost", "ghost"],
-        ghost_equations = [r"$= w_{N-3}$", r"$= w_{N-2}$"],
+        ghost_equations = [r"$= w_{N-1}$", r"$= w_N$"],
         pins        = [],
     )
 
