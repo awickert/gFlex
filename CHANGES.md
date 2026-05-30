@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+### Breaking changes
+
+- **G2009 plate solution removed** — the finite-difference solver now always
+  uses the vWC1994 stencil.  Setting `PlateSolutionType = 'G2009'` previously
+  selected a different stencil; it is now a no-op attribute (ignored silently).
+- **`PlateSolutionType` removed from the public interface** — the attribute is
+  no longer documented or read by any solver.  Existing scripts that set it
+  will not raise an error, but the value has no effect.
+
+### Improvements
+
+- `twoSurfplots()` now shows three panels (load, elastic thickness, deflection)
+  when `Te` is a 2-D array, using an asymmetric diverging colormap for the
+  deflection.
+- `export_for_blender()` writes load-cylinder geometry (radius from loaded
+  area, height proportional to load magnitude) and per-vertex colour weights
+  to the mesh file, enabling the companion Blender script to render a
+  physically scaled load cylinder.
+- Blender scene script: cylinder base deforms with the plate surface; camera
+  frames the full scene vertically.
+
+### Bug fixes
+
+- Fixed `SyntaxWarning` for invalid escape sequences (`\sigma`) in the F2D
+  class docstring (Python 3.12+).
+
+## [1.4.0](https://github.com/awickert/gFlex/releases/tag/v1.4.0) - 2026-05-29
+
 ### New features
 
 - **FFT spectral solver** for 1-D and 2-D problems.  Exact for periodic
