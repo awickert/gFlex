@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render docs/scripts/flowchart.graphml to docs/_static/flowchart.svg (and PNG via inkscape)."""
+"""Render docs/scripts/flowchart.graphml to docs/_static/flowchart.svg and flowchart.png."""
 import os
 import subprocess
 import xml.etree.ElementTree as ET
@@ -8,8 +8,8 @@ import numpy as np
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR   = os.path.dirname(SCRIPT_DIR)
 GRAPHML    = os.path.join(SCRIPT_DIR, 'flowchart.graphml')
-SVG_OUT    = os.path.join(DOCS_DIR, '_static', 'flowchart_new.svg')
-PNG_OUT    = os.path.join(DOCS_DIR, '_static', 'flowchart_new.png')
+SVG_OUT    = os.path.join(DOCS_DIR, '_static', 'flowchart.svg')
+PNG_OUT    = os.path.join(DOCS_DIR, '_static', 'flowchart.png')
 
 GNS  = 'http://graphml.graphdrawing.org/graphml'
 YNS  = 'http://www.yworks.com/xml/graphml'
