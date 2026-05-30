@@ -154,85 +154,107 @@ conditions (``0Displacement0Moment`` was added after publication):
    Fig. 4 (`CC BY 3.0 <https://creativecommons.org/licenses/by/3.0/>`_).
    ``0Displacement0Moment`` (added post-publication) is not shown.
 
-* ``0Displacement0Slope`` — zero displacement and slope; plate is pinned
-  to zero deflection at the boundary.
+0Displacement0Slope
+~~~~~~~~~~~~~~~~~~~
 
-  .. figure:: _static/bc_diagram_0Displacement0Slope.svg
-     :width: 80%
-     :align: center
-     :alt: Diagram of the 0Displacement0Slope (clamped end) boundary condition
+Zero displacement and zero slope: the plate is fully clamped at the
+boundary — no deflection and no rotation.
 
-     *Clamped end* — zero deflection and zero slope at the boundary.
+.. figure:: _static/bc_diagram_0Displacement0Slope.svg
+   :width: 80%
+   :align: center
+   :alt: Diagram of the 0Displacement0Slope (clamped end) boundary condition
 
-* ``0Displacement0Moment`` — zero displacement and bending moment; the
-  classical simply-supported (pinned) plate end.  The plate is held at
-  zero deflection but is free to rotate, so no moment is transmitted.
-  Implemented as a Dirichlet condition (:math:`w = 0`) at the boundary
-  node and an odd-reflection ghost
-  (:math:`w_\text{ghost} = -w_\text{interior}`) at the first interior
-  node to enforce zero curvature.
+   *Clamped end* — zero deflection and zero slope at the boundary.
 
-  ``Mirror`` and ``0Displacement0Moment`` are reflection boundary
-  conditions but encode opposite parities.  ``Mirror`` uses an *even*
-  reflection (:math:`w_\text{ghost} = +w_\text{interior}`): the symmetry
-  plane lies between the last real node and its ghost, the plate is
-  horizontal at the boundary, and the deflection there is generally
-  non-zero — making it the correct choice for modelling one half of a
-  symmetric system.  ``0Displacement0Moment`` uses an *odd* reflection
-  (:math:`w_\text{ghost} = -w_\text{interior}`): the boundary node is the
-  fixed point of the reflection, so :math:`w = 0` there by definition,
-  and the plate is free to rotate — the simply-supported end.  Sine modes
-  satisfy ``0Displacement0Moment``; cosine modes satisfy ``Mirror``.
+0Displacement0Moment
+~~~~~~~~~~~~~~~~~~~~
 
-  .. figure:: _static/bc_diagram_0Displacement0Moment.svg
-     :width: 80%
-     :align: center
-     :alt: Diagram of the 0Displacement0Moment (simply supported) boundary condition
+Zero displacement and zero bending moment: the classical simply-supported
+(pinned) plate end.  The plate is held at zero deflection but is free to
+rotate, so no moment is transmitted.  Implemented as a Dirichlet condition
+(:math:`w = 0`) at the boundary node and an odd-reflection ghost
+(:math:`w_\text{ghost} = -w_\text{interior}`) at the first interior node
+to enforce zero curvature.
 
-     *Simply supported* — zero deflection, free to rotate; no bending moment transmitted.
+``Mirror`` and ``0Displacement0Moment`` are reflection boundary conditions
+but encode opposite parities.  ``Mirror`` uses an *even* reflection
+(:math:`w_\text{ghost} = +w_\text{interior}`): the symmetry plane lies
+between the last real node and its ghost, the plate is horizontal at the
+boundary, and the deflection there is generally non-zero — making it the
+correct choice for modelling one half of a symmetric system.
+``0Displacement0Moment`` uses an *odd* reflection
+(:math:`w_\text{ghost} = -w_\text{interior}`): the boundary node is the
+fixed point of the reflection, so :math:`w = 0` there by definition, and
+the plate is free to rotate — the simply-supported end.  Sine modes
+satisfy ``0Displacement0Moment``; cosine modes satisfy ``Mirror``.
 
-* ``0Moment0Shear`` — zero bending moment and shear force; broken plate
-  with a free cantilever end (Wickert, 2016, Table 1).
+.. figure:: _static/bc_diagram_0Displacement0Moment.svg
+   :width: 80%
+   :align: center
+   :alt: Diagram of the 0Displacement0Moment (simply supported) boundary condition
 
-  .. figure:: _static/bc_diagram_0Moment0Shear.svg
-     :width: 80%
-     :align: center
-     :alt: Diagram of the 0Moment0Shear (free end) boundary condition
+   *Simply supported* — zero deflection, free to rotate; no bending moment transmitted.
 
-     *Free end* — no bending moment and no shear force; the plate ends freely ("broken plate").
+0Moment0Shear
+~~~~~~~~~~~~~
 
-* ``0Slope0Shear`` — zero slope and shear force; the plate is level at
-  the boundary but free to deflect there, with no shear transmitted.
-  Wickert (2016) calls this "free displacement of a horizontally clamped
-  boundary."  It is superficially similar to ``Mirror`` (both enforce zero
-  slope), but uses a different finite-difference stencil and produces
-  noticeably different solutions; prefer ``Mirror`` for symmetry problems.
+The natural condition at a free edge: no bending moment and no shear
+force are transmitted across the boundary (Wickert, 2016, Table 1).  It
+is the far-field condition into which a flexed plate decays.  Combined
+with an edge-applied load — a vertical point force supplies
+:math:`V_0`, a closely-spaced couple supplies :math:`M_0` — it produces
+the classical broken-plate response of Turcotte and Schubert: the load
+carries the inhomogeneity through the loading vector while the BC matrix
+stays homogeneous.
 
-  .. figure:: _static/bc_diagram_0Slope0Shear.svg
-     :width: 80%
-     :align: center
-     :alt: Diagram of the 0Slope0Shear (guided end) boundary condition
+.. figure:: _static/bc_diagram_0Moment0Shear.svg
+   :width: 80%
+   :align: center
+   :alt: Diagram of the 0Moment0Shear (free end) boundary condition
 
-     *Guided end* — zero slope, no shear force; plate is level and free to deflect.
+   *Free end* — no bending moment and no shear force; the plate ends freely ("broken plate").
 
-* ``Mirror`` — even reflection at the boundary; model only half of a
-  symmetric system (e.g., one flank of a mountain range or ice sheet).
-  See the ``0Displacement0Moment`` entry above for the contrast with the
-  odd-reflection simply-supported condition.
+0Slope0Shear
+~~~~~~~~~~~~
 
-  .. figure:: _static/bc_diagram_Mirror.svg
-     :width: 80%
-     :align: center
-     :alt: Diagram of the Mirror (symmetry plane) boundary condition
+Zero slope and zero shear force: the plate is level at the boundary but
+free to deflect there, with no shear transmitted.  Wickert (2016) calls
+this "free displacement of a horizontally clamped boundary."  It is
+superficially similar to ``Mirror`` (both enforce zero slope), but uses a
+different finite-difference stencil and produces noticeably different
+solutions; prefer ``Mirror`` for symmetry problems.
 
-     *Symmetry plane* — even reflection; use when the system is symmetric about the boundary.
+.. figure:: _static/bc_diagram_0Slope0Shear.svg
+   :width: 80%
+   :align: center
+   :alt: Diagram of the 0Slope0Shear (guided end) boundary condition
 
-* ``Periodic`` — wrap-around; the domain tiles infinitely in both
-  directions.
+   *Guided end* — zero slope, no shear force; plate is level and free to deflect.
 
-  .. figure:: _static/bc_diagram_Periodic.svg
-     :width: 80%
-     :align: center
-     :alt: Diagram of the Periodic boundary condition
+Mirror
+~~~~~~
 
-     *Periodic* — the domain wraps around; east and west edges are connected.
+Even reflection at the boundary: model only half of a symmetric system
+(e.g., one flank of a mountain range or ice sheet).  See
+`0Displacement0Moment`_ above for the contrast with the odd-reflection
+simply-supported condition.
+
+.. figure:: _static/bc_diagram_Mirror.svg
+   :width: 80%
+   :align: center
+   :alt: Diagram of the Mirror (symmetry plane) boundary condition
+
+   *Symmetry plane* — even reflection; use when the system is symmetric about the boundary.
+
+Periodic
+~~~~~~~~
+
+Wrap-around: the domain tiles infinitely in both directions.
+
+.. figure:: _static/bc_diagram_Periodic.svg
+   :width: 80%
+   :align: center
+   :alt: Diagram of the Periodic boundary condition
+
+   *Periodic* — the domain wraps around; east and west edges are connected.
