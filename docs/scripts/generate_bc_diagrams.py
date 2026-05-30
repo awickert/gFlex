@@ -33,7 +33,7 @@ C_EXCL  = "#d0d0d0"   # grey  — excluded ghost
 C_EDGE  = "#1a6faf"
 C_EDGX  = "#999999"
 C_EQN   = "#c03a2b"   # red   — reflection equation on label
-C_CURVE = "#aaaaaa"   # grey  — schematic deflection curve
+C_CURVE = "#555555"   # dark grey — schematic deflection curve
 C_BDY   = "#222222"   # black — boundary dashed line
 
 FIG_W, FIG_H = 7.0, 2.8
@@ -69,9 +69,9 @@ def _curve(ax, xs, ys):
     if len(xs_s) >= 4:
         cs   = CubicSpline(xs_s, ys_s)
         xf   = np.linspace(xs_s[0], xs_s[-1], 300)
-        ax.plot(xf, cs(xf), color=C_CURVE, lw=0.9, zorder=2, alpha=0.7)
+        ax.plot(xf, cs(xf), color=C_CURVE, lw=1.5, zorder=2, alpha=0.8)
     else:
-        ax.plot(xs_s, ys_s, color=C_CURVE, lw=0.9, zorder=2, alpha=0.7)
+        ax.plot(xs_s, ys_s, color=C_CURVE, lw=1.5, zorder=2, alpha=0.8)
 
 
 # ── main drawing function ──────────────────────────────────────────────────
@@ -109,12 +109,19 @@ def draw_bc(*, name, title, subtitle,
     # equilibrium baseline
     ax.axhline(0, color="#c8c8c8", lw=0.8, zorder=1)
 
-    # schematic deflection curve through ghost + real nodes
-    # (exclude excluded ghosts from the curve so it doesn't dip to 0 spuriously)
-    curve_mask = [k != "excl" for k in ghost_kinds]
+    # Deflection curve through active ghost nodes + all real nodes (spline).
+    # Excluded ghost nodes (0Displacement0Slope) are drawn as a flat horizontal
+    # line to w₀ instead: the clamped BC enforces zero slope at the boundary,
+    # so the profile must arrive flat — a spline would curve slightly near w₀.
+    excl_mask = np.array([k == "excl" for k in ghost_kinds])
+    curve_mask = ~excl_mask
     curve_x = np.concatenate([gx[curve_mask], rx])
     curve_y = np.concatenate([gy[curve_mask], ry])
     _curve(ax, curve_x, curve_y)
+    if excl_mask.any():
+        x_start = gx[excl_mask].min()
+        ax.plot([x_start, rx[0]], [ry[0], ry[0]],
+                color=C_CURVE, lw=1.5, zorder=2, alpha=0.8)
 
     # boundary line
     ax.axvline(bdy_x, color=C_BDY, lw=1.3, ls="--", zorder=3, alpha=0.85)
@@ -158,8 +165,8 @@ def draw_bc(*, name, title, subtitle,
                 ha="right", va="top", fontsize=7.5, color="#666666", style="italic")
 
     fig.tight_layout(pad=0.3)
-    outpath = os.path.join(OUTDIR, f"bc_diagram_{name}.png")
-    fig.savefig(outpath, dpi=DPI, bbox_inches="tight", facecolor="white")
+    outpath = os.path.join(OUTDIR, f"bc_diagram_{name}.svg")
+    fig.savefig(outpath, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"  saved {outpath}")
 
