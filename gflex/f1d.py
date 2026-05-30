@@ -394,8 +394,8 @@ class F1D(Flexure):
 
         **BC-type warnings** — fired for boundary types whose physical meaning
         deserves verification: ``'0Moment0Shear'`` (free broken end; check that
-        a rifted margin is intended) and ``'0Slope0Shear'`` (no clear geological
-        analog).
+        a rifted margin is intended) and ``'0Slope0Shear'`` (symmetry plane;
+        verify that load and elastic thickness are symmetric about the boundary).
 
         **Proximity warnings** — fired for ``'0Displacement0Slope'`` boundaries
         when the nearest loaded cell is within one flexural wavelength
@@ -417,10 +417,12 @@ class F1D(Flexure):
                 )
             elif bc == "0Slope0Shear":
                 warnings.warn(
-                    f"BC_{side} = '0Slope0Shear': requires the plate to be horizontal "
-                    "and experience no shear force at the boundary. No clear geological "
-                    "analog is known where both conditions hold simultaneously in a "
-                    "nontrivial (nonzero deflection) setting.",
+                    f"BC_{side} = '0Slope0Shear': enforces a symmetry plane — zero "
+                    "slope and zero shear force at the boundary. This is the correct "
+                    "finite-difference implementation of mirror symmetry, preferred "
+                    "over 'Mirror' especially for variable elastic thickness. Verify "
+                    "that both the load and elastic thickness are symmetric about "
+                    "this boundary.",
                     UserWarning,
                     stacklevel=4,
                 )
@@ -972,17 +974,25 @@ class F1D(Flexure):
 
     def BC_0Slope0Shear(self):
         """
-    This boundary condition is essentially a Neumann 0-gradient boundary
-    condition with that 0-gradient state extended over a longer part of
-    the grid such that the third derivative also equals 0.
+    Symmetry-plane boundary condition: zero slope (dw/dx = 0) and zero
+    shear force (V = 0) at the boundary.
 
-    This boundary condition has more of a geometric meaning than a physical
-    meaning. It produces a state in which the boundaries have to have all
-    gradients in deflection go to 0 (i.e. approach constant values) while
-    not specifying what those values must be.
+    Implemented by even reflection of both ghost nodes into the full
+    variable-D finite-difference stencil: the inner ghost coefficient is
+    folded into the nearest interior neighbor and the outer ghost coefficient
+    into the next neighbor beyond that.  This is the mathematically correct
+    implementation of mirror symmetry for the complete variable-D stencil,
+    and is preferred over ``'Mirror'``, which only reflects the inner ghost
+    at the first boundary row and folds the outer ghost into the center
+    coefficient at the second row — a truncation that diverges from true
+    even reflection when D varies spatially.
 
-    This uses a 0-curvature boundary condition for elastic thickness
-    that extends outside of the computational domain.
+    Valid when both the applied load and elastic thickness are symmetric
+    about this boundary, e.g. when modeling from the crest of a mountain
+    range or ice sheet to one margin.
+
+    A 0-curvature boundary condition is applied to elastic thickness
+    outside the computational domain.
     """
 
         if self.BC_W == "0Slope0Shear":
