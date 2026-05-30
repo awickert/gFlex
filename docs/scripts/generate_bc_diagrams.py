@@ -182,10 +182,13 @@ def draw_bc(*, name, title, subtitle,
                     color=C_CURVE, lw=1.5, zorder=2, alpha=0.8)
 
     # boundary line and rotated label
+    # rotation_mode="anchor" keeps the anchor IS the 'b' character (left-bottom
+    # of the pre-rotation text box).  ha="left" + x offset ≈ half cap-height
+    # centres the narrow vertical text on bdy_x.
     ax.axvline(bdy_x, color=C_BDY, lw=1.3, ls="--", zorder=3, alpha=0.85)
-    ax.text(bdy_x, ylo + 0.04, "boundary",
-            ha="center", va="bottom", fontsize=7.5, color="#555555",
-            rotation=90)
+    ax.text(bdy_x + 0.04, ylo + 0.04, "boundary",
+            ha="left", va="bottom", fontsize=7.5, color="#555555",
+            rotation=90, rotation_mode="anchor")
 
     # ghost nodes
     for (x, y), kind in zip(ghost_xy, ghost_kinds):
