@@ -353,14 +353,15 @@ def run():
     # ------------------------------------------------------------------
     # Periodic — wrap-around
     # Ghost cells come from the far end of the domain.
-    # Domain nodes: w₁ … w_N (4 shown).
+    # Four domain nodes (w₁–w₄) shown near the left boundary, plus the
+    # two far-end source nodes w_{N-1} and w_N shown in blue; a dashed
+    # gap segment indicates the (unspecified) domain interior distance.
+    # The wider figure relative to the other BCs reflects that Periodic
+    # is categorically different: no physical wall, just wrap-around.
     #   w₋₁ = w_N   (last node wraps to inner ghost)
     #   w₋₂ = w_{N-1}  (second-to-last wraps to outer ghost)
-    # Two right-side nodes w_{N-1} and w_N are drawn in blue at schematic
-    # positions, connected by a solid segment; a dashed line from w₄ to
-    # w_{N-1} indicates the (unspecified) domain interior gap.
     # ------------------------------------------------------------------
-    ry = [0.32, 0.55, 0.65, 0.52]
+    ry    = [0.32, 0.55, 0.65, 0.52]
     y_Nm1 = 0.10   # w_{N-1} value (= ghost w₋₂)
     y_N   = 0.18   # w_N value   (= ghost w₋₁)
     real  = list(zip([0, 1, 2, 3], ry))
