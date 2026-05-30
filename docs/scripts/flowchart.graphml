@@ -42,7 +42,7 @@ elastic properties</y:NodeLabel>
     <node id="bg_methods">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="80.00" y="311.66" width="840.00" height="100.00"/>
+          <y:Geometry x="60.00" y="311.66" width="860.00" height="100.00"/>
           <y:Fill color="#F2F2F2" transparent="false"/>
           <y:BorderStyle type="line" width="1.0" color="#BBBBBB"/>
           <y:NodeLabel fontFamily="Arial" fontSize="11" fontStyle="italic"
@@ -128,19 +128,19 @@ Analytical Solutions
            bc_per→Run routes LEFT of bc_nol_pad (arm at x=485 < left=501)
            bc_0ds→Run routes RIGHT of bc_nol_pad (arm at x=673 > right=661)
 
-         Band left:  bc_nol left=260  − 10 = 250
-         Band right: bc_0ms right=1021 + 10 = 1031  →  w=781
+         Band left:  bc_nol left=260  − 30 = 230  (extra 20 px for swim label strip)
+         Band right: bc_0ms right=1021 + 10 = 1031  →  w=801
          Band top:   bc_per top=459.45 − 15 = 444
          Band bottom: bc_nol_pad bottom=629.45 + 10 = 639.45 → h=196  -->
     <node id="bg_all_bcs">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="250.00" y="444.00" width="781.00" height="196.00"/>
+          <y:Geometry x="230.00" y="444.00" width="801.00" height="196.00"/>
           <y:Fill color="#F2F2F2" transparent="false"/>
           <y:BorderStyle type="line" width="1.0" color="#BBBBBB"/>
           <y:NodeLabel fontFamily="Arial" fontSize="11" fontStyle="italic"
                        alignment="left" textColor="#888888"
-                       modelName="internal" modelPosition="tl">Boundary Condition</y:NodeLabel>
+                       modelName="internal" modelPosition="tl">Boundary Conditions</y:NodeLabel>
           <y:Shape type="roundrectangle"/>
         </y:ShapeNode>
       </data>

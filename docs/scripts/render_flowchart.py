@@ -99,14 +99,16 @@ def svg_node(nd, background=False):
     fi = 'italic' if nd.get('italic') else 'normal'
 
     if background:
-        # top-left label: small, italic, muted
-        pad = 5
-        lines.append(f'  <text font-family="Arial,Helvetica,sans-serif"'
-                     f' font-size="{fs}" font-weight="{fw}" font-style="{fi}" fill="{tc}">')
+        # Rotated swim-lane label: centered vertically on the 20 px left strip
+        sx = x + 10          # horizontal center of the label strip
+        sy = y + h / 2       # vertical center of the band
+        lines.append(f'  <text text-anchor="middle" dominant-baseline="central"'
+                     f' font-family="Arial,Helvetica,sans-serif"'
+                     f' font-size="{fs}" font-weight="{fw}" font-style="{fi}" fill="{tc}"'
+                     f' transform="rotate(-90,{q(sx)},{q(sy)})">')
         for i, txt in enumerate(label_lines):
-            tx = x + pad
-            ty = y + pad + i * lh
-            lines.append(f'    <tspan x="{q(tx)}" y="{q(ty)}" dominant-baseline="hanging">{txt}</tspan>')
+            ty = sy + (i - (nl - 1) / 2) * lh
+            lines.append(f'    <tspan x="{q(sx)}" y="{q(ty)}" dominant-baseline="central">{txt}</tspan>')
         lines.append('  </text>')
     else:
         lines.append(f'  <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif"'
