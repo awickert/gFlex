@@ -135,7 +135,9 @@ Conditions
        computation.  Naturally compatible with cosine-series (Discrete
        Cosine Transform) solutions.
      - One flank of a mountain range or orogenic belt; one side of a
-       continental ice sheet; half of a foreland basin profile
+       continental ice sheet; half of a foreland basin profile; one
+       quarter of a bilaterally symmetric ice dome (Mirror on two
+       perpendicular axes)
    * - ``Periodic``
      - Domain tiles infinitely in both directions; the solution wraps
        around.  Native to FFT-based spectral solutions.
