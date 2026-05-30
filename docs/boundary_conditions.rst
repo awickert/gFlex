@@ -33,14 +33,14 @@ meaning and derivative order.
    * - Quantity
      - Symbol
      - Definition (uniform :math:`D`, 1-D)
-     - Derivative of :math:`w`
+     - :math:`w`-derivative order
    * - Deflection
      - :math:`w`
-     - —
+     - :math:`w`
      - 0th
    * - Slope
+     - :math:`S`
      - :math:`\mathrm{d}w/\mathrm{d}x`
-     - —
      - 1st
    * - Bending moment
      - :math:`M`
