@@ -96,6 +96,52 @@ Conditions
      - —
      - Domain tiles infinitely in both directions
 
+.. list-table::
+   :widths: 28 42 30
+   :header-rows: 1
+
+   * - gFlex name
+     - Geological description / use
+     - Examples
+   * - ``0Displacement0Slope``
+     - Plate is fully fixed at the boundary — no deflection and no rotation.
+       Functions as a conservative far-field constraint when the domain edge
+       is far from the load and the plate is expected to be undisturbed.
+     - Far boundary in a synthetic model
+   * - ``0Displacement0Moment``
+     - Plate is pinned to its reference elevation and free to rotate — the
+       natural condition for sine-series (Discrete Sine Transform) solutions.
+       Pinning both ends in deflection but freeing them in moment yields an
+       odd-periodic extension that supports spectral computation without edge
+       artefacts.
+     - —
+   * - ``0Moment0Shear``
+     - Natural free-edge condition: no moment or shear transmitted.  The
+       far-field condition for a plate decaying to its reference level, and
+       the foundation for broken-plate flexure when paired with an
+       edge-applied load that supplies (:math:`M_0`, :math:`V_0`) through
+       the loading vector.
+     - Far-field boundary of an interior-loaded domain; passive/rifted
+       margin; broken-plate flexure (T&S) with edge load at the boundary
+       node; subduction trench/outer rise (slab pull as edge-applied
+       vertical load)
+   * - ``0Slope0Shear``
+     - Plate is horizontal at the boundary and free to deflect; no shear
+       transmitted.  Primarily a mathematical convenience.
+     - —
+   * - ``Mirror``
+     - Symmetry plane: the system is identical on both sides of the
+       boundary.  Model only half of a symmetric domain, halving
+       computation.  Naturally compatible with cosine-series (Discrete
+       Cosine Transform) solutions.
+     - One flank of a mountain range or orogenic belt; one side of a
+       continental ice sheet; half of a foreland basin profile
+   * - ``Periodic``
+     - Domain tiles infinitely in both directions; the solution wraps
+       around.  Native to FFT-based spectral solutions.
+     - Regularly spaced seamount or volcanic chain; broad-scale FFT
+       calculations
+
 The following figure from Wickert (2016) shows schematics of five of the six
 conditions (``0Displacement0Moment`` was added after publication):
 
