@@ -137,6 +137,7 @@ point (``gflex <config_file>``).
    :caption: Contents
 
    theory
+   boundary_conditions
    example
    api
    configuration
