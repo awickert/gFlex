@@ -1098,31 +1098,52 @@ class F1D(Flexure):
     def BC_0Displacement0Moment(self):
         """
         Simply-supported (pinned) BC: zero displacement and zero bending moment
-        at the boundary.  Odd-reflection sibling of :meth:`BC_Mirror`: the ghost
-        cell is the *negative* of the interior cell at the same distance from the
-        edge (w[-1] = -w[+1]), which enforces w = 0 and d²w/dx² = 0.
+        at the boundary.
+
+        Enforces w = 0 at each boundary node via a Dirichlet condition: all
+        off-diagonal stencil entries at that node are set to zero, leaving
+        c0·w = q.  For the normal case of no load at the boundary (q = 0),
+        this gives w = 0 exactly for any D profile.
+
+        The moment condition (d²w/dx² = 0) is encoded at the first interior
+        node via the odd-reflection ghost w[ghost] = -w[interior], which
+        contributes -l2_coeff (west) or -r2_coeff (east) to c0 there.
+
+        Off-diagonal entries that after np.roll land at out-of-bounds spdiags
+        positions are set to np.nan (dropped automatically); those that land at
+        interior matrix positions are set to 0 explicitly.
         """
         if self.BC_W == "0Displacement0Moment":
+            # Boundary node: Dirichlet w[0] = 0
             i = 0
-            self.c0[i] += 0
-            self.r1[i] -= self.l1_coeff_i[i]
-            self.r2[i] -= self.l2_coeff_i[i]
+            self.l2[i] = np.nan    # ghost at j=-2: out-of-bounds after roll → excluded
+            self.l1[i] = np.nan    # ghost at j=-1: out-of-bounds after roll → excluded
+            self.c0[i] += 0        # c0·w[0] = q[0]; w[0] = 0 for q[0] = 0
+            self.r1[i] = 0         # decouple: lands at interior matrix position (0, 1)
+            self.r2[i] = 0         # decouple: lands at interior matrix position (0, 2)
+            # First interior node: encode M = 0 via odd-reflection ghost w[-1] = -w[+1]
             i = 1
-            self.l1[i] += 0
-            self.c0[i] -= self.l2_coeff_i[i]
+            self.l2[i] = np.nan    # ghost at j=-1: out-of-bounds after roll → excluded
+            self.l1[i] += 0        # coupling to w[0] = 0; contributes 0 to solution
+            self.c0[i] -= self.l2_coeff_i[i]   # ghost w[-1] = -w[1] folds into c0
             self.r1[i] += 0
             self.r2[i] += 0
 
         if self.BC_E == "0Displacement0Moment":
+            # First interior node: encode M = 0 via odd-reflection ghost w[N] = -w[N-2]
             i = -2
             self.l2[i] += 0
             self.l1[i] += 0
-            self.c0[i] -= self.r2_coeff_i[i]
+            self.c0[i] -= self.r2_coeff_i[i]   # ghost w[N] = -w[N-2] folds into c0
             self.r1[i] += 0
+            self.r2[i] = np.nan    # ghost at j=N: out-of-bounds after roll → excluded
+            # Boundary node: Dirichlet w[N-1] = 0
             i = -1
-            self.l2[i] -= self.r2_coeff_i[i]
-            self.l1[i] -= self.r1_coeff_i[i]
-            self.c0[i] += 0
+            self.l2[i] = 0         # decouple: lands at interior matrix position (N-1, N-3)
+            self.l1[i] = 0         # decouple: lands at interior matrix position (N-1, N-2)
+            self.c0[i] += 0        # c0·w[N-1] = q[N-1]; w[N-1] = 0 for q[N-1] = 0
+            self.r1[i] = np.nan    # ghost at j=N: out-of-bounds after roll → excluded
+            self.r2[i] = np.nan    # ghost at j=N+1: out-of-bounds after roll → excluded
 
     def calc_max_flexural_wavelength(self):
         """
