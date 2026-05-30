@@ -36,7 +36,7 @@ alpha = 1.0 / beta                         # flexural parameter [m]
 
 
 def _run(qs, method="FD", bc_w="0Moment0Shear", bc_e="0Moment0Shear",
-         sigma_xx=None):
+         sigma_xx=None, te=None):
     """Run a 1-D flexure calculation and return the flex object."""
     flex = F1D()
     flex.Quiet = True
@@ -47,7 +47,7 @@ def _run(qs, method="FD", bc_w="0Moment0Shear", bc_e="0Moment0Shear",
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.Te = Te
+    flex.Te = Te if te is None else te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.BC_W = bc_w
@@ -396,6 +396,69 @@ def test_fd_0displacement0moment_half_domain_antisymmetric():
     # linear-system solves).  atol handles the near-zero endpoint; rtol governs
     # the interior.
     np.testing.assert_allclose(flex_half.w, flex_full.w[:N_half], rtol=1e-8, atol=1e-10)
+
+
+# ---------------------------------------------------------------------------
+# 0Displacement0Moment: variable Te (Dirichlet approach)
+# ---------------------------------------------------------------------------
+
+def test_fd_0displacement0moment_variable_Te_boundary_exactly_zero():
+    """Variable-Te: boundary nodes are exactly zero (Dirichlet approach).
+
+    For constant Te the stencil is symmetric, so the old odd-reflection
+    approach happened to cancel r1/r2 at the boundary node.  For variable Te
+    the stencil is asymmetric and those terms no longer cancel — the boundary
+    node equation couples to interior nodes and w[0] would not be zero.
+
+    The Dirichlet fix decouples the boundary row entirely: only c0·w = q
+    remains.  With q[0] = q[N-1] = 0 (no load at the boundary) a direct
+    solver returns w = 0.0 exactly at both endpoints regardless of D(x).
+    """
+    N = 64
+    qs = np.zeros(N)
+    qs[N // 3] = 1e6   # interior load; q[0] = q[N-1] = 0
+
+    # Linearly varying Te breaks stencil symmetry
+    Te_var = np.linspace(20e3, 40e3, N)
+
+    flex = _run(qs, bc_w="0Displacement0Moment", bc_e="0Displacement0Moment",
+                te=Te_var)
+
+    assert flex.w[0] == 0.0,  "West boundary must be exactly zero for variable Te"
+    assert flex.w[-1] == 0.0, "East boundary must be exactly zero for variable Te"
+    # Interior deflection should be non-trivial and negative (load pushes down)
+    assert flex.w.min() < 0.0
+
+
+def test_fd_0displacement0moment_variable_Te_mirror_symmetry():
+    """Variable-Te: mirror-image D profiles with mirrored loads give mirrored solutions.
+
+    If Te(x) increases left-to-right and Te_flipped(x) = Te(L-x), then for any
+    load q, the deflection under Te_flipped is the left-right mirror of the
+    deflection under Te.  This holds for any BC that treats both boundaries
+    identically — including 0Displacement0Moment.  This cross-validates that
+    the Dirichlet fix is applied consistently on both sides for variable D.
+    """
+    N = 80
+    qs = np.zeros(N)
+    qs[N // 4] = 1e6   # asymmetric point load
+
+    Te_fwd = np.linspace(20e3, 40e3, N)
+    Te_rev = Te_fwd[::-1]
+
+    flex_fwd = _run(qs, bc_w="0Displacement0Moment", bc_e="0Displacement0Moment",
+                    te=Te_fwd)
+    flex_rev = _run(qs[::-1], bc_w="0Displacement0Moment", bc_e="0Displacement0Moment",
+                    te=Te_rev)
+
+    # Boundary nodes must be exactly zero in both runs (q[0]=q[-1]=0, direct solver)
+    assert flex_fwd.w[0] == 0.0
+    assert flex_fwd.w[-1] == 0.0
+    assert flex_rev.w[0] == 0.0
+    assert flex_rev.w[-1] == 0.0
+
+    # Mirrored solution: flex_rev should equal flex_fwd reversed
+    np.testing.assert_allclose(flex_rev.w, flex_fwd.w[::-1], atol=1e-10)
 
 
 if __name__ == "__main__":
