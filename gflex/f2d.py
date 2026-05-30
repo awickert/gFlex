@@ -475,8 +475,8 @@ class F2D(Flexure):
 
         **BC-type warnings** — fired for boundary types whose physical meaning
         deserves verification: ``'0Moment0Shear'`` (free broken end; check that
-        a rifted margin is intended) and ``'0Slope0Shear'`` (symmetry plane;
-        verify that load and elastic thickness are symmetric about the boundary).
+        a rifted margin is intended) and ``'0Slope0Shear'`` (no clear geological
+        analog).
 
         **Proximity warnings** — fired for ``'0Displacement0Slope'`` boundaries
         when the nearest loaded cell is within one flexural wavelength
@@ -498,12 +498,10 @@ class F2D(Flexure):
                 )
             elif bc == "0Slope0Shear":
                 warnings.warn(
-                    f"BC_{side} = '0Slope0Shear': enforces a symmetry plane — zero "
-                    "slope and zero shear force at the boundary. This is the correct "
-                    "finite-difference implementation of mirror symmetry, preferred "
-                    "over 'Mirror' especially for variable elastic thickness. Verify "
-                    "that both the load and elastic thickness are symmetric about "
-                    "this boundary.",
+                    f"BC_{side} = '0Slope0Shear': requires the plate to be horizontal "
+                    "and experience no shear force at the boundary. No clear geological "
+                    "analog is known where both conditions hold simultaneously in a "
+                    "nontrivial (nonzero deflection) setting.",
                     UserWarning,
                     stacklevel=4,
                 )
