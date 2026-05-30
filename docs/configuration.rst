@@ -145,6 +145,35 @@ Parameters
        Fig. 4 (`CC BY 3.0 <https://creativecommons.org/licenses/by/3.0/>`_).
        ``0Displacement0Moment`` (added post-publication) is not shown.
 
+    The boundary condition names encode which plate mechanical quantities
+    vanish at that edge.  The table below maps each name component to its
+    physical meaning and derivative order.
+
+    .. list-table::
+       :widths: 22 12 42 12
+       :header-rows: 1
+
+       * - Quantity
+         - Symbol
+         - Definition (uniform :math:`D`, 1-D)
+         - Derivative of :math:`w`
+       * - Deflection
+         - :math:`w`
+         - —
+         - 0th
+       * - Slope
+         - :math:`\mathrm{d}w/\mathrm{d}x`
+         - —
+         - 1st
+       * - Bending moment
+         - :math:`M`
+         - :math:`D\,\mathrm{d}^2w/\mathrm{d}x^2`
+         - 2nd
+       * - Shear force
+         - :math:`V`
+         - :math:`D\,\mathrm{d}^3w/\mathrm{d}x^3`
+         - 3rd
+
     * ``0Displacement0Slope`` — zero displacement and slope; plate is pinned
       to zero deflection at the boundary.
     * ``0Displacement0Moment`` — zero displacement and bending moment; the
