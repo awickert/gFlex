@@ -839,7 +839,7 @@ class F2D(Flexure):
             == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
         ).any():
             self.BC_Rigidity_W = "0 curvature"
-        elif self.BC_W == "Mirror":
+        elif self.BC_W in ("Mirror", "0Displacement0Moment"):
             self.BC_Rigidity_W = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
@@ -851,7 +851,7 @@ class F2D(Flexure):
             == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
         ).any():
             self.BC_Rigidity_E = "0 curvature"
-        elif self.BC_E == "Mirror":
+        elif self.BC_E in ("Mirror", "0Displacement0Moment"):
             self.BC_Rigidity_E = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
@@ -863,7 +863,7 @@ class F2D(Flexure):
             == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
         ).any():
             self.BC_Rigidity_N = "0 curvature"
-        elif self.BC_N == "Mirror":
+        elif self.BC_N in ("Mirror", "0Displacement0Moment"):
             self.BC_Rigidity_N = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
@@ -875,7 +875,7 @@ class F2D(Flexure):
             == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
         ).any():
             self.BC_Rigidity_S = "0 curvature"
-        elif self.BC_S == "Mirror":
+        elif self.BC_S in ("Mirror", "0Displacement0Moment"):
             self.BC_Rigidity_S = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
@@ -1330,6 +1330,40 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += 0
+        elif self.BC_W == "0Displacement0Moment":
+            # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
+            # column (j=0) by zeroing all off-diagonal stencil terms there, leaving
+            # only c0*w[i,0]=q[i,0].  The moment condition M_x=0 is encoded at
+            # j=1 via the odd-reflection ghost: w[j=-1]=-w[j=+1] gives
+            # c0[j=1] -= cj_2i0_coeff (the ghost contributes negatively to itself).
+            j = 0
+            self.cj_2i0[:, j] += np.inf
+            self.cj_1i_1[:, j] += np.inf
+            self.cj_1i0[:, j] += np.inf
+            self.cj_1i1[:, j] += np.inf
+            self.cj0i_2[:, j] += np.inf
+            self.cj0i_1[:, j] += np.inf
+            self.cj0i0[:, j] += 0
+            self.cj0i1[:, j] += np.inf
+            self.cj0i2[:, j] += np.inf
+            self.cj1i_1[:, j] += np.inf
+            self.cj1i0[:, j] += np.inf
+            self.cj1i1[:, j] += np.inf
+            self.cj2i0[:, j] += np.inf
+            j = 1
+            self.cj_2i0[:, j] += np.inf
+            self.cj_1i_1[:, j] += 0
+            self.cj_1i0[:, j] += 0
+            self.cj_1i1[:, j] += 0
+            self.cj0i_2[:, j] += 0
+            self.cj0i_1[:, j] += 0
+            self.cj0i0[:, j] -= self.cj_2i0_coeff_ij[:, j]
+            self.cj0i1[:, j] += 0
+            self.cj0i2[:, j] += 0
+            self.cj1i_1[:, j] += 0
+            self.cj1i0[:, j] += 0
+            self.cj1i1[:, j] += 0
+            self.cj2i0[:, j] += 0
         else:
             # Possibly redundant safeguard
             sys.exit("Invalid boundary condition")
@@ -1487,6 +1521,39 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += np.inf
+        elif self.BC_E == "0Displacement0Moment":
+            # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
+            # column (j=-1) by zeroing all off-diagonal stencil terms there.
+            # Moment condition M_x=0 is encoded at j=-2 via the odd-reflection
+            # ghost w[j=Nx]=-w[j=Nx-2]: c0[j=-2] -= cj2i0_coeff.
+            j = -1
+            self.cj_2i0[:, j] += np.inf
+            self.cj_1i_1[:, j] += np.inf
+            self.cj_1i0[:, j] += np.inf
+            self.cj_1i1[:, j] += np.inf
+            self.cj0i_2[:, j] += np.inf
+            self.cj0i_1[:, j] += np.inf
+            self.cj0i0[:, j] += 0
+            self.cj0i1[:, j] += np.inf
+            self.cj0i2[:, j] += np.inf
+            self.cj1i_1[:, j] += np.inf
+            self.cj1i0[:, j] += np.inf
+            self.cj1i1[:, j] += np.inf
+            self.cj2i0[:, j] += np.inf
+            j = -2
+            self.cj_2i0[:, j] += 0
+            self.cj_1i_1[:, j] += 0
+            self.cj_1i0[:, j] += 0
+            self.cj_1i1[:, j] += 0
+            self.cj0i_2[:, j] += 0
+            self.cj0i_1[:, j] += 0
+            self.cj0i0[:, j] -= self.cj2i0_coeff_ij[:, j]
+            self.cj0i1[:, j] += 0
+            self.cj0i2[:, j] += 0
+            self.cj1i_1[:, j] += 0
+            self.cj1i0[:, j] += 0
+            self.cj1i1[:, j] += 0
+            self.cj2i0[:, j] += np.inf
         else:
             # Possibly redundant safeguard
             sys.exit("Invalid boundary condition")
@@ -1617,6 +1684,39 @@ class F2D(Flexure):
             self.cj0i_2[i, :] += 0  # np.nan
             self.cj0i_1[i, :] += 0
             self.cj0i0[i, :] += self.cj0i_2_coeff_ij[i, :]
+            self.cj0i1[i, :] += 0
+            self.cj0i2[i, :] += 0
+            self.cj1i_1[i, :] += 0
+            self.cj1i0[i, :] += 0
+            self.cj1i1[i, :] += 0
+            self.cj2i0[i, :] += 0
+        elif self.BC_N == "0Displacement0Moment":
+            # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
+            # row (i=0) by zeroing all off-diagonal stencil terms there.
+            # Moment condition M_y=0 is encoded at i=1 via the odd-reflection
+            # ghost w[i=-1]=-w[i=+1]: c0[i=1] -= cj0i_2_coeff.
+            i = 0
+            self.cj_2i0[i, :] += np.inf
+            self.cj_1i_1[i, :] += np.inf
+            self.cj_1i0[i, :] += np.inf
+            self.cj_1i1[i, :] += np.inf
+            self.cj0i_2[i, :] += np.inf
+            self.cj0i_1[i, :] += np.inf
+            self.cj0i0[i, :] += 0
+            self.cj0i1[i, :] += np.inf
+            self.cj0i2[i, :] += np.inf
+            self.cj1i_1[i, :] += np.inf
+            self.cj1i0[i, :] += np.inf
+            self.cj1i1[i, :] += np.inf
+            self.cj2i0[i, :] += np.inf
+            i = 1
+            self.cj_2i0[i, :] += 0
+            self.cj_1i_1[i, :] += 0
+            self.cj_1i0[i, :] += 0
+            self.cj_1i1[i, :] += 0
+            self.cj0i_2[i, :] += 0  # np.nan
+            self.cj0i_1[i, :] += 0
+            self.cj0i0[i, :] -= self.cj0i_2_coeff_ij[i, :]
             self.cj0i1[i, :] += 0
             self.cj0i2[i, :] += 0
             self.cj1i_1[i, :] += 0
@@ -1755,6 +1855,39 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :][self.cj1i1[i, :] != np.inf] += 0  # np.nan
             self.cj2i0[i, :] += 0
+        elif self.BC_S == "0Displacement0Moment":
+            # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
+            # row (i=-1) by zeroing all off-diagonal stencil terms there.
+            # Moment condition M_y=0 is encoded at i=-2 via the odd-reflection
+            # ghost w[i=Ny]=-w[i=Ny-2]: c0[i=-2] -= cj0i2_coeff.
+            i = -2
+            self.cj_2i0[i, :] += 0
+            self.cj_1i_1[i, :] += 0
+            self.cj_1i0[i, :] += 0
+            self.cj_1i1[i, :] += 0
+            self.cj0i_2[i, :] += 0
+            self.cj0i_1[i, :] += 0
+            self.cj0i0[i, :] -= self.cj0i2_coeff_ij[i, :]
+            self.cj0i1[i, :] += 0
+            self.cj0i2[i, :] += 0  # np.nan
+            self.cj1i_1[i, :] += 0
+            self.cj1i0[i, :] += 0
+            self.cj1i1[i, :] += 0
+            self.cj2i0[i, :] += 0
+            i = -1
+            self.cj_2i0[i, :] += np.inf
+            self.cj_1i_1[i, :] += np.inf
+            self.cj_1i0[i, :] += np.inf
+            self.cj_1i1[i, :] += np.inf
+            self.cj0i_2[i, :] += np.inf
+            self.cj0i_1[i, :] += np.inf
+            self.cj0i0[i, :] += 0
+            self.cj0i1[i, :] += np.inf
+            self.cj0i2[i, :] += np.inf
+            self.cj1i_1[i, :] += np.inf
+            self.cj1i0[i, :] += np.inf
+            self.cj1i1[i, :] += np.inf
+            self.cj2i0[i, :] += np.inf
         else:
             # Possibly redundant safeguard
             sys.exit("Invalid boundary condition")
@@ -1882,6 +2015,67 @@ class F2D(Flexure):
             self.cj0i0[-1, -1] += 2 * self.cj_1i_1_coeff_ij[-1, -1]
             self.cj_1i_1[-1, -1] -= self.cj1i1_coeff_ij[-1, -1]
         # What about 0Moment0SHear on N/S part?
+
+        ######################
+        # 0DISPLACEMENT0MOMENT #
+        ######################
+        # odd×odd = even (positive), same sign as Mirror×Mirror.
+        # odd×even (Mirror or 0Slope0Shear) = negative.
+        # odd×0Moment0Shear = negative of the Mirror×0Moment0Shear correction.
+        _D0M = "0Displacement0Moment"
+        _even = ("0Slope0Shear", "Mirror")
+
+        # NW corner
+        if self.BC_N == _D0M and self.BC_W == _D0M:
+            self.cj1i1[0, 0] += self.cj_1i_1_coeff_ij[0, 0]
+        elif (self.BC_N == _D0M and self.BC_W in _even) or (
+            self.BC_W == _D0M and self.BC_N in _even
+        ):
+            self.cj1i1[0, 0] -= self.cj_1i_1_coeff_ij[0, 0]
+        elif (self.BC_N == _D0M and self.BC_W == "0Moment0Shear") or (
+            self.BC_W == _D0M and self.BC_N == "0Moment0Shear"
+        ):
+            self.cj0i0[0, 0] -= 2 * self.cj_1i_1_coeff_ij[0, 0]
+            self.cj1i1[0, 0] += self.cj_1i_1_coeff_ij[0, 0]
+
+        # NE corner
+        if self.BC_N == _D0M and self.BC_E == _D0M:
+            self.cj_1i1[0, -1] += self.cj1i_1_coeff_ij[0, -1]
+        elif (self.BC_N == _D0M and self.BC_E in _even) or (
+            self.BC_E == _D0M and self.BC_N in _even
+        ):
+            self.cj_1i1[0, -1] -= self.cj1i_1_coeff_ij[0, -1]
+        elif (self.BC_N == _D0M and self.BC_E == "0Moment0Shear") or (
+            self.BC_E == _D0M and self.BC_N == "0Moment0Shear"
+        ):
+            self.cj0i0[0, -1] -= 2 * self.cj_1i_1_coeff_ij[0, -1]
+            self.cj_1i1[0, -1] += self.cj1i_1_coeff_ij[0, -1]
+
+        # SW corner
+        if self.BC_S == _D0M and self.BC_W == _D0M:
+            self.cj1i_1[-1, 0] += self.cj_1i1_coeff_ij[-1, 0]
+        elif (self.BC_S == _D0M and self.BC_W in _even) or (
+            self.BC_W == _D0M and self.BC_S in _even
+        ):
+            self.cj1i_1[-1, 0] -= self.cj_1i1_coeff_ij[-1, 0]
+        elif (self.BC_S == _D0M and self.BC_W == "0Moment0Shear") or (
+            self.BC_W == _D0M and self.BC_S == "0Moment0Shear"
+        ):
+            self.cj0i0[-1, 0] -= 2 * self.cj_1i_1_coeff_ij[-1, 0]
+            self.cj1i_1[-1, 0] += self.cj_1i1_coeff_ij[-1, 0]
+
+        # SE corner
+        if self.BC_S == _D0M and self.BC_E == _D0M:
+            self.cj_1i_1[-1, -1] += self.cj1i1_coeff_ij[-1, -1]
+        elif (self.BC_S == _D0M and self.BC_E in _even) or (
+            self.BC_E == _D0M and self.BC_S in _even
+        ):
+            self.cj_1i_1[-1, -1] -= self.cj1i1_coeff_ij[-1, -1]
+        elif (self.BC_S == _D0M and self.BC_E == "0Moment0Shear") or (
+            self.BC_E == _D0M and self.BC_S == "0Moment0Shear"
+        ):
+            self.cj0i0[-1, -1] -= 2 * self.cj_1i_1_coeff_ij[-1, -1]
+            self.cj_1i_1[-1, -1] += self.cj1i1_coeff_ij[-1, -1]
 
         ##############################
         # PERIODIC B.C.'S AND OTHERS #
