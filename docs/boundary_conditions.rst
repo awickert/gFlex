@@ -56,32 +56,44 @@ meaning and derivative order.
 Conditions
 ----------
 
-Standard structural-mechanics names for each boundary condition:
-
 .. list-table::
-   :widths: 35 25 40
+   :widths: 24 18 17 14 27
    :header-rows: 1
 
    * - gFlex name
-     - Standard name
-     - Physical meaning
+     - Zero at boundary
+     - Structural mechanics
+     - Geophysical
+     - Description
    * - ``0Displacement0Slope``
+     - :math:`w`,\ :math:`\mathrm{d}w/\mathrm{d}x`
      - clamped end
-     - Plate is fixed: no deflection, no rotation
+     - —
+     - No deflection, no rotation
    * - ``0Displacement0Moment``
+     - :math:`w`,\ :math:`M`
      - simply supported
-     - Plate is pinned: no deflection, free to rotate
+     - —
+     - No deflection, free to rotate
    * - ``0Moment0Shear``
+     - :math:`M`,\ :math:`V`
      - free end
-     - Broken-plate edge: no moment, no shear
+     - broken plate
+     - Free, unsupported plate end
    * - ``0Slope0Shear``
+     - :math:`\mathrm{d}w/\mathrm{d}x`,\ :math:`V`
      - guided end
-     - Plate is level, free to deflect vertically; no shear
+     - —
+     - Plate is level at edge, free to deflect; no shear
    * - ``Mirror``
-     - symmetry plane
+     - :math:`\mathrm{d}w/\mathrm{d}x`,\ :math:`V`
+     - —
+     - —
      - Even reflection; model half of a symmetric system
    * - ``Periodic``
-     - periodic
+     - —
+     - —
+     - —
      - Domain tiles infinitely in both directions
 
 The following figure from Wickert (2016) shows schematics of five of the six
