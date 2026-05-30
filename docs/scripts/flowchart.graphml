@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/graphml"
+         xmlns:y="http://www.yworks.com/xml/graphml">
+  <key id="d6"  for="node" yfiles.type="nodegraphics"/>
+  <key id="d10" for="edge" yfiles.type="edgegraphics"/>
+  <graph id="G" edgedefault="directed">
+
+    <!-- Input -->
+    <node id="n8">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry x="393.34" y="59.66" width="210" height="84"/>
+          <y:Fill color="#E8E8E8" transparent="false"/>
+          <y:BorderStyle type="line" width="1.5" color="#000000"/>
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
+                       alignment="center">Loads,
+elastic properties</y:NodeLabel>
+          <y:Shape type="diamond"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+
+    <!-- BMI: initialize -->
+    <node id="n7">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry x="424.34" y="203.89" width="148" height="60"/>
+          <y:Fill color="#E8E8E8" transparent="false"/>
+          <y:BorderStyle type="line" width="2.5" color="#000000"/>
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="bold"
+                       alignment="center">Initialize
+(1D or 2D)</y:NodeLabel>
+          <y:Shape type="ellipse"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+
+    <!-- Solution methods (rank=same) -->
+    <node id="n1">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry x="64.45" y="323.66" width="170" height="76"/>
+          <y:Fill color="#E8E8E8" transparent="false"/>
+          <y:BorderStyle type="line" width="1.5" color="#000000"/>
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
+                       alignment="center">Finite Difference
+(FD)</y:NodeLabel>
+          <y:Shape type="roundrectangle"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+
+    <node id="n2">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry x="271.39" y="323.66" width="205" height="76"/>
+          <y:Fill color="#E8E8E8" transparent="false"/>
+          <y:BorderStyle type="line" width="1.5" color="#000000"/>
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
+                       alignment="center">Superposition of
+Analytical Solutions
+(SAS)</y:NodeLabel>
+          <y:Shape type="roundrectangle"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+
+    <node id="n3">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry x="515.28" y="323.66" width="215" height="76"/>
+          <y:Fill color="#E8E8E8" transparent="false"/>
+          <y:BorderStyle type="line" width="1.5" color="#000000"/>
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
+                       alignment="center">Superposition of
+Analytical Solutions,
+no grid (SAS_NG)</y:NodeLabel>
+          <y:Shape type="roundrectangle"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+
+    <node id="n4">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry x="765.00" y="323.66" width="120" height="76"/>
+          <y:Fill color="#E8E8E8" transparent="false"/>
+          <y:BorderStyle type="line" width="1.5" color="#000000"/>
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
+                       alignment="center">Spectral
+(FFT)</y:NodeLabel>
+          <y:Shape type="roundrectangle"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+
+    <!-- BMI: run -->
+    <node id="n0">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry x="443.34" y="458.56" width="110" height="44"/>
+          <y:Fill color="#E8E8E8" transparent="false"/>
+          <y:BorderStyle type="line" width="2.5" color="#000000"/>
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="bold"
+                       alignment="center">Run</y:NodeLabel>
+          <y:Shape type="ellipse"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+
+    <!-- BMI: finalize -->
+    <node id="n14">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry x="443.34" y="559.67" width="110" height="44"/>
+          <y:Fill color="#E8E8E8" transparent="false"/>
+          <y:BorderStyle type="line" width="2.5" color="#000000"/>
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="bold"
+                       alignment="center">Finalize</y:NodeLabel>
+          <y:Shape type="ellipse"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+
+    <!-- Edges -->
+    <edge id="e0" source="n8"  target="n7">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+    <edge id="e1" source="n7"  target="n1">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+    <edge id="e2" source="n7"  target="n2">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+    <edge id="e3" source="n7"  target="n3">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+    <edge id="e4" source="n7"  target="n4">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+    <edge id="e5" source="n1"  target="n0">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+    <edge id="e6" source="n2"  target="n0">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+    <edge id="e7" source="n3"  target="n0">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+    <edge id="e8" source="n4"  target="n0">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+    <edge id="e9" source="n0"  target="n14">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+
+  </graph>
+</graphml>
