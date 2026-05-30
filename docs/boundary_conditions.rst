@@ -40,15 +40,15 @@ meaning and derivative order.
      - 0th
    * - Slope
      - :math:`S`
-     - :math:`\mathrm{d}w/\mathrm{d}x`
+     - :math:`\frac{\mathrm{d}w}{\mathrm{d}x}`
      - 1st
    * - Bending moment
      - :math:`M`
-     - :math:`D\,\mathrm{d}^2w/\mathrm{d}x^2`
+     - :math:`D\,\frac{\mathrm{d}^2 w}{\mathrm{d}x^2}`
      - 2nd
    * - Shear force
      - :math:`V`
-     - :math:`D\,\mathrm{d}^3w/\mathrm{d}x^3`
+     - :math:`D\,\frac{\mathrm{d}^3 w}{\mathrm{d}x^3}`
      - 3rd
 
 ----
@@ -66,7 +66,7 @@ Conditions
      - Geophysical
      - Description
    * - ``0Displacement0Slope``
-     - :math:`w`,\ :math:`\mathrm{d}w/\mathrm{d}x`
+     - :math:`w`,\ :math:`S`
      - clamped end
      - —
      - No deflection, no rotation
@@ -81,12 +81,12 @@ Conditions
      - broken plate
      - Free, unsupported plate end
    * - ``0Slope0Shear``
-     - :math:`\mathrm{d}w/\mathrm{d}x`,\ :math:`V`
+     - :math:`S`,\ :math:`V`
      - guided end
      - —
      - Plate is level at edge, free to deflect; no shear
    * - ``Mirror``
-     - :math:`\mathrm{d}w/\mathrm{d}x`,\ :math:`V`
+     - :math:`S`,\ :math:`V`
      - —
      - —
      - Even reflection; model half of a symmetric system
@@ -167,21 +167,22 @@ conditions (``0Displacement0Moment`` was added after publication):
 * ``0Displacement0Moment`` — zero displacement and bending moment; the
   classical simply-supported (pinned) plate end.  The plate is held at
   zero deflection but is free to rotate, so no moment is transmitted.
-  Implemented as a Dirichlet condition (w = 0) at the boundary node and
-  an odd-reflection ghost (w\ :sub:`ghost` = −w\ :sub:`interior`) at the
-  first interior node to enforce zero curvature.
+  Implemented as a Dirichlet condition (:math:`w = 0`) at the boundary
+  node and an odd-reflection ghost
+  (:math:`w_\text{ghost} = -w_\text{interior}`) at the first interior
+  node to enforce zero curvature.
 
   ``Mirror`` and ``0Displacement0Moment`` are reflection boundary
   conditions but encode opposite parities.  ``Mirror`` uses an *even*
-  reflection (w\ :sub:`ghost` = +w\ :sub:`interior`): the symmetry plane
-  lies between the last real node and its ghost, the plate is horizontal
-  at the boundary, and the deflection there is generally non-zero —
-  making it the correct choice for modelling one half of a symmetric
-  system.  ``0Displacement0Moment`` uses an *odd* reflection
-  (w\ :sub:`ghost` = −w\ :sub:`interior`): the boundary node is the fixed
-  point of the reflection, so w = 0 there by definition, and the plate is
-  free to rotate — the simply-supported end.  Sine modes satisfy
-  ``0Displacement0Moment``; cosine modes satisfy ``Mirror``.
+  reflection (:math:`w_\text{ghost} = +w_\text{interior}`): the symmetry
+  plane lies between the last real node and its ghost, the plate is
+  horizontal at the boundary, and the deflection there is generally
+  non-zero — making it the correct choice for modelling one half of a
+  symmetric system.  ``0Displacement0Moment`` uses an *odd* reflection
+  (:math:`w_\text{ghost} = -w_\text{interior}`): the boundary node is the
+  fixed point of the reflection, so :math:`w = 0` there by definition,
+  and the plate is free to rotate — the simply-supported end.  Sine modes
+  satisfy ``0Displacement0Moment``; cosine modes satisfy ``Mirror``.
 
   .. figure:: _static/bc_diagram_0Displacement0Moment.svg
      :width: 80%
