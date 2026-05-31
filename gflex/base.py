@@ -875,10 +875,6 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.grass = False
 
-        # Default convergence tolerance for the iterative solver; overridden by
-        # config file if ConvergenceTolerance is set there.
-        self.iterative_ConvergenceTolerance = 1e-3
-
         # Default values for lat/lon usage -- defaulting not to use it
         try:
             self.latlon
@@ -1448,12 +1444,6 @@ class Flexure(Utility, Plotting):
                 sys.exit("No solver defined!")
         # Check consistency of size if coeff array was loaded
         if self.filename:
-            # Only needed for iterative solver; direct-solver configs may omit it
-            self.iterative_ConvergenceTolerance = self.configGet(
-                "float", "numerical", "ConvergenceTolerance", optional=True
-            )
-            if self.iterative_ConvergenceTolerance is None:
-                self.iterative_ConvergenceTolerance = 1e-3
             # Try to import Te grid or scalar for the finite difference solution
             try:
                 self.Te = self.configGet(
