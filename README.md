@@ -151,7 +151,7 @@ Plot=both
 GridSpacing_x=
 ;
 ; Boundary conditions can be:
-; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
+; (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
 ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 BoundaryCondition_West=
 BoundaryCondition_East=
@@ -162,7 +162,7 @@ BoundaryCondition_East=
 GridSpacing_y=
 ;
 ; Boundary conditions can be:
-; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
+; (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
 ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 BoundaryCondition_North=
 BoundaryCondition_South=
@@ -183,12 +183,13 @@ Quiet=
 
 #### Finite-difference boundary conditions
 
-Five boundary conditions are available for FD solutions (see also Table 1 in Wickert, 2016):
+Six boundary conditions are available for FD solutions (see also Table 1 in Wickert, 2016):
 
 | Name | Condition | Physical interpretation |
 |------|-----------|------------------------|
-| `0Displacement0Slope` | w = 0, dw/dx = 0 | Plate is pinned to zero deflection and zero slope at the boundary |
-| `0Moment0Shear` | d²w/dx² = d³w/dx³ = 0 | Broken plate: free cantilever end with no moment or shear |
+| `0Displacement0Slope` | w = 0, dw/dx = 0 | Clamped end: zero deflection and zero slope (no rotation) |
+| `0Displacement0Moment` | w = 0, d²w/dx² = 0 | Simply supported (pinned) end: zero deflection, free to rotate |
+| `0Moment0Shear` | d²w/dx² = d³w/dx³ = 0 | Broken plate: free end with no moment or shear |
 | `0Slope0Shear` | dw/dx = d³w/dx³ = 0 | Plate is level at the boundary but free to deflect there; no shear transmitted |
 | `Mirror` | w(b − x) = w(b + x) | Mirror-symmetry plane — model only half of a symmetric system |
 | `Periodic` | w(0) = w(L) | Wrap-around: the domain tiles infinitely in both directions |
@@ -234,7 +235,7 @@ flex.qs[10:40, 10:40] += 1E6 # Populating this template
 flex.dx = 5000. # grid cell size, x-oriented [m]
 flex.dy = 5000. # grid cell size, y-oriented [m]
 # Boundary conditions can be:
-# (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
+# (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
 # For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 flex.BC_W = '0Displacement0Slope' # west boundary condition
 flex.BC_E = '0Moment0Shear' # east boundary condition
