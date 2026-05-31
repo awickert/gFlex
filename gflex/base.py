@@ -506,7 +506,7 @@ class Plotting:
                                 titletext + ", $T_e$ = " + str(self.Te / 1000) + " km",
                                 fontsize=16,
                             )
-                    except:
+                    except AttributeError:
                         plt.title(titletext, fontsize=16)
                     # x and y labels
                     plt.ylabel("Loads and flexural response [m]", fontsize=16)
