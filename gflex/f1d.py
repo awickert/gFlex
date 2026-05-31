@@ -230,6 +230,123 @@ def pad_domain_1d(Te, qs, dx, n_wavelengths=1.0, Te_out=None,
     return Te_padded, qs_padded, p
 
 
+def _sandbox_easter_egg():
+    """You found it. The sandbox is not closed — it flexes."""
+    import sys
+    import warnings
+
+    # ── Physics: 2 m sandbox, 12 mm plywood floor, 4 kg sand castle ─────────
+    nx = 200
+    dx = 0.01
+    qs_load = np.zeros(nx)
+    c = nx // 2
+    half_load = 10  # 20 cm footprint
+    qs_load[c - half_load : c + half_load] = 4.0 * 9.81 / (2 * half_load * dx)
+
+    solver = F1D()
+    solver.dx = dx
+    solver.qs = qs_load
+    solver.te = 0.012      # 12 mm plywood
+    solver.E = 10e9
+    solver.nu = 0.30
+    solver.rho_m = 1.0     # negligible buoyancy (floor on a table)
+    solver.rho_fill = 0.0
+    solver.g = 9.81
+    solver.method = "FD"
+    solver.bc_west = "zero_displacement_zero_slope"
+    solver.bc_east = "zero_displacement_zero_slope"
+    solver.quiet = True
+    solver.verbose = False
+    solver.debug = False
+    solver.initialize()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        solver.run()
+    solver.finalize()
+
+    w_sag = -solver.w           # positive = downward
+    w_max_mm = float(w_sag.max() * 1000.0)
+
+    # ── Canvas ───────────────────────────────────────────────────────────────
+    INT_W = 58
+    NROWS = 17
+    WALL_L = 1
+    WALL_R = WALL_L + INT_W + 1   # = 60
+
+    BOX_INTERIOR_TOP = 8    # first row inside the box at the edges (sag = 0)
+    CASTLE_HEIGHT = 9
+    SAND_HEIGHT = 3
+    MAX_SAG = 3
+
+    idx = np.linspace(0, nx - 1, INT_W).astype(int)
+    w_col = w_sag[idx]
+    w_col_max = w_col.max()
+    if w_col_max > 1e-15:
+        sag = np.round(w_col / w_col_max * MAX_SAG).astype(int)
+    else:
+        sag = np.zeros(INT_W, dtype=int)
+
+    center_sag = int(sag[INT_W // 2])
+    castle_base_row = BOX_INTERIOR_TOP + center_sag
+    castle_top_row = castle_base_row - (CASTLE_HEIGHT - 1)
+
+    buf = [[' '] * (WALL_R + 2) for _ in range(NROWS)]
+
+    def put(r, c, text):
+        for k, ch in enumerate(text):
+            if 0 <= r < NROWS and 0 <= c + k < len(buf[0]):
+                buf[r][c + k] = ch
+
+    cx = WALL_L + 1 + INT_W // 2
+
+    # Castle: 11 chars wide, 9 rows tall
+    castle = [
+        "     |     ",
+        "    [F]    ",
+        " _  |||  _ ",
+        "| |     | |",
+        "| |  O  | |",
+        "| |     | |",
+        "| |  |  | |",
+        "| |  |  | |",
+        "|_|__|__|_|",
+    ]
+    for i, line in enumerate(castle):
+        put(castle_top_row + i, cx - len(line) // 2, line)
+
+    # Box walls (no bottom bar)
+    for r in range(BOX_INTERIOR_TOP, NROWS):
+        buf[r][WALL_L] = '|'
+        buf[r][WALL_R] = '|'
+
+    # Sand grains and floor, column by column
+    for i in range(INT_W):
+        col = WALL_L + 1 + i
+        s = int(sag[i])
+
+        # Sand: alternating dot pattern offset per row → scattered grain look
+        for sand_row in range(SAND_HEIGHT):
+            r = BOX_INTERIOR_TOP + s + sand_row
+            if 0 <= r < NROWS:
+                grain = '.' if (col + sand_row) % 2 == 0 else ' '
+                if buf[r][col] == ' ':
+                    buf[r][col] = grain
+
+        # Floor
+        r = BOX_INTERIOR_TOP + SAND_HEIGHT + s
+        if 0 <= r < NROWS:
+            buf[r][col] = '='
+
+    print()
+    for row in buf:
+        print(''.join(row))
+    print()
+    print(f"  gFlex (FD, clamped ends): {w_max_mm:.3f} mm deflection at centre.")
+    print(f"  A 4 kg sand castle on 12 mm plywood flexes a 2 m sandbox by {w_max_mm:.3f} mm.")
+    print()
+    sys.exit(0)
+
+
 class F1D(Flexure):
     """
     One-dimensional lithospheric flexure solver.
@@ -271,7 +388,8 @@ class F1D(Flexure):
     BC_W, BC_E : str
         Boundary conditions on the west (left) and east (right) ends.
         FD options: ``'zero_displacement_zero_slope'``, ``'zero_displacement_zero_moment'``,
-        ``'zero_slope_zero_shear'``, ``'zero_moment_zero_shear'``, ``'mirror'``, ``'periodic'``.
+        ``'zero_slope_zero_shear'``, ``'zero_moment_zero_shear'``, ``'mirror'``, ``'periodic'``,
+        ``'Sandbox'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).
     sigma_xx : float, optional
         Normal stress applied at the plate ends [Pa].  FD only.
@@ -662,6 +780,9 @@ class F1D(Flexure):
             print("Boundary condition, West:", self.bc_west, type(self.bc_west))
             print("Boundary condition, East:", self.bc_east, type(self.bc_east))
 
+        if self.bc_east == "sandbox" or self.bc_west == "sandbox":
+            _sandbox_easter_egg()
+
         # First, set flexural rigidity boundary conditions to flesh out this padded
         # array
         self._apply_bc_rigidity()
@@ -834,9 +955,6 @@ class F1D(Flexure):
             self._bc_zero_displacement_zero_moment()
         if self.bc_east == "periodic" and self.bc_west == "periodic":
             self._bc_periodic()
-        if self.bc_east == "Sandbox" or self.bc_west == "Sandbox":
-            # Sandbox is the developer's testing ground
-            sys.exit("Sandbox Closed")
 
     def build_diagonals(self):
         """

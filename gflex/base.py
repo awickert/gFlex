@@ -1252,6 +1252,7 @@ class Flexure(Utility, Plotting):
                         "mirror",
                         "zero_moment_zero_shear",
                         "zero_slope_zero_shear",
+                        "sandbox",
                     ]
                 )
                 self.bc2D = np.array(
