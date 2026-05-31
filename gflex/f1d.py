@@ -341,21 +341,21 @@ class F1D(Flexure):
         self.solver_start_time = time.time()
         if self.method == "FD":
             # Finite difference
-            super().FD()
-            self.method_func = self.FD
+            super()._solve_fd()
+            self.method_func = self._solve_fd
         elif self.method == "FFT":
             # Fast Fourier transform
-            super().FFT()
-            self.method_func = self.FFT
+            super()._solve_fft()
+            self.method_func = self._solve_fft
         elif self.method == "SAS":
             # Superposition of analytical solutions
-            super().SAS()
-            self.method_func = self.SAS
+            super()._solve_sas()
+            self.method_func = self._solve_sas
         elif self.method == "SAS_NG":
             # Superposition of analytical solutions,
             # nonuniform points
-            super().SAS_NG()
-            self.method_func = self.SAS_NG
+            super()._solve_sas_ng()
+            self.method_func = self._solve_sas_ng
         else:
             sys.exit('Error: method must be "FD", "FFT", "SAS", or "SAS_NG"')
 
@@ -465,7 +465,7 @@ class F1D(Flexure):
                     stacklevel=4,
                 )
 
-    def FD(self):
+    def _solve_fd(self):
         """Run the finite-difference solution pipeline.
 
         Calls :meth:`_check_warnings_FD` first to flag potentially problematic
@@ -479,10 +479,10 @@ class F1D(Flexure):
             pass
         else:
             self.elasprepFD()  # define dx4 and D within self
-            self.BC_selector_and_coeff_matrix_creator()
+            self._build_coefficient_matrix()
         self.fd_solve()  # Get the deflection, "w"
 
-    def FFT(self):
+    def _solve_fft(self):
         """Spectral (FFT) flexural solution for uniform elastic thickness.
 
         Applies the analytical transfer function in the wavenumber domain::
@@ -553,13 +553,13 @@ class F1D(Flexure):
         else:
             self.w = w_work[pad : pad + self.nx]
 
-    def SAS(self):
+    def _solve_sas(self):
         """Run the gridded superposition-of-analytical-solutions pipeline."""
         self.gridded_x()
         self.spatial_domain_vars_sas()
         self.spatial_domain_gridded()
 
-    def SAS_NG(self):
+    def _solve_sas_ng(self):
         """Run the ungridded (non-uniform points) SAS pipeline."""
         self.spatial_domain_vars_sas()
         self.spatial_domain_no_grid()
@@ -649,7 +649,7 @@ class F1D(Flexure):
         self.dx2 = self.dx**2  # Needed if horizontal (i.e., tectonic) stresses
         self.D = self.E * self.te**3 / (12 * (1 - self.nu**2))
 
-    def BC_selector_and_coeff_matrix_creator(self):
+    def _build_coefficient_matrix(self):
         """
         Selects the boundary conditions
         Then calls the function to build the pentadiagonal matrix to solve
@@ -664,14 +664,14 @@ class F1D(Flexure):
 
         # First, set flexural rigidity boundary conditions to flesh out this padded
         # array
-        self.BC_Rigidity()
+        self._apply_bc_rigidity()
 
         # Second, build the coefficient arrays -- with the rigidity b.c.'s
         self.get_coeff_values()
 
         # Third, apply boundary conditions to the coeff_arrays to create the
         # flexural solution
-        self.BC_Flexure()
+        self._apply_bc_flexure()
 
         # Fourth, construct the sparse diagonal array
         self.build_diagonals()
@@ -684,7 +684,7 @@ class F1D(Flexure):
                 self.coeff_creation_time,
             )
 
-    def BC_Rigidity(self):
+    def _apply_bc_rigidity(self):
         """
         Utility function to help implement boundary conditions by specifying
         them for and applying them to the elastic thickness grid
@@ -800,7 +800,7 @@ class F1D(Flexure):
         # to simulate this, I need to re-zero everything. To do so, I use
         # numpy.roll. (See self.build_diagonals.)
 
-    def BC_Flexure(self):
+    def _apply_bc_flexure(self):
         """Apply flexural boundary conditions to the coefficient diagonals."""
         # Some links that helped me teach myself how to set up the boundary conditions
         # in the matrix for the flexure problem:
@@ -823,17 +823,17 @@ class F1D(Flexure):
         # defined functions. Keeping these due to inertia and fear of cut/paste
         # mistakes
         if self.bc_east == "zero_displacement_zero_slope" or self.bc_west == "zero_displacement_zero_slope":
-            self.BC_0Displacement0Slope()
+            self._bc_zero_displacement_zero_slope()
         if self.bc_east == "zero_slope_zero_shear" or self.bc_west == "zero_slope_zero_shear":
-            self.BC_0Slope0Shear()
+            self._bc_zero_slope_zero_shear()
         if self.bc_east == "zero_moment_zero_shear" or self.bc_west == "zero_moment_zero_shear":
-            self.BC_0Moment0Shear()
+            self._bc_zero_moment_zero_shear()
         if self.bc_east == "mirror" or self.bc_west == "mirror":
-            self.BC_Mirror()
+            self._bc_mirror()
         if self.bc_east == "zero_displacement_zero_moment" or self.bc_west == "zero_displacement_zero_moment":
-            self.BC_0Displacement0Moment()
+            self._bc_zero_displacement_zero_moment()
         if self.bc_east == "periodic" and self.bc_west == "periodic":
-            self.BC_Periodic()
+            self._bc_periodic()
         if self.bc_east == "Sandbox" or self.bc_west == "Sandbox":
             # Sandbox is the developer's testing ground
             sys.exit("Sandbox Closed")
@@ -875,7 +875,7 @@ class F1D(Flexure):
             self.diags, self.offsets, self.nx, self.nx, format="csr"
         )
 
-    def BC_Periodic(self):
+    def _bc_periodic(self):
         """
         periodic boundary conditions: wraparound to the other side.
         """
@@ -922,7 +922,7 @@ class F1D(Flexure):
             ]
         )
 
-    def BC_0Displacement0Slope(self):
+    def _bc_zero_displacement_zero_slope(self):
         """
         zero_displacement_zero_slope boundary condition for 0 deflection.
         This requires that nothing be done to the edges of the solution array,
@@ -958,7 +958,7 @@ class F1D(Flexure):
             self.r1[i] = np.nan
             self.r2[i] = np.nan
 
-    def BC_0Slope0Shear(self):
+    def _bc_zero_slope_zero_shear(self):
         """
     This boundary condition is essentially a Neumann 0-gradient boundary
     condition with that 0-gradient state extended over a longer part of
@@ -1000,7 +1000,7 @@ class F1D(Flexure):
             self.r1[i] = np.nan
             self.r2[i] = np.nan
 
-    def BC_0Moment0Shear(self):
+    def _bc_zero_moment_zero_shear(self):
         """
         d2w/dx2 = d3w/dx3 = 0
         (no moment or shear)
@@ -1046,7 +1046,7 @@ class F1D(Flexure):
             self.r1[i] += np.nan
             self.r2[i] += np.nan
 
-    def BC_Mirror(self):
+    def _bc_mirror(self):
         """
         Mirrors qs across the boundary on either the west (left) or east (right)
         side, depending on the selections.
@@ -1083,7 +1083,7 @@ class F1D(Flexure):
             # self.r1[i] += np.nan
             # self.r2[i] += np.nan
 
-    def BC_0Displacement0Moment(self):
+    def _bc_zero_displacement_zero_moment(self):
         """
         Simply-supported (pinned) BC: zero displacement and zero bending moment
         at the boundary.

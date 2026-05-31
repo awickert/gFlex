@@ -422,21 +422,21 @@ class F2D(Flexure):
 
         if self.method == "FD":
             # Finite difference
-            super().FD()
-            self.method_func = self.FD
+            super()._solve_fd()
+            self.method_func = self._solve_fd
         elif self.method == "FFT":
             # Fast Fourier transform
-            super().FFT()
-            self.method_func = self.FFT
+            super()._solve_fft()
+            self.method_func = self._solve_fft
         elif self.method == "SAS":
             # Superposition of analytical solutions
-            super().SAS()
-            self.method_func = self.SAS
+            super()._solve_sas()
+            self.method_func = self._solve_sas
         elif self.method == "SAS_NG":
             # Superposition of analytical solutions,
             # nonuniform points (no grid)
-            super().SAS_NG()
-            self.method_func = self.SAS_NG
+            super()._solve_sas_ng()
+            self.method_func = self._solve_sas_ng
         else:
             sys.exit('Error: method must be "FD", "FFT", "SAS", or "SAS_NG"')
 
@@ -549,7 +549,7 @@ class F2D(Flexure):
                     stacklevel=4,
                 )
 
-    def FD(self):
+    def _solve_fd(self):
         """Run the finite-difference solution pipeline.
 
         Calls :meth:`_check_warnings_FD` first to flag potentially problematic
@@ -562,10 +562,10 @@ class F2D(Flexure):
             pass
         else:
             self.elasprep()
-            self.BC_selector_and_coeff_matrix_creator()
+            self._build_coefficient_matrix()
         self.fd_solve()
 
-    def FFT(self):
+    def _solve_fft(self):
         """Spectral (FFT) flexural solution for uniform elastic thickness.
 
         Applies the analytical 2-D transfer function in the wavenumber domain::
@@ -643,12 +643,12 @@ class F2D(Flexure):
         else:
             self.w = w_work[pad_y : pad_y + ny, pad_x : pad_x + nx]
 
-    def SAS(self):
+    def _solve_sas(self):
         """Run the gridded superposition-of-analytical-solutions pipeline."""
         self.spatial_domain_vars_sas()
         self.spatial_domain_gridded()
 
-    def SAS_NG(self):
+    def _solve_sas_ng(self):
         """Run the ungridded (non-uniform points) SAS pipeline."""
         self.spatial_domain_vars_sas()
         self.spatial_domain_no_grid()
@@ -757,7 +757,7 @@ class F2D(Flexure):
             self.dx2dy2 = self.dx**2 * self.dy**2
         self.D = self.E * self.te**3 / (12 * (1 - self.nu**2))
 
-    def BC_selector_and_coeff_matrix_creator(self):
+    def _build_coefficient_matrix(self):
         """
         Selects the boundary conditions
         E-W is for inside each panel
@@ -790,14 +790,14 @@ class F2D(Flexure):
 
         # First, set flexural rigidity boundary conditions to flesh out this padded
         # array
-        self.BC_Rigidity()
+        self._apply_bc_rigidity()
 
         # Second, build the coefficient arrays -- with the rigidity b.c.'s
         self.get_coeff_values()
 
         # Third, apply boundary conditions to the coeff_arrays to create the
         # flexural solution
-        self.BC_Flexure()
+        self._apply_bc_flexure()
 
         # Fourth, construct the sparse diagonal array
         self.build_diagonals()
@@ -810,7 +810,7 @@ class F2D(Flexure):
                 self.coeff_creation_time,
             )
 
-    def BC_Rigidity(self):
+    def _apply_bc_rigidity(self):
         """
         Utility function to help implement boundary conditions by specifying
         them for and applying them to the elastic thickness grid
@@ -1132,7 +1132,7 @@ class F2D(Flexure):
         self.ncolsx = self.cj0i0.shape[1]
         self.nrowsy = self.cj0i0.shape[0]
 
-    def BC_Flexure(self):
+    def _apply_bc_flexure(self):
         """Apply flexural boundary conditions to the 2D coefficient arrays."""
         # The next section of code is split over several functions for the 1D
         # case, but will be all in one function here, at least for now.
@@ -2090,7 +2090,7 @@ class F2D(Flexure):
 
         The result is stored in ``self.coeff_matrix`` as a
         :class:`scipy.sparse.dia_matrix`, ready for the direct solver called
-        by :meth:`F2D.FD`.
+        by :meth:`F2D._solve_fd`.
         """
         ##########################################################
         # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #

@@ -1400,7 +1400,7 @@ class Flexure(Utility, Plotting):
     ### no matter it is 1D or 2D; but if it can't be that way, we can set up a
     ### variable-length arguments, which is the way how Python overloads functions.
 
-    def FD(self):
+    def _solve_fd(self):
         """
         Set-up for the finite difference solution method
         """
@@ -1479,7 +1479,7 @@ class Flexure(Utility, Plotting):
             if self.te.any():
                 self.te_array_size_check()
 
-    def FFT(self):
+    def _solve_fft(self):
         """
         Set-up for the FFT spectral solution method.
 
@@ -1517,7 +1517,7 @@ class Flexure(Utility, Plotting):
     # SAS and SAS_NG are the exact same here; leaving separate just for symmetry
     # with other functions
 
-    def SAS(self):
+    def _solve_sas(self):
         """
         Set-up for the rectangularly-gridded superposition of analytical solutions
         method for solving flexure
@@ -1546,7 +1546,7 @@ class Flexure(Utility, Plotting):
                 # q0 is the parsable input to either a qs grid or contains (x,(y),q)
                 del self.q0
 
-    def SAS_NG(self):
+    def _solve_sas_ng(self):
         """
         Set-up for the ungridded superposition of analytical solutions
         method for solving flexure
