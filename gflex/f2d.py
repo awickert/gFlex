@@ -2503,7 +2503,12 @@ class F2D(Flexure):
                 self.maxFlexuralWavelength_ncells_y,
             )
 
-        q0vector = self.qs.reshape(-1, order="C")
+        # qs negative so the plate bends down under a positive (downward) load
+        # and up under a negative load (material removed).  The coefficient
+        # matrix A encodes D∇⁴ + Δρg, which is positive definite; solving
+        # A·w = −q therefore gives w < 0 for q > 0, matching the
+        # positive-upward sign convention used throughout gFlex.
+        q0vector = -self.qs.reshape(-1, order="C")
         if self.Solver == "iterative" or self.Solver == "Iterative":
             if self.Debug:
                 print(
@@ -2545,7 +2550,7 @@ class F2D(Flexure):
             )
 
         # Reshape into grid
-        self.w = -wvector.reshape(self.qs.shape)
+        self.w = wvector.reshape(self.qs.shape)
         self.w_padded = self.w.copy()  # for troubleshooting
 
         # Time to solve used to be here
