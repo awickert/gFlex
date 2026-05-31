@@ -27,7 +27,6 @@ GridSpacing_x=
 BoundaryCondition_West=
 BoundaryCondition_East=
 Solver=
-ConvergenceTolerance=
 
 [verbosity]
 Verbose=

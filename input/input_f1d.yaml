@@ -26,7 +26,6 @@ numerical:
   BoundaryCondition_West: Periodic
   BoundaryCondition_East: Periodic
   Solver: direct
-  ConvergenceTolerance: 0.001
 
 verbosity:
   Verbose: false

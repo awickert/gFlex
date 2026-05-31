@@ -12,9 +12,7 @@ flex.Method = "FD"  # Solution method: * FD (finite difference)
 #                  * SAS (superposition of analytical solutions)
 #                  * SAS_NG (ungridded SAS)
 
-flex.Solver = "direct"  # direct or iterative
-# convergence = 1E-3 # convergence between iterations, if an iterative solution
-# method is chosen
+flex.Solver = "direct"
 
 flex.g = 9.8  # acceleration due to gravity
 flex.E = 65e9  # Young's Modulus

@@ -31,11 +31,7 @@ Plot=both
 GridSpacing_x=4000
 BoundaryCondition_West=0Moment0Shear
 BoundaryCondition_East=0Displacement0Slope
-; Solver can be direct or iterative
 Solver=direct
-; Iterates until this is the difference between two subsequent iterations
-; Set as 0 if you don't want to iterate
-ConvergenceTolerance=1E-3
 
 [numerical2D]
 ; Those parameters shared between this and the 1D solution are in "[numerical]"

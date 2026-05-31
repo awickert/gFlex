@@ -33,11 +33,7 @@ Plot=both
 GridSpacing_x=
 BoundaryCondition_West=NoOutsideLoads
 BoundaryCondition_East=NoOutsideLoads
-; Solver can be direct or iterative
 Solver=direct
-; Iterates until this is the difference between two subsequent iterations
-; Set as 0 if you don't want to iterate
-ConvergenceTolerance=1E-3
 CoeffArray=
 
 [numerical2D]

@@ -28,7 +28,6 @@ GridSpacing_x=
 BoundaryCondition_West=
 BoundaryCondition_East=
 Solver=
-ConvergenceTolerance=
 
 [numerical2D]
 GridSpacing_y=
