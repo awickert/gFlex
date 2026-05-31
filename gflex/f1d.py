@@ -22,15 +22,8 @@ import time
 import warnings
 
 import numpy as np
-from scipy.sparse import diags, spdiags
-from scipy.sparse.linalg import LinearOperator, lgmres, spsolve
-
-try:
-    import pyamg as _pyamg
-    _HAS_PYAMG = True
-except ImportError:
-    _pyamg = None
-    _HAS_PYAMG = False
+from scipy.sparse import spdiags
+from scipy.sparse.linalg import spsolve
 
 from gflex.base import Flexure
 
@@ -1172,47 +1165,6 @@ class F1D(Flexure):
             np.ceil(self.maxFlexuralWavelength / self.dx)
         )
 
-    def _fft_preconditioner(self):
-        """Return (M, x0): FFT-based LinearOperator approximating A0⁻¹ and
-        FFT warm-start vector, both for the geometric-mean rigidity D0.
-
-        The preconditioner applies the inverse of the constant-rigidity
-        biharmonic operator in the wavenumber domain:
-            M·v = IFFT( FFT(v) / (D0·k⁴ + Δρg) )
-        This clusters the spectrum of M·A near 1 for modest Te contrast,
-        outperforming ILU which ignores the near-biharmonic structure.
-        The warm start x0 = M·(−qs) is the full FFT solve at rigidity D0.
-        """
-        nx = len(self.qs)
-        D_vals = np.asarray(self.D).ravel()
-        D_vals = D_vals[np.isfinite(D_vals) & (D_vals > 0)]
-        D0 = float(np.exp(np.mean(np.log(D_vals))))
-
-        k = np.fft.rfftfreq(nx, d=self.dx) * 2.0 * np.pi
-        denom = D0 * k**4 + self.drho * self.g
-
-        def matvec(v):
-            return np.fft.irfft(np.fft.rfft(v) / denom, n=nx)
-
-        M = LinearOperator((nx, nx), matvec=matvec)
-        x0 = np.fft.irfft(np.fft.rfft(-self.qs) / denom, n=nx)
-        return M, x0
-
-    def _amg_preconditioner(self):
-        """Return (M, x0): AMG-based LinearOperator and warm-start vector.
-
-        Builds a smoothed-aggregation multigrid hierarchy from the assembled
-        coefficient matrix.  Each preconditioner application performs one
-        V-cycle, which achieves grid-independent convergence for smooth-Te
-        problems and substantially better convergence than the FFT preconditioner
-        for discontinuous or high-contrast Te fields.  Requires PyAMG.
-        """
-        A = self.coeff_matrix.tocsr()
-        ml = _pyamg.smoothed_aggregation_solver(A, B=np.ones((A.shape[0], 1)))
-        M = ml.aspreconditioner()
-        x0 = M @ (-self.qs)
-        return M, x0
-
     def fd_solve(self):
         """
         w = fd_solve()
@@ -1228,44 +1180,16 @@ class F1D(Flexure):
             self.calc_max_flexural_wavelength()
             print("maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells")
 
-        if self.Solver == "iterative" or self.Solver == "Iterative":
+        if self.Solver == "direct" or self.Solver == "Direct":
             if self.Debug:
-                print(
-                    "Using generalized minimal residual method for iterative solution"
-                )
-            if self.Verbose:
-                print(
-                    "Converging to a tolerance of",
-                    self.iterative_ConvergenceTolerance,
-                    "m between iterations",
-                )
-            # qs negative so bends down with positive load, bends up with neative load
-            # (i.e. material removed)
-            M, x0 = self._fft_preconditioner()
-            w, info = lgmres(
-                self.coeff_matrix, -self.qs, M=M, x0=x0,
-                rtol=self.iterative_ConvergenceTolerance, maxiter=40,
-            )
-            if info != 0:
-                if not self.Quiet:
-                    print(
-                        f"FFT-preconditioned lgmres did not converge (info={info}); "
-                        "falling back to direct solver."
-                    )
-                w = spsolve(self.coeff_matrix, -self.qs)
-            self.w = w
+                print("Using direct solution with UMFpack")
         else:
-            if self.Solver == "direct" or self.Solver == "Direct":
-                if self.Debug:
-                    print("Using direct solution with UMFpack")
-            else:
+            if not self.Quiet:
                 print("Solution type not understood:")
                 print("Defaulting to direct solution with UMFpack")
-            # UMFpack is now the default, but setting true just to be sure in case
-            # anything changes
-            # qs negative so bends down with positive load, bends up with neative load
-            # (i.e. material removed)
-            self.w = spsolve(self.coeff_matrix, -self.qs, use_umfpack=True)
+        # qs negative so bends down with positive load, bends up with negative load
+        # (i.e. material removed)
+        self.w = spsolve(self.coeff_matrix, -self.qs, use_umfpack=True)
 
         if self.Debug:
             print("w.shape:")
