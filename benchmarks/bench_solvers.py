@@ -344,12 +344,7 @@ def _iter_solve(matrix, rhs, tol=1e-3, maxiter=200):
     """ILU-preconditioned LGMRES with iteration counting.
 
     Returns (elapsed_s, n_iters, w, converged).
-    Mirrors the preconditioner logic in gFlex's fd_solve() so timings
-    are directly comparable.
-
-    maxiter caps the iteration count so that poorly-conditioned large
-    problems (the 2D biharmonic condition number grows as O(N⁴)) do not
-    run indefinitely.  Non-convergence is flagged with a "!" in the table.
+    Kept for reference; the main benchmarks now use _fft_iter_solve.
     """
     iters = [0]
 
@@ -373,12 +368,7 @@ class _SolverTimeout(Exception):
 
 
 def _timeout_iter_solve(matrix, rhs, tol=1e-3, maxiter=10, timeout_s=10):
-    """Wrap _iter_solve with a wall-time cap via SIGALRM (Linux/macOS only).
-
-    Returns (elapsed_s, n_iters, w, converged) on success, or None if the
-    timeout fires before the solve completes (covers both the ILU
-    factorisation and the lgmres iterations).
-    """
+    """ILU-preconditioned LGMRES with wall-time cap (kept for reference)."""
     def _handler(sig, frame):
         raise _SolverTimeout()
 
@@ -392,6 +382,40 @@ def _timeout_iter_solve(matrix, rhs, tol=1e-3, maxiter=10, timeout_s=10):
         signal.alarm(0)
         signal.signal(signal.SIGALRM, old_handler)
     return result
+
+
+def _fft_iter_solve(flex, rhs, tol=1e-3, maxiter=200, timeout_s=60):
+    """FFT-preconditioned LGMRES with iteration counting and wall-time cap.
+
+    Uses flex._fft_preconditioner() to obtain the spectral preconditioner
+    M and warm-start vector x0, matching what gFlex's fd_solve() now does.
+    Returns (elapsed_s, n_iters, w, converged), or None on timeout.
+    """
+    iters = [0]
+
+    def _cb(_r):
+        iters[0] += 1
+
+    def _handler(sig, frame):
+        raise _SolverTimeout()
+
+    M, x0 = flex._fft_preconditioner()
+
+    old_handler = signal.signal(signal.SIGALRM, _handler)
+    signal.alarm(timeout_s)
+    t0 = _tick()
+    try:
+        w, info = lgmres(
+            flex.coeff_matrix, rhs, M=M, x0=x0,
+            rtol=tol, maxiter=maxiter, callback=_cb,
+        )
+        t = _tick() - t0
+        return t, iters[0], w, info == 0
+    except _SolverTimeout:
+        return None
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
 
 
 # ── FD benchmarks: direct vs iterative, three Te profiles ────────────────────
@@ -418,14 +442,9 @@ _TE_PROFILES_2D_NONSQ = (
 )
 
 
-def bench_1d_fd(sizes, iter_max=2000, profiles=_TE_PROFILES_1D):
-    """Benchmark 1-D FD.
-
-    Iterative solve is skipped for n > iter_max: the ILU-preconditioned
-    LGMRES converges reliably up to ~2000 nodes but offers little
-    advantage over the direct sparse LU at that scale.
-    """
-    print("\n1D FD  (direct vs iterative)")
+def bench_1d_fd(sizes, iter_timeout=60, profiles=_TE_PROFILES_1D):
+    """Benchmark 1-D FD: direct vs FFT-preconditioned LGMRES."""
+    print("\n1D FD  (direct vs FFT-preconditioned iterative)")
     cols = [
         ("n", 7), ("Te profile", 14),
         ("assemble(s)", 12), ("direct(s)", 10),
@@ -450,13 +469,13 @@ def bench_1d_fd(sizes, iter_max=2000, profiles=_TE_PROFILES_1D):
             t_direct = _tick() - t0
             w_direct = flex.w.copy()
 
-            if n <= iter_max:
-                rhs = -flex.qs
-                t_iter, n_iter, w_iter, ok = _iter_solve(flex.coeff_matrix, rhs)
+            result = _fft_iter_solve(flex, -flex.qs, timeout_s=iter_timeout)
+            if result is not None:
+                t_iter, n_iter, w_iter, ok = result
                 rel_err = (np.linalg.norm(w_iter - w_direct)
                            / np.linalg.norm(w_direct))
                 ratio = t_iter / t_direct if t_direct > 1e-9 else float("nan")
-                sfx = "" if ok else "!"   # "!" flags non-convergence
+                sfx = "" if ok else "!"
                 print(f"  {n:>7}  {prof:>14}  {t_asm:>12.4f}"
                       f"  {t_direct:>10.4f}"
                       f"  {t_iter:>9.4f}  {n_iter:>5}{sfx}"
@@ -464,23 +483,14 @@ def bench_1d_fd(sizes, iter_max=2000, profiles=_TE_PROFILES_1D):
             else:
                 print(f"  {n:>7}  {prof:>14}  {t_asm:>12.4f}"
                       f"  {t_direct:>10.4f}"
-                      f"  {'—':>9}  {'—':>6}  {'—':>9}  {'—':>9}")
+                      f"  {'T/O':>9}  {'—':>6}  {'—':>9}  {'—':>9}")
         if n != sizes[-1]:
             print()
 
 
 def bench_2d_fd(sizes, iter_timeout=60, profiles=_TE_PROFILES_2D):
-    """Benchmark 2-D FD.
-
-    The iterative solve is attempted for every grid size but is abandoned
-    after iter_timeout seconds (wall time).  This cap covers both the ILU
-    factorisation and the lgmres iterations: the biharmonic operator's
-    condition number grows as O(N⁴), so ILU preconditioning becomes
-    prohibitively expensive for large grids.  Timed-out rows are marked
-    "T/O"; raise iter_timeout to explore larger sizes once a better
-    preconditioner (e.g. FFT-based) is in place.
-    """
-    print("\n2D FD  (direct vs iterative)")
+    """Benchmark 2-D FD: direct vs FFT-preconditioned LGMRES."""
+    print("\n2D FD  (direct vs FFT-preconditioned iterative)")
     cols = [
         ("n×n", 9), ("Te profile", 14),
         ("assemble(s)", 12), ("direct(s)", 10),
@@ -506,8 +516,7 @@ def bench_2d_fd(sizes, iter_timeout=60, profiles=_TE_PROFILES_2D):
             w_direct = flex.w.flatten()
 
             rhs = -flex.qs.reshape(-1, order="C")
-            result = _timeout_iter_solve(flex.coeff_matrix, rhs,
-                                         timeout_s=iter_timeout)
+            result = _fft_iter_solve(flex, rhs, timeout_s=iter_timeout)
             if result is not None:
                 t_iter, n_iter, w_iter, ok = result
                 rel_err = (np.linalg.norm(w_iter - w_direct)
@@ -627,7 +636,7 @@ if __name__ == "__main__":
         print(_header(git, ts))
 
         print("\n--- 1D ---")
-        bench_1d_fd(sizes=[100, 500, 2000, 5000])
+        bench_1d_fd(sizes=[100, 500, 2000, 5000], iter_timeout=60)
         bench_1d_fft(sizes=[100, 500, 2000, 5000, 20000])
         bench_1d_sas(sizes=[100, 500, 2000, 5000])
 
