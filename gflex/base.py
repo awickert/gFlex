@@ -83,7 +83,7 @@ class Utility:
                 var = self.config.get(category, name)
                 if var == "" and not optional:
                     # but "" is acceptable for boundary conditions
-                    if name[:17] != "BoundaryCondition":
+                    if name[:18] != "boundary_condition":
                         if not self.quiet:
                             print(
                                 "An empty input string here is not an acceptable"
@@ -906,7 +906,7 @@ class Flexure(Utility, Plotting):
         if filename:
             if self.filename:
                 pass  # Don't overwrite if filename is None-type
-                # "Debug" not yet defined.
+                # "debug" not yet defined.
                 # if self.debug:
                 #  print("Overwriting filename from '__init__' step with that from\n"+\
                 #        "initialize step."
@@ -932,15 +932,15 @@ class Flexure(Utility, Plotting):
             # Default is "verbose" with no debug or quiet
             # Verbose
             self.verbose = self.configGet(
-                "bool", "verbosity", "Verbose", optional=True
+                "bool", "verbosity", "verbose", optional=True
             ) or self.verbose
             # Debug means that whole arrays, etc., can be printed
             self.debug = self.configGet(
-                "bool", "verbosity", "Debug", optional=True
+                "bool", "verbosity", "debug", optional=True
             ) or self.debug
             # Quiet suppresses all output
             self.quiet = self.configGet(
-                "bool", "verbosity", "Quiet", optional=True
+                "bool", "verbosity", "quiet", optional=True
             ) or self.quiet
         # Quiet overrides all others
         if self.quiet:
@@ -948,7 +948,7 @@ class Flexure(Utility, Plotting):
             self.verbose = False
 
         # Introduce model
-        # After configuration file can define "Quiet", and getter/setter should be done
+        # After configuration file can define "quiet", and getter/setter should be done
         # by this point if we are going that way.
         if not self.quiet:
             print("")  # Blank line at start of run
@@ -973,33 +973,33 @@ class Flexure(Utility, Plotting):
             # about what they do for the SAS case
             # Not optional: flexural solutions can be very sensitive to b.c.'s
             self.bc_east = self.configGet(
-                "string", "numerical", "BoundaryCondition_East", optional=False
+                "string", "numerical", "boundary_condition_east", optional=False
             )
             self.bc_west = self.configGet(
-                "string", "numerical", "BoundaryCondition_West", optional=False
+                "string", "numerical", "boundary_condition_west", optional=False
             )
             if self.dimension == 2:
                 self.bc_north = self.configGet(
-                    "string", "numerical2D", "BoundaryCondition_North", optional=False
+                    "string", "numerical2D", "boundary_condition_north", optional=False
                 )
                 self.bc_south = self.configGet(
-                    "string", "numerical2D", "BoundaryCondition_South", optional=False
+                    "string", "numerical2D", "boundary_condition_south", optional=False
                 )
 
             # Parameters
-            self.g = self.configGet("float", "parameter", "GravAccel")
-            self.rho_m = self.configGet("float", "parameter", "MantleDensity")
+            self.g = self.configGet("float", "parameter", "gravitational_acceleration")
+            self.rho_m = self.configGet("float", "parameter", "mantle_density")
             self.rho_fill = self.configGet(
-                "float", "parameter", "InfillMaterialDensity"
+                "float", "parameter", "infill_material_density"
             )
 
             # Grid spacing
             if self.method != "SAS_NG":
                 # No meaning for ungridded superimposed analytical solutions
                 # From configuration file
-                self.dx = self.configGet("float", "numerical", "GridSpacing_x")
+                self.dx = self.configGet("float", "numerical", "grid_spacing_x")
                 if self.dimension == 2:
-                    self.dy = self.configGet("float", "numerical2D", "GridSpacing_y")
+                    self.dy = self.configGet("float", "numerical2D", "grid_spacing_y")
 
             # Loading grid
             # q0 is either a load array or an x,y,q array.
@@ -1008,14 +1008,14 @@ class Flexure(Utility, Plotting):
             # it is a surface normal stress that is h_load * rho_load * g
             # it later is combined with dx and (if 2D) dy for FD cases
             # for point loads, need mass: q0 should be written as [x, (y), force])
-            self.q0 = self.configGet("string", "input", "Loads")
+            self.q0 = self.configGet("string", "input", "loads")
 
         # Parameters -- rho_m and rho_fill defined, so this outside
         # of if-statement (to work with getters/setters as well)
         self.drho = self.rho_m - self.rho_fill
         if self.filename:
-            self.E = self.configGet("float", "parameter", "YoungsModulus")
-            self.nu = self.configGet("float", "parameter", "PoissonsRatio")
+            self.E = self.configGet("float", "parameter", "youngs_modulus")
+            self.nu = self.configGet("float", "parameter", "poissons_ratio")
 
         # Stop program if there is no q0 defined or if it is None-type
         try:
@@ -1057,14 +1057,14 @@ class Flexure(Utility, Plotting):
                 if self.q0.ndim != self.dimension:
                     print("Number of dimensions in loads file is inconsistent with")
                     print("number of dimensions in solution technique.")
-                    print("Loads", self.q0.ndim)
+                    print("loads", self.q0.ndim)
                     print("Dimensions", self.dimension)
                     print(self.q0)
                     print("Exiting.")
                     sys.exit()
 
         # Plotting selection
-        self.plotChoice = self.configGet("string", "output", "Plot", optional=True)
+        self.plotChoice = self.configGet("string", "output", "plot", optional=True)
 
         # Ensure that Te is of floating-point type to avoid integer math
         # and floor division
@@ -1173,7 +1173,7 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             # Otherwise, set from config; None means no output file
             self.wOutFile = self.configGet(
-                "string", "output", "DeflectionOut", optional=True
+                "string", "output", "deflection_out", optional=True
             )
         else:
             if self.verbose:
@@ -1418,7 +1418,7 @@ class Flexure(Utility, Plotting):
             self.y = np.arange(self.dy / 2.0, self.dy * self.qs.shape[1], self.dy)
         # Config file may override the default solver
         if self.filename:
-            _solver = self.configGet("string", "numerical", "Solver", optional=True)
+            _solver = self.configGet("string", "numerical", "solver", optional=True)
             if _solver is not None:
                 self.solver = _solver
         # Check consistency of size if coeff array was loaded
@@ -1426,11 +1426,11 @@ class Flexure(Utility, Plotting):
             # Try to import Te grid or scalar for the finite difference solution
             # Try float first (scalar Te); fall back to string (file path)
             self.te = self.configGet(
-                "float", "input", "ElasticThickness", optional=True
+                "float", "input", "elastic_thickness", optional=True
             )
             if self.te is None:
                 Tepath = self.configGet(
-                    "string", "input", "ElasticThickness", optional=False
+                    "string", "input", "elastic_thickness", optional=False
                 )
                 self.te = Tepath
             else:
@@ -1498,7 +1498,7 @@ class Flexure(Utility, Plotting):
         # Config-file parameter loading
         # FFT requires scalar (uniform) Te; that check is performed in F1D/F2D
         if self.filename:
-            self.te = self.configGet("float", "input", "ElasticThickness")
+            self.te = self.configGet("float", "input", "elastic_thickness")
             # qs may still be coming from q0 when driven by a config file
             try:
                 self.qs
@@ -1518,7 +1518,7 @@ class Flexure(Utility, Plotting):
             self.x = np.arange(self.dx / 2.0, self.dx * self.qs.shape[0], self.dx)
         if self.filename:
             # Define the (scalar) elastic thickness
-            self.te = self.configGet("float", "input", "ElasticThickness")
+            self.te = self.configGet("float", "input", "elastic_thickness")
             # Define a stress-based qs = q0
             self.qs = self.q0.copy()
             # Remove self.q0 to avoid issues with multiply-defined inputs
@@ -1545,7 +1545,7 @@ class Flexure(Utility, Plotting):
         """
         if self.filename:
             # Define the (scalar) elastic thickness
-            self.te = self.configGet("float", "input", "ElasticThickness")
+            self.te = self.configGet("float", "input", "elastic_thickness")
             # See if it wants to be run in lat/lon
             # Could put under in 2D if-statement, but could imagine an eventual desire
             # to change this and have 1D lat/lon profiles as well.
@@ -1555,7 +1555,7 @@ class Flexure(Utility, Plotting):
                 "string", "numerical2D", "latlon", optional=True
             )
             self.planetary_radius = self.configGet(
-                "float", "numerical2D", "PlanetaryRadius", optional=True
+                "float", "numerical2D", "planetary_radius", optional=True
             )
         # Parse out input q0 into variables of imoprtance for solution
         if self.dimension == 1:

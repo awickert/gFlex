@@ -16,8 +16,8 @@ flex.method = "FD"  # Solution method: * FD (finite difference)
 flex.g = 9.8  # acceleration due to gravity
 flex.E = 65e9  # Young's Modulus
 flex.nu = 0.25  # Poisson's Ratio
-flex.rho_m = 3300.0  # MantleDensity
-flex.rho_fill = 0.0  # InfillMaterialDensity
+flex.rho_m = 3300.0  # mantle_density
+flex.rho_fill = 0.0  # infill_material_density
 
 flex.te = 35000.0 * np.ones(
     (50, 50)

@@ -41,20 +41,20 @@ Parameters
 ``parameter`` section
 ~~~~~~~~~~~~~~~~~~~~~
 
-``YoungsModulus``
+``youngs_modulus``
     Young's modulus :math:`E` [Pa].  Typical lithospheric value: 65 GPa
     (``6.5e10``).
 
-``PoissonsRatio``
+``poissons_ratio``
     Poisson's ratio :math:`\nu` [dimensionless].  Typical value: 0.25.
 
-``GravAccel``
+``gravitational_acceleration``
     Gravitational acceleration :math:`g` [m s⁻²].  Earth standard: 9.8.
 
-``MantleDensity``
+``mantle_density``
     Density of the mantle :math:`\rho_m` [kg m⁻³].  Typical value: 3300.
 
-``InfillMaterialDensity``
+``infill_material_density``
     Density of the material that fills (or vacates) the flexural depression
     :math:`\rho_\text{fill}` [kg m⁻³].  Common values:
 
@@ -84,7 +84,7 @@ Parameters
     Paths are resolved relative to the directory containing the
     configuration file.
 
-``ElasticThickness``
+``elastic_thickness``
     Elastic thickness [m].  Either a scalar value or a path to a
     space-delimited array.  Arrays are required for FD solutions with
     spatially variable *Te*.  Use :func:`~gflex.smooth_pad_Te` and
@@ -102,7 +102,7 @@ Parameters
 ``output`` section
 ~~~~~~~~~~~~~~~~~~
 
-``DeflectionOut``
+``deflection_out``
     Path for writing deflection output as a space-delimited ASCII file.
     Leave blank to suppress file output.
 
@@ -121,10 +121,10 @@ Parameters
 ``numerical`` section
 ~~~~~~~~~~~~~~~~~~~~~
 
-``GridSpacing_x``
+``grid_spacing_x``
     Grid cell size in the x-direction [m].
 
-``BoundaryCondition_West``, ``BoundaryCondition_East``
+``boundary_condition_west``, ``boundary_condition_east``
     Boundary conditions on the west and east edges.
 
     For FD: ``zero_displacement_zero_slope``, ``zero_displacement_zero_moment``,
@@ -155,11 +155,11 @@ Parameters
 ``numerical2D`` section
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-``GridSpacing_y``
+``grid_spacing_y``
     Grid cell size in the y-direction [m].
 
-``BoundaryCondition_North``, ``BoundaryCondition_South``
-    Same options as ``BoundaryCondition_West`` / ``BoundaryCondition_East``.
+``boundary_condition_north``, ``boundary_condition_south``
+    Same options as ``boundary_condition_west`` / ``boundary_condition_east``.
 
 ``latlon``
     ``true`` / ``false``.  Interpret input coordinates as geographic
@@ -203,29 +203,29 @@ Complete examples
       method: FD
 
     parameter:
-      YoungsModulus: 6.5e10
-      PoissonsRatio: 0.25
-      GravAccel: 9.8
-      MantleDensity: 3300
-      InfillMaterialDensity: 0
+      youngs_modulus: 6.5e10
+      poissons_ratio: 0.25
+      gravitational_acceleration: 9.8
+      mantle_density: 3300
+      infill_material_density: 0
 
     input:
-      Loads: q0_sample/1D/central_block.txt
-      ElasticThickness: Te_sample/1D/8km_20km_ramp.txt
+      loads: q0_sample/1D/central_block.txt
+      elastic_thickness: Te_sample/1D/8km_20km_ramp.txt
 
     output:
-      DeflectionOut: ""
-      Plot: combo          # overlay deflection and load (1-D only)
+      deflection_out: ""
+      plot: combo          # overlay deflection and load (1-D only)
 
     numerical:
-      GridSpacing_x: 6000
-      BoundaryCondition_West: periodic
-      BoundaryCondition_East: periodic
+      grid_spacing_x: 6000
+      boundary_condition_west: periodic
+      boundary_condition_east: periodic
 
     verbosity:
-      Verbose: false
-      Debug: false
-      Quiet: false
+      verbose: false
+      debug: false
+      quiet: false
 
 2-D finite-difference example (YAML)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -239,32 +239,32 @@ Complete examples
       method: FD
 
     parameter:
-      YoungsModulus: 6.5e10
-      PoissonsRatio: 0.25
-      GravAccel: 9.8
-      MantleDensity: 3300
-      InfillMaterialDensity: 0
+      youngs_modulus: 6.5e10
+      poissons_ratio: 0.25
+      gravitational_acceleration: 9.8
+      mantle_density: 3300
+      infill_material_density: 0
 
     input:
-      Loads: q0_sample/2D/diag.txt
-      ElasticThickness: Te_sample/2D/fault_24-30.txt
+      loads: q0_sample/2D/diag.txt
+      elastic_thickness: Te_sample/2D/fault_24-30.txt
 
     output:
-      DeflectionOut: ""
-      Plot: both
+      deflection_out: ""
+      plot: both
 
     numerical:
-      GridSpacing_x: 4000
-      BoundaryCondition_West: zero_moment_zero_shear
-      BoundaryCondition_East: zero_displacement_zero_slope
+      grid_spacing_x: 4000
+      boundary_condition_west: zero_moment_zero_shear
+      boundary_condition_east: zero_displacement_zero_slope
 
     numerical2D:
-      GridSpacing_y: 4000
-      BoundaryCondition_North: mirror
-      BoundaryCondition_South: zero_slope_zero_shear
+      grid_spacing_y: 4000
+      boundary_condition_north: mirror
+      boundary_condition_south: zero_slope_zero_shear
 
     verbosity:
-      Verbose: false
-      Debug: false
-      Quiet: false
+      verbose: false
+      debug: false
+      quiet: false
 

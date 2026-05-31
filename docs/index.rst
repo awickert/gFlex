@@ -100,24 +100,24 @@ A minimal 2-D YAML configuration:
      dimension: 2
      method: FD
    parameter:
-     YoungsModulus: 6.5e10
-     PoissonsRatio: 0.25
-     GravAccel: 9.8
-     MantleDensity: 3300
-     InfillMaterialDensity: 0
+     youngs_modulus: 6.5e10
+     poissons_ratio: 0.25
+     gravitational_acceleration: 9.8
+     mantle_density: 3300
+     infill_material_density: 0
    input:
-     Loads: path/to/loads.txt
-     ElasticThickness: path/to/Te.txt
+     loads: path/to/loads.txt
+     elastic_thickness: path/to/Te.txt
    output:
-     Plot: both
+     plot: both
    numerical:
-     GridSpacing_x: 4000
-     BoundaryCondition_West: zero_moment_zero_shear
-     BoundaryCondition_East: zero_displacement_zero_slope
+     grid_spacing_x: 4000
+     boundary_condition_west: zero_moment_zero_shear
+     boundary_condition_east: zero_displacement_zero_slope
    numerical2D:
-     GridSpacing_y: 4000
-     BoundaryCondition_North: mirror
-     BoundaryCondition_South: zero_slope_zero_shear
+     grid_spacing_y: 4000
+     boundary_condition_north: mirror
+     boundary_condition_south: zero_slope_zero_shear
 
 Run from the command line::
 
