@@ -8,7 +8,7 @@ authors:
   given-names: "Eric W. H."
   orcid: "https://orcid.org/0000-0002-5864-6459"
 title: "gFlex"
-version: 1.3.0
-doi: 10.5281/zenodo.5034651
-date-released: 2026-05-27
+version: 1.4.0
+doi: 10.5281/zenodo.10471939
+date-released: 2026-05-29
 url: "https://github.com/awickert/gFlex"
