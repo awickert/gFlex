@@ -116,18 +116,13 @@ class Utility:
                         )
                         print("")
             else:
-                print(
-                    "Problem loading "
-                    + vartype
-                    + ' "'
-                    + name
-                    + '" in category "'
-                    + category
-                    + '" from configuration file.'
+                msg = (
+                    f'Problem loading {vartype} "{name}" in category '
+                    f'"{category}" from configuration file.'
                 )
                 if specialReturnMessage:
-                    print(specialReturnMessage)
-                sys.exit("Exiting.")
+                    msg += f"\n{specialReturnMessage}"
+                raise ValueError(msg)
 
     def _load_config(self, filename):
         """Return a :class:`configparser.ConfigParser` populated from *filename*.

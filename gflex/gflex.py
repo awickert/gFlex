@@ -64,38 +64,42 @@ def main():
     if not args.silent:
         print(LICENSE, file=sys.stderr)
 
-    obj = WhichModel(args.filename)
+    try:
+        obj = WhichModel(args.filename)
 
-    obj.Debug = args.verbose
-    obj.Quiet = args.silent
+        obj.Debug = args.verbose
+        obj.Quiet = args.silent
 
-    ########################################
-    ## SET MODEL TYPE AND DIMENSIONS HERE ##
-    ########################################
+        ########################################
+        ## SET MODEL TYPE AND DIMENSIONS HERE ##
+        ########################################
 
-    if obj.dimension == 1:
-        obj = F1D(args.filename)
-    elif obj.dimension == 2:
-        obj = F2D(args.filename)
+        if obj.dimension == 1:
+            obj = F1D(args.filename)
+        elif obj.dimension == 2:
+            obj = F2D(args.filename)
 
-    obj.initialize(args.filename)
+        obj.initialize(args.filename)
 
-    ############################################
-    ##       SET MODEL PARAMETERS HERE        ##
-    ## (if not defined in configuration file) ##
-    ############################################
-    # obj.set_value('method','FD') # for example
+        ############################################
+        ##       SET MODEL PARAMETERS HERE        ##
+        ## (if not defined in configuration file) ##
+        ############################################
+        # obj.set_value('method','FD') # for example
 
-    obj.run()
-    obj.finalize()
+        obj.run()
+        obj.finalize()
 
-    obj.output()  # Not part of IRF or BMI: Does standalone plotting and file output
+        obj.output()  # Not part of IRF or BMI: Does standalone plotting and file output
 
-    #####################
-    ## GET VALUES HERE ##
-    ##   (if desired)  ##
-    #####################
-    # wout = obj.get_value('Deflection') # for example
+        #####################
+        ## GET VALUES HERE ##
+        ##   (if desired)  ##
+        #####################
+        # wout = obj.get_value('Deflection') # for example
+
+    except ValueError as e:
+        sys.exit(f"Error: {e}")
 
 
 if __name__ == "__main__":
