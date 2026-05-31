@@ -121,7 +121,6 @@ A minimal 2-D YAML configuration:
      BoundaryCondition_West: 0Moment0Shear
      BoundaryCondition_East: 0Displacement0Slope
      Solver: direct
-     ConvergenceTolerance: 1.0e-3
    numerical2D:
      GridSpacing_y: 4000
      BoundaryCondition_North: Mirror

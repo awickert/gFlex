@@ -144,14 +144,7 @@ Parameters
 ``Solver``
     Linear system solver for FD:
 
-    * ``direct`` — sparse direct solver; recommended for most grids.
-    * ``iterative`` — lower peak memory on very large grids; slower.
-
-``ConvergenceTolerance``
-    Relative residual tolerance passed as ``rtol`` to the LGMRES solver.
-    Only used when ``Solver = iterative``.  Default: ``1.0e-3``.  Decrease
-    for higher accuracy at the cost of more iterations; the solver falls back
-    to a direct solve if LGMRES does not converge.
+    * ``direct`` — sparse direct solver (default and only supported option).
 
 .. note::
 
@@ -241,7 +234,6 @@ Complete examples
       BoundaryCondition_West: Periodic
       BoundaryCondition_East: Periodic
       Solver: direct
-      ConvergenceTolerance: 0.001
 
     verbosity:
       Verbose: false
@@ -279,7 +271,6 @@ Complete examples
       BoundaryCondition_West: 0Moment0Shear
       BoundaryCondition_East: 0Displacement0Slope
       Solver: direct
-      ConvergenceTolerance: 1.0e-3
 
     numerical2D:
       GridSpacing_y: 4000
@@ -329,7 +320,6 @@ Equivalent 1-D example in INI:
     BoundaryCondition_West=Periodic
     BoundaryCondition_East=Periodic
     Solver=direct
-    ConvergenceTolerance=0.001
 
     [verbosity]
     Verbose=false
@@ -414,13 +404,8 @@ here (with corrections) for quick reference.
     BoundaryCondition_West=
     BoundaryCondition_East=
     ;
-    ; Solver can be direct or iterative
+    ; Solver: currently only "direct" (sparse LU) is supported
     Solver=
-    ; Tolerance between iterations [m]
-    ; If you have chosen an iterative solution type, gFlex will iterate
-    ; until the change between two subsequent iterations is below this value.
-    ; Set as 0 if you don't want to iterate.
-    ConvergenceTolerance=1E-3
 
     [numerical2D]
     ; dy [m]
