@@ -31,6 +31,18 @@
 
 - Fixed `SyntaxWarning` for invalid escape sequences (`\sigma`) in the F2D
   class docstring (Python 3.12+).
+- Fixed a longstanding ghost-node error in the 1-D
+  `zero_displacement_zero_slope` FD boundary condition.  The original
+  implementation (present since the first version) dropped ghost-node stencil
+  terms rather than eliminating them via even reflection, and left the
+  boundary row coupled to interior nodes rather than decoupling it as a
+  Dirichlet constraint.  The practical effect was that the boundary deflection
+  was not strictly zero and the zero-slope condition was not enforced; results
+  were accurate only when the boundary was far enough from any load that
+  deflection was naturally negligible there (the recommended use case, and the
+  intent of the existing proximity warning).  The corrected implementation
+  decouples the boundary row (enforcing w = 0 exactly) and folds the
+  even-reflected ghost into the adjacent interior node (enforcing dw/dx = 0).
 
 ## [1.4.0](https://github.com/awickert/gFlex/releases/tag/v1.4.0) - 2026-05-29
 

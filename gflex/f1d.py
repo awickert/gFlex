@@ -1042,39 +1042,53 @@ class F1D(Flexure):
 
     def _bc_zero_displacement_zero_slope(self):
         """
-        zero_displacement_zero_slope boundary condition for 0 deflection.
-        This requires that nothing be done to the edges of the solution array,
-        because the lack of the off-grid terms implies that they go to 0
-        Here we just turn the cells outside the array into nan, to ensure that
-        we are not accidentally including the wrong cells here (and for consistency
-        with the other solution types -- this takes negligible time)
+        Clamped boundary: zero displacement and zero slope.
+
+        **Boundary node** (i=0 west, i=N-1 east): decoupled from all interior
+        nodes so the row reduces to c0·w = 0, enforcing w = 0 exactly for
+        zero boundary load.
+
+        **First interior node** (i=1 west, i=N-2 east): the ghost node one
+        step outside the domain is eliminated via even reflection
+        (w[ghost] = w[interior]), which folds its stencil coefficient into c0.
+        This encodes dw/dx = 0 at the boundary.
+
+        Historical note: the original implementation (pre-2026) dropped ghost
+        nodes silently rather than reflecting them, and did not decouple the
+        boundary row from interior nodes.  The result was a ghost = 0
+        truncation that approximated clamped conditions only when the boundary
+        was far from any load.  This is now corrected.
         """
         if self.bc_west == "zero_displacement_zero_slope":
+            # Boundary node: decouple so c0·w[0] = 0 → w[0] = 0 exactly
             i = 0
-            self.l2[i] = np.nan
-            self.l1[i] = np.nan
+            self.l2[i] = np.nan   # ghost w[-2]: out-of-bounds, excluded
+            self.l1[i] = np.nan   # ghost w[-1]: out-of-bounds, excluded
             self.c0[i] += 0
-            self.r1[i] += 0
-            self.r2[i] += 0
+            self.r1[i] = 0        # decouple from w[1]
+            self.r2[i] = 0        # decouple from w[2]
+            # First interior node: even reflection w[-1] = w[1] encodes zero slope
             i = 1
-            self.l2[i] = np.nan
-            self.l1[i] += 0
-            self.c0[i] += 0
+            self.l2[i] = np.nan   # ghost absorbed into c0 below
+            self.l1[i] += 0       # w[0] = 0, contributes nothing
+            self.c0[i] += self.l2_coeff_i[i]   # fold w[-1] = +w[1] into c0
             self.r1[i] += 0
             self.r2[i] += 0
         if self.bc_east == "zero_displacement_zero_slope":
+            # First interior node: even reflection w[N] = w[N-2] encodes zero slope
             i = -2
             self.l2[i] += 0
             self.l1[i] += 0
-            self.c0[i] += 0
+            self.c0[i] += self.r2_coeff_i[i]   # fold w[N] = +w[N-2] into c0
             self.r1[i] += 0
-            self.r2[i] = np.nan
+            self.r2[i] = np.nan   # ghost absorbed into c0 above
+            # Boundary node: decouple so c0·w[N-1] = 0 → w[N-1] = 0 exactly
             i = -1
-            self.l2[i] += 0
-            self.l1[i] += 0
+            self.l2[i] = 0        # decouple from w[N-3]
+            self.l1[i] = 0        # decouple from w[N-2]
             self.c0[i] += 0
-            self.r1[i] = np.nan
-            self.r2[i] = np.nan
+            self.r1[i] = np.nan   # ghost w[N]: out-of-bounds, excluded
+            self.r2[i] = np.nan   # ghost w[N+1]: out-of-bounds, excluded
 
     def _bc_zero_slope_zero_shear(self):
         """
