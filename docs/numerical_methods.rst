@@ -6,10 +6,106 @@ analytical solutions (SAS / SAS_NG), a spectral FFT solver, and a
 finite-difference (FD) solver.  See :doc:`theory` for the governing
 equations and a comparison of the strategies.
 
-This page documents the FD interior stencils — the fixed-coefficient
-templates applied at every grid point away from the domain boundary.
+This page gives the mathematical form of each solver and, for the FD
+solver, shows how the governing PDEs map onto the interior stencils.
 Stencils that enforce the domain boundary conditions are described in
 :doc:`boundary_conditions`.
+
+----
+
+Superposition of analytical solutions (SAS / SAS\_NG)
+------------------------------------------------------
+
+The SAS solver exploits the linearity of the flexure equation to
+superpose Green's-function responses to individual point or line loads
+(Wickert, 2016, Eqs. 7–8).
+
+**1-D (line load)**
+
+The deflection at position :math:`x` due to a line load of magnitude
+:math:`q` centred at :math:`x_i` is (Wickert, 2016, Eq. 3)
+
+.. math::
+
+   w(x;\,x_i) = q\,\frac{\alpha_{1\mathrm{D}}^3}{8D}
+   \exp\!\left(-\frac{r}{\alpha_{1\mathrm{D}}}\right)
+   \!\left[
+     \cos\!\left(\frac{r}{\alpha_{1\mathrm{D}}}\right)
+   + \sin\!\left(\frac{r}{\alpha_{1\mathrm{D}}}\right)
+   \right], \quad r = |x - x_i|,
+
+where
+
+.. math::
+
+   \alpha_{1\mathrm{D}} = \left(\frac{4D}{\Delta\rho\,g}\right)^{1/4}
+
+is the one-dimensional flexural parameter.  The full deflection is the
+sum of these responses over all loaded grid cells, each multiplied by
+the cell width :math:`\Delta x`.
+
+**2-D (point load) — Kelvin–Bessel function**
+
+The two-dimensional response to a point load :math:`q` at
+:math:`(x_i, y_j)` is (Wickert, 2016, Eq. 5; Brotchie and Silvester,
+1969)
+
+.. math::
+
+   w(x,y;\,x_i,y_j) = q\,\frac{\alpha_{2\mathrm{D}}^2}{2\pi D}
+   \,\mathrm{kei}\!\left(\frac{r}{\alpha_{2\mathrm{D}}}\right),
+   \quad r = \sqrt{(x-x_i)^2+(y-y_j)^2},
+
+where
+
+.. math::
+
+   \alpha_{2\mathrm{D}} = \left(\frac{D}{\Delta\rho\,g}\right)^{1/4}
+
+is the two-dimensional flexural parameter, and :math:`\mathrm{kei}` is
+the zeroth-order Kelvin–Bessel function — the imaginary part of
+:math:`K_0(r\,e^{i\pi/4})`, with :math:`K_0` being the zeroth-order
+modified Bessel function of the second kind (Abramowitz and Stegun,
+1972).  The total deflection is the sum over all point loads (Wickert,
+2016, Eq. 8).
+
+----
+
+Spectral (FFT) solver
+---------------------
+
+The FFT solver works in the wavenumber domain.  For uniform :math:`D`
+the deflection spectrum is obtained by dividing the transformed load by
+the spectral stiffness.
+
+**1-D**
+
+With angular wavenumber :math:`k`:
+
+.. math::
+
+   W(k) = \frac{-Q(k)}{%
+     D\,k^4 + \sigma_{xx}\,T_e\,k^2 + \Delta\rho\,g},
+
+where :math:`Q(k)` is the Fourier transform of the load and
+:math:`\sigma_{xx}` is the optional in-plane (end) normal stress.
+
+**2-D**
+
+With angular wavenumbers :math:`k_x` and :math:`k_y`:
+
+.. math::
+
+   W(k_x,k_y) = \frac{-Q(k_x,k_y)}{%
+     D\,(k_x^2+k_y^2)^2
+     + \sigma_{xx}\,T_e\,k_x^2
+     + \sigma_{yy}\,T_e\,k_y^2
+     + 2\,\sigma_{xy}\,T_e\,k_x\,k_y
+     + \Delta\rho\,g}.
+
+For non-periodic boundary conditions both transforms zero-pad the load
+by four flexural wavelengths on each side before transforming, then
+trim the result back to the original domain.
 
 ----
 
