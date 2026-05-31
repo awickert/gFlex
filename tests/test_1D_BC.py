@@ -39,19 +39,19 @@ def _run(qs, method="FD", bc_w="0Moment0Shear", bc_e="0Moment0Shear",
          sigma_xx=None, te=None):
     """Run a 1-D flexure calculation and return the flex object."""
     flex = F1D()
-    flex.Quiet = True
-    flex.Method = method
-    flex.Solver = "direct"
+    flex.quiet = True
+    flex.method = method
+    flex.solver = "direct"
     flex.g = g
     flex.E = E
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.Te = Te if te is None else te
+    flex.te = Te if te is None else te
     flex.qs = qs.copy()
     flex.dx = dx
-    flex.BC_W = bc_w
-    flex.BC_E = bc_e
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
     if sigma_xx is not None:
         flex.sigma_xx = sigma_xx
     flex.initialize()

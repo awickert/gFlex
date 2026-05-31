@@ -11,19 +11,19 @@ def _run_flex_1d(Te, qs, dx, method="FD", bc_w="0Moment0Shear",
                  bc_e="0Moment0Shear", sigma_xx=None, solver="direct"):
     """Helper: run a 1-D flexure calculation and return the flex object."""
     flex = F1D()
-    flex.Quiet = True
-    flex.Method = method
-    flex.Solver = solver
+    flex.quiet = True
+    flex.method = method
+    flex.solver = solver
     flex.g = 9.8
     flex.E = 65e9
     flex.nu = 0.25
     flex.rho_m = 3300.0
     flex.rho_fill = 0.0
-    flex.Te = Te
+    flex.te = Te
     flex.qs = qs.copy()
     flex.dx = dx
-    flex.BC_W = bc_w
-    flex.BC_E = bc_e
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
     if sigma_xx is not None:
         flex.sigma_xx = sigma_xx
     flex.initialize()

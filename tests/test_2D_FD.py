@@ -9,22 +9,22 @@ from gflex.f2d import F2D, pad_domain, recommended_pad_width, smooth_pad_Te
 def _run_flex_2d(Te, qs, dx, dy, bc="0Displacement0Slope"):
     """Helper: run a 2-D FD flexure calculation and return deflection array."""
     flex = F2D()
-    flex.Quiet = True
-    flex.Method = "FD"
-    flex.Solver = "direct"
+    flex.quiet = True
+    flex.method = "FD"
+    flex.solver = "direct"
     flex.g = 9.8
     flex.E = 65e9
     flex.nu = 0.25
     flex.rho_m = 3300.0
     flex.rho_fill = 0.0
-    flex.Te = Te.copy() if isinstance(Te, np.ndarray) else Te
+    flex.te = Te.copy() if isinstance(Te, np.ndarray) else Te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.dy = dy
-    flex.BC_W = bc
-    flex.BC_E = bc
-    flex.BC_S = bc
-    flex.BC_N = bc
+    flex.bc_west = bc
+    flex.bc_east = bc
+    flex.bc_south = bc
+    flex.bc_north = bc
     flex.initialize()
     flex.run()
     flex.finalize()
@@ -34,12 +34,12 @@ def _run_flex_2d(Te, qs, dx, dy, bc="0Displacement0Slope"):
 def test_main():
     flex = F2D()
 
-    flex.Quiet = False
+    flex.quiet = False
 
-    flex.Method = "FD"  # Solution method: * FD (finite difference)
+    flex.method = "FD"  # Solution method: * FD (finite difference)
     #                  * SAS (superposition of analytical solutions)
     #                  * SAS_NG (ungridded SAS)
-    flex.Solver = "direct"
+    flex.solver = "direct"
 
     flex.g = 9.8  # acceleration due to gravity
     flex.E = 65e9  # Young's Modulus
@@ -47,10 +47,10 @@ def test_main():
     flex.rho_m = 3300.0  # MantleDensity
     flex.rho_fill = 0.0  # InfillMaterialDensity
 
-    flex.Te = 35000.0 * np.ones(
+    flex.te = 35000.0 * np.ones(
         (50, 50)
     )  # Elastic thickness [m] -- scalar but may be an array
-    flex.Te[:, -3:] = 0.0
+    flex.te[:, -3:] = 0.0
     flex.qs = np.zeros((50, 50))  # Template array for surface load stresses
     flex.qs[10:40, 10:40] += 1e6  # Populating this template
     flex.dx = 5000.0  # grid cell size, x-oriented [m]
@@ -58,10 +58,10 @@ def test_main():
     # Boundary conditions can be:
     # (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
     # For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
-    flex.BC_W = "0Displacement0Slope"  # west boundary condition
-    flex.BC_E = "0Moment0Shear"  # east boundary condition
-    flex.BC_S = "0Displacement0Slope"  # south boundary condition
-    flex.BC_N = "0Displacement0Slope"  # north boundary condition
+    flex.bc_west = "0Displacement0Slope"  # west boundary condition
+    flex.bc_east = "0Moment0Shear"  # east boundary condition
+    flex.bc_south = "0Displacement0Slope"  # south boundary condition
+    flex.bc_north = "0Displacement0Slope"  # north boundary condition
 
     # latitude/longitude solutions are exact for SAS, approximate otherwise
     # latlon = # true/false: flag to enable lat/lon input. Defaults False.

@@ -55,22 +55,22 @@ def _run(qs, method="SAS", bc_w="0Moment0Shear", bc_e="0Moment0Shear",
          bc_n="0Moment0Shear", bc_s="0Moment0Shear"):
     """Run a 2-D flexure calculation and return the flex object."""
     flex = F2D()
-    flex.Quiet   = True
-    flex.Method  = method
-    flex.Solver  = "direct"
+    flex.quiet   = True
+    flex.method  = method
+    flex.solver  = "direct"
     flex.g        = g
     flex.E        = E
     flex.nu       = nu
     flex.rho_m    = rho_m
     flex.rho_fill = rho_fill
-    flex.Te       = Te
+    flex.te       = Te
     flex.qs       = qs.copy()
     flex.dx       = dx
     flex.dy       = dy
-    flex.BC_W     = bc_w
-    flex.BC_E     = bc_e
-    flex.BC_N     = bc_n
-    flex.BC_S     = bc_s
+    flex.bc_west     = bc_w
+    flex.bc_east     = bc_e
+    flex.bc_north     = bc_n
+    flex.bc_south     = bc_s
     flex.initialize()
     flex.run()
     flex.finalize()
@@ -146,14 +146,14 @@ def test_2d_sas_vs_fd_large_domain():
 def _run_sas_ng(x, y, q, xw, yw):
     """Run a 2-D SAS_NG (non-gridded) flexure calculation."""
     flex = F2D()
-    flex.Quiet   = True
-    flex.Method  = "SAS_NG"
+    flex.quiet   = True
+    flex.method  = "SAS_NG"
     flex.g        = g
     flex.E        = E
     flex.nu       = nu
     flex.rho_m    = rho_m
     flex.rho_fill = rho_fill
-    flex.Te       = Te
+    flex.te       = Te
     flex.x        = x.copy()
     flex.y        = y.copy()
     flex.q        = q.copy()

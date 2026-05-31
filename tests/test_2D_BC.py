@@ -55,22 +55,22 @@ def _run(qs, method="FD", bc_w="0Moment0Shear", bc_e="0Moment0Shear",
          sigma_xx=None, sigma_yy=None, sigma_xy=None):
     """Run a 2-D flexure calculation and return the flex object."""
     flex = F2D()
-    flex.Quiet = True
-    flex.Method = method
-    flex.Solver = "direct"
+    flex.quiet = True
+    flex.method = method
+    flex.solver = "direct"
     flex.g = g
     flex.E = E
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.Te = Te
+    flex.te = Te
     flex.qs = qs.copy()
     flex.dx = dx_
     flex.dy = dy_
-    flex.BC_W = bc_w
-    flex.BC_E = bc_e
-    flex.BC_N = bc_n
-    flex.BC_S = bc_s
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
+    flex.bc_north = bc_n
+    flex.bc_south = bc_s
     if sigma_xx is not None:
         flex.sigma_xx = sigma_xx
     if sigma_yy is not None:

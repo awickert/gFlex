@@ -37,19 +37,19 @@ dx = 5000.0
 
 def _run_1d(qs, bc_w, bc_e):
     flex = F1D()
-    flex.Quiet = True
-    flex.Method = "FD"
-    flex.Solver = "direct"
+    flex.quiet = True
+    flex.method = "FD"
+    flex.solver = "direct"
     flex.g = g
     flex.E = E
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.Te = Te
+    flex.te = Te
     flex.qs = qs.copy()
     flex.dx = dx
-    flex.BC_W = bc_w
-    flex.BC_E = bc_e
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         flex.initialize()
@@ -60,22 +60,22 @@ def _run_1d(qs, bc_w, bc_e):
 
 def _run_2d(qs, bc_w, bc_e, bc_n, bc_s):
     flex = F2D()
-    flex.Quiet = True
-    flex.Method = "FD"
-    flex.Solver = "direct"
+    flex.quiet = True
+    flex.method = "FD"
+    flex.solver = "direct"
     flex.g = g
     flex.E = E
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.Te = Te
+    flex.te = Te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.dy = dx
-    flex.BC_W = bc_w
-    flex.BC_E = bc_e
-    flex.BC_N = bc_n
-    flex.BC_S = bc_s
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
+    flex.bc_north = bc_n
+    flex.bc_south = bc_s
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         flex.initialize()

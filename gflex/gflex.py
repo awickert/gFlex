@@ -12,7 +12,7 @@ To run in a Python script or shell, follow this general pattern:
 ```
 import gflex
 flex = gflex.F1D()
-flex.Method = ...
+flex.method = ...
 # ...more variable setting...
 # see the 'input' directory for examples
 ```
@@ -67,8 +67,8 @@ def main():
     try:
         obj = WhichModel(args.filename)
 
-        obj.Debug = args.verbose
-        obj.Quiet = args.silent
+        obj.debug = args.verbose
+        obj.quiet = args.silent
 
         ########################################
         ## SET MODEL TYPE AND DIMENSIONS HERE ##

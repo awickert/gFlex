@@ -100,17 +100,17 @@ Running gFlex
 .. code-block:: python
 
    flex = F2D()
-   flex.Quiet = True
+   flex.quiet = True
 
-   flex.Method  = 'FD'
+   flex.method  = 'FD'
 
    flex.g        = g;     flex.E  = E;    flex.nu = nu
    flex.rho_m    = rho_m; flex.rho_fill = rho_fill
-   flex.Te       = Te_grid
+   flex.te       = Te_grid
    flex.qs       = qs
    flex.dx       = dx;    flex.dy = dy
 
-   flex.BC_W = flex.BC_E = flex.BC_S = flex.BC_N = '0Moment0Shear'
+   flex.bc_west = flex.bc_east = flex.bc_south = flex.bc_north = '0Moment0Shear'
 
    flex.initialize()
    flex.run()
@@ -153,7 +153,7 @@ deflection side by side), plot the arrays directly:
        cmap=cmc.lajolla_r, aspect='equal')
    axes[0].set_title("Load thickness, mantle equivalent [m]")
 
-   axes[1].imshow(flex.Te / 1e3,
+   axes[1].imshow(flex.te / 1e3,
        extent=(0, dx/1000*ncols, dy/1000*nrows, 0),
        cmap=cmc.roma, aspect='equal')
    axes[1].set_title(r"Elastic thickness $T_e$ [km]")
@@ -196,7 +196,7 @@ NumPy or gFlex installed:
        path='/tmp/gflex_blender_mesh.py',
        z_exaggeration=200.0,
        qs=flex.qs,
-       Te=flex.Te,
+       Te=flex.te,
        rho_m=rho_m,
        g=g,
    )

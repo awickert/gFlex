@@ -49,18 +49,18 @@ _alpha = (_D / (_drho * _g)) ** 0.25   # ≈ 47 km
 
 def _run(ny, nx, qs, dx, dy, method="FD", bc="0Moment0Shear"):
     flex = F2D()
-    flex.Quiet = True
-    flex.Method = method
+    flex.quiet = True
+    flex.method = method
     flex.g = _g
     flex.E = _E
     flex.nu = _nu
     flex.rho_m = _rho_m
     flex.rho_fill = _rho_fill
-    flex.Te = _Te
+    flex.te = _Te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.dy = dy
-    flex.BC_W = flex.BC_E = flex.BC_N = flex.BC_S = bc
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = bc
     flex.initialize()
     flex.run()
     return flex

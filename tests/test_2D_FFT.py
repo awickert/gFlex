@@ -27,21 +27,21 @@ drho = rho_m - rho_fill
 def _run(qs, method="FFT", bc_w="", bc_e="", bc_n="", bc_s="",
          dx_=dx, dy_=dy, sigma_xx=None, sigma_yy=None, sigma_xy=None):
     flex = F2D()
-    flex.Quiet = True
-    flex.Method = method
+    flex.quiet = True
+    flex.method = method
     flex.g = g
     flex.E = E
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.Te = Te
+    flex.te = Te
     flex.qs = qs.copy()
     flex.dx = dx_
     flex.dy = dy_
-    flex.BC_W = bc_w
-    flex.BC_E = bc_e
-    flex.BC_N = bc_n
-    flex.BC_S = bc_s
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
+    flex.bc_north = bc_n
+    flex.bc_south = bc_s
     if sigma_xx is not None:
         flex.sigma_xx = sigma_xx
     if sigma_yy is not None:
@@ -108,18 +108,18 @@ def test_fft_2d_periodic_rho_fill_exact():
     qs = q0 * np.cos(kx * X) * np.cos(ky * Y)
 
     flex = F2D()
-    flex.Quiet = True
-    flex.Method = "FFT"
+    flex.quiet = True
+    flex.method = "FFT"
     flex.g = g
     flex.E = E
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill_water
-    flex.Te = Te
+    flex.te = Te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.dy = dy
-    flex.BC_W = flex.BC_E = flex.BC_N = flex.BC_S = "Periodic"
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "Periodic"
     flex.initialize()
     flex.run()
     flex.finalize()

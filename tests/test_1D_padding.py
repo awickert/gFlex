@@ -41,19 +41,19 @@ dx = 5000.0
 
 def _run_1d(Te_in, qs, bc="0Displacement0Slope", method="FD"):
     flex = F1D()
-    flex.Quiet = True
-    flex.Method = method
-    flex.Solver = "direct"
+    flex.quiet = True
+    flex.method = method
+    flex.solver = "direct"
     flex.g = g
     flex.E = E
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.Te = Te_in.copy() if isinstance(Te_in, np.ndarray) else Te_in
+    flex.te = Te_in.copy() if isinstance(Te_in, np.ndarray) else Te_in
     flex.qs = qs.copy()
     flex.dx = dx
-    flex.BC_W = bc
-    flex.BC_E = bc
+    flex.bc_west = bc
+    flex.bc_east = bc
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         flex.initialize()

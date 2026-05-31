@@ -177,7 +177,7 @@ def smooth_pad_Te(Te, pad_width, Te_out=None):
         Te_pad = smooth_pad_Te(Te, p)
         qs_pad = np.pad(qs, p, mode='constant')
         flex = F2D()
-        flex.Te = Te_pad
+        flex.te = Te_pad
         flex.qs = qs_pad
         # ... set other parameters and run ...
         w_inner = flex.w[p:-p, p:-p]   # trim padding from output
@@ -286,7 +286,7 @@ def pad_domain(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
     To run :class:`F2D` with the padded grids::
 
         flex = gflex.F2D()
-        flex.Te = Te_pad
+        flex.te = Te_pad
         flex.qs = qs_pad
         # ... set other parameters and run ...
         w_inner = flex.w[p:-p, p:-p]   # trim padding from output
@@ -369,19 +369,19 @@ class F2D(Flexure):
         from gflex import F2D
 
         flex = F2D()
-        flex.Quiet = True
-        flex.Method = 'FD'
-        flex.Solver = 'direct'
+        flex.quiet = True
+        flex.method = 'FD'
+        flex.solver = 'direct'
         flex.g = 9.8
         flex.E = 65e9
         flex.nu = 0.25
         flex.rho_m = 3300.
         flex.rho_fill = 0.
-        flex.Te = 30e3 * np.ones((50, 50))
+        flex.te = 30e3 * np.ones((50, 50))
         flex.qs = np.zeros((50, 50))
         flex.qs[20:30, 20:30] = 1e6   # 10 × 10 cell load
         flex.dx = flex.dy = 5000.     # 5 km grid
-        flex.BC_W = flex.BC_E = flex.BC_S = flex.BC_N = '0Moment0Shear'
+        flex.bc_west = flex.bc_east = flex.bc_south = flex.bc_north = '0Moment0Shear'
         flex.initialize()
         flex.run()
         flex.finalize()
@@ -405,14 +405,14 @@ class F2D(Flexure):
         """
         self.dimension = 2  # Set it here in case it wasn't set for selection before
         super().initialize()
-        if self.Verbose:
+        if self.verbose:
             print("F2D initialized")
 
     def run(self):
         """
         Execute the flexural solution.
 
-        Selects and runs the method specified by ``self.Method``.  The
+        Selects and runs the method specified by ``self.method``.  The
         deflection array is stored in ``self.w`` on return.  Call
         :meth:`finalize` afterwards to restore any internally modified
         state.
@@ -420,19 +420,19 @@ class F2D(Flexure):
         self.bc_check()
         self.solver_start_time = time.time()
 
-        if self.Method == "FD":
+        if self.method == "FD":
             # Finite difference
             super().FD()
             self.method_func = self.FD
-        elif self.Method == "FFT":
+        elif self.method == "FFT":
             # Fast Fourier transform
             super().FFT()
             self.method_func = self.FFT
-        elif self.Method == "SAS":
+        elif self.method == "SAS":
             # Superposition of analytical solutions
             super().SAS()
             self.method_func = self.SAS
-        elif self.Method == "SAS_NG":
+        elif self.method == "SAS_NG":
             # Superposition of analytical solutions,
             # nonuniform points (no grid)
             super().SAS_NG()
@@ -440,19 +440,19 @@ class F2D(Flexure):
         else:
             sys.exit('Error: method must be "FD", "FFT", "SAS", or "SAS_NG"')
 
-        if self.Verbose:
+        if self.verbose:
             print("F2D run")
         self.method_func()
 
         self.time_to_solve = time.time() - self.solver_start_time
-        if not self.Quiet:
+        if not self.quiet:
             print("Time to solve [s]:", self.time_to_solve)
 
     def finalize(self):
         """
         Clean up after the solver.
 
-        Restores ``self.Te`` to its pre-run value if gFlex padded it
+        Restores ``self.te`` to its pre-run value if gFlex padded it
         internally, so the object can be reused cleanly in a
         model-coupling loop.  Clears the cached coefficient matrix.
         """
@@ -460,8 +460,8 @@ class F2D(Flexure):
         # value, so this is not messed up for repeat operations in a
         # model-coupling exercise
         with contextlib.suppress(AttributeError):
-            self.Te = self.Te_unpadded
-        if self.Verbose:
+            self.te = self.te_unpadded
+        if self.verbose:
             print("F2D finalized")
         super().finalize()
 
@@ -487,7 +487,7 @@ class F2D(Flexure):
         reports the distance as a fraction of the local flexural wavelength and
         points to the domain-padding utilities.
         """
-        bc_sides = {"W": self.BC_W, "E": self.BC_E, "N": self.BC_N, "S": self.BC_S}
+        bc_sides = {"W": self.bc_west, "E": self.bc_east, "N": self.bc_north, "S": self.bc_south}
         for side, bc in bc_sides.items():
             if bc == "0Moment0Shear":
                 warnings.warn(
@@ -512,9 +512,9 @@ class F2D(Flexure):
             return
         ny, nx = self.qs.shape
         Te_arr = (
-            self.Te
-            if isinstance(self.Te, np.ndarray)
-            else np.full((ny, nx), float(self.Te))
+            self.te
+            if isinstance(self.te, np.ndarray)
+            else np.full((ny, nx), float(self.te))
         )
         rows, cols = loaded[:, 0], loaded[:, 1]
         Te_loaded = Te_arr[rows, cols]
@@ -590,10 +590,10 @@ class F2D(Flexure):
         Requires uniform (scalar) elastic thickness; for variable *Te* use
         the finite-difference method instead.
         """
-        if np.isscalar(self.Te):
+        if np.isscalar(self.te):
             pass
-        elif np.all(self.Te == np.mean(self.Te)):
-            self.Te = float(np.mean(self.Te))
+        elif np.all(self.te == np.mean(self.te)):
+            self.te = float(np.mean(self.te))
         else:
             sys.exit(
                 "\nINPUT VARIABLE TYPE INCONSISTENT WITH SOLUTION TYPE.\n"
@@ -602,15 +602,15 @@ class F2D(Flexure):
                 "EXITING."
             )
 
-        D = self.E * self.Te**3 / (12.0 * (1.0 - self.nu**2))
+        D = self.E * self.te**3 / (12.0 * (1.0 - self.nu**2))
         alpha = (4.0 * D / (self.drho * self.g)) ** 0.25
 
         ny, nx = self.qs.shape
         periodic = (
-            self.BC_W == "Periodic"
-            and self.BC_E == "Periodic"
-            and self.BC_N == "Periodic"
-            and self.BC_S == "Periodic"
+            self.bc_west == "Periodic"
+            and self.bc_east == "Periodic"
+            and self.bc_north == "Periodic"
+            and self.bc_south == "Periodic"
         )
 
         if periodic:
@@ -631,9 +631,9 @@ class F2D(Flexure):
         K2 = Kx**2 + Ky**2
         denom = (
             D * K2**2
-            + self.sigma_xx * self.Te * Kx**2
-            + self.sigma_yy * self.Te * Ky**2
-            + 2.0 * self.sigma_xy * self.Te * Kx * Ky
+            + self.sigma_xx * self.te * Kx**2
+            + self.sigma_yy * self.te * Ky**2
+            + 2.0 * self.sigma_xy * self.te * Kx * Ky
             + self.drho * self.g
         )
         w_work = scipy.fft.irfft2(-Q / denom, s=qs_work.shape)
@@ -668,10 +668,10 @@ class F2D(Flexure):
         # * If scalar, okay.
         # * If grid, convert to scalar if a singular value
         # * Else, throw an error.
-        if np.isscalar(self.Te):
+        if np.isscalar(self.te):
             pass
-        elif np.all(self.Te == np.mean(self.Te)):
-            self.Te = np.mean(self.Te)
+        elif np.all(self.te == np.mean(self.te)):
+            self.te = np.mean(self.te)
         else:
             sys.exit(
                 "\nINPUT VARIABLE TYPE INCONSISTENT WITH SOLUTION TYPE.\n"
@@ -682,7 +682,7 @@ class F2D(Flexure):
                 "EXITING."
             )
 
-        self.D = self.E * self.Te**3 / (12 * (1 - self.nu**2))  # Flexural rigidity
+        self.D = self.E * self.te**3 / (12 * (1 - self.nu**2))  # Flexural rigidity
         self.alpha = (self.D / (self.drho * self.g)) ** 0.25  # 2D flexural parameter
         self.coeff = self.alpha**2 / (2 * np.pi * self.D)
 
@@ -724,7 +724,7 @@ class F2D(Flexure):
     def spatialDomainNoGrid(self):
         """Compute deflection by summing 2D Kelvin-function Green's functions at ungridded output points."""
         self.w = np.zeros(self.xw.shape)
-        if self.Debug:
+        if self.debug:
             print("w = ")
             print(self.w.shape)
 
@@ -736,7 +736,7 @@ class F2D(Flexure):
                 long1=self.x[None, :],
                 lat2=self.yw[:, None],
                 long2=self.xw[:, None],
-                radius=self.PlanetaryRadius,
+                radius=self.planetary_radius,
             )   # (N_out, N_load)
         else:
             r = np.sqrt(
@@ -751,11 +751,11 @@ class F2D(Flexure):
     def elasprep(self):
         """Precompute dx⁴, dy⁴, dx²dy², and the flexural rigidity array D for the FD solver."""
 
-        if self.Method != "SAS_NG":
+        if self.method != "SAS_NG":
             self.dx4 = self.dx**4
             self.dy4 = self.dy**4
             self.dx2dy2 = self.dx**2 * self.dy**2
-        self.D = self.E * self.Te**3 / (12 * (1 - self.nu**2))
+        self.D = self.E * self.te**3 / (12 * (1 - self.nu**2))
 
     def BC_selector_and_coeff_matrix_creator(self):
         """
@@ -782,11 +782,11 @@ class F2D(Flexure):
 
         # Zeroth, start the timer and print the boundary conditions to the screen
         self.coeff_start_time = time.time()
-        if self.Verbose:
-            print("Boundary condition, West:", self.BC_W, type(self.BC_W))
-            print("Boundary condition, East:", self.BC_E, type(self.BC_E))
-            print("Boundary condition, North:", self.BC_N, type(self.BC_N))
-            print("Boundary condition, South:", self.BC_S, type(self.BC_S))
+        if self.verbose:
+            print("Boundary condition, West:", self.bc_west, type(self.bc_west))
+            print("Boundary condition, East:", self.bc_east, type(self.bc_east))
+            print("Boundary condition, North:", self.bc_north, type(self.bc_north))
+            print("Boundary condition, South:", self.bc_south, type(self.bc_south))
 
         # First, set flexural rigidity boundary conditions to flesh out this padded
         # array
@@ -804,7 +804,7 @@ class F2D(Flexure):
 
         # Finally, compute the total time this process took
         self.coeff_creation_time = time.time() - self.coeff_start_time
-        if not self.Quiet:
+        if not self.quiet:
             print(
                 "Time to construct coefficient (operator) array [s]:",
                 self.coeff_creation_time,
@@ -820,73 +820,73 @@ class F2D(Flexure):
         # FLEXURAL RIGIDITY BOUNDARY CONDITIONS #
         #########################################
         # West
-        if self.BC_W == "Periodic":
-            self.BC_Rigidity_W = "periodic"
+        if self.bc_west == "Periodic":
+            self.bc_rigidity_west = "periodic"
         elif (
-            self.BC_W
+            self.bc_west
             == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
         ).any():
-            self.BC_Rigidity_W = "0 curvature"
-        elif self.BC_W in ("Mirror", "0Displacement0Moment"):
-            self.BC_Rigidity_W = "mirror symmetry"
+            self.bc_rigidity_west = "0 curvature"
+        elif self.bc_west in ("Mirror", "0Displacement0Moment"):
+            self.bc_rigidity_west = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
         # East
-        if self.BC_E == "Periodic":
-            self.BC_Rigidity_E = "periodic"
+        if self.bc_east == "Periodic":
+            self.bc_rigidity_east = "periodic"
         elif (
-            self.BC_E
+            self.bc_east
             == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
         ).any():
-            self.BC_Rigidity_E = "0 curvature"
-        elif self.BC_E in ("Mirror", "0Displacement0Moment"):
-            self.BC_Rigidity_E = "mirror symmetry"
+            self.bc_rigidity_east = "0 curvature"
+        elif self.bc_east in ("Mirror", "0Displacement0Moment"):
+            self.bc_rigidity_east = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
         # North
-        if self.BC_N == "Periodic":
-            self.BC_Rigidity_N = "periodic"
+        if self.bc_north == "Periodic":
+            self.bc_rigidity_north = "periodic"
         elif (
-            self.BC_N
+            self.bc_north
             == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
         ).any():
-            self.BC_Rigidity_N = "0 curvature"
-        elif self.BC_N in ("Mirror", "0Displacement0Moment"):
-            self.BC_Rigidity_N = "mirror symmetry"
+            self.bc_rigidity_north = "0 curvature"
+        elif self.bc_north in ("Mirror", "0Displacement0Moment"):
+            self.bc_rigidity_north = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
         # South
-        if self.BC_S == "Periodic":
-            self.BC_Rigidity_S = "periodic"
+        if self.bc_south == "Periodic":
+            self.bc_rigidity_south = "periodic"
         elif (
-            self.BC_S
+            self.bc_south
             == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
         ).any():
-            self.BC_Rigidity_S = "0 curvature"
-        elif self.BC_S in ("Mirror", "0Displacement0Moment"):
-            self.BC_Rigidity_S = "mirror symmetry"
+            self.bc_rigidity_south = "0 curvature"
+        elif self.bc_south in ("Mirror", "0Displacement0Moment"):
+            self.bc_rigidity_south = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
 
         #############
         # PAD ARRAY #
         #############
-        if np.isscalar(self.Te):
+        if np.isscalar(self.te):
             self.D *= np.ones(self.qs.shape)  # And leave Te as a scalar for checks
         else:
-            self.Te_unpadded = self.Te.copy()
-            self.Te = np.hstack(
+            self.te_unpadded = self.te.copy()
+            self.te = np.hstack(
                 (
-                    np.nan * np.zeros((self.Te.shape[0], 1)),
-                    self.Te,
-                    np.nan * np.zeros((self.Te.shape[0], 1)),
+                    np.nan * np.zeros((self.te.shape[0], 1)),
+                    self.te,
+                    np.nan * np.zeros((self.te.shape[0], 1)),
                 )
             )
-            self.Te = np.vstack(
+            self.te = np.vstack(
                 (
-                    np.nan * np.zeros(self.Te.shape[1]),
-                    self.Te,
-                    np.nan * np.zeros(self.Te.shape[1]),
+                    np.nan * np.zeros(self.te.shape[1]),
+                    self.te,
+                    np.nan * np.zeros(self.te.shape[1]),
                 )
             )
             self.D = np.hstack(
@@ -907,33 +907,33 @@ class F2D(Flexure):
         ###############################################################
         # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
         ###############################################################
-        if self.BC_Rigidity_W == "0 curvature":
+        if self.bc_rigidity_west == "0 curvature":
             self.D[:, 0] = 2 * self.D[:, 1] - self.D[:, 2]
-        if self.BC_Rigidity_E == "0 curvature":
+        if self.bc_rigidity_east == "0 curvature":
             self.D[:, -1] = 2 * self.D[:, -2] - self.D[:, -3]
-        if self.BC_Rigidity_N == "0 curvature":
+        if self.bc_rigidity_north == "0 curvature":
             self.D[0, :] = 2 * self.D[1, :] - self.D[2, :]
-        if self.BC_Rigidity_S == "0 curvature":
+        if self.bc_rigidity_south == "0 curvature":
             self.D[-1, :] = 2 * self.D[-2, :] - self.D[-3, :]
 
-        if self.BC_Rigidity_W == "mirror symmetry":
+        if self.bc_rigidity_west == "mirror symmetry":
             self.D[:, 0] = self.D[:, 2]
-        if self.BC_Rigidity_E == "mirror symmetry":
+        if self.bc_rigidity_east == "mirror symmetry":
             self.D[:, -1] = self.D[:, -3]
-        if self.BC_Rigidity_N == "mirror symmetry":
+        if self.bc_rigidity_north == "mirror symmetry":
             self.D[0, :] = self.D[
                 2, :
             ]  # Yes, will work on corners -- double-reflection
-        if self.BC_Rigidity_S == "mirror symmetry":
+        if self.bc_rigidity_south == "mirror symmetry":
             self.D[-1, :] = self.D[-3, :]
 
-        if self.BC_Rigidity_W == "periodic":
+        if self.bc_rigidity_west == "periodic":
             self.D[:, 0] = self.D[:, -2]
-        if self.BC_Rigidity_E == "periodic":
+        if self.bc_rigidity_east == "periodic":
             self.D[:, -1] = self.D[:, -3]
-        if self.BC_Rigidity_N == "periodic":
+        if self.bc_rigidity_north == "periodic":
             self.D[0, :] = self.D[-2, :]
-        if self.BC_Rigidity_S == "periodic":
+        if self.bc_rigidity_south == "periodic":
             self.D[-1, :] = self.D[-3, :]
 
     def get_coeff_values(self):
@@ -967,7 +967,7 @@ class F2D(Flexure):
         nu = self.nu
         g = self.g
 
-        if np.isscalar(self.Te):
+        if np.isscalar(self.te):
             # So much simpler with constant D! And symmetrical stencil
             dx2 = self.dx ** 2
             dy2 = self.dy ** 2
@@ -979,26 +979,26 @@ class F2D(Flexure):
             self.cj0i2 = D / dy4                                                     # Symmetry
             self.cj0i_2 = D / dy4
             # x±1, y=0  (σ_xx acts on x-direction: -σ_xx·Te·∂²w/∂x²)
-            self.cj1i0 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.Te / dx2
-            self.cj_1i0 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.Te / dx2  # Symmetry
+            self.cj1i0 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.te / dx2
+            self.cj_1i0 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.te / dx2  # Symmetry
             # x=0, y±1  (σ_yy acts on y-direction: -σ_yy·Te·∂²w/∂y²)
-            self.cj0i_1 = -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.Te / dy2
+            self.cj0i_1 = -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.te / dy2
             self.cj0i1 = (
-                -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.Te / dy2
+                -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.te / dy2
             )                                                                         # Symmetry
             # x±1, y±1  (σ_xy cross term: -2σ_xy·Te·∂²w/∂x∂y; sign from FD of mixed deriv)
-            self.cj1i_1 = 2 * D / dx2dy2 + self.sigma_xy * self.Te / (2 * dxdy)
-            self.cj1i1 = 2 * D / dx2dy2 - self.sigma_xy * self.Te / (2 * dxdy)
-            self.cj_1i_1 = 2 * D / dx2dy2 - self.sigma_xy * self.Te / (2 * dxdy)   # Symmetry
-            self.cj_1i1 = 2 * D / dx2dy2 + self.sigma_xy * self.Te / (2 * dxdy)    # Symmetry
+            self.cj1i_1 = 2 * D / dx2dy2 + self.sigma_xy * self.te / (2 * dxdy)
+            self.cj1i1 = 2 * D / dx2dy2 - self.sigma_xy * self.te / (2 * dxdy)
+            self.cj_1i_1 = 2 * D / dx2dy2 - self.sigma_xy * self.te / (2 * dxdy)   # Symmetry
+            self.cj_1i1 = 2 * D / dx2dy2 + self.sigma_xy * self.te / (2 * dxdy)    # Symmetry
             # center
             self.cj0i0 = (
                 6 * D / dx4
                 + 6 * D / dy4
                 + 8 * D / dx2dy2
                 + drho * g
-                + 2 * self.sigma_xx * self.Te / dx2
-                + 2 * self.sigma_yy * self.Te / dy2
+                + 2 * self.sigma_xx * self.te / dx2
+                + 2 * self.sigma_yy * self.te / dy2
             )
             # Bring up to size
             self.cj2i0 *= np.ones(self.qs.shape)
@@ -1029,7 +1029,7 @@ class F2D(Flexure):
             self.cj_1i1_coeff_ij = self.cj_1i1.copy()
             self.cj_2i0_coeff_ij = self.cj_2i0.copy()
 
-        elif isinstance(self.Te, np.ndarray):
+        elif isinstance(self.te, np.ndarray):
             # All derivatives here, to make reading the equations below easier
             D00 = D[1:-1, 1:-1]
             D10 = D[1:-1, 2:]
@@ -1154,8 +1154,8 @@ class F2D(Flexure):
         # and would otherwise cause boundary condition nan's to appear in the
         # cross-derivatives: infinity is changed into 0 later.
 
-        if self.BC_W == "Periodic":
-            if self.BC_E == "Periodic":
+        if self.bc_west == "Periodic":
+            if self.bc_east == "Periodic":
                 # For each side, there will be two new diagonals (mostly zeros), and
                 # two sets of diagonals that will replace values in current diagonals.
                 # This is because of the pattern of fill in the periodic b.c.'s in the
@@ -1202,7 +1202,7 @@ class F2D(Flexure):
                 sys.exit(
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
-        elif self.BC_W == "0Displacement0Slope":
+        elif self.bc_west == "0Displacement0Slope":
             j = 0
             self.cj_2i0[:, j] += np.inf
             self.cj_1i_1[:, j] += np.inf
@@ -1231,7 +1231,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += 0
-        elif self.BC_W == "0Moment0Shear":
+        elif self.bc_west == "0Moment0Shear":
             j = 0
             self.cj_2i0[:, j] += np.inf
             self.cj_1i_1[:, j] += np.inf
@@ -1264,7 +1264,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += -2 * self.cj_2i0_coeff_ij[:, j]
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += self.cj_2i0_coeff_ij[:, j]
-        elif self.BC_W == "0Slope0Shear":
+        elif self.bc_west == "0Slope0Shear":
             j = 0
             self.cj_2i0[:, j] += np.inf
             self.cj_1i_1[:, j] += np.inf
@@ -1293,7 +1293,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += self.cj_2i0_coeff_ij[:, j]
-        elif self.BC_W == "Mirror":
+        elif self.bc_west == "Mirror":
             j = 0
             self.cj_2i0[:, j] += np.inf
             self.cj_1i_1[:, j] += np.inf
@@ -1322,7 +1322,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += 0
-        elif self.BC_W == "0Displacement0Moment":
+        elif self.bc_west == "0Displacement0Moment":
             # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
             # column (j=0) by zeroing all off-diagonal stencil terms there, leaving
             # only c0*w[i,0]=q[i,0].  The moment condition M_x=0 is encoded at
@@ -1360,10 +1360,10 @@ class F2D(Flexure):
             # Possibly redundant safeguard
             sys.exit("Invalid boundary condition")
 
-        if self.BC_E == "Periodic":
+        if self.bc_east == "Periodic":
             # See more extensive comments above (BC_W)
 
-            if self.BC_W == "Periodic":
+            if self.bc_west == "Periodic":
                 # New arrays -- new diagonals, but mostly empty. Just corners of blocks
                 # (boxes) in block-diagonal matrix
                 self.cj1i_1_Periodic_left = np.zeros(self.qs.shape)
@@ -1393,7 +1393,7 @@ class F2D(Flexure):
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
 
-        elif self.BC_E == "0Displacement0Slope":
+        elif self.bc_east == "0Displacement0Slope":
             j = -1
             self.cj_2i0[:, j] += 0
             self.cj_1i_1[:, j] += 0
@@ -1422,7 +1422,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += np.inf
-        elif self.BC_E == "0Moment0Shear":
+        elif self.bc_east == "0Moment0Shear":
             j = -1
             self.cj_2i0[:, j] += self.cj2i0_coeff_ij[:, j]
             self.cj_1i_1[:, j] += -self.cj1i_1_coeff_ij[:, j]
@@ -1455,7 +1455,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 2 * self.cj2i0_coeff_ij[:, j]
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += np.inf
-        elif self.BC_E == "0Slope0Shear":
+        elif self.bc_east == "0Slope0Shear":
             j = -1
             self.cj_2i0[:, j] += self.cj2i0_coeff_ij[:, j]
             self.cj_1i_1[:, j] += self.cj1i_1_coeff_ij[:, j]
@@ -1484,7 +1484,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += np.inf
-        elif self.BC_E == "Mirror":
+        elif self.bc_east == "Mirror":
             j = -1
             self.cj_2i0[:, j] += self.cj2i0_coeff_ij[:, j]
             self.cj_1i_1[:, j] += self.cj1i_1_coeff_ij[:, j]
@@ -1513,7 +1513,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += np.inf
-        elif self.BC_E == "0Displacement0Moment":
+        elif self.bc_east == "0Displacement0Moment":
             # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
             # column (j=-1) by zeroing all off-diagonal stencil terms there.
             # Moment condition M_x=0 is encoded at j=-2 via the odd-reflection
@@ -1554,15 +1554,15 @@ class F2D(Flexure):
         # DEFINE COEFFICIENTS TO W_i-2 -- W_i+2 WITH B.C.'S APPLIED (y: N, S) #
         #######################################################################
 
-        if self.BC_N == "Periodic":
-            if self.BC_S == "Periodic":
+        if self.bc_north == "Periodic":
+            if self.bc_south == "Periodic":
                 pass  # Will address the N-S (whole-matrix-involving) boundary condition
                 # inclusion below, when constructing sparse matrix diagonals
             else:
                 sys.exit(
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
-        elif self.BC_N == "0Displacement0Slope":
+        elif self.bc_north == "0Displacement0Slope":
             i = 0
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :][self.cj_1i_1[i, :] != np.inf] = np.nan
@@ -1591,7 +1591,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :] += 0
             self.cj2i0[i, :] += 0
-        elif self.BC_N == "0Moment0Shear":
+        elif self.bc_north == "0Moment0Shear":
             i = 0
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :][self.cj_1i_1[i, :] != np.inf] = np.nan
@@ -1624,7 +1624,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :] += 0
             self.cj2i0[i, :] += 0
-        elif self.BC_N == "0Slope0Shear":
+        elif self.bc_north == "0Slope0Shear":
             i = 0
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :][self.cj_1i_1[i, :] != np.inf] = np.nan
@@ -1653,7 +1653,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :] += 0
             self.cj2i0[i, :] += 0
-        elif self.BC_N == "Mirror":
+        elif self.bc_north == "Mirror":
             i = 0
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :][self.cj_1i_1[i, :] != np.inf] = np.nan
@@ -1682,7 +1682,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :] += 0
             self.cj2i0[i, :] += 0
-        elif self.BC_N == "0Displacement0Moment":
+        elif self.bc_north == "0Displacement0Moment":
             # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
             # row (i=0) by zeroing all off-diagonal stencil terms there.
             # Moment condition M_y=0 is encoded at i=1 via the odd-reflection
@@ -1719,15 +1719,15 @@ class F2D(Flexure):
             # Possibly redundant safeguard
             sys.exit("Invalid boundary condition")
 
-        if self.BC_S == "Periodic":
-            if self.BC_N == "Periodic":
+        if self.bc_south == "Periodic":
+            if self.bc_north == "Periodic":
                 pass  # Will address the N-S (whole-matrix-involving) boundary condition
                 # inclusion below, when constructing sparse matrix diagonals
             else:
                 sys.exit(
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
-        elif self.BC_S == "0Displacement0Slope":
+        elif self.bc_south == "0Displacement0Slope":
             i = -2
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :] += 0
@@ -1756,7 +1756,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :][self.cj1i1[i, :] != np.inf] += 0  # np.nan
             self.cj2i0[i, :] += 0
-        elif self.BC_S == "0Moment0Shear":
+        elif self.bc_south == "0Moment0Shear":
             i = -2
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :] += 0
@@ -1789,7 +1789,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 2 * self.cj_1i1_coeff_ij[i, :]
             self.cj1i1[i, :][self.cj1i1[i, :] != np.inf] += 0  # np.nan
             self.cj2i0[i, :] += 0
-        elif self.BC_S == "0Slope0Shear":
+        elif self.bc_south == "0Slope0Shear":
             i = -2
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :] += 0
@@ -1818,7 +1818,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :][self.cj1i1[i, :] != np.inf] += 0  # np.nan
             self.cj2i0[i, :] += 0
-        elif self.BC_S == "Mirror":
+        elif self.bc_south == "Mirror":
             i = -2
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :] += 0
@@ -1847,7 +1847,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :][self.cj1i1[i, :] != np.inf] += 0  # np.nan
             self.cj2i0[i, :] += 0
-        elif self.BC_S == "0Displacement0Moment":
+        elif self.bc_south == "0Displacement0Moment":
             # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
             # row (i=-1) by zeroing all off-diagonal stencil terms there.
             # Moment condition M_y=0 is encoded at i=-2 via the odd-reflection
@@ -1907,16 +1907,16 @@ class F2D(Flexure):
         #################
         # 0MOMENT0SHEAR #
         #################
-        if self.BC_N == "0Moment0Shear" and self.BC_W == "0Moment0Shear":
+        if self.bc_north == "0Moment0Shear" and self.bc_west == "0Moment0Shear":
             self.cj0i0[0, 0] += 2 * self.cj_1i_1_coeff_ij[0, 0]
             self.cj1i1[0, 0] -= self.cj_1i_1_coeff_ij[0, 0]
-        if self.BC_N == "0Moment0Shear" and self.BC_E == "0Moment0Shear":
+        if self.bc_north == "0Moment0Shear" and self.bc_east == "0Moment0Shear":
             self.cj0i0[0, -1] += 2 * self.cj_1i_1_coeff_ij[0, -1]
             self.cj_1i1[0, -1] -= self.cj1i_1_coeff_ij[0, -1]
-        if self.BC_S == "0Moment0Shear" and self.BC_W == "0Moment0Shear":
+        if self.bc_south == "0Moment0Shear" and self.bc_west == "0Moment0Shear":
             self.cj0i0[-1, 0] += 2 * self.cj_1i_1_coeff_ij[-1, 0]
             self.cj1i_1[-1, 0] -= self.cj_1i1_coeff_ij[-1, 0]
-        if self.BC_S == "0Moment0Shear" and self.BC_E == "0Moment0Shear":
+        if self.bc_south == "0Moment0Shear" and self.bc_east == "0Moment0Shear":
             self.cj0i0[-1, -1] += 2 * self.cj_1i_1_coeff_ij[-1, -1]
             self.cj_1i_1[-1, -1] -= self.cj1i1_coeff_ij[-1, -1]
 
@@ -1937,20 +1937,20 @@ class F2D(Flexure):
         # 0SLOPE0SHEAR AND/OR MIRROR #
         ##############################
         # (both end up being the same)
-        if (self.BC_N == "0Slope0Shear" or self.BC_N == "Mirror") and (
-            self.BC_W == "0Slope0Shear" or self.BC_W == "Mirror"
+        if (self.bc_north == "0Slope0Shear" or self.bc_north == "Mirror") and (
+            self.bc_west == "0Slope0Shear" or self.bc_west == "Mirror"
         ):
             self.cj1i1[0, 0] += self.cj_1i_1_coeff_ij[0, 0]
-        if (self.BC_N == "0Slope0Shear" or self.BC_N == "Mirror") and (
-            self.BC_E == "0Slope0Shear" or self.BC_E == "Mirror"
+        if (self.bc_north == "0Slope0Shear" or self.bc_north == "Mirror") and (
+            self.bc_east == "0Slope0Shear" or self.bc_east == "Mirror"
         ):
             self.cj_1i1[0, -1] += self.cj1i_1_coeff_ij[0, -1]
-        if (self.BC_S == "0Slope0Shear" or self.BC_S == "Mirror") and (
-            self.BC_W == "0Slope0Shear" or self.BC_W == "Mirror"
+        if (self.bc_south == "0Slope0Shear" or self.bc_south == "Mirror") and (
+            self.bc_west == "0Slope0Shear" or self.bc_west == "Mirror"
         ):
             self.cj1i_1[-1, 0] += self.cj_1i1_coeff_ij[-1, 0]
-        if (self.BC_S == "0Slope0Shear" or self.BC_S == "Mirror") and (
-            self.BC_E == "0Slope0Shear" or self.BC_E == "Mirror"
+        if (self.bc_south == "0Slope0Shear" or self.bc_south == "Mirror") and (
+            self.bc_east == "0Slope0Shear" or self.bc_east == "Mirror"
         ):
             self.cj_1i_1[-1, -1] += self.cj1i1_coeff_ij[-1, -1]
 
@@ -1960,23 +1960,23 @@ class F2D(Flexure):
         # How do multiple types of b.c.'s interfere
         # 0Moment0Shear must determine corner conditions in order to be mirrored
         # by the "mirror" b.c.
-        if (self.BC_N == "Mirror" and self.BC_W == "0Moment0Shear") or (
-            self.BC_W == "Mirror" and self.BC_N == "0Moment0Shear"
+        if (self.bc_north == "Mirror" and self.bc_west == "0Moment0Shear") or (
+            self.bc_west == "Mirror" and self.bc_north == "0Moment0Shear"
         ):
             self.cj0i0[0, 0] += 2 * self.cj_1i_1_coeff_ij[0, 0]
             self.cj1i1[0, 0] -= self.cj_1i_1_coeff_ij[0, 0]
-        if (self.BC_N == "Mirror" and self.BC_E == "0Moment0Shear") or (
-            self.BC_E == "Mirror" and self.BC_N == "0Moment0Shear"
+        if (self.bc_north == "Mirror" and self.bc_east == "0Moment0Shear") or (
+            self.bc_east == "Mirror" and self.bc_north == "0Moment0Shear"
         ):
             self.cj0i0[0, -1] += 2 * self.cj_1i_1_coeff_ij[0, -1]
             self.cj1i1[0, -1] -= self.cj_1i_1_coeff_ij[0, -1]
-        if (self.BC_S == "Mirror" and self.BC_W == "0Moment0Shear") or (
-            self.BC_W == "Mirror" and self.BC_S == "0Moment0Shear"
+        if (self.bc_south == "Mirror" and self.bc_west == "0Moment0Shear") or (
+            self.bc_west == "Mirror" and self.bc_south == "0Moment0Shear"
         ):
             self.cj0i0[-1, 0] += 2 * self.cj_1i_1_coeff_ij[-1, 0]
             self.cj1i_1[-1, 0] -= self.cj_1i1_coeff_ij[-1, 0]
-        if (self.BC_S == "Mirror" and self.BC_E == "0Moment0Shear") or (
-            self.BC_E == "Mirror" and self.BC_S == "0Moment0Shear"
+        if (self.bc_south == "Mirror" and self.bc_east == "0Moment0Shear") or (
+            self.bc_east == "Mirror" and self.bc_south == "0Moment0Shear"
         ):
             self.cj0i0[-1, -1] += 2 * self.cj_1i_1_coeff_ij[-1, -1]
             self.cj_1i_1[-1, -1] -= self.cj1i1_coeff_ij[-1, -1]
@@ -1986,23 +1986,23 @@ class F2D(Flexure):
         ######################################
         # Just use 0Moment0Shear-style b.c.'s at corners: letting this dominate
         # because it seems to be the more geologically likely b.c.
-        if (self.BC_N == "0Slope0Shear" and self.BC_W == "0Moment0Shear") or (
-            self.BC_W == "0Slope0Shear" and self.BC_N == "0Moment0Shear"
+        if (self.bc_north == "0Slope0Shear" and self.bc_west == "0Moment0Shear") or (
+            self.bc_west == "0Slope0Shear" and self.bc_north == "0Moment0Shear"
         ):
             self.cj0i0[0, 0] += 2 * self.cj_1i_1_coeff_ij[0, 0]
             self.cj1i1[0, 0] -= self.cj_1i_1_coeff_ij[0, 0]
-        if (self.BC_N == "0Slope0Shear" and self.BC_E == "0Moment0Shear") or (
-            self.BC_E == "0Slope0Shear" and self.BC_N == "0Moment0Shear"
+        if (self.bc_north == "0Slope0Shear" and self.bc_east == "0Moment0Shear") or (
+            self.bc_east == "0Slope0Shear" and self.bc_north == "0Moment0Shear"
         ):
             self.cj0i0[0, -1] += 2 * self.cj_1i_1_coeff_ij[0, -1]
             self.cj1i1[0, -1] -= self.cj_1i_1_coeff_ij[0, -1]
-        if (self.BC_S == "0Slope0Shear" and self.BC_W == "0Moment0Shear") or (
-            self.BC_W == "0Slope0Shear" and self.BC_S == "0Moment0Shear"
+        if (self.bc_south == "0Slope0Shear" and self.bc_west == "0Moment0Shear") or (
+            self.bc_west == "0Slope0Shear" and self.bc_south == "0Moment0Shear"
         ):
             self.cj0i0[-1, 0] += 2 * self.cj_1i_1_coeff_ij[-1, 0]
             self.cj1i_1[-1, 0] -= self.cj_1i1_coeff_ij[-1, 0]
-        if (self.BC_S == "0Slope0Shear" and self.BC_E == "0Moment0Shear") or (
-            self.BC_E == "0Slope0Shear" and self.BC_S == "0Moment0Shear"
+        if (self.bc_south == "0Slope0Shear" and self.bc_east == "0Moment0Shear") or (
+            self.bc_east == "0Slope0Shear" and self.bc_south == "0Moment0Shear"
         ):
             self.cj0i0[-1, -1] += 2 * self.cj_1i_1_coeff_ij[-1, -1]
             self.cj_1i_1[-1, -1] -= self.cj1i1_coeff_ij[-1, -1]
@@ -2018,53 +2018,53 @@ class F2D(Flexure):
         _even = ("0Slope0Shear", "Mirror")
 
         # NW corner
-        if self.BC_N == _D0M and self.BC_W == _D0M:
+        if self.bc_north == _D0M and self.bc_west == _D0M:
             self.cj1i1[0, 0] += self.cj_1i_1_coeff_ij[0, 0]
-        elif (self.BC_N == _D0M and self.BC_W in _even) or (
-            self.BC_W == _D0M and self.BC_N in _even
+        elif (self.bc_north == _D0M and self.bc_west in _even) or (
+            self.bc_west == _D0M and self.bc_north in _even
         ):
             self.cj1i1[0, 0] -= self.cj_1i_1_coeff_ij[0, 0]
-        elif (self.BC_N == _D0M and self.BC_W == "0Moment0Shear") or (
-            self.BC_W == _D0M and self.BC_N == "0Moment0Shear"
+        elif (self.bc_north == _D0M and self.bc_west == "0Moment0Shear") or (
+            self.bc_west == _D0M and self.bc_north == "0Moment0Shear"
         ):
             self.cj0i0[0, 0] -= 2 * self.cj_1i_1_coeff_ij[0, 0]
             self.cj1i1[0, 0] += self.cj_1i_1_coeff_ij[0, 0]
 
         # NE corner
-        if self.BC_N == _D0M and self.BC_E == _D0M:
+        if self.bc_north == _D0M and self.bc_east == _D0M:
             self.cj_1i1[0, -1] += self.cj1i_1_coeff_ij[0, -1]
-        elif (self.BC_N == _D0M and self.BC_E in _even) or (
-            self.BC_E == _D0M and self.BC_N in _even
+        elif (self.bc_north == _D0M and self.bc_east in _even) or (
+            self.bc_east == _D0M and self.bc_north in _even
         ):
             self.cj_1i1[0, -1] -= self.cj1i_1_coeff_ij[0, -1]
-        elif (self.BC_N == _D0M and self.BC_E == "0Moment0Shear") or (
-            self.BC_E == _D0M and self.BC_N == "0Moment0Shear"
+        elif (self.bc_north == _D0M and self.bc_east == "0Moment0Shear") or (
+            self.bc_east == _D0M and self.bc_north == "0Moment0Shear"
         ):
             self.cj0i0[0, -1] -= 2 * self.cj_1i_1_coeff_ij[0, -1]
             self.cj_1i1[0, -1] += self.cj1i_1_coeff_ij[0, -1]
 
         # SW corner
-        if self.BC_S == _D0M and self.BC_W == _D0M:
+        if self.bc_south == _D0M and self.bc_west == _D0M:
             self.cj1i_1[-1, 0] += self.cj_1i1_coeff_ij[-1, 0]
-        elif (self.BC_S == _D0M and self.BC_W in _even) or (
-            self.BC_W == _D0M and self.BC_S in _even
+        elif (self.bc_south == _D0M and self.bc_west in _even) or (
+            self.bc_west == _D0M and self.bc_south in _even
         ):
             self.cj1i_1[-1, 0] -= self.cj_1i1_coeff_ij[-1, 0]
-        elif (self.BC_S == _D0M and self.BC_W == "0Moment0Shear") or (
-            self.BC_W == _D0M and self.BC_S == "0Moment0Shear"
+        elif (self.bc_south == _D0M and self.bc_west == "0Moment0Shear") or (
+            self.bc_west == _D0M and self.bc_south == "0Moment0Shear"
         ):
             self.cj0i0[-1, 0] -= 2 * self.cj_1i_1_coeff_ij[-1, 0]
             self.cj1i_1[-1, 0] += self.cj_1i1_coeff_ij[-1, 0]
 
         # SE corner
-        if self.BC_S == _D0M and self.BC_E == _D0M:
+        if self.bc_south == _D0M and self.bc_east == _D0M:
             self.cj_1i_1[-1, -1] += self.cj1i1_coeff_ij[-1, -1]
-        elif (self.BC_S == _D0M and self.BC_E in _even) or (
-            self.BC_E == _D0M and self.BC_S in _even
+        elif (self.bc_south == _D0M and self.bc_east in _even) or (
+            self.bc_east == _D0M and self.bc_south in _even
         ):
             self.cj_1i_1[-1, -1] -= self.cj1i1_coeff_ij[-1, -1]
-        elif (self.BC_S == _D0M and self.BC_E == "0Moment0Shear") or (
-            self.BC_E == _D0M and self.BC_S == "0Moment0Shear"
+        elif (self.bc_south == _D0M and self.bc_east == "0Moment0Shear") or (
+            self.bc_east == _D0M and self.bc_south == "0Moment0Shear"
         ):
             self.cj0i0[-1, -1] -= 2 * self.cj_1i_1_coeff_ij[-1, -1]
             self.cj_1i_1[-1, -1] += self.cj1i1_coeff_ij[-1, -1]
@@ -2172,10 +2172,10 @@ class F2D(Flexure):
         self.nx = self.ncolsx
 
         if (
-            self.BC_N == "Periodic"
-            and self.BC_S == "Periodic"
-            and self.BC_W == "Periodic"
-            and self.BC_E == "Periodic"
+            self.bc_north == "Periodic"
+            and self.bc_south == "Periodic"
+            and self.bc_west == "Periodic"
+            and self.bc_east == "Periodic"
         ):
             # Additional vector creation
             # West
@@ -2299,7 +2299,7 @@ class F2D(Flexure):
             A_lil[N - 1, 0] = self.cj1i1_coeff_ij[-1, -1]
             self.coeff_matrix = A_lil.tocsr()
 
-        elif self.BC_W == "Periodic" and self.BC_E == "Periodic":
+        elif self.bc_west == "Periodic" and self.bc_east == "Periodic":
             # Additional vector creation
             # West
             # Roll
@@ -2377,7 +2377,7 @@ class F2D(Flexure):
                 format="csr",
             )
 
-        elif self.BC_N == "Periodic" and self.BC_S == "Periodic":
+        elif self.bc_north == "Periodic" and self.bc_south == "Periodic":
             # Periodic.
             # If these are periodic, we need to wrap around the ends of the
             # large-scale diagonal structure
@@ -2476,10 +2476,10 @@ class F2D(Flexure):
         Requires the coefficient matrix from "2D.coeff_matrix"
         """
 
-        if self.Debug:
+        if self.debug:
             # Will fail if scalar
             with contextlib.suppress(AttributeError):
-                print("self.Te", self.Te.shape)
+                print("self.te", self.te.shape)
             print("self.qs", self.qs.shape)
             self.calc_max_flexural_wavelength()
             print(
@@ -2488,10 +2488,10 @@ class F2D(Flexure):
                 self.maxFlexuralWavelength_ncells_y,
             )
 
-        if self.Debug:
+        if self.debug:
             print("Using direct solution with UMFpack")
-        elif self.Solver not in ("direct", "Direct"):
-            if not self.Quiet:
+        elif self.solver not in ("direct", "Direct"):
+            if not self.quiet:
                 print("Solution type not understood:")
                 print("Defaulting to direct solution with UMFpack")
 

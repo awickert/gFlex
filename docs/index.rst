@@ -64,19 +64,19 @@ Quick start
    from gflex import F2D
 
    flex = F2D()
-   flex.Quiet = True
-   flex.Method = 'FD'
+   flex.quiet = True
+   flex.method = 'FD'
    flex.g = 9.8
    flex.E = 65e9
    flex.nu = 0.25
    flex.rho_m = 3300.
    flex.rho_fill = 0.
-   flex.Te = 35e3 * np.ones((50, 50))   # uniform 35 km elastic thickness
+   flex.te = 35e3 * np.ones((50, 50))   # uniform 35 km elastic thickness
    flex.qs = np.zeros((50, 50))
    flex.qs[10:40, 10:40] = 1e6          # 150 × 150 km load at 1 MPa
    flex.dx = flex.dy = 5000.            # 5 km grid
-   flex.BC_W = flex.BC_S = flex.BC_N = '0Displacement0Slope'
-   flex.BC_E = '0Moment0Shear'
+   flex.bc_west = flex.bc_south = flex.bc_north = '0Displacement0Slope'
+   flex.bc_east = '0Moment0Shear'
    flex.initialize()
    flex.run()
    flex.finalize()

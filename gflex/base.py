@@ -84,7 +84,7 @@ class Utility:
                 if var == "" and not optional:
                     # but "" is acceptable for boundary conditions
                     if name[:17] != "BoundaryCondition":
-                        if not self.Quiet:
+                        if not self.quiet:
                             print(
                                 "An empty input string here is not an acceptable"
                                 " option."
@@ -106,7 +106,7 @@ class Utility:
             if optional:
                 # Carry on if the variable is optional
                 var = None
-                if self.Verbose or self.Debug:
+                if self.verbose or self.debug:
                     if not self.grass:
                         print("")
                         print('No value entered for optional parameter "' + name + '"')
@@ -233,10 +233,10 @@ class Utility:
                 except AttributeError:
                     pass
                 else:
-                    if not self.Quiet:
+                    if not self.quiet:
                         print("dx and dy being overwritten -- supply a full grid")
             else:
-                if not self.Quiet:
+                if not self.quiet:
                     print("dx and dy being overwritten -- supply a full grid")
             # Boundaries
             n = np.max(self.y) + self.alpha
@@ -301,7 +301,7 @@ class Utility:
             print(f"  {self.inpath}")
             print("Exiting.")
             sys.exit()
-        elif out is not None and self.Verbose:
+        elif out is not None and self.verbose:
             print(f"Loading {var} from {format_name}")
 
         return out
@@ -341,12 +341,12 @@ class Plotting:
         # except:
         #  self.plotChoice = None
         if self.plotChoice:
-            if self.Verbose:
+            if self.verbose:
                 print("Starting to plot " + self.plotChoice)
             if self.dimension == 1:
                 if self.plotChoice == "q":
                     plt.figure(1)
-                    if self.Method == "SAS_NG":
+                    if self.method == "SAS_NG":
                         plt.plot(self.x / 1000.0, self.q / (self.rho_m * self.g), "ko-")
                         plt.ylabel(
                             "Load volume, mantle equivalent [m$^3$]",
@@ -367,7 +367,7 @@ class Plotting:
                     plt.show()
                 elif self.plotChoice == "w":
                     plt.figure(1)
-                    if self.Method == "SAS_NG":
+                    if self.method == "SAS_NG":
                         plt.plot(self.xw / 1000.0, self.w, "k-")
                     else:
                         plt.plot(self.x / 1000.0, self.w, "k-")
@@ -380,7 +380,7 @@ class Plotting:
                 elif self.plotChoice == "both":
                     plt.figure(1, figsize=(6, 9))
                     ax = plt.subplot(212)
-                    if self.Method == "SAS_NG":
+                    if self.method == "SAS_NG":
                         ax.plot(self.xw / 1000.0, self.w, "k-")
                     else:
                         ax.plot(self.x / 1000.0, self.w, "k-")
@@ -390,7 +390,7 @@ class Plotting:
                     )
                     plt.subplot(211)
                     plt.title("Loads and Lithospheric Deflections", fontsize=16)
-                    if self.Method == "SAS_NG":
+                    if self.method == "SAS_NG":
                         plt.plot(self.x / 1000.0, self.q / (self.rho_m * self.g), "ko-")
                         plt.ylabel(
                             "Load volume, mantle equivalent [m$^3$]",
@@ -415,8 +415,8 @@ class Plotting:
                     titletext = "Loads and Lithospheric Deflections"
                     ax = fig.add_subplot(1, 1, 1)
                     # Plot undeflected load
-                    if self.Method == "SAS_NG":
-                        if not self.Quiet:
+                    if self.method == "SAS_NG":
+                        if not self.quiet:
                             print(
                                 "Combo plot can't work with SAS_NG! Don't have mechanism"
                                 " in place to calculate load width."
@@ -434,7 +434,7 @@ class Plotting:
                             label="Load thickness [m mantle equivalent]",
                         )
                     # Plot deflected load
-                    if self.Method == "SAS_NG":
+                    if self.method == "SAS_NG":
                         pass
                         # ax.plot(
                         #     self.x / 1000.0,
@@ -452,7 +452,7 @@ class Plotting:
                             label="Deflection [m] + load thickness [m mantle equivalent]",
                         )
                     # Plot deflection
-                    if self.Method == "SAS_NG":
+                    if self.method == "SAS_NG":
                         ax.plot(
                             self.xw / 1000.0,
                             self.w,
@@ -475,16 +475,16 @@ class Plotting:
                     plt.ylim((-yabsmax, yabsmax))
                     # Plot title selector -- be infomrative
                     try:
-                        self.Te
-                        if self.Method == "FD":
-                            if type(self.Te) is np.ndarray:
-                                if (self.Te != (self.Te).mean()).any():
+                        self.te
+                        if self.method == "FD":
+                            if type(self.te) is np.ndarray:
+                                if (self.te != (self.te).mean()).any():
                                     plt.title(titletext, fontsize=16)
                                 else:
                                     plt.title(
                                         titletext
                                         + ", $T_e$ = "
-                                        + str((self.Te / 1000).mean())
+                                        + str((self.te / 1000).mean())
                                         + " km",
                                         fontsize=16,
                                     )
@@ -492,13 +492,13 @@ class Plotting:
                                 plt.title(
                                     titletext
                                     + ", $T_e$ = "
-                                    + str(self.Te / 1000)
+                                    + str(self.te / 1000)
                                     + " km",
                                     fontsize=16,
                                 )
                         else:
                             plt.title(
-                                titletext + ", $T_e$ = " + str(self.Te / 1000) + " km",
+                                titletext + ", $T_e$ = " + str(self.te / 1000) + " km",
                                 fontsize=16,
                             )
                     except AttributeError:
@@ -511,7 +511,7 @@ class Plotting:
                     plt.tight_layout()
                     plt.show()
                 else:
-                    if not self.Quiet:
+                    if not self.quiet:
                         print(
                             'Incorrect plotChoice input, "'
                             + self.plotChoice
@@ -524,7 +524,7 @@ class Plotting:
             elif self.dimension == 2:
                 if self.plotChoice == "q":
                     fig = plt.figure(1, figsize=(8, 6))
-                    if self.Method != "SAS_NG":
+                    if self.method != "SAS_NG":
                         self.surfplot(
                             self.qs / (self.rho_m * self.g),
                             "Load thickness, mantle equivalent [m]",
@@ -544,7 +544,7 @@ class Plotting:
                 elif self.plotChoice == "w":
                     fig = plt.figure(1, figsize=(8, 6))
                     w_abs = float(np.abs(self.w).max())
-                    if self.Method != "SAS_NG":
+                    if self.method != "SAS_NG":
                         self.surfplot(self.w, "Deflection [m]",
                                       cmap=_cmap_deflection, vmin=-w_abs, vmax=w_abs)
                         plt.show()
@@ -555,7 +555,7 @@ class Plotting:
                     plt.show()
                 elif self.plotChoice == "both":
                     plt.figure(1, figsize=(6, 9))
-                    if self.Method != "SAS_NG":
+                    if self.method != "SAS_NG":
                         self.twoSurfplots()
                         plt.show()
                     else:
@@ -574,7 +574,7 @@ class Plotting:
                         plt.tight_layout()
                         plt.show()
                 else:
-                    if not self.Quiet:
+                    if not self.quiet:
                         print(
                             'Incorrect plotChoice input, "'
                             + self.plotChoice
@@ -642,7 +642,7 @@ class Plotting:
             _defl_norm = None
             _defl_vmin, _defl_vmax = -w_abs, w_abs
 
-        _has_te_grid = isinstance(self.Te, np.ndarray) and self.Te.ndim == 2
+        _has_te_grid = isinstance(self.te, np.ndarray) and self.te.ndim == 2
 
         xlabel = "longitude [deg E]" if self.latlon else "x [km]"
         ylabel = "latitude [deg N]" if self.latlon else "y [km]"
@@ -677,7 +677,7 @@ class Plotting:
         if _has_te_grid:
             ax_te.set_title(r"Elastic thickness $T_e$ [km]", fontsize=16)
             im_te = ax_te.imshow(
-                self.Te / 1e3, extent=_ext(self.Te), cmap=_cmap_te,
+                self.te / 1e3, extent=_ext(self.te), cmap=_cmap_te,
             )
             ax_te.set_xlabel(xlabel, fontsize=12, fontweight="bold")
             ax_te.set_ylabel(ylabel, fontsize=12, fontweight="bold")
@@ -707,7 +707,7 @@ class Plotting:
         """
         # Help from http://wiki.scipy.org/Cookbook/Matplotlib/Gridding_irregularly_spaced_data
 
-        if self.Verbose:
+        if self.verbose:
             print("Starting to interpolate grid for plotting -- can be a slow process!")
 
         from scipy.interpolate import griddata
@@ -854,10 +854,10 @@ class Flexure(Utility, Plotting):
         # DEFAULT VERBOSITY
         # Set default "quiet" to False, unless set by setter or overwritten by
         # the configuration file.
-        self.Quiet = False
+        self.quiet = False
         # And also set default verbosity
-        self.Verbose = True
-        self.Debug = False
+        self.verbose = True
+        self.debug = False
 
         # x and y to None for checks
         self.x = None
@@ -874,7 +874,7 @@ class Flexure(Utility, Plotting):
             self.grass = False
 
         # Default solver; may be overridden programmatically or via config file
-        self.Solver = "direct"
+        self.solver = "direct"
 
         # Default values for lat/lon usage -- defaulting not to use it
         try:
@@ -882,9 +882,9 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.latlon = False
         try:
-            self.PlanetaryRadius
+            self.planetary_radius
         except AttributeError:
-            self.PlanetaryRadius = None
+            self.planetary_radius = None
 
     def initialize(self, filename=None):
         """
@@ -907,7 +907,7 @@ class Flexure(Utility, Plotting):
             if self.filename:
                 pass  # Don't overwrite if filename is None-type
                 # "Debug" not yet defined.
-                # if self.Debug:
+                # if self.debug:
                 #  print("Overwriting filename from '__init__' step with that from\n"+\
                 #        "initialize step."
             else:
@@ -931,26 +931,26 @@ class Flexure(Utility, Plotting):
             # Set verbosity for model run
             # Default is "verbose" with no debug or quiet
             # Verbose
-            self.Verbose = self.configGet(
+            self.verbose = self.configGet(
                 "bool", "verbosity", "Verbose", optional=True
-            ) or self.Verbose
+            ) or self.verbose
             # Debug means that whole arrays, etc., can be printed
-            self.Debug = self.configGet(
+            self.debug = self.configGet(
                 "bool", "verbosity", "Debug", optional=True
-            ) or self.Debug
+            ) or self.debug
             # Quiet suppresses all output
-            self.Quiet = self.configGet(
+            self.quiet = self.configGet(
                 "bool", "verbosity", "Quiet", optional=True
-            ) or self.Quiet
+            ) or self.quiet
         # Quiet overrides all others
-        if self.Quiet:
-            self.Debug = False
-            self.Verbose = False
+        if self.quiet:
+            self.debug = False
+            self.verbose = False
 
         # Introduce model
         # After configuration file can define "Quiet", and getter/setter should be done
         # by this point if we are going that way.
-        if not self.Quiet:
+        if not self.quiet:
             print("")  # Blank line at start of run
             print("")
             print("****************************" + "*" * len(__version__))
@@ -966,23 +966,23 @@ class Flexure(Utility, Plotting):
             self.coeff_creation_time = None
             self.time_to_solve = None
 
-            self.Method = self.configGet("string", "mode", "method")
+            self.method = self.configGet("string", "mode", "method")
             # Boundary conditions
-            # This used to be nested inside an "if self.Method == 'FD'", but it seems
+            # This used to be nested inside an "if self.method == 'FD'", but it seems
             # better to define these to ensure there aren't mistaken impressions
             # about what they do for the SAS case
             # Not optional: flexural solutions can be very sensitive to b.c.'s
-            self.BC_E = self.configGet(
+            self.bc_east = self.configGet(
                 "string", "numerical", "BoundaryCondition_East", optional=False
             )
-            self.BC_W = self.configGet(
+            self.bc_west = self.configGet(
                 "string", "numerical", "BoundaryCondition_West", optional=False
             )
             if self.dimension == 2:
-                self.BC_N = self.configGet(
+                self.bc_north = self.configGet(
                     "string", "numerical2D", "BoundaryCondition_North", optional=False
                 )
-                self.BC_S = self.configGet(
+                self.bc_south = self.configGet(
                     "string", "numerical2D", "BoundaryCondition_South", optional=False
                 )
 
@@ -994,7 +994,7 @@ class Flexure(Utility, Plotting):
             )
 
             # Grid spacing
-            if self.Method != "SAS_NG":
+            if self.method != "SAS_NG":
                 # No meaning for ungridded superimposed analytical solutions
                 # From configuration file
                 self.dx = self.configGet("float", "numerical", "GridSpacing_x")
@@ -1053,7 +1053,7 @@ class Flexure(Utility, Plotting):
 
         # Check consistency of dimensions
         if self.q0 is not None:
-            if self.Method != "SAS_NG":
+            if self.method != "SAS_NG":
                 if self.q0.ndim != self.dimension:
                     print("Number of dimensions in loads file is inconsistent with")
                     print("number of dimensions in solution technique.")
@@ -1069,12 +1069,12 @@ class Flexure(Utility, Plotting):
         # Ensure that Te is of floating-point type to avoid integer math
         # and floor division
         try:
-            self.Te = self.Te.astype(float)  # array
+            self.te = self.te.astype(float)  # array
         except AttributeError:
             # Integer scalar Te does not seem to be a problem, but taking this step
             # anyway for consistency
             try:
-                self.Te = float(self.Te)  # integer
+                self.te = float(self.te)  # integer
             except (AttributeError, ValueError, TypeError):
                 # If not already defined, then an input file is being used, and this
                 # code should bring the grid in as floating point type... just later.
@@ -1087,7 +1087,7 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.sigma_xx = 0
         else:
-            if self.Method not in ("FD", "FFT"):
+            if self.method not in ("FD", "FFT"):
                 warnings.warn(
                     "End loads have been set but will not be implemented because the"
                     " solution method is not finite difference or FFT",
@@ -1099,7 +1099,7 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.sigma_xy = 0
         else:
-            if self.Method not in ("FD", "FFT"):
+            if self.method not in ("FD", "FFT"):
                 warnings.warn(
                     "End loads have been set but will not be implemented because the"
                     " solution method is not finite difference or FFT",
@@ -1111,7 +1111,7 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.sigma_yy = 0
         else:
-            if self.Method not in ("FD", "FFT"):
+            if self.method not in ("FD", "FFT"):
                 warnings.warn(
                     "End loads have been set but will not be implemented because the"
                     " solution method is not finite difference or FFT",
@@ -1134,7 +1134,7 @@ class Flexure(Utility, Plotting):
         # searching for the proper rigidity
         with contextlib.suppress(AttributeError):
             del self.coeff_matrix
-        if not self.Quiet:
+        if not self.quiet:
             print("")
 
     # SAVING TO FILE AND PLOTTING STEPS
@@ -1151,7 +1151,7 @@ class Flexure(Utility, Plotting):
         ``plotChoice`` to ``'q'``, ``'w'``, ``'both'``, or (1D only)
         ``'combo'`` to display plots.
         """
-        if self.Verbose:
+        if self.verbose:
             print("Output step")
         self.outputDeflections()
         self.plotting()
@@ -1176,7 +1176,7 @@ class Flexure(Utility, Plotting):
                 "string", "output", "DeflectionOut", optional=True
             )
         else:
-            if self.Verbose:
+            if self.verbose:
                 print("Output filename provided.")
         if self.wOutFile:
             if self.wOutFile[-4:] == ".npy":
@@ -1188,7 +1188,7 @@ class Flexure(Utility, Plotting):
 
                 # Shouldn't need more than mm precision, at very most
                 savetxt(self.wOutFile, self.w, fmt="%.3f")
-                if self.Verbose:
+                if self.verbose:
                     print("Saving deflections --> " + self.wOutFile)
 
     def bc_check(self):
@@ -1211,7 +1211,7 @@ class Flexure(Utility, Plotting):
         """
         # Check that boundary conditions are acceptable with code implementation
         # Acceptable b.c.'s
-        if self.Method == "FFT":
+        if self.method == "FFT":
             # Ensure BC attributes exist; FFT handles them internally
             # 'Periodic' → exact transform; anything else → zero-padded (NoOutsideLoads)
             for attr in ("BC_E", "BC_W"):
@@ -1222,9 +1222,9 @@ class Flexure(Utility, Plotting):
                     if not hasattr(self, attr):
                         setattr(self, attr, "")
             else:
-                self.BC_S = None
-                self.BC_N = None
-        elif self.Method == "FD":
+                self.bc_south = None
+                self.bc_north = None
+        elif self.method == "FD":
             # Check if a coefficient array has been defined
             # It would only be by a getter or setter;
             # no way to do I/O with this with present configuration files
@@ -1258,9 +1258,9 @@ class Flexure(Utility, Plotting):
                 )
                 # Boundary conditions should be defined by this point -- whether via
                 # the configuration file or the getters and setters
-                self.bclist = [self.BC_E, self.BC_W]
+                self.bclist = [self.bc_east, self.bc_west]
                 if self.dimension == 2:
-                    self.bclist += [self.BC_N, self.BC_S]
+                    self.bclist += [self.bc_north, self.bc_south]
                 # Now check that these are valid boundary conditions
                 for bc in self.bclist:
                     if self.dimension == 1:
@@ -1290,53 +1290,53 @@ class Flexure(Utility, Plotting):
             # If they aren't set, it is because no input file has been used
             # Just set them to an empty string (like input file would do)
             try:
-                self.BC_E
+                self.bc_east
             except AttributeError:
-                self.BC_E = ""
+                self.bc_east = ""
             try:
-                self.BC_W
+                self.bc_west
             except AttributeError:
-                self.BC_W = ""
+                self.bc_west = ""
             if self.dimension == 2:
                 try:
-                    self.BC_S
+                    self.bc_south
                 except AttributeError:
-                    self.BC_S = ""
+                    self.bc_south = ""
                 try:
-                    self.BC_N
+                    self.bc_north
                 except AttributeError:
-                    self.BC_N = ""
+                    self.bc_north = ""
             else:
                 # Simplifies flow control a few lines down to define these as None-type
-                self.BC_S = None
-                self.BC_N = None
+                self.bc_south = None
+                self.bc_north = None
             if (
-                self.BC_E == "NoOutsideLoads"
-                or self.BC_E == ""
-                and self.BC_W == "NoOutsideLoads"
-                or self.BC_W == ""
+                self.bc_east == "NoOutsideLoads"
+                or self.bc_east == ""
+                and self.bc_west == "NoOutsideLoads"
+                or self.bc_west == ""
             ) and (
                 self.dimension != 2
                 or (
-                    self.BC_E == "NoOutsideLoads"
-                    or self.BC_E == ""
-                    and self.BC_W == "NoOutsideLoads"
-                    or self.BC_W == ""
+                    self.bc_east == "NoOutsideLoads"
+                    or self.bc_east == ""
+                    and self.bc_west == "NoOutsideLoads"
+                    or self.bc_west == ""
                 )
             ):
                 if (
-                    self.BC_E == ""
-                    or self.BC_W == ""
-                    or self.BC_S == ""
-                    or self.BC_N == ""
+                    self.bc_east == ""
+                    or self.bc_west == ""
+                    or self.bc_south == ""
+                    or self.bc_north == ""
                 ):
-                    if self.Verbose:
+                    if self.verbose:
                         print(
                             "Assuming NoOutsideLoads boundary condition, as this is"
                             " implicit in the superposition-based analytical solution"
                         )
             else:
-                if not self.Quiet:
+                if not self.quiet:
                     print("")
                     print(">>> BOUNDARY CONDITIONS IMPROPERLY DEFINED <<<")
                     print("")
@@ -1371,7 +1371,7 @@ class Flexure(Utility, Plotting):
             print("Exiting.")
             sys.exit()
 
-    def TeArraySizeCheck(self):
+    def te_array_size_check(self):
         """
         Checks that Te and q0 array sizes are compatible
         For finite difference solution.
@@ -1379,13 +1379,13 @@ class Flexure(Utility, Plotting):
         # Only if they are both defined and are arrays
         # Both being arrays is a possible bug in this check routine that I have
         # intentionally introduced
-        if isinstance(self.Te, np.ndarray) and isinstance(self.qs, np.ndarray):
+        if isinstance(self.te, np.ndarray) and isinstance(self.qs, np.ndarray):
             # Doesn't touch non-arrays or 1D arrays
-            if type(self.Te) is np.ndarray:
-                if (np.array(self.Te.shape) != np.array(self.qs.shape)).any():
+            if type(self.te) is np.ndarray:
+                if (np.array(self.te.shape) != np.array(self.qs.shape)).any():
                     sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
             else:
-                if self.Debug:
+                if self.debug:
                     print("Te and qs array sizes pass consistency check")
 
     ### need to determine its interface, it is best to have a uniform interface
@@ -1396,7 +1396,7 @@ class Flexure(Utility, Plotting):
         """
         Set-up for the finite difference solution method
         """
-        if self.Verbose:
+        if self.verbose:
             print("Finite Difference Solution Technique")
         # Used to check for coeff_matrix here, but now doing so in self.bc_check()
         # called by f1d and f2d at the start
@@ -1420,22 +1420,22 @@ class Flexure(Utility, Plotting):
         if self.filename:
             _solver = self.configGet("string", "numerical", "Solver", optional=True)
             if _solver is not None:
-                self.Solver = _solver
+                self.solver = _solver
         # Check consistency of size if coeff array was loaded
         if self.filename:
             # Try to import Te grid or scalar for the finite difference solution
             # Try float first (scalar Te); fall back to string (file path)
-            self.Te = self.configGet(
+            self.te = self.configGet(
                 "float", "input", "ElasticThickness", optional=True
             )
-            if self.Te is None:
+            if self.te is None:
                 Tepath = self.configGet(
                     "string", "input", "ElasticThickness", optional=False
                 )
-                self.Te = Tepath
+                self.te = Tepath
             else:
                 Tepath = None
-            if self.Te is None:
+            if self.te is None:
                 if self.coeff_matrix is not None:
                     pass
                 else:
@@ -1445,17 +1445,17 @@ class Flexure(Utility, Plotting):
                         "No input elastic thickness or coefficient matrix supplied."
                     )
         # or if getter/setter
-        if isinstance(self.Te, str):
+        if isinstance(self.te, str):
             # Try to import Te grid or scalar for the finite difference solution
-            Tepath = self.Te
+            Tepath = self.te
         else:
             Tepath = None  # in case no self.filename present (like for GRASS GIS)
         # If there is a Tepath, import Te
         # Assume that even if a coeff_matrix is defined
         # That the user wants Te if they gave the path
         if Tepath:
-            self.Te = self.loadFile(self.Te, close_on_fail=False)
-            if self.Te is None:
+            self.te = self.loadFile(self.te, close_on_fail=False)
+            if self.te is None:
                 print("Requested Te file is provided but cannot be located.")
                 print("No scalar elastic thickness is provided in configuration file")
                 print("(Typo in path to input Te grid?)")
@@ -1468,8 +1468,8 @@ class Flexure(Utility, Plotting):
 
             # Check that Te is the proper size if it was loaded
             # Will be array if it was loaded
-            if self.Te.any():
-                self.TeArraySizeCheck()
+            if self.te.any():
+                self.te_array_size_check()
 
     def FFT(self):
         """
@@ -1482,7 +1482,7 @@ class Flexure(Utility, Plotting):
         performed by :meth:`FD` and :meth:`SAS`; the scalar-:math:`T_e`
         requirement is enforced in :class:`F1D` and :class:`F2D`.
         """
-        if self.Verbose:
+        if self.verbose:
             print("FFT Spectral Solution Technique")
         # Define qs from q0 if not already set by a getter/setter
         try:
@@ -1498,7 +1498,7 @@ class Flexure(Utility, Plotting):
         # Config-file parameter loading
         # FFT requires scalar (uniform) Te; that check is performed in F1D/F2D
         if self.filename:
-            self.Te = self.configGet("float", "input", "ElasticThickness")
+            self.te = self.configGet("float", "input", "ElasticThickness")
             # qs may still be coming from q0 when driven by a config file
             try:
                 self.qs
@@ -1518,7 +1518,7 @@ class Flexure(Utility, Plotting):
             self.x = np.arange(self.dx / 2.0, self.dx * self.qs.shape[0], self.dx)
         if self.filename:
             # Define the (scalar) elastic thickness
-            self.Te = self.configGet("float", "input", "ElasticThickness")
+            self.te = self.configGet("float", "input", "ElasticThickness")
             # Define a stress-based qs = q0
             self.qs = self.q0.copy()
             # Remove self.q0 to avoid issues with multiply-defined inputs
@@ -1545,7 +1545,7 @@ class Flexure(Utility, Plotting):
         """
         if self.filename:
             # Define the (scalar) elastic thickness
-            self.Te = self.configGet("float", "input", "ElasticThickness")
+            self.te = self.configGet("float", "input", "ElasticThickness")
             # See if it wants to be run in lat/lon
             # Could put under in 2D if-statement, but could imagine an eventual desire
             # to change this and have 1D lat/lon profiles as well.
@@ -1554,7 +1554,7 @@ class Flexure(Utility, Plotting):
             self.latlon = self.configGet(
                 "string", "numerical2D", "latlon", optional=True
             )
-            self.PlanetaryRadius = self.configGet(
+            self.planetary_radius = self.configGet(
                 "float", "numerical2D", "PlanetaryRadius", optional=True
             )
         # Parse out input q0 into variables of imoprtance for solution

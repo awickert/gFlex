@@ -34,11 +34,11 @@ def _1d_fd():
     N = 60
     qs = np.zeros(N); qs[25:35] = 1e6
     flex = F1D()
-    flex.Quiet = True;  flex.Method = "FD";  flex.Solver = "direct"
+    flex.quiet = True;  flex.method = "FD";  flex.solver = "direct"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.Te = _Te * np.ones(N);  flex.qs = qs;  flex.dx = _dx
-    flex.BC_W = flex.BC_E = "Periodic"
+    flex.te = _Te * np.ones(N);  flex.qs = qs;  flex.dx = _dx
+    flex.bc_west = flex.bc_east = "Periodic"
     flex.initialize();  flex.run();  flex.finalize()
     return flex
 
@@ -47,10 +47,10 @@ def _1d_sas():
     N = 60
     qs = np.zeros(N); qs[25:35] = 1e6
     flex = F1D()
-    flex.Quiet = True;  flex.Method = "SAS"
+    flex.quiet = True;  flex.method = "SAS"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.Te = _Te;  flex.qs = qs;  flex.dx = _dx
+    flex.te = _Te;  flex.qs = qs;  flex.dx = _dx
     flex.initialize();  flex.run();  flex.finalize()
     return flex
 
@@ -59,11 +59,11 @@ def _1d_fft():
     N = 64
     qs = np.zeros(N); qs[28:36] = 1e6
     flex = F1D()
-    flex.Quiet = True;  flex.Method = "FFT"
+    flex.quiet = True;  flex.method = "FFT"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.Te = _Te;  flex.qs = qs;  flex.dx = _dx
-    flex.BC_W = flex.BC_E = "Periodic"
+    flex.te = _Te;  flex.qs = qs;  flex.dx = _dx
+    flex.bc_west = flex.bc_east = "Periodic"
     flex.initialize();  flex.run();  flex.finalize()
     return flex
 
@@ -73,10 +73,10 @@ def _1d_sas_ng():
     x = np.arange(N) * _dx
     q = np.zeros(N); q[25:35] = 1e6 * _dx   # point forces [N/m]
     flex = F1D()
-    flex.Quiet = True;  flex.Method = "SAS_NG"
+    flex.quiet = True;  flex.method = "SAS_NG"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.Te = _Te
+    flex.te = _Te
     flex.x = x;  flex.q = q;  flex.xw = x.copy()
     flex.initialize();  flex.run();  flex.finalize()
     return flex
@@ -86,12 +86,12 @@ def _2d_fd():
     N = 20
     qs = np.zeros((N, N)); qs[7:13, 7:13] = 1e6
     flex = F2D()
-    flex.Quiet = True;  flex.Method = "FD";  flex.Solver = "direct"
+    flex.quiet = True;  flex.method = "FD";  flex.solver = "direct"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.Te = _Te * np.ones((N, N));  flex.qs = qs
+    flex.te = _Te * np.ones((N, N));  flex.qs = qs
     flex.dx = flex.dy = _dx
-    flex.BC_W = flex.BC_E = flex.BC_N = flex.BC_S = "Periodic"
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "Periodic"
     flex.initialize();  flex.run();  flex.finalize()
     return flex
 
@@ -100,10 +100,10 @@ def _2d_sas():
     N = 20
     qs = np.zeros((N, N)); qs[7:13, 7:13] = 1e6
     flex = F2D()
-    flex.Quiet = True;  flex.Method = "SAS"
+    flex.quiet = True;  flex.method = "SAS"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.Te = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx
+    flex.te = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx
     flex.initialize();  flex.run();  flex.finalize()
     return flex
 
@@ -112,11 +112,11 @@ def _2d_fft():
     N = 20
     qs = np.zeros((N, N)); qs[7:13, 7:13] = 1e6
     flex = F2D()
-    flex.Quiet = True;  flex.Method = "FFT"
+    flex.quiet = True;  flex.method = "FFT"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.Te = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx   # scalar Te required
-    flex.BC_W = flex.BC_E = flex.BC_N = flex.BC_S = "Periodic"
+    flex.te = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx   # scalar Te required
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "Periodic"
     flex.initialize();  flex.run();  flex.finalize()
     return flex
 
@@ -131,10 +131,10 @@ def _2d_sas_ng():
     mask = (np.abs(xf - x[N // 2]) < 2 * _dx) & (np.abs(yf - y[N // 2]) < 2 * _dy)
     q[mask] = 1e6 * _dx * _dy    # point forces [N]
     flex = F2D()
-    flex.Quiet = True;  flex.Method = "SAS_NG"
+    flex.quiet = True;  flex.method = "SAS_NG"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.Te = _Te
+    flex.te = _Te
     flex.x = xf;  flex.y = yf;  flex.q = q
     flex.xw = xf.copy();  flex.yw = yf.copy()
     flex.initialize();  flex.run();  flex.finalize()

@@ -50,19 +50,19 @@ coeff = alpha**3 / (8.0 * D)
 def _run(qs, method="SAS", bc_w="0Moment0Shear", bc_e="0Moment0Shear"):
     """Run a 1-D flexure calculation and return the flex object."""
     flex = F1D()
-    flex.Quiet  = True
-    flex.Method = method
-    flex.Solver = "direct"
+    flex.quiet  = True
+    flex.method = method
+    flex.solver = "direct"
     flex.g       = g
     flex.E       = E
     flex.nu      = nu
     flex.rho_m   = rho_m
     flex.rho_fill = rho_fill
-    flex.Te      = Te
+    flex.te      = Te
     flex.qs      = qs.copy()
     flex.dx      = dx
-    flex.BC_W    = bc_w
-    flex.BC_E    = bc_e
+    flex.bc_west    = bc_w
+    flex.bc_east    = bc_e
     flex.initialize()
     flex.run()
     flex.finalize()
@@ -142,14 +142,14 @@ def test_1d_sas_vs_fd_large_domain():
 def _run_sas_ng(x, q, xw):
     """Run a 1-D SAS_NG (non-gridded) flexure calculation."""
     flex = F1D()
-    flex.Quiet   = True
-    flex.Method  = "SAS_NG"
+    flex.quiet   = True
+    flex.method  = "SAS_NG"
     flex.g        = g
     flex.E        = E
     flex.nu       = nu
     flex.rho_m    = rho_m
     flex.rho_fill = rho_fill
-    flex.Te       = Te
+    flex.te       = Te
     flex.x        = x.copy()
     flex.q        = q.copy()
     flex.xw       = xw.copy()

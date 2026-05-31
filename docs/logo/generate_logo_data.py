@@ -52,14 +52,14 @@ qs = np.where(R <= load_radius, 3e7, 0.0)   # 30 MPa flat-topped load
 
 # ── Run gFlex ─────────────────────────────────────────────────────────────────
 flex = F2D()
-flex.Quiet = True
-flex.Method = "FD"
+flex.quiet = True
+flex.method = "FD"
 flex.g = g;  flex.E = E;  flex.nu = nu
 flex.rho_m = rho_m;  flex.rho_fill = rho_fill
-flex.Te = Te_grid
+flex.te = Te_grid
 flex.qs = qs
 flex.dx = dx;  flex.dy = dy
-flex.BC_W = flex.BC_E = flex.BC_S = flex.BC_N = "0Moment0Shear"
+flex.bc_west = flex.bc_east = flex.bc_south = flex.bc_north = "0Moment0Shear"
 flex.initialize()
 flex.run()
 flex.finalize()

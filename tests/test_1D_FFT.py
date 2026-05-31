@@ -26,19 +26,19 @@ drho = rho_m - rho_fill
 def _run_flex_1d(qs, method="FFT", bc_w="", bc_e="", sigma_xx=None):
     """Run a 1-D flexure calculation with the shared parameter set."""
     flex = F1D()
-    flex.Quiet = True
-    flex.Method = method
-    flex.Solver = "direct"
+    flex.quiet = True
+    flex.method = method
+    flex.solver = "direct"
     flex.g = g
     flex.E = E
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.Te = Te
+    flex.te = Te
     flex.qs = qs.copy()
     flex.dx = dx
-    flex.BC_W = bc_w
-    flex.BC_E = bc_e
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
     if sigma_xx is not None:
         flex.sigma_xx = sigma_xx
     flex.initialize()
