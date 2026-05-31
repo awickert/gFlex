@@ -102,7 +102,7 @@ class Utility:
                 )
                 sys.exit()  # Won't exit, but will lead to exception
             return var
-        except:
+        except Exception:
             if optional:
                 # Carry on if the variable is optional
                 var = None
@@ -171,7 +171,7 @@ class Utility:
         else:
             try:
                 self.coeff_matrix = sparse.dia_matrix(self.coeff_matrix)
-            except:
+            except Exception:
                 sys.exit(
                     "Failed to make a sparse array or load a sparse matrix from the input."
                 )
@@ -276,18 +276,18 @@ class Utility:
             # First see if it is a full path or directly links from the current
             # working directory
             out = np.load(var)
-        except:
+        except Exception:
             try:
                 out = np.loadtxt(var)
-            except:
+            except Exception:
                 # Then see if it is relative to the location of the configuration file
                 try:
                     out = np.load(self.inpath + var)
-                except:
+                except Exception:
                     try:
                         out = np.loadtxt(self.inpath + var)
                     # If failure
-                    except:
+                    except Exception:
                         pass
                     else:
                         format_name = "ASCII"
@@ -825,7 +825,7 @@ class WhichModel(Utility):
                     # (at least for them)
                     self.dimension = self.configGet("integer", "mode", "dimension")
                     self.whichModel_AlreadyRun = True
-                except:
+                except Exception:
                     sys.exit(
                         ">>>> Error: cannot locate specified configuration file. <<<<"
                     )
@@ -928,7 +928,7 @@ class Flexure(Utility, Plotting):
                 # (at least for them)
                 self.dimension = self.configGet("integer", "mode", "dimension")
                 self.whichModel_AlreadyRun = True
-            except:
+            except Exception:
                 sys.exit(
                     "No configuration file at specified path, or configuration file"
                     " configured incorrectly"
@@ -937,26 +937,17 @@ class Flexure(Utility, Plotting):
             # Set verbosity for model run
             # Default is "verbose" with no debug or quiet
             # Verbose
-            try:
-                self.Verbose = self.configGet(
-                    "bool", "verbosity", "Verbose", optional=False
-                )
-            except:
-                pass
-            # Deebug means that whole arrays, etc., can be printed
-            try:
-                self.Debug = self.configGet(
-                    "bool", "verbosity", "Debug", optional=False
-                )
-            except:
-                pass
-            # Deebug means that whole arrays, etc., can be printed
-            try:
-                self.Quiet = self.configGet(
-                    "bool", "verbosity", "Quiet", optional=False
-                )
-            except:
-                pass
+            self.Verbose = self.configGet(
+                "bool", "verbosity", "Verbose", optional=True
+            ) or self.Verbose
+            # Debug means that whole arrays, etc., can be printed
+            self.Debug = self.configGet(
+                "bool", "verbosity", "Debug", optional=True
+            ) or self.Debug
+            # Quiet suppresses all output
+            self.Quiet = self.configGet(
+                "bool", "verbosity", "Quiet", optional=True
+            ) or self.Quiet
         # Quiet overrides all others
         if self.Quiet:
             self.Debug = False
@@ -1090,7 +1081,7 @@ class Flexure(Utility, Plotting):
             # anyway for consistency
             try:
                 self.Te = float(self.Te)  # integer
-            except (ValueError, TypeError):
+            except (AttributeError, ValueError, TypeError):
                 # If not already defined, then an input file is being used, and this
                 # code should bring the grid in as floating point type... just later.
                 pass
@@ -1191,7 +1182,7 @@ class Flexure(Utility, Plotting):
                 self.wOutFile = self.configGet(
                     "string", "output", "DeflectionOut", optional=True
                 )
-            except:
+            except Exception:
                 # if there is no parsable output string, do not generate output;
                 # this allows the user to leave the line blank and produce no output
                 if self.Debug:
@@ -1446,22 +1437,17 @@ class Flexure(Utility, Plotting):
         # Check consistency of size if coeff array was loaded
         if self.filename:
             # Try to import Te grid or scalar for the finite difference solution
-            try:
-                self.Te = self.configGet(
-                    "float", "input", "ElasticThickness", optional=False
-                )
-                if self.Te is None:
-                    Tepath = self.configGet(
-                        "string", "input", "ElasticThickness", optional=False
-                    )
-                    self.Te = Tepath
-                else:
-                    Tepath = None
-            except:
+            # Try float first (scalar Te); fall back to string (file path)
+            self.Te = self.configGet(
+                "float", "input", "ElasticThickness", optional=True
+            )
+            if self.Te is None:
                 Tepath = self.configGet(
                     "string", "input", "ElasticThickness", optional=False
                 )
                 self.Te = Tepath
+            else:
+                Tepath = None
             if self.Te is None:
                 if self.coeff_matrix is not None:
                     pass
@@ -1638,7 +1624,7 @@ class Flexure(Utility, Plotting):
                 self.xw = self.configGet("string", "input", "xw", optional=True)
                 if self.xw == "":
                     self.xw = None
-            except:
+            except Exception:
                 self.xw = None
         # If strings, load arrays
         if isinstance(self.xw, str):
@@ -1652,7 +1638,7 @@ class Flexure(Utility, Plotting):
                     self.yw = self.configGet("string", "input", "yw", optional=True)
                     if self.yw == "":
                         self.yw = None
-                except:
+                except Exception:
                     self.yw = None
             # At this point, can check if we have both None or both defined
             if (self.xw is not None and self.yw is None) or (
