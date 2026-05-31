@@ -52,10 +52,7 @@ gflex <path-to-configuration-file>
 
 This can be run from any directory, as the installation of gFlex adds the program "gflex" to the system path.
 
-Two configuration file formats are supported:
-
-* **YAML** (`.yaml` / `.yml` extension) — recommended for new workflows. See **input/input_f1d.yaml** and **input/input_f2d.yaml** for complete examples.
-* **INI** (any extension) — the original legacy format.
+Configuration files must be YAML (`.yaml` / `.yml` extension). See **input/input_f1d.yaml** and **input/input_f2d.yaml** for complete examples.
 
 A minimal 2-D YAML configuration file looks like:
 
@@ -84,102 +81,7 @@ numerical2D:
   BoundaryCondition_South: 0Slope0Shear
 ```
 
-For a full parameter reference, see the [Configuration Files](https://gflex.readthedocs.io/en/latest/configuration.html) page on ReadTheDocs. The annotated INI template **input/input_help** is also reproduced below for quick reference:
-
-```ini
-; input_help
-; All units are SI. Not all entries are needed.
-; Standard parameter values for Earth are included.
-
-[mode]
-; 1 (line) or 2 (surface) dimensions
-dimension=2
-; Solution method: FD (Finite Difference), FFT (spectral),
-; SAS (Superposition of Analytical Solutions), or SAS_NG (SAS, but
-; on an unstructured grid — NG = "no grid").
-; For SAS_NG, 1D data must be provided and will be returned in
-; two columns: (x,q0) --> (x,w). 2D data are similar, except
-; will be of the form (x,y,[q0/in or w/out]).
-method=SAS
-[parameter]
-YoungsModulus=65E9
-PoissonsRatio=0.25
-GravAccel=9.8
-MantleDensity=3300
-; This is the density of material (e.g., air, water)
-; that is filling (or leaving) the hole that was
-; created by flexure. If you do not have a constant
-; density of infilling material, for example, at a
-; subsiding shoreline, you must instead iterate.
-InfillMaterialDensity=0
-
-[input]
-; space-delimited array of loads
-; stresses (rho*g*h) if gridded (dx (and if applicable, dy)) will be applied
-;   to convert them into forces
-; forces (rho*g*h*Area) if not gridded (SAS_NG)
-; If the solution method (above) is selected as "SAS_NG", then this file
-; will actually be of the format (x,[y],q0) and the code will sort it out.
-Loads=q0_sample/2D/central_square_load.txt
-;
-; scalar value or space-delimited array of elastic thickness(es) [m]
-; array required for finite difference solutions with variable Te
-ElasticThickness=Te_sample/2D/10km_const.txt
-;
-; xw and yw are vectors of desired output points for the SAS_NG method.
-; If they are not specified and a SAS_NG solution is run, the solution will be
-; calculated at the points with the loads.
-; they are ignored if a different solution method is chosen.
-xw=
-yw=
-
-[output]
-; DeflectionOut is for writing an output file.
-; If this is blank, no output is printed.
-; Otherwise, a space-delimited ASCII file of
-; outputs is with this file name (and path).
-DeflectionOut=tmpout.txt
-;
-; Acceptable inputs to "Plot" are q0 (loads), w (deflection), or both; any
-; other entry here will result in no plotting.
-; Automatically plots a 1D line or 2D surface based on the choice
-; of "dimension" variable in [mode]
-Plot=both
-
-[numerical]
-; dx [m]
-GridSpacing_x=
-;
-; Boundary conditions can be:
-; (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
-; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
-BoundaryCondition_West=
-BoundaryCondition_East=
-;
-
-[numerical2D]
-; dy [m]
-GridSpacing_y=
-;
-; Boundary conditions can be:
-; (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
-; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
-BoundaryCondition_North=
-BoundaryCondition_South=
-;
-; Flag to enable lat/lon input (true/false). By default, this is false
-latlon=
-; radius of planet [m], for lat/lon solutions
-PlanetaryRadius=
-
-[verbosity]
-; true/false. Defaults to true.
-Verbose=
-; true/false. Defaults to false.
-Debug=
-; true/false -- total silence if true. Defaults to false.
-Quiet=
-```
+For a full parameter reference, see the [Configuration Files](https://gflex.readthedocs.io/en/latest/configuration.html) page on ReadTheDocs.
 
 #### Finite-difference boundary conditions
 
@@ -274,7 +176,7 @@ If you would like to use a Python script with a configuration file, this is also
 ```python
 import gflex
 
-# To use a configuration file (INI or YAML):
+# To use a configuration file (YAML):
 filename = 'input/input_f1d.yaml'
 obj = gflex.WhichModel(filename)
 
