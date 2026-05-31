@@ -473,7 +473,7 @@ def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES_2D):
             w_direct = flex.w.flatten()
 
             if n <= iter_max:
-                rhs = flex.qs.reshape(-1, order="C")
+                rhs = -flex.qs.reshape(-1, order="C")
                 t_iter, n_iter, w_iter, ok = _iter_solve(flex.coeff_matrix, rhs)
                 rel_err = (np.linalg.norm(w_iter - w_direct)
                            / np.linalg.norm(w_direct))
