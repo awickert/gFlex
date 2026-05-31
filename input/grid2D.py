@@ -9,7 +9,6 @@ flex = gflex.F2D()
 flex.Quiet = False
 
 flex.Method = "FD"
-flex.Solver = "direct"
 
 flex.g = 9.8  # acceleration due to gravity
 flex.E = 65e9  # Young's Modulus

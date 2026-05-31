@@ -66,7 +66,6 @@ Quick start
    flex = F2D()
    flex.Quiet = True
    flex.Method = 'FD'
-   flex.Solver = 'direct'
    flex.g = 9.8
    flex.E = 65e9
    flex.nu = 0.25
@@ -120,7 +119,6 @@ A minimal 2-D YAML configuration:
      GridSpacing_x: 4000
      BoundaryCondition_West: 0Moment0Shear
      BoundaryCondition_East: 0Displacement0Slope
-     Solver: direct
    numerical2D:
      GridSpacing_y: 4000
      BoundaryCondition_North: Mirror

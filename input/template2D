@@ -27,7 +27,6 @@ Plot=
 GridSpacing_x=
 BoundaryCondition_West=
 BoundaryCondition_East=
-Solver=
 
 [numerical2D]
 GridSpacing_y=

@@ -25,7 +25,6 @@ numerical:
   GridSpacing_x: 4000
   BoundaryCondition_West: 0Moment0Shear
   BoundaryCondition_East: 0Displacement0Slope
-  Solver: direct
 
 numerical2D:
   GridSpacing_y: 4000

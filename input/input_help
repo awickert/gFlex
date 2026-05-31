@@ -69,8 +69,6 @@ GridSpacing_x=
 BoundaryCondition_West=
 BoundaryCondition_East=
 ;
-; Solver: currently only "direct" (sparse LU) is supported
-Solver=
 
 [numerical2D]
 ; dy [m]

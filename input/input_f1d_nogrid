@@ -24,7 +24,6 @@ Plot=both
 GridSpacing_x=6000
 BoundaryCondition_West=
 BoundaryCondition_East=
-Solver=
 
 [verbosity]
 Verbose=false

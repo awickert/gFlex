@@ -141,11 +141,6 @@ Parameters
 
     For SAS / SAS_NG: ``NoOutsideLoads`` (assumed if left blank).
 
-``Solver``
-    Linear system solver for FD:
-
-    * ``direct`` — sparse direct solver (default and only supported option).
-
 .. note::
 
    **In-plane stresses** (:math:`\sigma_{xx}`, :math:`\sigma_{yy}`,
@@ -233,7 +228,6 @@ Complete examples
       GridSpacing_x: 6000
       BoundaryCondition_West: Periodic
       BoundaryCondition_East: Periodic
-      Solver: direct
 
     verbosity:
       Verbose: false
@@ -270,7 +264,6 @@ Complete examples
       GridSpacing_x: 4000
       BoundaryCondition_West: 0Moment0Shear
       BoundaryCondition_East: 0Displacement0Slope
-      Solver: direct
 
     numerical2D:
       GridSpacing_y: 4000
@@ -319,7 +312,6 @@ Equivalent 1-D example in INI:
     GridSpacing_x=6000
     BoundaryCondition_West=Periodic
     BoundaryCondition_East=Periodic
-    Solver=direct
 
     [verbosity]
     Verbose=false
@@ -404,8 +396,6 @@ here (with corrections) for quick reference.
     BoundaryCondition_West=
     BoundaryCondition_East=
     ;
-    ; Solver: currently only "direct" (sparse LU) is supported
-    Solver=
 
     [numerical2D]
     ; dy [m]

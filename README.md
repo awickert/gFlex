@@ -78,8 +78,6 @@ numerical:
   GridSpacing_x: 4000
   BoundaryCondition_West: 0Moment0Shear
   BoundaryCondition_East: 0Displacement0Slope
-  Solver: direct
-  ConvergenceTolerance: 1.0e-3
 numerical2D:
   GridSpacing_y: 4000
   BoundaryCondition_North: Mirror
@@ -158,8 +156,6 @@ GridSpacing_x=
 BoundaryCondition_West=
 BoundaryCondition_East=
 ;
-; Solver: currently only "direct" (sparse LU) is supported
-Solver=
 
 [numerical2D]
 ; dy [m]
@@ -224,7 +220,6 @@ flex.Method = 'FD' # Solution method: * FD (finite difference)
                    #                  * FFT (spectral, 2-D only)
                    #                  * SAS (superposition of analytical solutions)
                    #                  * SAS_NG (ungridded SAS)
-flex.Solver = 'direct'
 
 flex.g = 9.8 # acceleration due to gravity
 flex.E = 65E9 # Young's Modulus

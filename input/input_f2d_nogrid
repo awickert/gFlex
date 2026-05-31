@@ -33,7 +33,6 @@ Plot=both
 GridSpacing_x=
 BoundaryCondition_West=NoOutsideLoads
 BoundaryCondition_East=NoOutsideLoads
-Solver=direct
 CoeffArray=
 
 [numerical2D]
