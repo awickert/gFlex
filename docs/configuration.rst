@@ -34,7 +34,7 @@ Parameters
       thickness only; fast and analytically exact.
     * ``SAS_NG`` — SAS on an unstructured point set (NG = "no grid").
       Load and output locations are arbitrary (x, q0) or (x, y, q0)
-      columns; see ``Loads`` below.
+      columns; see ``loads`` below.
 
 ----
 
@@ -71,7 +71,7 @@ Parameters
 ``input`` section
 ~~~~~~~~~~~~~~~~~
 
-``Loads``
+``loads``
     Path to the load file.
 
     * *Gridded methods (FD, SAS)*: a space-delimited array of surface
@@ -106,7 +106,7 @@ Parameters
     Path for writing deflection output as a space-delimited ASCII file.
     Leave blank to suppress file output.
 
-``Plot``
+``plot``
     Controls inline plotting after the run:
 
     * ``q`` — plot the applied load.
@@ -165,7 +165,7 @@ Parameters
     ``true`` / ``false``.  Interpret input coordinates as geographic
     latitude and longitude.  Default: ``false``.
 
-``PlanetaryRadius``
+``planetary_radius``
     Planetary radius [m].  Required when ``latlon = true``.  Earth:
     6 371 000 m.
 
@@ -174,17 +174,17 @@ Parameters
 ``verbosity`` section
 ~~~~~~~~~~~~~~~~~~~~~
 
-``Verbose``
+``verbose``
     ``true`` / ``false``.  Print progress messages during the run.
     Default: ``true``.
 
-``Debug``
+``debug``
     ``true`` / ``false``.  Print internal arrays and solver diagnostics.
     Default: ``false``.
 
-``Quiet``
-    ``true`` / ``false``.  Suppress all output.  Overrides ``Verbose`` and
-    ``Debug``.  Default: ``false``.
+``quiet``
+    ``true`` / ``false``.  Suppress all output.  Overrides ``verbose`` and
+    ``debug``.  Default: ``false``.
 
 ----
 
