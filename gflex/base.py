@@ -875,6 +875,9 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.grass = False
 
+        # Default solver; may be overridden programmatically or via config file
+        self.Solver = "direct"
+
         # Default values for lat/lon usage -- defaulting not to use it
         try:
             self.latlon
@@ -1432,16 +1435,11 @@ class Flexure(Utility, Plotting):
         self.x = np.arange(self.dx / 2.0, self.dx * self.qs.shape[0], self.dx)
         if self.dimension == 2:
             self.y = np.arange(self.dy / 2.0, self.dy * self.qs.shape[1], self.dy)
-        # Is there a solver defined
-        try:
-            self.Solver  # See if it exists already
-        except AttributeError:
-            # Well, will fail if it doesn't see this, maybe not the most reasonable
-            # error message.
-            if self.filename:
-                self.Solver = self.configGet("string", "numerical", "Solver")
-            else:
-                sys.exit("No solver defined!")
+        # Config file may override the default solver
+        if self.filename:
+            _solver = self.configGet("string", "numerical", "Solver", optional=True)
+            if _solver is not None:
+                self.Solver = _solver
         # Check consistency of size if coeff array was loaded
         if self.filename:
             # Try to import Te grid or scalar for the finite difference solution
