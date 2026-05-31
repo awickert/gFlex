@@ -435,7 +435,7 @@ def _timeout_iter_solve(matrix, rhs, tol=1e-3, maxiter=10, timeout_s=10):
     return result
 
 
-def _fft_iter_solve(flex, rhs, tol=1e-3, maxiter=200, timeout_s=60):
+def _fft_iter_solve(flex, rhs, tol=1e-3, maxiter=40, timeout_s=60):
     """FFT-preconditioned LGMRES with iteration counting and wall-time cap.
 
     Uses flex._fft_preconditioner() to obtain the spectral preconditioner
