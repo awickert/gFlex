@@ -14,6 +14,7 @@ Run from the repo root:
 """
 
 import os
+import re
 
 import matplotlib
 import numpy as np
@@ -41,6 +42,28 @@ C_BDY   = "#222222"
 C_EQN   = "#c03a2b"
 SCALE   = 1.0
 MARGIN  = 0.35
+
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+def _save(fig, path):
+    """Save figure and normalize non-deterministic SVG content.
+
+    Matplotlib embeds a timestamp and generates random hex IDs for clip-paths
+    on every run.  Strip the timestamp and replace random IDs with sequential
+    fixed names so git only registers genuine diagram changes.
+    """
+    fig.savefig(path, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    with open(path) as f:
+        svg = f.read()
+    svg = re.sub(r"\s*<dc:date>[^<]*</dc:date>", "", svg)
+    ids = list(dict.fromkeys(re.findall(r'"(p[0-9a-f]{8,})"', svg)))
+    for i, uid in enumerate(ids):
+        svg = svg.replace(uid, f"clip{i:02d}")
+    with open(path, "w") as f:
+        f.write(svg)
+    print(f"  saved {path}")
 
 
 # ── primitives ────────────────────────────────────────────────────────────────
@@ -142,9 +165,7 @@ def draw_1d_stencil():
 
     fig.tight_layout(pad=0.3)
     out = os.path.join(OUTDIR, "stencil_1d_interior.svg")
-    fig.savefig(out, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
-    print(f"  saved {out}")
+    _save(fig, out)
 
 
 # ── 2-D interior stencil ─────────────────────────────────────────────────────
@@ -204,21 +225,24 @@ def draw_2d_stencil():
     for (di, dj) in stencil:
         _circle(ax, di, dj, "center" if (di, dj) == (0, 0) else "real")
 
-    # Coefficient labels — offset perpendicular to each connecting line
+    # Coefficient labels — offset so labels fall between grid lines (integer
+    # coordinates) and clear of each node's connecting line from the centre.
+    # Grid lines run at every integer x and y, so both offset components
+    # must be non-zero to avoid sitting on a grid line or the connecting line.
     offsets = {
-        ( 0,  0): ( 0.00,  0.00),   # inside circle
-        ( 1,  0): ( 0.00,  0.28),   # above (perpendicular to horizontal line)
-        (-1,  0): ( 0.00,  0.28),   # above
-        ( 0,  1): ( 0.28,  0.00),   # right (perpendicular to vertical line)
-        ( 0, -1): ( 0.28,  0.00),   # right
-        ( 2,  0): ( 0.00,  0.26),   # above far node
-        (-2,  0): ( 0.00,  0.26),   # above far node
-        ( 0,  2): ( 0.26,  0.00),   # right of far node
-        ( 0, -2): ( 0.26,  0.00),   # right of far node
-        ( 1,  1): ( 0.00,  0.26),   # above diagonal node
-        (-1,  1): ( 0.00,  0.26),   # above
-        ( 1, -1): ( 0.00, -0.26),   # below diagonal node
-        (-1, -1): ( 0.00, -0.26),   # below
+        ( 0,  0): ( 0.00,  0.00),   # +20: inside centre circle
+        ( 1,  0): ( 0.30,  0.22),   # -8: upper-right; off x=1 grid & y=0 line
+        (-1,  0): (-0.30,  0.22),   # -8: upper-left
+        ( 0,  1): ( 0.22,  0.30),   # -8: upper-right; off x=0 line & y=1 grid
+        ( 0, -1): ( 0.22, -0.30),   # -8: lower-right
+        ( 2,  0): ( 0.28,  0.22),   # +1: upper-right of far node
+        (-2,  0): (-0.28,  0.22),   # +1: upper-left
+        ( 0,  2): ( 0.22,  0.28),   # +1: upper-right
+        ( 0, -2): ( 0.22, -0.28),   # +1: lower-right
+        ( 1,  1): ( 0.22, -0.22),   # +2: perp to NE diagonal → lower-right
+        (-1,  1): (-0.22, -0.22),   # +2: lower-left
+        ( 1, -1): ( 0.22,  0.22),   # +2: upper-right
+        (-1, -1): (-0.22,  0.22),   # +2: upper-left
     }
     for (di, dj), coeff in stencil.items():
         sign  = "+" if coeff > 0 else ""
@@ -259,9 +283,7 @@ def draw_2d_stencil():
 
     fig.tight_layout(pad=0.3)
     out = os.path.join(OUTDIR, "stencil_2d_interior.svg")
-    fig.savefig(out, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
-    print(f"  saved {out}")
+    _save(fig, out)
 
 
 # ── Mirror vs 0Displacement0Moment ghost comparison ──────────────────────────
@@ -364,9 +386,7 @@ def draw_ghost_comparison():
                 style="italic")
 
     out = os.path.join(OUTDIR, "stencil_mirror_vs_0d0m.svg")
-    fig.savefig(out, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
-    print(f"  saved {out}")
+    _save(fig, out)
 
 
 # ── entry point ───────────────────────────────────────────────────────────────
