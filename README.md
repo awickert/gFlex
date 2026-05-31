@@ -158,13 +158,8 @@ GridSpacing_x=
 BoundaryCondition_West=
 BoundaryCondition_East=
 ;
-; Solver can be direct or iterative
+; Solver: currently only "direct" (sparse LU) is supported
 Solver=
-; Tolerance between iterations [m]
-; If you have chosen an iterative solution type ("Solver"), it will iterate
-; until this is the difference between two subsequent iterations.
-; Set as 0 if you don't want to iterate.
-ConvergenceTolerance=1E-3
 
 [numerical2D]
 ; dy [m]
@@ -229,9 +224,7 @@ flex.Method = 'FD' # Solution method: * FD (finite difference)
                    #                  * FFT (spectral, 2-D only)
                    #                  * SAS (superposition of analytical solutions)
                    #                  * SAS_NG (ungridded SAS)
-flex.Solver = 'direct' # direct or iterative
-# convergence = 1E-3 # convergence between iterations, if an iterative solution
-                     # method is chosen
+flex.Solver = 'direct'
 
 flex.g = 9.8 # acceleration due to gravity
 flex.E = 65E9 # Young's Modulus
