@@ -125,7 +125,7 @@ class Utility:
                 raise ValueError(msg)
 
     def _load_config(self, filename):
-        """Return a :class:`configparser.ConfigParser` populated from *filename*.
+        """Read a YAML configuration file and return a ConfigParser for internal use.
 
         Only YAML (``.yaml`` / ``.yml``) configuration files are supported.
         The file must use the standard section names (``mode``, ``parameter``,
@@ -891,15 +891,14 @@ class Flexure(Utility, Plotting):
         Load parameters and prepare internal state.
 
         If a configuration file path is available, reads all physical and
-        numerical parameters from it (INI or YAML format).  Otherwise
-        expects the caller to have set attributes directly (programmatic
-        use).  Called automatically by :meth:`F1D.initialize` and
-        :meth:`F2D.initialize`.
+        numerical parameters from it (YAML format).  Otherwise expects the
+        caller to have set attributes directly (programmatic use).  Called
+        automatically by :meth:`F1D.initialize` and :meth:`F2D.initialize`.
 
         Parameters
         ----------
         filename : str, optional
-            Path to a gFlex configuration file (INI or YAML).
+            Path to a gFlex YAML configuration file (``.yaml`` / ``.yml``).
         """
         # Values from configuration file
 
