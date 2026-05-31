@@ -579,6 +579,74 @@ def bench_2d_sas(sizes):
         print("  ".join([f"{label:>9}", f"{_tick() - t0:>12.4f}"]))
 
 
+# Maximum grid side length (cells) at which SAS is run per load pattern.
+# SAS scales as O(N_load × N_grid); full-domain SAS on large grids is very slow.
+_SAS_CAP = {"small": 200, "quarter": 100, "full": 50}
+
+
+def bench_2d_load_geometry(sizes_fd):
+    """Compare FD, FFT, and SAS timing across load-pattern geometries.
+
+    Three load patterns are tested on square grids (constant Te):
+    - ``'small'``   : 3×3 central patch (N_load = 9); SAS ≈ O(N_grid)
+    - ``'quarter'`` : central 50 % per axis (N_load ≈ N²/4)
+    - ``'full'``    : entire domain (N_load = N²)
+
+    FD and FFT timing is independent of load pattern (the stiffness matrix
+    and spectral operator depend only on the grid and Te, not on the load).
+    SAS time scales as O(N_load × N_grid), so the SAS column varies
+    dramatically across patterns.
+
+    A ``'--'`` in the SAS column means n exceeds the per-pattern cap
+    (small ≤ 200, quarter ≤ 100, full ≤ 50) to avoid excessively long runs.
+
+    Note: ``'full'`` with FD (0Displacement0Slope BCs) produces a
+    bowl-shaped deflection — the plate is clamped at its edges, so
+    deflection drops to zero there.  The timing is a valid scaling
+    measurement regardless.
+    """
+    print("\n2D load geometry  (FD direct + FFT + SAS, constant Te, square grids)")
+    print("  FD and FFT timing is load-pattern-independent.")
+    print("  '--' in SAS column = n exceeds per-pattern cap.")
+    print("  'full' with FD: 0Displacement0Slope BCs give bowl-shaped deflection.")
+    cols = [
+        ("n×n",   9), ("pattern",  9), ("N_load",  9),
+        ("FD(s)", 9), ("FFT(s)",   9), ("SAS(s)",  9),
+    ]
+    _hdr(cols)
+
+    patterns = ("small", "quarter", "full")
+    for n in sizes_fd:
+        label = f"{n}×{n}"
+        for i, pat in enumerate(patterns):
+            qs = _make_qs_2d(n, n, pat)
+            n_load = int(np.count_nonzero(qs))
+
+            flex_fd = _make_f2d(n, n, "FD", qs=qs)
+            t0 = _tick()
+            flex_fd.run()
+            t_fd = _tick() - t0
+
+            flex_fft = _make_f2d(n, n, "FFT", qs=qs)
+            t0 = _tick()
+            flex_fft.run()
+            t_fft = _tick() - t0
+
+            if n <= _SAS_CAP[pat]:
+                flex_sas = _make_f2d(n, n, "SAS", qs=qs)
+                t0 = _tick()
+                flex_sas.run()
+                t_sas = f"{_tick() - t0:9.4f}"
+            else:
+                t_sas = f"{'--':>9}"
+
+            row_label = label if i == 0 else ""
+            print(f"  {row_label:>9}  {pat:>9}  {n_load:>9}  "
+                  f"{t_fd:9.4f}  {t_fft:9.4f}  {t_sas}")
+        if n != sizes_fd[-1]:
+            print()
+
+
 # ── entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -613,6 +681,7 @@ if __name__ == "__main__":
         ])
         bench_2d_fft(sizes=[50, 100, 500, 1000])
         bench_2d_sas(sizes=[10, 25, 50, 100])
+        bench_2d_load_geometry(sizes_fd=[25, 50, 100, 200])
     finally:
         tee.close()
 
