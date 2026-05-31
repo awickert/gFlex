@@ -248,8 +248,7 @@ class F1D(Flexure):
         ``'SAS'`` (superposition of analytical solutions, constant *Te*
         only), or ``'SAS_NG'`` (SAS on an ungridded point array).
     Solver : str
-        Linear solver: ``'direct'`` (sparse LU, default) or
-        ``'iterative'``.
+        Linear solver: ``'direct'`` (sparse LU, default).
     g : float
         Gravitational acceleration [m s⁻²].
     E : float
