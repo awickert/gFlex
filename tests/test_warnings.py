@@ -38,7 +38,7 @@ dx = 5000.0
 def _run_1d(qs, bc_w, bc_e):
     flex = F1D()
     flex.quiet = True
-    flex.method = "FD"
+    flex.method = "fd"
     flex.solver = "direct"
     flex.g = g
     flex.E = E
@@ -61,7 +61,7 @@ def _run_1d(qs, bc_w, bc_e):
 def _run_2d(qs, bc_w, bc_e, bc_n, bc_s):
     flex = F2D()
     flex.quiet = True
-    flex.method = "FD"
+    flex.method = "fd"
     flex.solver = "direct"
     flex.g = g
     flex.E = E

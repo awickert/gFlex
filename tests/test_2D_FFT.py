@@ -24,7 +24,7 @@ D    = E * Te**3 / (12.0 * (1.0 - nu**2))
 drho = rho_m - rho_fill
 
 
-def _run(qs, method="FFT", bc_w="", bc_e="", bc_n="", bc_s="",
+def _run(qs, method="fft", bc_w="", bc_e="", bc_n="", bc_s="",
          dx_=dx, dy_=dy, sigma_xx=None, sigma_yy=None, sigma_xy=None):
     flex = F2D()
     flex.quiet = True
@@ -109,7 +109,7 @@ def test_fft_2d_periodic_rho_fill_exact():
 
     flex = F2D()
     flex.quiet = True
-    flex.method = "FFT"
+    flex.method = "fft"
     flex.g = g
     flex.E = E
     flex.nu = nu
@@ -177,7 +177,7 @@ def test_fft_2d_padded_vs_sas():
     qs[35:45, 35:45] = 1e6
 
     flex_fft = _run(qs)
-    flex_sas = _run(qs, method="SAS")
+    flex_sas = _run(qs, method="sas")
 
     # Compare interior, away from any near-boundary differences
     m = 10
@@ -199,7 +199,7 @@ def test_fft_2d_nonsquare_grid():
     qs[25:35, 35:45] = 1e6
 
     flex_fft = _run(qs, dx_=4000., dy_=6000.)
-    flex_sas = _run(qs, method="SAS", dx_=4000., dy_=6000.)
+    flex_sas = _run(qs, method="sas", dx_=4000., dy_=6000.)
 
     m = 8
     np.testing.assert_allclose(

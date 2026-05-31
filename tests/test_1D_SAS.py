@@ -47,7 +47,7 @@ alpha = (4.0 * D / (drho * g)) ** 0.25   # ≈ 66.3 km
 coeff = alpha**3 / (8.0 * D)
 
 
-def _run(qs, method="SAS", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_shear"):
+def _run(qs, method="sas", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_shear"):
     """Run a 1-D flexure calculation and return the flex object."""
     flex = F1D()
     flex.quiet  = True
@@ -125,7 +125,7 @@ def test_1d_sas_vs_fd_large_domain():
     qs[190:210] = 1e6
 
     flex_sas = _run(qs)
-    flex_fd  = _run(qs, method="FD")
+    flex_fd  = _run(qs, method="fd")
 
     m = 100
     np.testing.assert_allclose(
@@ -143,7 +143,7 @@ def _run_sas_ng(x, q, xw):
     """Run a 1-D SAS_NG (non-gridded) flexure calculation."""
     flex = F1D()
     flex.quiet   = True
-    flex.method  = "SAS_NG"
+    flex.method  = "sas_ng"
     flex.g        = g
     flex.E        = E
     flex.nu       = nu

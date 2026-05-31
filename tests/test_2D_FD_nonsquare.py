@@ -47,7 +47,7 @@ _drho = _rho_m - _rho_fill
 _alpha = (_D / (_drho * _g)) ** 0.25   # ≈ 47 km
 
 
-def _run(ny, nx, qs, dx, dy, method="FD", bc="zero_moment_zero_shear"):
+def _run(ny, nx, qs, dx, dy, method="fd", bc="zero_moment_zero_shear"):
     flex = F2D()
     flex.quiet = True
     flex.method = method
@@ -199,8 +199,8 @@ def test_2d_fd_nonsquare_agrees_with_sas(nx, ny):
     half_load = 3
     qs[cy - half_load : cy + half_load, cx - half_load : cx + half_load] = 1e6
 
-    flex_fd  = _run(ny, nx, qs, dx, dy, method="FD",  bc="zero_moment_zero_shear")
-    flex_sas = _run(ny, nx, qs, dx, dy, method="SAS", bc="zero_moment_zero_shear")
+    flex_fd  = _run(ny, nx, qs, dx, dy, method="fd",  bc="zero_moment_zero_shear")
+    flex_sas = _run(ny, nx, qs, dx, dy, method="sas", bc="zero_moment_zero_shear")
 
     half = 10
     w_fd  = flex_fd.w [cy - half : cy + half, cx - half : cx + half]

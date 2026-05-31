@@ -35,7 +35,7 @@ beta  = (drho * g / (4.0 * D)) ** 0.25   # 1 / alpha
 alpha = 1.0 / beta                         # flexural parameter [m]
 
 
-def _run(qs, method="FD", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_shear",
+def _run(qs, method="fd", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_shear",
          sigma_xx=None, te=None):
     """Run a 1-D flexure calculation and return the flex object."""
     flex = F1D()
@@ -174,7 +174,7 @@ def _central_load_sas_comparison(bc, margin=85):
     qs[95:105] = 1e6
 
     flex_fd  = _run(qs, bc_w=bc, bc_e=bc)
-    flex_sas = _run(qs, method="SAS", bc_w=bc, bc_e=bc)
+    flex_sas = _run(qs, method="sas", bc_w=bc, bc_e=bc)
 
     np.testing.assert_allclose(
         flex_fd.w[margin : N - margin],

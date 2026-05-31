@@ -447,7 +447,7 @@ def bench_1d_fd(sizes, profiles=_TE_PROFILES_1D):
     for n in sizes:
         for prof in profiles:
             te = _te_1d(n, prof)
-            flex = _make_f1d(n, "FD", te)
+            flex = _make_f1d(n, "fd", te)
             flex.bc_check()
             flex.gridded_x()
 
@@ -477,7 +477,7 @@ def bench_2d_fd(sizes, profiles=_TE_PROFILES_2D):
         label = f"{n}×{n}"
         for prof in profiles:
             te = _te_2d(n, n, prof)
-            flex = _make_f2d(n, n, "FD", te)
+            flex = _make_f2d(n, n, "fd", te)
             flex.bc_check()
 
             t0 = _tick()
@@ -513,7 +513,7 @@ def bench_2d_fd_nonsquare(shapes, profiles=_TE_PROFILES_2D_NONSQ):
         label = f"{nx}×{ny}"
         for prof in profiles:
             te = _te_2d(ny, nx, prof)
-            flex = _make_f2d(nx, ny, "FD", te)
+            flex = _make_f2d(nx, ny, "fd", te)
             flex.bc_check()
 
             t0 = _tick()
@@ -537,7 +537,7 @@ def bench_1d_fft(sizes):
     cols = [("n", 8), ("total (s)", 12)]
     _hdr(cols)
     for n in sizes:
-        flex = _make_f1d(n, "FFT")
+        flex = _make_f1d(n, "fft")
         t0 = _tick()
         flex.run()
         print("  ".join([f"{n:>8}", f"{_tick() - t0:>12.4f}"]))
@@ -548,7 +548,7 @@ def bench_1d_sas(sizes):
     cols = [("n", 8), ("total (s)", 12)]
     _hdr(cols)
     for n in sizes:
-        flex = _make_f1d(n, "SAS")
+        flex = _make_f1d(n, "sas")
         t0 = _tick()
         flex.run()
         print("  ".join([f"{n:>8}", f"{_tick() - t0:>12.4f}"]))
@@ -560,7 +560,7 @@ def bench_2d_fft(sizes):
     _hdr(cols)
     for n in sizes:
         label = f"{n}×{n}"
-        flex = _make_f2d(n, n, "FFT")
+        flex = _make_f2d(n, n, "fft")
         t0 = _tick()
         flex.run()
         print("  ".join([f"{label:>9}", f"{_tick() - t0:>12.4f}"]))
@@ -572,7 +572,7 @@ def bench_2d_sas(sizes):
     _hdr(cols)
     for n in sizes:
         label = f"{n}×{n}"
-        flex = _make_f2d(n, n, "SAS")
+        flex = _make_f2d(n, n, "sas")
         t0 = _tick()
         flex.run()
         print("  ".join([f"{label:>9}", f"{_tick() - t0:>12.4f}"]))
@@ -624,18 +624,18 @@ def bench_2d_load_geometry(sizes_fd):
             qs = _make_qs_2d(n, n, pat)
             n_load = int(np.count_nonzero(qs))
 
-            flex_fd = _make_f2d(n, n, "FD", qs=qs)
+            flex_fd = _make_f2d(n, n, "fd", qs=qs)
             t0 = _tick()
             flex_fd.run()
             t_fd = _tick() - t0
 
-            flex_fft = _make_f2d(n, n, "FFT", qs=qs)
+            flex_fft = _make_f2d(n, n, "fft", qs=qs)
             t0 = _tick()
             flex_fft.run()
             t_fft = _tick() - t0
 
             if n <= _SAS_CAP[pat]:
-                flex_sas = _make_f2d(n, n, "SAS", qs=qs)
+                flex_sas = _make_f2d(n, n, "sas", qs=qs)
                 t0 = _tick()
                 flex_sas.run()
                 t_sas = f"{_tick() - t0:9.4f}"

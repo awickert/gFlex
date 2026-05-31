@@ -7,7 +7,7 @@ import pytest
 from gflex.f1d import F1D
 
 
-def _run_flex_1d(Te, qs, dx, method="FD", bc_w="zero_moment_zero_shear",
+def _run_flex_1d(Te, qs, dx, method="fd", bc_w="zero_moment_zero_shear",
                  bc_e="zero_moment_zero_shear", sigma_xx=None, solver="direct"):
     """Helper: run a 1-D flexure calculation and return the flex object."""
     flex = F1D()
@@ -87,10 +87,10 @@ def test_1d_end_load_fft_vs_fd():
     x = (np.arange(N) + 0.5) * dx
     qs = np.sin(k * x) * 1e6
 
-    flex_fft = _run_flex_1d(Te=Te, qs=qs, dx=dx, method="FFT",
+    flex_fft = _run_flex_1d(Te=Te, qs=qs, dx=dx, method="fft",
                              bc_w="periodic", bc_e="periodic",
                              sigma_xx=sigma_xx)
-    flex_fd = _run_flex_1d(Te=Te, qs=qs, dx=dx, method="FD",
+    flex_fd = _run_flex_1d(Te=Te, qs=qs, dx=dx, method="fd",
                             bc_w="periodic", bc_e="periodic",
                             sigma_xx=sigma_xx)
 

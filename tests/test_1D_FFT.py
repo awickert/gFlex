@@ -23,7 +23,7 @@ D    = E * Te**3 / (12.0 * (1.0 - nu**2))
 drho = rho_m - rho_fill
 
 
-def _run_flex_1d(qs, method="FFT", bc_w="", bc_e="", sigma_xx=None):
+def _run_flex_1d(qs, method="fft", bc_w="", bc_e="", sigma_xx=None):
     """Run a 1-D flexure calculation with the shared parameter set."""
     flex = F1D()
     flex.quiet = True
@@ -144,7 +144,7 @@ def test_fft_padded_end_load_vs_fd():
     pad = int(np.ceil(4.0 * alpha / dx))
     qs_large = np.pad(qs, pad, mode="constant")
 
-    flex_fd = _run_flex_1d(qs_large, method="FD",
+    flex_fd = _run_flex_1d(qs_large, method="fd",
                             bc_w="periodic", bc_e="periodic",
                             sigma_xx=sigma_xx)
 

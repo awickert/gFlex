@@ -10,7 +10,7 @@ def _run_flex_2d(Te, qs, dx, dy, bc="zero_displacement_zero_slope"):
     """Helper: run a 2-D FD flexure calculation and return deflection array."""
     flex = F2D()
     flex.quiet = True
-    flex.method = "FD"
+    flex.method = "fd"
     flex.solver = "direct"
     flex.g = 9.8
     flex.E = 65e9
@@ -36,7 +36,7 @@ def test_main():
 
     flex.quiet = False
 
-    flex.method = "FD"  # Solution method: * FD (finite difference)
+    flex.method = "fd"  # Solution method: * FD (finite difference)
     #                  * SAS (superposition of analytical solutions)
     #                  * SAS_NG (ungridded SAS)
     flex.solver = "direct"

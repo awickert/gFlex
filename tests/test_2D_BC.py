@@ -49,7 +49,7 @@ drho = rho_m - rho_fill
 alpha_2d = (D / (drho * g)) ** 0.25
 
 
-def _run(qs, method="FD", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_shear",
+def _run(qs, method="fd", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_shear",
          bc_n="zero_moment_zero_shear", bc_s="zero_moment_zero_shear",
          dx_=dx, dy_=dy,
          sigma_xx=None, sigma_yy=None, sigma_xy=None):
@@ -203,7 +203,7 @@ def _central_load_sas_comparison(bc, margin=70):
     qs[95:105, 95:105] = 1e6
 
     flex_fd  = _run(qs, bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc)
-    flex_sas = _run(qs, method="SAS", bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc)
+    flex_sas = _run(qs, method="sas", bc_w=bc, bc_e=bc, bc_n=bc, bc_s=bc)
 
     np.testing.assert_allclose(
         flex_fd.w[margin:N-margin, margin:N-margin],
@@ -313,7 +313,7 @@ def test_fd_2d_sigma_yy_direction():
 
 def _fft_run(qs, **kw):
     """Thin wrapper to run the FFT solver through the shared _run helper."""
-    return _run(qs, method="FFT", **kw)
+    return _run(qs, method="fft", **kw)
 
 
 def test_fd_2d_sigma_xx_vs_fft_periodic():

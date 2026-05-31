@@ -34,7 +34,7 @@ def _1d_fd():
     N = 60
     qs = np.zeros(N); qs[25:35] = 1e6
     flex = F1D()
-    flex.quiet = True;  flex.method = "FD";  flex.solver = "direct"
+    flex.quiet = True;  flex.method = "fd";  flex.solver = "direct"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te * np.ones(N);  flex.qs = qs;  flex.dx = _dx
@@ -47,7 +47,7 @@ def _1d_sas():
     N = 60
     qs = np.zeros(N); qs[25:35] = 1e6
     flex = F1D()
-    flex.quiet = True;  flex.method = "SAS"
+    flex.quiet = True;  flex.method = "sas"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te;  flex.qs = qs;  flex.dx = _dx
@@ -59,7 +59,7 @@ def _1d_fft():
     N = 64
     qs = np.zeros(N); qs[28:36] = 1e6
     flex = F1D()
-    flex.quiet = True;  flex.method = "FFT"
+    flex.quiet = True;  flex.method = "fft"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te;  flex.qs = qs;  flex.dx = _dx
@@ -73,7 +73,7 @@ def _1d_sas_ng():
     x = np.arange(N) * _dx
     q = np.zeros(N); q[25:35] = 1e6 * _dx   # point forces [N/m]
     flex = F1D()
-    flex.quiet = True;  flex.method = "SAS_NG"
+    flex.quiet = True;  flex.method = "sas_ng"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te
@@ -86,7 +86,7 @@ def _2d_fd():
     N = 20
     qs = np.zeros((N, N)); qs[7:13, 7:13] = 1e6
     flex = F2D()
-    flex.quiet = True;  flex.method = "FD";  flex.solver = "direct"
+    flex.quiet = True;  flex.method = "fd";  flex.solver = "direct"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te * np.ones((N, N));  flex.qs = qs
@@ -100,7 +100,7 @@ def _2d_sas():
     N = 20
     qs = np.zeros((N, N)); qs[7:13, 7:13] = 1e6
     flex = F2D()
-    flex.quiet = True;  flex.method = "SAS"
+    flex.quiet = True;  flex.method = "sas"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx
@@ -112,7 +112,7 @@ def _2d_fft():
     N = 20
     qs = np.zeros((N, N)); qs[7:13, 7:13] = 1e6
     flex = F2D()
-    flex.quiet = True;  flex.method = "FFT"
+    flex.quiet = True;  flex.method = "fft"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx   # scalar Te required
@@ -131,7 +131,7 @@ def _2d_sas_ng():
     mask = (np.abs(xf - x[N // 2]) < 2 * _dx) & (np.abs(yf - y[N // 2]) < 2 * _dy)
     q[mask] = 1e6 * _dx * _dy    # point forces [N]
     flex = F2D()
-    flex.quiet = True;  flex.method = "SAS_NG"
+    flex.quiet = True;  flex.method = "sas_ng"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te

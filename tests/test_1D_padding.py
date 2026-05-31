@@ -39,7 +39,7 @@ dx = 5000.0
 # Helper
 # ---------------------------------------------------------------------------
 
-def _run_1d(Te_in, qs, bc="zero_displacement_zero_slope", method="FD"):
+def _run_1d(Te_in, qs, bc="zero_displacement_zero_slope", method="fd"):
     flex = F1D()
     flex.quiet = True
     flex.method = method
@@ -203,14 +203,14 @@ def test_pad_domain_1d_improves_fd_accuracy():
     Te_arr = np.full(N, Te)
 
     # SAS: infinite-plate reference (BCs irrelevant for SAS)
-    w_sas = _run_1d(Te, qs, bc="zero_moment_zero_shear", method="SAS")
+    w_sas = _run_1d(Te, qs, bc="zero_moment_zero_shear", method="sas")
 
     # Unpadded FD: boundary close to load
-    w_unpadded = _run_1d(Te, qs, bc="zero_displacement_zero_slope", method="FD")
+    w_unpadded = _run_1d(Te, qs, bc="zero_displacement_zero_slope", method="fd")
 
     # Padded FD: boundary pushed away; trim to inner domain
     Te_pad, qs_pad, p = pad_domain_1d(Te_arr, qs, dx=dx)
-    w_padded = _run_1d(Te_pad, qs_pad, bc="zero_displacement_zero_slope", method="FD")[p:-p]
+    w_padded = _run_1d(Te_pad, qs_pad, bc="zero_displacement_zero_slope", method="fd")[p:-p]
 
     # Compare over the western half where the W boundary effect is strongest
     inner = slice(0, N // 2)
