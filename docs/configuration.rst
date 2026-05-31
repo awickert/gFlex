@@ -21,18 +21,18 @@ Parameters
 ``method``
     Solution method:
 
-    * ``FD`` — Finite Difference.  Supports spatially variable elastic
+    * ``fd`` — Finite Difference.  Supports spatially variable elastic
       thickness.  Requires a grid (``dx``, and ``dy`` in 2-D).
-    * ``FFT`` — Spectral (Fast Fourier Transform).  Requires
+    * ``fft`` — Spectral (Fast Fourier Transform).  Requires
       scalar (uniform) :math:`T_e`.  Spectrally accurate and fast.  When
       all boundary conditions are ``periodic`` the domain tiles exactly;
       for any other boundary condition the load is zero-padded by
       :math:`4\alpha` on each side, approximating the ``no_outside_loads``
       condition.  In-plane stresses (:math:`\sigma_{xx}`, :math:`\sigma_{yy}`,
       :math:`\sigma_{xy}`) are supported.
-    * ``SAS`` — Superposition of Analytical Solutions.  Constant elastic
+    * ``sas`` — Superposition of Analytical Solutions.  Constant elastic
       thickness only; fast and analytically exact.
-    * ``SAS_NG`` — SAS on an unstructured point set (NG = "no grid").
+    * ``sas_ng`` — SAS on an unstructured point set (NG = "no grid").
       Load and output locations are arbitrary (x, q0) or (x, y, q0)
       columns; see ``loads`` below.
 
@@ -145,9 +145,9 @@ Parameters
        flex.sigma_yy = 0.
        flex.sigma_xy = 0.
 
-   All three default to zero if not set.  They are supported by ``FD``
-   and ``FFT`` in 2-D, and by ``FD`` and ``FFT`` in 1-D (``sigma_xx``
-   only).  Setting them with ``SAS`` or ``SAS_NG`` raises a warning and
+   All three default to zero if not set.  They are supported by ``fd``
+   and ``fft`` in 2-D, and by ``fd`` and ``fft`` in 1-D (``sigma_xx``
+   only).  Setting them with ``sas`` or ``sas_ng`` raises a warning and
    has no effect.  See :doc:`theory` for the governing equations.
 
 ----
@@ -200,7 +200,7 @@ Complete examples
 
     mode:
       dimension: 1
-      method: FD
+      method: fd
 
     parameter:
       youngs_modulus: 6.5e10
@@ -236,7 +236,7 @@ Complete examples
 
     mode:
       dimension: 2
-      method: FD
+      method: fd
 
     parameter:
       youngs_modulus: 6.5e10

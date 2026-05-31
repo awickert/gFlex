@@ -59,7 +59,7 @@ A minimal 2-D YAML configuration file looks like:
 ```yaml
 mode:
   dimension: 2
-  method: FD
+  method: fd
 parameter:
   youngs_modulus: 6.5e10
   poissons_ratio: 0.25
@@ -119,10 +119,10 @@ flex = gflex.F2D()
 
 flex.quiet = False
 
-flex.method = 'FD' # Solution method: * FD (finite difference)
-                   #                  * FFT (spectral)
-                   #                  * SAS (superposition of analytical solutions)
-                   #                  * SAS_NG (ungridded SAS)
+flex.method = 'fd' # Solution method: * fd (finite difference)
+                   #                  * fft (spectral)
+                   #                  * sas (superposition of analytical solutions)
+                   #                  * sas_ng (ungridded SAS)
 
 flex.g = 9.8 # acceleration due to gravity
 flex.E = 65E9 # Young's Modulus

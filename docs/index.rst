@@ -65,7 +65,7 @@ Quick start
 
    flex = F2D()
    flex.quiet = True
-   flex.method = 'FD'
+   flex.method = 'fd'
    flex.g = 9.8
    flex.E = 65e9
    flex.nu = 0.25
@@ -98,7 +98,7 @@ A minimal 2-D YAML configuration:
 
    mode:
      dimension: 2
-     method: FD
+     method: fd
    parameter:
      youngs_modulus: 6.5e10
      poissons_ratio: 0.25

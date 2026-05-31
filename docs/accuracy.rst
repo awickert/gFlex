@@ -3,7 +3,7 @@ Numerical Accuracy
 
 Each solution method in gFlex has a distinct accuracy profile.
 
-Analytical solutions (``SAS`` and ``SAS_NG``)
+Analytical solutions (``sas`` and ``sas_ng``)
 ----------------------------------------------
 
 The superposition-of-analytical-solutions methods are **exact** for a plate
@@ -42,7 +42,7 @@ Because the FFT assumes a single, spatially uniform flexural rigidity
 :math:`D`, it cannot represent variable-:math:`T_e` problems; those require
 the finite difference solver.
 
-Finite difference solver (``FD``)
+Finite difference solver (``fd``)
 ---------------------------------
 
 .. figure:: _static/fig3_fd_vs_sas.png
@@ -64,7 +64,7 @@ Finite difference solver (``FD``)
 2-D finite-difference solver: second-order convergence
 -------------------------------------------------------
 
-The 2-D finite-difference solver (``Method = 'FD'``) is second-order accurate in space: halving the grid spacing
+The 2-D finite-difference solver (``method = 'fd'``) is second-order accurate in space: halving the grid spacing
 :math:`\Delta x` reduces the numerical error by a factor of approximately
 four (:math:`\mathcal{O}(\Delta x^2)`).
 
