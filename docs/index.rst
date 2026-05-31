@@ -154,3 +154,8 @@ point (``gflex <config_file>``).
    accuracy
    references
    changelog
+
+----
+
+Documentation prepared with AI assistance (Claude, Anthropic) drawing on
+the gFlex source code and Wickert (2016), reviewed by A. D. Wickert.
