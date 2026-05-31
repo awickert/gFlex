@@ -22,6 +22,7 @@ import time
 import warnings
 
 import numpy as np
+import scipy.fft
 from scipy.signal import fftconvolve
 from scipy.sparse import spdiags
 from scipy.sparse.linalg import spsolve
@@ -542,10 +543,10 @@ class F1D(Flexure):
             qs_work = np.pad(self.qs, pad, mode="constant")
 
         N_work = len(qs_work)
-        k = np.fft.rfftfreq(N_work, d=self.dx) * 2.0 * np.pi
-        Q = np.fft.rfft(qs_work)
+        k = scipy.fft.rfftfreq(N_work, d=self.dx) * 2.0 * np.pi
+        Q = scipy.fft.rfft(qs_work)
         denom = D * k**4 + self.sigma_xx * self.Te * k**2 + self.drho * self.g
-        w_work = np.fft.irfft(-Q / denom, n=N_work)
+        w_work = scipy.fft.irfft(-Q / denom, n=N_work)
 
         if periodic:
             self.w = w_work

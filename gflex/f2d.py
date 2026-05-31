@@ -23,6 +23,7 @@ import warnings
 
 import numpy as np
 import scipy
+import scipy.fft
 from scipy.signal import fftconvolve
 from scipy.special import kei
 from scipy.sparse.linalg import spsolve
@@ -622,11 +623,11 @@ class F2D(Flexure):
             )
 
         ny_work, nx_work = qs_work.shape
-        kx = np.fft.rfftfreq(nx_work, d=self.dx) * 2.0 * np.pi
-        ky = np.fft.fftfreq(ny_work, d=self.dy) * 2.0 * np.pi
+        kx = scipy.fft.rfftfreq(nx_work, d=self.dx) * 2.0 * np.pi
+        ky = scipy.fft.fftfreq(ny_work, d=self.dy) * 2.0 * np.pi
         Kx, Ky = np.meshgrid(kx, ky)
 
-        Q = np.fft.rfft2(qs_work)
+        Q = scipy.fft.rfft2(qs_work)
         K2 = Kx**2 + Ky**2
         denom = (
             D * K2**2
@@ -635,7 +636,7 @@ class F2D(Flexure):
             + 2.0 * self.sigma_xy * self.Te * Kx * Ky
             + self.drho * self.g
         )
-        w_work = np.fft.irfft2(-Q / denom, s=qs_work.shape)
+        w_work = scipy.fft.irfft2(-Q / denom, s=qs_work.shape)
 
         if periodic:
             self.w = w_work
