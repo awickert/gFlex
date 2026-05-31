@@ -23,6 +23,7 @@ import warnings
 
 import numpy as np
 import scipy
+from scipy.signal import fftconvolve
 from scipy.special import kei
 from scipy.sparse.linalg import spsolve
 
@@ -706,24 +707,16 @@ class F2D(Flexure):
 
         biggrid = self.coeff * kei(bigdist / self.alpha)  # Kelvin fcn solution
 
-        # Now compute the deflections
-        self.w = np.zeros((self.ny, self.nx))  # Deflection array
-        for i in range(self.nx):
-            for j in range(self.ny):
-                # Loop over locations that have loads, and sum
-                if self.qs[j, i]:
-                    # Solve by summing portions of "biggrid" while moving origin
-                    # to location of current cell
-                    # Load must be multiplied by grid cell size
-                    self.w += (
-                        self.qs[j, i]
-                        * self.dx
-                        * self.dy
-                        * biggrid[
-                            self.ny - j : 2 * self.ny - j, self.nx - i : 2 * self.nx - i
-                        ]
-                    )
-            # No need to return: w already belongs to "self"
+        # Convolve the load field with the Green's function kernel.
+        # biggrid[1:-1, 1:-1] trims the outer ring to give a kernel of shape
+        # (2*ny-1, 2*nx-1) centred at [ny-1, nx-1], covering every relative
+        # offset that can occur between two cells in the (ny, nx) grid.
+        # fftconvolve with mode='same' computes the same sum as the original
+        # double loop — each loaded cell's contribution is a phase-shifted copy
+        # of the Green's function — but does so in O(N² log N) via the FFT
+        # rather than O(N_load × N_grid) Python iterations.
+        kernel = biggrid[1:-1, 1:-1]
+        self.w = fftconvolve(self.qs * self.dx * self.dy, kernel, mode="same")
 
     # NO GRID
 
