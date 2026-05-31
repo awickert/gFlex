@@ -4,7 +4,10 @@ Solver benchmarks for gFlex.
 Run with:
     python benchmarks/bench_solvers.py
 
-Prints timing tables to stdout; redirect to a file to keep a record.
+Results are printed to stdout and saved to benchmarks/results/ as a text
+file named {short_commit_hash}_{UTC_timestamp}.txt.  The file header
+records the full commit hash, branch, whether the working tree is clean,
+and key hardware/software details so runs are reproducible and comparable.
 
 FD benchmarks cover:
   - direct sparse LU vs ILU-preconditioned LGMRES (iterative)
@@ -21,12 +24,154 @@ Grid-size notes:
   - FD iterative:  problem-dependent; may be slower than direct for small N.
 """
 
+import os
+import platform
+import subprocess
+import sys
 import time
 
 import numpy as np
+import scipy
+import scipy.sparse
 
 from gflex.f1d import F1D
 from gflex.f2d import F2D
+
+
+# ── provenance: git and system info ───────────────────────────────────────────
+
+def _git_info():
+    """Return dict with commit hash, branch, and dirty-flag."""
+    def _run(*args):
+        try:
+            return subprocess.check_output(args, text=True,
+                                           stderr=subprocess.DEVNULL).strip()
+        except Exception:
+            return "unknown"
+
+    full  = _run("git", "rev-parse", "HEAD")
+    short = _run("git", "rev-parse", "--short", "HEAD")
+    branch = _run("git", "rev-parse", "--abbrev-ref", "HEAD")
+    dirty = bool(_run("git", "status", "--porcelain"))
+    return {"full": full, "short": short, "branch": branch, "dirty": dirty}
+
+
+def _cpu_model():
+    """Best-effort CPU model string, Linux and macOS."""
+    try:
+        with open("/proc/cpuinfo") as f:
+            for line in f:
+                if line.startswith("model name"):
+                    return line.split(":", 1)[1].strip()
+    except OSError:
+        pass
+    try:
+        return subprocess.check_output(
+            ["sysctl", "-n", "machdep.cpu.brand_string"],
+            text=True, stderr=subprocess.DEVNULL,
+        ).strip()
+    except Exception:
+        pass
+    return platform.processor() or "unknown"
+
+
+def _ram_gb():
+    """Total RAM in GiB, Linux and macOS."""
+    try:
+        with open("/proc/meminfo") as f:
+            for line in f:
+                if line.startswith("MemTotal:"):
+                    return int(line.split()[1]) / (1024 ** 2)
+    except OSError:
+        pass
+    try:
+        b = subprocess.check_output(
+            ["sysctl", "-n", "hw.memsize"],
+            text=True, stderr=subprocess.DEVNULL,
+        ).strip()
+        return int(b) / (1024 ** 3)
+    except Exception:
+        pass
+    return None
+
+
+def _header(git, timestamp):
+    """Format a provenance block for the top of the results file."""
+    dirty = " (dirty)" if git["dirty"] else ""
+    ram = _ram_gb()
+    ram_str = f"{ram:.1f} GiB" if ram is not None else "unknown"
+    lines = [
+        "gFlex solver benchmarks",
+        "=" * 70,
+        f"timestamp : {timestamp}",
+        f"commit    : {git['full']}{dirty}",
+        f"branch    : {git['branch']}",
+        f"cpu       : {_cpu_model()}",
+        f"cpu cores : {os.cpu_count()}",
+        f"ram       : {ram_str}",
+        f"os        : {platform.platform()}",
+        f"python    : {sys.version.split()[0]}",
+        f"numpy     : {np.__version__}",
+        f"scipy     : {scipy.__version__}",
+    ]
+    return "\n".join(lines)
+
+
+def _push_result(local_path, hostname):
+    """Upload result file to awickert/gflex-benchmarks via gh CLI.
+
+    Path in the repo: results/{hostname}/{filename}.
+    Requires `gh` to be installed and authenticated; fails gracefully if not.
+    """
+    import base64
+
+    filename    = os.path.basename(local_path)
+    remote_path = f"results/{hostname}/{filename}"
+    with open(local_path, "rb") as f:
+        content = base64.b64encode(f.read()).decode()
+
+    result = subprocess.run(
+        [
+            "gh", "api",
+            f"repos/awickert/gflex-benchmarks/contents/{remote_path}",
+            "--method", "PUT",
+            "--field", f"message=Add benchmark result from {hostname}",
+            "--field", f"content={content}",
+        ],
+        capture_output=True, text=True,
+    )
+    if result.returncode == 0:
+        print(
+            f"Pushed to github.com/awickert/gflex-benchmarks/{remote_path}",
+            file=sys.__stdout__,
+        )
+    else:
+        print(
+            f"Warning: push to gflex-benchmarks failed:\n{result.stderr.strip()}",
+            file=sys.__stdout__,
+        )
+
+
+class _Tee:
+    """Mirror writes to stdout and a file simultaneously."""
+
+    def __init__(self, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        self._f = open(path, "w")
+        self._stdout = sys.stdout
+        sys.stdout = self
+
+    def write(self, s):
+        self._stdout.write(s)
+        self._f.write(s)
+
+    def flush(self):
+        self._stdout.flush()
+        self._f.flush()
+
+    def close(self):
+        sys.stdout = self._stdout
+        self._f.close()
 
 
 # ── physical constants ────────────────────────────────────────────────────────
@@ -279,15 +424,30 @@ def bench_2d_sas(sizes):
 # ── entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("gFlex solver benchmarks")
-    print("=" * 70)
+    from datetime import datetime, timezone
 
-    print("\n--- 1D ---")
-    bench_1d_fd(sizes=[100, 500, 2000, 5000])
-    bench_1d_fft(sizes=[100, 500, 2000, 5000, 20000])
-    bench_1d_sas(sizes=[100, 500, 2000, 5000])
+    git = _git_info()
+    ts  = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    print("\n--- 2D ---")
-    bench_2d_fd(sizes=[50, 100, 200, 400])
-    bench_2d_fft(sizes=[50, 100, 500, 1000])
-    bench_2d_sas(sizes=[10, 25, 50, 100])
+    _RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
+    outpath = os.path.join(_RESULTS_DIR, f"{git['short']}_{ts}.txt")
+
+    tee = _Tee(outpath)
+    try:
+        print(_header(git, ts))
+
+        print("\n--- 1D ---")
+        bench_1d_fd(sizes=[100, 500, 2000, 5000])
+        bench_1d_fft(sizes=[100, 500, 2000, 5000, 20000])
+        bench_1d_sas(sizes=[100, 500, 2000, 5000])
+
+        print("\n--- 2D ---")
+        bench_2d_fd(sizes=[50, 100, 200, 400])
+        bench_2d_fft(sizes=[50, 100, 500, 1000])
+        bench_2d_sas(sizes=[10, 25, 50, 100])
+    finally:
+        tee.close()
+
+    hostname = platform.node()
+    print(f"\nResults saved to {outpath}", file=sys.__stdout__)
+    _push_result(outpath, hostname)
