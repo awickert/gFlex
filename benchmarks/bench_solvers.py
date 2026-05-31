@@ -34,6 +34,7 @@ import time
 import numpy as np
 import scipy
 import scipy.sparse
+from scipy.ndimage import gaussian_filter, gaussian_filter1d
 from scipy.sparse.linalg import lgmres, spilu, LinearOperator
 
 from gflex.f1d import F1D
@@ -181,6 +182,14 @@ class _Tee:
 _COMMON = dict(g=9.8, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0)
 _TE_REF = 35000.0     # reference elastic thickness [m]
 
+# Flexural wavelength for reference Te — used to set correlation lengths and
+# tanh transition widths so they scale with the physical problem.
+_D_REF = _COMMON["E"] * _TE_REF**3 / (12.0 * (1.0 - _COMMON["nu"]**2))
+_LAMBDA_FLEX = (
+    2.0 * np.pi
+    * (_D_REF / ((_COMMON["rho_m"] - _COMMON["rho_fill"]) * _COMMON["g"])) ** 0.25
+)   # ≈ 330 km for the defaults above
+
 
 # ── Te profiles ───────────────────────────────────────────────────────────────
 
@@ -212,6 +221,27 @@ def _te_1d(n, profile, dx=5000.0):
         # White noise ±50 % of reference
         rng = np.random.default_rng(42)
         return _TE_REF * (1.0 + 0.5 * rng.uniform(-1.0, 1.0, n))
+    if profile == "tanh_step":
+        # Smooth step: same contrast as abrupt (½ → 1½ × ref) but with a
+        # transition width of one flexural wavelength — more geologically realistic
+        return _TE_REF * (1.0 + 0.5 * np.tanh((x - L / 2.0) / _LAMBDA_FLEX))
+    if profile == "corr_mild":
+        # Spatially correlated noise ±20 % of reference; Gaussian-smoothed with
+        # sigma = ½ flexural wavelength, representative of real Te heterogeneity
+        rng = np.random.default_rng(42)
+        raw = rng.uniform(-1.0, 1.0, n)
+        sigma = 0.5 * _LAMBDA_FLEX / dx
+        smoothed = gaussian_filter1d(raw, sigma=sigma)
+        smoothed /= np.abs(smoothed).max()
+        return _TE_REF * (1.0 + 0.2 * smoothed)
+    if profile == "corr_strong":
+        # Spatially correlated noise ±50 % of reference; same smoothing as corr_mild
+        rng = np.random.default_rng(42)
+        raw = rng.uniform(-1.0, 1.0, n)
+        sigma = 0.5 * _LAMBDA_FLEX / dx
+        smoothed = gaussian_filter1d(raw, sigma=sigma)
+        smoothed /= np.abs(smoothed).max()
+        return _TE_REF * (1.0 + 0.5 * smoothed)
     raise ValueError(f"unknown Te profile: {profile!r}")
 
 
@@ -269,6 +299,27 @@ def _te_2d(ny, nx, profile, dx=5000.0, dy=5000.0):
         return _TE_REF * (1.0 + 0.2 * rng.uniform(-1.0, 1.0, (ny, nx)))
     if profile == "noisy_strong":
         return _TE_REF * (1.0 + 0.5 * rng.uniform(-1.0, 1.0, (ny, nx)))
+
+    # Smooth step profiles: same contrast as abrupt but tanh transition of width λ_flex
+    if profile == "tanh_step":
+        return _TE_REF * (1.0 + 0.5 * np.tanh((xx - Lx / 2.0) / _LAMBDA_FLEX))
+    if profile == "tanh_step_45":
+        scale = 0.5 * (Lx + Ly)
+        return _TE_REF * (1.0 + 0.5 * np.tanh((r - 0.5) * scale / _LAMBDA_FLEX))
+
+    # Spatially correlated noise: Gaussian-smoothed with sigma = ½ flexural wavelength
+    sigma = 0.5 * _LAMBDA_FLEX / dx
+    rng2 = np.random.default_rng(42)
+    if profile == "corr_mild":
+        raw = rng2.uniform(-1.0, 1.0, (ny, nx))
+        smoothed = gaussian_filter(raw, sigma=sigma)
+        smoothed /= np.abs(smoothed).max()
+        return _TE_REF * (1.0 + 0.2 * smoothed)
+    if profile == "corr_strong":
+        raw = rng2.uniform(-1.0, 1.0, (ny, nx))
+        smoothed = gaussian_filter(raw, sigma=sigma)
+        smoothed /= np.abs(smoothed).max()
+        return _TE_REF * (1.0 + 0.5 * smoothed)
 
     # Circular inclusion centred in domain (radius = Lx / 5)
     cx, cy = Lx / 2.0, Ly / 2.0
@@ -424,21 +475,25 @@ _TE_PROFILES_1D = (
     "constant",
     "sinusoidal", "abrupt", "gradient",
     "wide_range",
+    "tanh_step",
     "noisy_mild", "noisy_strong",
+    "corr_mild",  "corr_strong",
 )
 _TE_PROFILES_2D = (
     "constant",
-    "sinusoidal", "sinusoidal_45",
-    "abrupt",     "abrupt_45",
-    "gradient",   "gradient_45",
-    "wide_range", "wide_range_45",
-    "noisy_mild", "noisy_strong",
-    "disk_thin",  "disk_thick",
+    "sinusoidal",  "sinusoidal_45",
+    "abrupt",      "abrupt_45",
+    "gradient",    "gradient_45",
+    "wide_range",  "wide_range_45",
+    "tanh_step",   "tanh_step_45",
+    "noisy_mild",  "noisy_strong",
+    "corr_mild",   "corr_strong",
+    "disk_thin",   "disk_thick",
 )
-# Subset used for non-square domain benchmarks: one smooth, one abrupt diagonal,
-# one high-dynamic-range, one disk — enough to reveal anisotropic effects
+# Subset used for non-square domain benchmarks: representative mix of smooth,
+# transitional, correlated, and high-dynamic-range Te structures
 _TE_PROFILES_2D_NONSQ = (
-    "constant", "abrupt_45", "wide_range", "disk_thick",
+    "constant", "tanh_step", "corr_mild", "wide_range", "abrupt_45", "disk_thick",
 )
 
 
@@ -537,16 +592,17 @@ def bench_2d_fd(sizes, iter_timeout=60, profiles=_TE_PROFILES_2D):
 
 # ── 2D FD non-square domains ─────────────────────────────────────────────────
 
-def bench_2d_fd_nonsquare(shapes, iter_max=100, profiles=_TE_PROFILES_2D_NONSQ):
-    """FD benchmark on non-square grids (nx ≠ ny), direct solve only.
+def bench_2d_fd_nonsquare(shapes, iter_timeout=60, profiles=_TE_PROFILES_2D_NONSQ):
+    """FD benchmark on non-square grids (nx ≠ ny): direct and FFT-iterative.
 
     Aspect ratios up to 4:1 test anisotropic stencil behaviour.
     A representative subset of Te profiles is used to keep run time manageable.
     """
-    print("\n2D FD  non-square domains  (direct only, subset of Te profiles)")
+    print("\n2D FD  non-square domains  (direct and FFT-preconditioned iterative)")
     cols = [
         ("nx×ny", 11), ("Te profile", 14),
         ("assemble(s)", 12), ("direct(s)", 10),
+        ("iter(s)", 9), ("iters", 6), ("rel_err", 9), ("iter/dir", 9),
     ]
     _hdr(cols)
     for (nx, ny) in shapes:
@@ -565,9 +621,24 @@ def bench_2d_fd_nonsquare(shapes, iter_max=100, profiles=_TE_PROFILES_2D_NONSQ):
             t0 = _tick()
             flex.fd_solve()
             t_direct = _tick() - t0
+            w_direct = flex.w.flatten()
 
-            print(f"  {label:>11}  {prof:>14}"
-                  f"  {t_asm:>12.4f}  {t_direct:>10.4f}")
+            rhs = -flex.qs.reshape(-1, order="C")
+            result = _fft_iter_solve(flex, rhs, timeout_s=iter_timeout)
+            if result is not None:
+                t_iter, n_iter, w_iter, ok = result
+                rel_err = (np.linalg.norm(w_iter - w_direct)
+                           / np.linalg.norm(w_direct))
+                ratio = t_iter / t_direct if t_direct > 1e-9 else float("nan")
+                sfx = "" if ok else "!"
+                print(f"  {label:>11}  {prof:>14}  {t_asm:>12.4f}"
+                      f"  {t_direct:>10.4f}"
+                      f"  {t_iter:>9.4f}  {n_iter:>5}{sfx}"
+                      f"  {rel_err:>9.2e}  {ratio:>9.2f}")
+            else:
+                print(f"  {label:>11}  {prof:>14}  {t_asm:>12.4f}"
+                      f"  {t_direct:>10.4f}"
+                      f"  {'T/O':>9}  {'—':>6}  {'—':>9}  {'—':>9}")
         if shapes.index((nx, ny)) != len(shapes) - 1:
             print()
 
@@ -642,7 +713,7 @@ if __name__ == "__main__":
 
         print("\n--- 2D ---")
         bench_2d_fd(sizes=[50, 100, 200, 400], iter_timeout=10)
-        bench_2d_fd_nonsquare(shapes=[(200, 50), (400, 100), (200, 25)])
+        bench_2d_fd_nonsquare(shapes=[(200, 50), (400, 100), (200, 25)], iter_timeout=10)
         bench_2d_fft(sizes=[50, 100, 500, 1000])
         bench_2d_sas(sizes=[10, 25, 50, 100])
     finally:
