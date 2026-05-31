@@ -33,6 +33,7 @@ import time
 import numpy as np
 import scipy
 import scipy.sparse
+from scipy.sparse.linalg import lgmres, spilu, LinearOperator
 
 from gflex.f1d import F1D
 from gflex.f2d import F2D
@@ -296,6 +297,32 @@ def _hdr(cols):
     print("  ".join("-" * w for _, w in cols))
 
 
+# ── iterative solver with diagnostics ────────────────────────────────────────
+
+def _iter_solve(matrix, rhs, tol=1e-3):
+    """ILU-preconditioned LGMRES with iteration counting.
+
+    Returns (elapsed_s, n_iters, w, converged).
+    Mirrors the preconditioner logic in gFlex's fd_solve() so timings
+    are directly comparable.
+    """
+    iters = [0]
+
+    def _cb(_r):
+        iters[0] += 1
+
+    try:
+        ilu = spilu(matrix.tocsc(), fill_factor=20, drop_tol=1e-4)
+        M = LinearOperator(matrix.shape, ilu.solve)
+    except RuntimeError:
+        M = scipy.sparse.diags(1.0 / matrix.diagonal())
+
+    t0 = _tick()
+    w, info = lgmres(matrix, rhs, M=M, rtol=tol, callback=_cb)
+    t = _tick() - t0
+    return t, iters[0], w, info == 0
+
+
 # ── FD benchmarks: direct vs iterative, three Te profiles ────────────────────
 
 _TE_PROFILES_1D = ("constant", "sinusoidal", "abrupt", "gradient")
@@ -317,7 +344,8 @@ def bench_1d_fd(sizes, iter_max=2000, profiles=_TE_PROFILES_1D):
     print("\n1D FD  (direct vs iterative)")
     cols = [
         ("n", 7), ("Te profile", 14),
-        ("assemble(s)", 12), ("direct(s)", 10), ("iterative(s)", 13), ("iter/direct", 11),
+        ("assemble(s)", 12), ("direct(s)", 10),
+        ("iter(s)", 9), ("iters", 6), ("rel_err", 9), ("iter/dir", 9),
     ]
     _hdr(cols)
     for n in sizes:
@@ -336,21 +364,23 @@ def bench_1d_fd(sizes, iter_max=2000, profiles=_TE_PROFILES_1D):
             t0 = _tick()
             flex.fd_solve()
             t_direct = _tick() - t0
+            w_direct = flex.w.copy()
 
             if n <= iter_max:
-                flex.Solver = "iterative"
-                t0 = _tick()
-                flex.fd_solve()
-                t_iter = _tick() - t0
+                rhs = -flex.qs
+                t_iter, n_iter, w_iter, ok = _iter_solve(flex.coeff_matrix, rhs)
+                rel_err = (np.linalg.norm(w_iter - w_direct)
+                           / np.linalg.norm(w_direct))
                 ratio = t_iter / t_direct if t_direct > 1e-9 else float("nan")
-                iter_str = f"{t_iter:>13.4f}"
-                ratio_str = f"{ratio:>11.2f}"
+                sfx = "" if ok else "!"   # "!" flags non-convergence
+                print(f"  {n:>7}  {prof:>14}  {t_asm:>12.4f}"
+                      f"  {t_direct:>10.4f}"
+                      f"  {t_iter:>9.4f}  {n_iter:>5}{sfx}"
+                      f"  {rel_err:>9.2e}  {ratio:>9.2f}")
             else:
-                iter_str = f"{'—':>13}"
-                ratio_str = f"{'—':>11}"
-
-            print(f"  {n:>7}  {prof:>14}  {t_asm:>12.4f}"
-                  f"  {t_direct:>10.4f}  {iter_str}  {ratio_str}")
+                print(f"  {n:>7}  {prof:>14}  {t_asm:>12.4f}"
+                      f"  {t_direct:>10.4f}"
+                      f"  {'—':>9}  {'—':>6}  {'—':>9}  {'—':>9}")
         if n != sizes[-1]:
             print()
 
@@ -367,7 +397,8 @@ def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES_2D):
     print("\n2D FD  (direct vs iterative)")
     cols = [
         ("n×n", 9), ("Te profile", 14),
-        ("assemble(s)", 12), ("direct(s)", 10), ("iterative(s)", 13), ("iter/direct", 11),
+        ("assemble(s)", 12), ("direct(s)", 10),
+        ("iter(s)", 9), ("iters", 6), ("rel_err", 9), ("iter/dir", 9),
     ]
     _hdr(cols)
     for n in sizes:
@@ -386,21 +417,23 @@ def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES_2D):
             t0 = _tick()
             flex.fd_solve()
             t_direct = _tick() - t0
+            w_direct = flex.w.flatten()
 
             if n <= iter_max:
-                flex.Solver = "iterative"
-                t0 = _tick()
-                flex.fd_solve()
-                t_iter = _tick() - t0
+                rhs = flex.qs.reshape(-1, order="C")
+                t_iter, n_iter, w_iter, ok = _iter_solve(flex.coeff_matrix, rhs)
+                rel_err = (np.linalg.norm(w_iter - w_direct)
+                           / np.linalg.norm(w_direct))
                 ratio = t_iter / t_direct if t_direct > 1e-9 else float("nan")
-                iter_str = f"{t_iter:>13.4f}"
-                ratio_str = f"{ratio:>11.2f}"
+                sfx = "" if ok else "!"
+                print(f"  {label:>9}  {prof:>14}  {t_asm:>12.4f}"
+                      f"  {t_direct:>10.4f}"
+                      f"  {t_iter:>9.4f}  {n_iter:>5}{sfx}"
+                      f"  {rel_err:>9.2e}  {ratio:>9.2f}")
             else:
-                iter_str = f"{'—':>13}"
-                ratio_str = f"{'—':>11}"
-
-            print(f"  {label:>9}  {prof:>14}  {t_asm:>12.4f}"
-                  f"  {t_direct:>10.4f}  {iter_str}  {ratio_str}")
+                print(f"  {label:>9}  {prof:>14}  {t_asm:>12.4f}"
+                      f"  {t_direct:>10.4f}"
+                      f"  {'—':>9}  {'—':>6}  {'—':>9}  {'—':>9}")
         if n != sizes[-1]:
             print()
 
