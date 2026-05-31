@@ -204,21 +204,21 @@ def draw_2d_stencil():
     for (di, dj) in stencil:
         _circle(ax, di, dj, "center" if (di, dj) == (0, 0) else "real")
 
-    # Coefficient labels — offset away from the centre so they don't overlap
+    # Coefficient labels — offset perpendicular to each connecting line
     offsets = {
         ( 0,  0): ( 0.00,  0.00),   # inside circle
-        ( 1,  0): ( 0.24,  0.00),
-        (-1,  0): (-0.24,  0.00),
-        ( 0,  1): ( 0.00,  0.24),
-        ( 0, -1): ( 0.00, -0.24),
-        ( 2,  0): ( 0.00,  0.24),
-        (-2,  0): ( 0.00,  0.24),
-        ( 0,  2): ( 0.24,  0.00),
-        ( 0, -2): ( 0.24,  0.00),
-        ( 1,  1): ( 0.20,  0.16),
-        (-1,  1): (-0.20,  0.16),
-        ( 1, -1): ( 0.20, -0.16),
-        (-1, -1): (-0.20, -0.16),
+        ( 1,  0): ( 0.00,  0.28),   # above (perpendicular to horizontal line)
+        (-1,  0): ( 0.00,  0.28),   # above
+        ( 0,  1): ( 0.28,  0.00),   # right (perpendicular to vertical line)
+        ( 0, -1): ( 0.28,  0.00),   # right
+        ( 2,  0): ( 0.00,  0.26),   # above far node
+        (-2,  0): ( 0.00,  0.26),   # above far node
+        ( 0,  2): ( 0.26,  0.00),   # right of far node
+        ( 0, -2): ( 0.26,  0.00),   # right of far node
+        ( 1,  1): ( 0.00,  0.26),   # above diagonal node
+        (-1,  1): ( 0.00,  0.26),   # above
+        ( 1, -1): ( 0.00, -0.26),   # below diagonal node
+        (-1, -1): ( 0.00, -0.26),   # below
     }
     for (di, dj), coeff in stencil.items():
         sign  = "+" if coeff > 0 else ""
