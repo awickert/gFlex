@@ -225,24 +225,21 @@ def draw_2d_stencil():
     for (di, dj) in stencil:
         _circle(ax, di, dj, "center" if (di, dj) == (0, 0) else "real")
 
-    # Coefficient labels — offset so labels fall between grid lines (integer
-    # coordinates) and clear of each node's connecting line from the centre.
-    # Grid lines run at every integer x and y, so both offset components
-    # must be non-zero to avoid sitting on a grid line or the connecting line.
+    # Coefficient labels — offset away from the centre so they don't overlap
     offsets = {
-        ( 0,  0): ( 0.00,  0.00),   # +20: inside centre circle
-        ( 1,  0): ( 0.30,  0.22),   # -8: upper-right; off x=1 grid & y=0 line
-        (-1,  0): (-0.30,  0.22),   # -8: upper-left
-        ( 0,  1): ( 0.22,  0.30),   # -8: upper-right; off x=0 line & y=1 grid
-        ( 0, -1): ( 0.22, -0.30),   # -8: lower-right
-        ( 2,  0): ( 0.28,  0.22),   # +1: upper-right of far node
-        (-2,  0): (-0.28,  0.22),   # +1: upper-left
-        ( 0,  2): ( 0.22,  0.28),   # +1: upper-right
-        ( 0, -2): ( 0.22, -0.28),   # +1: lower-right
-        ( 1,  1): ( 0.22, -0.22),   # +2: perp to NE diagonal → lower-right
-        (-1,  1): (-0.22, -0.22),   # +2: lower-left
-        ( 1, -1): ( 0.22,  0.22),   # +2: upper-right
-        (-1, -1): (-0.22,  0.22),   # +2: upper-left
+        ( 0,  0): ( 0.28,  0.08),   # outside circle to right
+        ( 1,  0): ( 0.24,  0.20),
+        (-1,  0): (-0.24,  0.20),
+        ( 0,  1): ( 0.20,  0.24),
+        ( 0, -1): ( 0.20, -0.24),
+        ( 2,  0): ( 0.20,  0.24),
+        (-2,  0): (-0.20,  0.24),
+        ( 0,  2): ( 0.24,  0.20),
+        ( 0, -2): ( 0.24, -0.20),
+        ( 1,  1): ( 0.20,  0.16),
+        (-1,  1): (-0.20,  0.16),
+        ( 1, -1): ( 0.20, -0.16),
+        (-1, -1): (-0.20, -0.16),
     }
     for (di, dj), coeff in stencil.items():
         sign  = "+" if coeff > 0 else ""
