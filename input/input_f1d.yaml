@@ -3,7 +3,7 @@
 
 mode:
   dimension: 1
-  method: FD
+  method: fd
 
 parameter:
   youngs_modulus: 6.5e10

@@ -8,10 +8,10 @@ flex = gflex.F2D()
 
 flex.quiet = False
 
-flex.method = "FD"  # Solution method: * FD (finite difference)
-#                  * FFT (spectral)
-#                  * SAS (superposition of analytical solutions)
-#                  * SAS_NG (ungridded SAS)
+flex.method = "fd"  # Solution method: * fd (finite difference)
+#                  * fft (spectral)
+#                  * sas (superposition of analytical solutions)
+#                  * sas_ng (ungridded SAS)
 
 flex.g = 9.8  # acceleration due to gravity
 flex.E = 65e9  # Young's Modulus
