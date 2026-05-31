@@ -57,6 +57,73 @@ class _RigidityBC(Enum):
     ZERO_CURVATURE = "zero_curvature"
 
 
+# ---------------------------------------------------------------------------
+# Inhomogeneous (prescribed-value) BC support  (#52)
+# ---------------------------------------------------------------------------
+
+_VALID_BC_KEYS = frozenset({"displacement", "slope", "moment", "shear"})
+
+# Maps the frozenset of two prescribed keys → canonical BC type string.
+# Each entry corresponds to one existing homogeneous BC type whose stencil
+# structure is re-used when nonzero values are prescribed.
+_BC_DICT_TO_STRING = {
+    frozenset({"displacement", "slope"}):  "zero_displacement_zero_slope",
+    frozenset({"displacement", "moment"}): "zero_displacement_zero_moment",
+    frozenset({"moment", "shear"}):        "zero_moment_zero_shear",
+    frozenset({"slope", "shear"}):         "zero_slope_zero_shear",
+}
+
+
+def _resolve_bc(bc, edge_label, dimension):
+    """Return the canonical BC type string for *bc* (str or dict).
+
+    String presets are returned unchanged.  Dict BCs are validated and
+    mapped to their equivalent canonical string so that downstream stencil
+    and rigidity code never sees a raw dict.  Calls ``sys.exit`` with a
+    descriptive message on any error.
+    """
+    if isinstance(bc, str):
+        return bc
+
+    if not isinstance(bc, dict):
+        sys.exit(
+            f"Boundary condition at {edge_label!r} must be a string or dict, "
+            f"got {type(bc).__name__!r}.\nExiting."
+        )
+    if dimension == 2:
+        sys.exit(
+            "Dict-style boundary conditions are not yet supported for 2-D FD. "
+            f"Received {bc!r} at {edge_label!r}.\nExiting."
+        )
+    keys = frozenset(bc)
+    unknown = keys - _VALID_BC_KEYS
+    if unknown:
+        sys.exit(
+            f"Boundary condition at {edge_label!r}: unknown key(s) "
+            f"{sorted(unknown)}.  Valid keys: {sorted(_VALID_BC_KEYS)}.\nExiting."
+        )
+    if len(keys) != 2:
+        sys.exit(
+            f"Boundary condition at {edge_label!r}: dict must have exactly 2 keys, "
+            f"got {len(keys)} ({sorted(keys)}).\nExiting."
+        )
+    if keys not in _BC_DICT_TO_STRING:
+        sys.exit(
+            f"Boundary condition at {edge_label!r}: {sorted(keys)!r} is not a valid "
+            f"pair.  Valid pairs: "
+            f"{[sorted(p) for p in _BC_DICT_TO_STRING]}.\nExiting."
+        )
+    for k, v in bc.items():
+        try:
+            float(v)
+        except (TypeError, ValueError):
+            sys.exit(
+                f"Boundary condition at {edge_label!r}: value for {k!r} must be "
+                f"numeric, got {type(v).__name__!r}.\nExiting."
+            )
+    return _BC_DICT_TO_STRING[keys]
+
+
 class Utility:
 
     """
@@ -1264,9 +1331,25 @@ class Flexure(Utility, Plotting):
                 self.coeff_matrix
             except AttributeError:
                 self.coeff_matrix = None
+
+            # Seed _bc_*_norm to the raw user-set values so that coupled-mode
+            # callers (coeff_matrix already provided) get working defaults even
+            # if the validation block below is skipped.
+            self._bc_west_norm = self.bc_west
+            self._bc_east_norm = self.bc_east
+            # _bc_*_values stores the user-supplied dict for dict BCs (used by
+            # the inhomogeneous RHS assembly in #51); None for string presets.
+            self._bc_west_values = self.bc_west if isinstance(self.bc_west, dict) else None
+            self._bc_east_values = self.bc_east if isinstance(self.bc_east, dict) else None
+            if self.dimension == 2:
+                self._bc_north_norm = self.bc_north
+                self._bc_south_norm = self.bc_south
+                self._bc_north_values = self.bc_north if isinstance(self.bc_north, dict) else None
+                self._bc_south_values = self.bc_south if isinstance(self.bc_south, dict) else None
+
             # No need to create a coeff_matrix if one already exists
             if self.coeff_matrix is None:
-                # Acceptable boundary conditions
+                # Acceptable string boundary conditions
                 self.bc1D = np.array(
                     [
                         "zero_displacement_zero_slope",
@@ -1289,34 +1372,43 @@ class Flexure(Utility, Plotting):
                     ]
                 )
                 # Boundary conditions should be defined by this point -- whether via
-                # the configuration file or the getters and setters
-                self.bclist = [self.bc_east, self.bc_west]
+                # the configuration file or the getters and setters.
+                # Validate each edge BC and compute its canonical type string
+                # (_bc_*_norm).  Dict BCs are mapped to their equivalent string;
+                # string presets are validated against bc1D / bc2D and kept as-is.
+                edge_labels = ["east", "west"]
+                bcs = [self.bc_east, self.bc_west]
                 if self.dimension == 2:
-                    self.bclist += [self.bc_north, self.bc_south]
-                # Now check that these are valid boundary conditions
-                for bc in self.bclist:
-                    if self.dimension == 1:
+                    edge_labels += ["north", "south"]
+                    bcs += [self.bc_north, self.bc_south]
+                for bc, edge in zip(bcs, edge_labels):
+                    if isinstance(bc, dict):
+                        norm = _resolve_bc(bc, edge, self.dimension)
+                    elif self.dimension == 1:
                         if bc not in self.bc1D:
                             sys.exit(
                                 f"{bc!r} is not an acceptable 1D finite difference"
                                 " boundary condition and/or is not yet implement in"
                                 " the code. Acceptable boundary conditions are:"
-                                f" {', '.join(repr(bc) for bc in self.bc1D)}\n"
+                                f" {', '.join(repr(b) for b in self.bc1D)}\n"
                                 "Exiting."
                             )
+                        norm = bc
                     elif self.dimension == 2:
                         if bc not in self.bc2D:
                             sys.exit(
                                 f"{bc!r} is not an acceptable 2D finite difference"
                                 " boundary condition and/or is not yet implement in"
                                 " the code. Acceptable boundary conditions are:"
-                                f" {', '.join(repr(bc) for bc in self.bc2D)}\n"
+                                f" {', '.join(repr(b) for b in self.bc2D)}\n"
                                 "Exiting."
                             )
+                        norm = bc
                     else:
                         sys.exit(
                             "For a flexural solution, grid must be 1D or 2D. Exiting."
                         )
+                    setattr(self, f"_bc_{edge}_norm", norm)
         else:
             # Analytical solution boundary conditions
             # If they aren't set, it is because no input file has been used
