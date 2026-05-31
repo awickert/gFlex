@@ -9,7 +9,7 @@ Theory
    support and the FFT spectral solver, added in later versions, are
    synthesized here following the same conventions.  Please refer to
    Wickert (2016) for the full derivations, figures, and authoritative
-   treatment of the v1.0 methods.  This page is AI-generated.
+   treatment of the v1.0 methods.
 
 Flexure of the lithosphere is the process by which loads bend the elastic
 outer shell of Earth or other planets (Watts, 2001; Watters and McGovern,

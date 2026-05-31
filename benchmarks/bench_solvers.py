@@ -360,6 +360,9 @@ def _make_f2d(nx, ny, method, te=_TE_REF, solver="direct", bc="0Displacement0Slo
     flex.dy = 5000.0
     flex.Te = te
     flex.qs = np.zeros((ny, nx))
+    # Central quarter-area load (central 50 % of each axis = 25 % of domain
+    # area); SAS timing scales linearly with N_load, so absolute SAS times
+    # scale proportionally with the loaded fraction.
     flex.qs[ny // 4 : 3 * ny // 4, nx // 4 : 3 * nx // 4] = 1e6
     flex.BC_W = bc
     flex.BC_E = bc
