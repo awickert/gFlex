@@ -117,9 +117,9 @@ import numpy as np
 
 flex = gflex.F2D()
 
-flex.Quiet = False
+flex.quiet = False
 
-flex.Method = 'FD' # Solution method: * FD (finite difference)
+flex.method = 'FD' # Solution method: * FD (finite difference)
                    #                  * FFT (spectral)
                    #                  * SAS (superposition of analytical solutions)
                    #                  * SAS_NG (ungridded SAS)
@@ -130,8 +130,8 @@ flex.nu = 0.25 # Poisson's Ratio
 flex.rho_m = 3300. # MantleDensity
 flex.rho_fill = 0. # InfillMaterialDensity
 
-flex.Te = 35000.*np.ones((50, 50)) # Elastic thickness [m] -- scalar but may be an array
-flex.Te[:,-3:] = 0.
+flex.te = 35000.*np.ones((50, 50)) # Elastic thickness [m] -- scalar but may be an array
+flex.te[:,-3:] = 0.
 flex.qs = np.zeros((50, 50)) # Template array for surface load stresses
 flex.qs[10:40, 10:40] += 1E6 # Populating this template
 flex.dx = 5000. # grid cell size, x-oriented [m]
@@ -139,10 +139,10 @@ flex.dy = 5000. # grid cell size, y-oriented [m]
 # Boundary conditions can be:
 # (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
 # For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
-flex.BC_W = '0Displacement0Slope' # west boundary condition
-flex.BC_E = '0Moment0Shear' # east boundary condition
-flex.BC_S = '0Displacement0Slope' # south boundary condition
-flex.BC_N = '0Displacement0Slope' # north boundary condition
+flex.bc_west = '0Displacement0Slope' # west boundary condition
+flex.bc_east = '0Moment0Shear' # east boundary condition
+flex.bc_south = '0Displacement0Slope' # south boundary condition
+flex.bc_north = '0Displacement0Slope' # north boundary condition
 
 # latitude/longitude solutions are exact for SAS, approximate otherwise
 #latlon = # true/false: flag to enable lat/lon input. Defaults False.
