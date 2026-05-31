@@ -2573,12 +2573,7 @@ class F2D(Flexure):
                     self.iterative_ConvergenceTolerance,
                     "m between iterations",
                 )
-            if _HAS_PYAMG:
-                M, x0 = self._amg_preconditioner()
-                precond_name = "AMG"
-            else:
-                M, x0 = self._fft_preconditioner()
-                precond_name = "FFT"
+            M, x0 = self._fft_preconditioner()
             wvector, info = lgmres(
                 self.coeff_matrix, q0vector, M=M, x0=x0,
                 rtol=self.iterative_ConvergenceTolerance, maxiter=40,
@@ -2586,7 +2581,7 @@ class F2D(Flexure):
             if info != 0:
                 if not self.Quiet:
                     print(
-                        f"{precond_name}-preconditioned lgmres did not converge (info={info}); "
+                        f"FFT-preconditioned lgmres did not converge (info={info}); "
                         "falling back to direct solver."
                     )
                 wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
