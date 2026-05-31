@@ -574,7 +574,16 @@ if __name__ == "__main__":
 
         print("\n--- 2D ---")
         bench_2d_fd(sizes=[50, 100, 200, 400])
-        bench_2d_fd_nonsquare(shapes=[(200, 50), (400, 100), (200, 25)])
+        bench_2d_fd_nonsquare(shapes=[
+            # 2:1 aspect ratio — moderate elongation, both orientations
+            (100, 50),   (50, 100),    # ~5 k cells
+            (200, 100),  (100, 200),   # ~20 k cells
+            # 4:1 aspect ratio — strong elongation, both orientations
+            (200, 50),   (50, 200),    # ~10 k cells
+            (400, 100),  (100, 400),   # ~40 k cells
+            # 8:1 — very elongated (stress-tests thin-strip performance)
+            (200, 25),   (400, 50),    # ~5 k / ~20 k cells
+        ])
         bench_2d_fft(sizes=[50, 100, 500, 1000])
         bench_2d_sas(sizes=[10, 25, 50, 100])
     finally:
