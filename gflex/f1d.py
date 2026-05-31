@@ -629,23 +629,15 @@ class F1D(Flexure):
         """
         Superposition of analytical solutions without a gridded domain
         """
-        self.w = np.zeros(self.xw.shape)
-
         if self.Debug:
             print("w = ")
-            print(self.w.shape)
+            print(self.xw.shape)
 
-        for i in range(len(self.q)):
-            # More efficient if we have created some 0-load points
-            # (e.g., for where we want output)
-            if self.q[i] != 0:
-                dist = np.abs(self.xw - self.x[i])
-                self.w -= (
-                    self.q[i]
-                    * self.coeff
-                    * np.exp(-dist / self.alpha)
-                    * (np.cos(dist / self.alpha) + np.sin(dist / self.alpha))
-                )
+        # dist shape: (N_out, N_load); vectorised over both dimensions at once.
+        dist = np.abs(self.xw[:, None] - self.x[None, :])
+        r = dist / self.alpha
+        G = np.exp(-r) * (np.cos(r) + np.sin(r))   # (N_out, N_load)
+        self.w = -self.coeff * (G * self.q[None, :]).sum(axis=1)
 
     ## FINITE DIFFERENCE
     ######################
