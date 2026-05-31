@@ -30,7 +30,7 @@ Parameters
 
     * ``FD`` — Finite Difference.  Supports spatially variable elastic
       thickness.  Requires a grid (``dx``, and ``dy`` in 2-D).
-    * ``FFT`` — Spectral (Fast Fourier Transform).  *2-D only.*  Requires
+    * ``FFT`` — Spectral (Fast Fourier Transform).  Requires
       scalar (uniform) :math:`T_e`.  Spectrally accurate and fast.  When
       all boundary conditions are ``Periodic`` the domain tiles exactly;
       for any other boundary condition the load is zero-padded by
