@@ -1085,12 +1085,12 @@ class Flexure(Utility, Plotting):
         # and floor division
         try:
             self.Te = self.Te.astype(float)  # array
-        except:
+        except AttributeError:
             # Integer scalar Te does not seem to be a problem, but taking this step
             # anyway for consistency
             try:
                 self.Te = float(self.Te)  # integer
-            except:
+            except (ValueError, TypeError):
                 # If not already defined, then an input file is being used, and this
                 # code should bring the grid in as floating point type... just later.
                 pass
