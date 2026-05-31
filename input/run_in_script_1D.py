@@ -25,8 +25,8 @@ flex.te = 30000.0  # *np.ones(500) # Elastic thickness -- scalar but may be an a
 flex.qs = np.zeros(300)
 flex.qs[100:200] += 1e6  # surface load stresses
 flex.dx = 4000.0  # grid cell size [m]
-flex.bc_west = "0Displacement0Slope"  # west boundary condition
-flex.bc_east = "0Moment0Shear"  # east boundary condition
+flex.bc_west = "zero_displacement_zero_slope"  # west boundary condition
+flex.bc_east = "zero_moment_zero_shear"  # east boundary condition
 
 flex.sigma_xx = 100.0  # Normal stress on the edge of the plate
 

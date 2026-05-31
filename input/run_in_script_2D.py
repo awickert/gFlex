@@ -28,12 +28,12 @@ flex.qs[10:40, 10:40] += 1e6  # Populating this template
 flex.dx = 5000.0  # grid cell size, x-oriented [m]
 flex.dy = 5000.0  # grid cell size, y-oriented [m]
 # Boundary conditions can be:
-# (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
-# For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
-flex.bc_west = "0Displacement0Slope"  # west boundary condition
-flex.bc_east = "0Moment0Shear"  # east boundary condition
-flex.bc_south = "0Displacement0Slope"  # south boundary condition
-flex.bc_north = "0Displacement0Slope"  # north boundary condition
+# (FD): zero_displacement_zero_slope, zero_displacement_zero_moment, zero_moment_zero_shear, zero_slope_zero_shear, mirror, or periodic
+# For SAS or SAS_NG, no_outside_loads is valid, and no entry defaults to this
+flex.bc_west = "zero_displacement_zero_slope"  # west boundary condition
+flex.bc_east = "zero_moment_zero_shear"  # east boundary condition
+flex.bc_south = "zero_displacement_zero_slope"  # south boundary condition
+flex.bc_north = "zero_displacement_zero_slope"  # north boundary condition
 
 # latitude/longitude solutions are exact for SAS, approximate otherwise
 # latlon = # true/false: flag to enable lat/lon input. Defaults False.

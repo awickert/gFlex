@@ -7,8 +7,8 @@ import pytest
 from gflex.f1d import F1D
 
 
-def _run_flex_1d(Te, qs, dx, method="FD", bc_w="0Moment0Shear",
-                 bc_e="0Moment0Shear", sigma_xx=None, solver="direct"):
+def _run_flex_1d(Te, qs, dx, method="FD", bc_w="zero_moment_zero_shear",
+                 bc_e="zero_moment_zero_shear", sigma_xx=None, solver="direct"):
     """Helper: run a 1-D flexure calculation and return the flex object."""
     flex = F1D()
     flex.quiet = True
@@ -60,9 +60,9 @@ def test_1d_sigma_xx_zero_matches_default():
     qs = np.zeros(N)
     qs[60:90] = 1e6
     flex_default = _run_flex_1d(Te=30e3, qs=qs, dx=dx,
-                                bc_w="Periodic", bc_e="Periodic")
+                                bc_w="periodic", bc_e="periodic")
     flex_zero = _run_flex_1d(Te=30e3, qs=qs, dx=dx,
-                             bc_w="Periodic", bc_e="Periodic",
+                             bc_w="periodic", bc_e="periodic",
                              sigma_xx=0.0)
     np.testing.assert_array_equal(flex_default.w, flex_zero.w)
 
@@ -88,10 +88,10 @@ def test_1d_end_load_fft_vs_fd():
     qs = np.sin(k * x) * 1e6
 
     flex_fft = _run_flex_1d(Te=Te, qs=qs, dx=dx, method="FFT",
-                             bc_w="Periodic", bc_e="Periodic",
+                             bc_w="periodic", bc_e="periodic",
                              sigma_xx=sigma_xx)
     flex_fd = _run_flex_1d(Te=Te, qs=qs, dx=dx, method="FD",
-                            bc_w="Periodic", bc_e="Periodic",
+                            bc_w="periodic", bc_e="periodic",
                             sigma_xx=sigma_xx)
 
     # rtol=5e-4: FD discretisation error in k⁴ is O((kdx)²) ≈ 0.05 % for
@@ -193,7 +193,7 @@ def test_1d_fd_convergence_order():
 
         w_exact(x) = −cos(2π x / L)
 
-    on a Periodic domain of width L = 2α (α = (4D/Δρg)^0.25).  The
+    on a periodic domain of width L = 2α (α = (4D/Δρg)^0.25).  The
     manufactured load is:
 
         q_mms(x) = (D kx⁴ + Δρg) · cos(kx x),   kx = 2π/L
@@ -225,7 +225,7 @@ def test_1d_fd_convergence_order():
         x      = (np.arange(N) + 0.5) * dxi
         qs_mms = q_fac * np.cos(kx * x)
         flex   = _run_flex_1d(Te=Te_mms, qs=qs_mms, dx=dxi,
-                               bc_w="Periodic", bc_e="Periodic")
+                               bc_w="periodic", bc_e="periodic")
         err    = np.max(np.abs(flex.w - (-np.cos(kx * x))))
         dxs.append(dxi)
         errors.append(err)

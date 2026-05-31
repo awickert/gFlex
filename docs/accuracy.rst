@@ -7,7 +7,7 @@ Analytical solutions (``SAS`` and ``SAS_NG``)
 ----------------------------------------------
 
 The superposition-of-analytical-solutions methods are **exact** for a plate
-of constant elastic thickness under the ``NoOutsideLoads`` boundary condition
+of constant elastic thickness under the ``no_outside_loads`` boundary condition
 (zero deflection at infinity).  In one dimension the Green's function is the
 exponential sinusoid of Eq. (3) in Wickert (2016); in two dimensions it is the
 zeroth-order Kelvin function :math:`\mathrm{kei}`, evaluated via
@@ -16,7 +16,7 @@ evaluations are at machine precision and negligible in practice.
 
 The only meaningful source of error is a **domain that is too small**: if the
 load produces non-trivial deflection at the domain boundary, the
-``NoOutsideLoads`` assumption is violated and the solution is physically
+``no_outside_loads`` assumption is violated and the solution is physically
 wrong — not because of numerics, but because the boundary condition does not
 match the situation.  Use :func:`gflex.flexural_wavelengths` to estimate the
 flexural parameter :math:`\alpha` and ensure the domain extends several
@@ -30,10 +30,10 @@ FFT spectral solver
 The FFT solver is **spectrally accurate** for uniform elastic thickness: for a
 smooth load field the solution error decays faster than any finite power of the
 grid spacing, limited in practice only by floating-point arithmetic.  For
-periodic boundary conditions (``Periodic`` on all sides) the solution is exact
+periodic boundary conditions (``periodic`` on all sides) the solution is exact
 to machine precision.  For all other boundary conditions the load is
 zero-padded by :math:`4\alpha` on each side before the transform, which
-approximates the ``NoOutsideLoads`` condition; the padding introduces a small
+approximates the ``no_outside_loads`` condition; the padding introduces a small
 error near the domain edges that decreases as the pad width increases relative
 to the load's flexural footprint.  For typical geoscience applications the
 :math:`4\alpha` default padding is more than sufficient.
@@ -53,8 +53,8 @@ Finite difference solver (``FD``)
    Comparison of numerical (FD) and analytical (SAS) solutions in one dimension
    **(a)** and two dimensions **(c)**, and their differences **(b, d)**, for a
    100 km central line load / circular load.  The 1–2 m offset in **(b)** is due
-   primarily to the ``NoOutsideLoads`` BC of the analytical solution versus the
-   ``0Displacement0Slope`` BC of the FD solution; the cross-shaped residual in
+   primarily to the ``no_outside_loads`` BC of the analytical solution versus the
+   ``zero_displacement_zero_slope`` BC of the FD solution; the cross-shaped residual in
    **(d)** reflects boundary effects along the longer diagonal boundaries.
    Reproduced from Wickert (2016), Fig. 3;
    `CC BY 3.0 <https://creativecommons.org/licenses/by/3.0/>`_.
@@ -105,7 +105,7 @@ Kelvin-function benchmark setup
    * - Domain
      - 600 km × 600 km, point load at centre
    * - Boundary conditions
-     - ``0Moment0Shear`` on all four sides
+     - ``zero_moment_zero_shear`` on all four sides
    * - Grid spacings tested
      - :math:`\Delta x` = 10 000, 5 000, 2 500, 1 250 m
 

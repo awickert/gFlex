@@ -6,7 +6,7 @@ import pytest
 from gflex.f2d import F2D, pad_domain, recommended_pad_width, smooth_pad_Te
 
 
-def _run_flex_2d(Te, qs, dx, dy, bc="0Displacement0Slope"):
+def _run_flex_2d(Te, qs, dx, dy, bc="zero_displacement_zero_slope"):
     """Helper: run a 2-D FD flexure calculation and return deflection array."""
     flex = F2D()
     flex.quiet = True
@@ -56,12 +56,12 @@ def test_main():
     flex.dx = 5000.0  # grid cell size, x-oriented [m]
     flex.dy = 5000.0  # grid cell size, y-oriented [m]
     # Boundary conditions can be:
-    # (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
-    # For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
-    flex.bc_west = "0Displacement0Slope"  # west boundary condition
-    flex.bc_east = "0Moment0Shear"  # east boundary condition
-    flex.bc_south = "0Displacement0Slope"  # south boundary condition
-    flex.bc_north = "0Displacement0Slope"  # north boundary condition
+    # (FD): zero_slope_zero_shear, zero_moment_zero_shear, zero_displacement_zero_slope, mirror, or periodic
+    # For SAS or SAS_NG, no_outside_loads is valid, and no entry defaults to this
+    flex.bc_west = "zero_displacement_zero_slope"  # west boundary condition
+    flex.bc_east = "zero_moment_zero_shear"  # east boundary condition
+    flex.bc_south = "zero_displacement_zero_slope"  # south boundary condition
+    flex.bc_north = "zero_displacement_zero_slope"  # north boundary condition
 
     # latitude/longitude solutions are exact for SAS, approximate otherwise
     # latlon = # true/false: flag to enable lat/lon input. Defaults False.
@@ -221,7 +221,7 @@ def test_2d_fd_convergence_order():
 
         q_mms = (4 D β⁴ + k) · w_exact
 
-    Periodic boundary conditions on all four sides eliminate any
+    periodic boundary conditions on all four sides eliminate any
     boundary-truncation coupling, so the measured convergence rate reflects
     only the interior stencil accuracy.  The domain width L = 2α (α is the
     flexural parameter) ensures both the biharmonic and Winkler terms
@@ -268,7 +268,7 @@ def test_2d_fd_convergence_order():
         X, Y = np.meshgrid(x, y)
 
         w   = _run_flex_2d(Te * np.ones((N, N)), q_mms(X, Y), dx, dy,
-                           bc="Periodic")
+                           bc="periodic")
         err = np.max(np.abs(w - w_gflex_exact(X, Y)))
         dxs.append(dx)
         errors.append(err)

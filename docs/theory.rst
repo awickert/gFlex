@@ -227,7 +227,7 @@ In two dimensions, the response at :math:`(x, y)` to a point load at
               \right).
 
 The implicit boundary condition for all analytical solutions is
-``NoOutsideLoads``: the plate is undeflected at infinity
+``no_outside_loads``: the plate is undeflected at infinity
 (:math:`w_\infty = 0`).
 
 Superposition of Analytical Solutions, No Grid (``SAS_NG``)
@@ -275,11 +275,11 @@ where :math:`k_x` and :math:`k_y` are angular wavenumbers [m⁻¹].  The
 deflection field :math:`w` is recovered by the inverse FFT.
 
 Two boundary condition modes are available.  When all four sides are set to
-``Periodic``, the load array is transformed as-is and the solution is
+``periodic``, the load array is transformed as-is and the solution is
 inherently periodic.  For all other boundary conditions, the load is
 zero-padded by four flexural parameters (:math:`4\alpha`) on each side before
 the transform and trimmed back afterward, producing a result equivalent to the
-``NoOutsideLoads`` condition of the analytical solutions.
+``no_outside_loads`` condition of the analytical solutions.
 
 Because the transfer function assumes a single, spatially uniform value of
 :math:`D`, the FFT solver requires scalar (constant) :math:`T_e`.  Spatially

@@ -75,8 +75,8 @@ Quick start
    flex.qs = np.zeros((50, 50))
    flex.qs[10:40, 10:40] = 1e6          # 150 × 150 km load at 1 MPa
    flex.dx = flex.dy = 5000.            # 5 km grid
-   flex.bc_west = flex.bc_south = flex.bc_north = '0Displacement0Slope'
-   flex.bc_east = '0Moment0Shear'
+   flex.bc_west = flex.bc_south = flex.bc_north = 'zero_displacement_zero_slope'
+   flex.bc_east = 'zero_moment_zero_shear'
    flex.initialize()
    flex.run()
    flex.finalize()
@@ -112,12 +112,12 @@ A minimal 2-D YAML configuration:
      Plot: both
    numerical:
      GridSpacing_x: 4000
-     BoundaryCondition_West: 0Moment0Shear
-     BoundaryCondition_East: 0Displacement0Slope
+     BoundaryCondition_West: zero_moment_zero_shear
+     BoundaryCondition_East: zero_displacement_zero_slope
    numerical2D:
      GridSpacing_y: 4000
-     BoundaryCondition_North: Mirror
-     BoundaryCondition_South: 0Slope0Shear
+     BoundaryCondition_North: mirror
+     BoundaryCondition_South: zero_slope_zero_shear
 
 Run from the command line::
 

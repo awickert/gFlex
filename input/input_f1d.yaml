@@ -23,8 +23,8 @@ output:
 
 numerical:
   GridSpacing_x: 6000
-  BoundaryCondition_West: Periodic
-  BoundaryCondition_East: Periodic
+  BoundaryCondition_West: periodic
+  BoundaryCondition_East: periodic
 
 verbosity:
   Verbose: false

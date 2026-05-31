@@ -1196,24 +1196,24 @@ class Flexure(Utility, Plotting):
         Validate boundary conditions and prepare BC state for the chosen solver.
 
         For ``FD``: checks that every edge BC is one of the five accepted
-        strings (``'0Displacement0Slope'``, ``'0Moment0Shear'``,
-        ``'0Slope0Shear'``, ``'Mirror'``, ``'Periodic'``) and exits with an
+        strings (``'zero_displacement_zero_slope'``, ``'zero_moment_zero_shear'``,
+        ``'zero_slope_zero_shear'``, ``'mirror'``, ``'periodic'``) and exits with an
         informative message if not.  A pre-built ``coeff_matrix`` bypasses
         the check (coupled-model use case).
 
         For ``FFT``: ensures the BC attributes exist; the FFT solver
-        interprets ``'Periodic'`` on all sides as an exact periodic transform
+        interprets ``'periodic'`` on all sides as an exact periodic transform
         and treats any other value as a request for zero-padded
-        ``NoOutsideLoads`` behaviour.
+        ``no_outside_loads`` behaviour.
 
         For ``SAS`` / ``SAS_NG``: sets missing BC attributes to an empty
-        string, which the analytical solvers treat as ``'NoOutsideLoads'``.
+        string, which the analytical solvers treat as ``'no_outside_loads'``.
         """
         # Check that boundary conditions are acceptable with code implementation
         # Acceptable b.c.'s
         if self.method == "FFT":
             # Ensure BC attributes exist; FFT handles them internally
-            # 'Periodic' → exact transform; anything else → zero-padded (NoOutsideLoads)
+            # 'periodic' → exact transform; anything else → zero-padded (no_outside_loads)
             for attr in ("BC_E", "BC_W"):
                 if not hasattr(self, attr):
                     setattr(self, attr, "")
@@ -1238,22 +1238,22 @@ class Flexure(Utility, Plotting):
                 # Acceptable boundary conditions
                 self.bc1D = np.array(
                     [
-                        "0Displacement0Slope",
-                        "0Displacement0Moment",
-                        "Periodic",
-                        "Mirror",
-                        "0Moment0Shear",
-                        "0Slope0Shear",
+                        "zero_displacement_zero_slope",
+                        "zero_displacement_zero_moment",
+                        "periodic",
+                        "mirror",
+                        "zero_moment_zero_shear",
+                        "zero_slope_zero_shear",
                     ]
                 )
                 self.bc2D = np.array(
                     [
-                        "0Displacement0Slope",
-                        "0Displacement0Moment",
-                        "Periodic",
-                        "Mirror",
-                        "0Moment0Shear",
-                        "0Slope0Shear",
+                        "zero_displacement_zero_slope",
+                        "zero_displacement_zero_moment",
+                        "periodic",
+                        "mirror",
+                        "zero_moment_zero_shear",
+                        "zero_slope_zero_shear",
                     ]
                 )
                 # Boundary conditions should be defined by this point -- whether via
@@ -1311,16 +1311,16 @@ class Flexure(Utility, Plotting):
                 self.bc_south = None
                 self.bc_north = None
             if (
-                self.bc_east == "NoOutsideLoads"
+                self.bc_east == "no_outside_loads"
                 or self.bc_east == ""
-                and self.bc_west == "NoOutsideLoads"
+                and self.bc_west == "no_outside_loads"
                 or self.bc_west == ""
             ) and (
                 self.dimension != 2
                 or (
-                    self.bc_east == "NoOutsideLoads"
+                    self.bc_east == "no_outside_loads"
                     or self.bc_east == ""
-                    and self.bc_west == "NoOutsideLoads"
+                    and self.bc_west == "no_outside_loads"
                     or self.bc_west == ""
                 )
             ):
@@ -1332,7 +1332,7 @@ class Flexure(Utility, Plotting):
                 ):
                     if self.verbose:
                         print(
-                            "Assuming NoOutsideLoads boundary condition, as this is"
+                            "Assuming no_outside_loads boundary condition, as this is"
                             " implicit in the superposition-based analytical solution"
                         )
             else:
@@ -1342,7 +1342,7 @@ class Flexure(Utility, Plotting):
                     print("")
                     print("For analytical solutions the boundaries must be either:")
                     print("")
-                    print("* NoOutsideLoads (explicitly)")
+                    print("* no_outside_loads (explicitly)")
                     print("* <left blank>")
                     print("")
                     print(

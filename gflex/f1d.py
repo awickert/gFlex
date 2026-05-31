@@ -270,9 +270,9 @@ class F1D(Flexure):
         Grid spacing [m].
     BC_W, BC_E : str
         Boundary conditions on the west (left) and east (right) ends.
-        FD options: ``'0Displacement0Slope'``, ``'0Displacement0Moment'``,
-        ``'0Slope0Shear'``, ``'0Moment0Shear'``, ``'Mirror'``, ``'Periodic'``.
-        SAS option: ``'NoOutsideLoads'`` (the default when unset).
+        FD options: ``'zero_displacement_zero_slope'``, ``'zero_displacement_zero_moment'``,
+        ``'zero_slope_zero_shear'``, ``'zero_moment_zero_shear'``, ``'mirror'``, ``'periodic'``.
+        SAS option: ``'no_outside_loads'`` (the default when unset).
     sigma_xx : float, optional
         Normal stress applied at the plate ends [Pa].  FD only.
     Quiet : bool
@@ -300,8 +300,8 @@ class F1D(Flexure):
         flex.qs = np.zeros(300)
         flex.qs[100:200] = 1e6      # 100-cell load
         flex.dx = 4000.             # 4 km grid
-        flex.bc_west = '0Displacement0Slope'
-        flex.bc_east = '0Moment0Shear'
+        flex.bc_west = 'zero_displacement_zero_slope'
+        flex.bc_east = 'zero_moment_zero_shear'
         flex.initialize()
         flex.run()
         flex.finalize()
@@ -394,11 +394,11 @@ class F1D(Flexure):
         Two categories of warning are raised:
 
         **BC-type warnings** — fired for boundary types whose physical meaning
-        deserves verification: ``'0Moment0Shear'`` (free broken end; check that
-        a rifted margin is intended) and ``'0Slope0Shear'`` (no clear geological
+        deserves verification: ``'zero_moment_zero_shear'`` (free broken end; check that
+        a rifted margin is intended) and ``'zero_slope_zero_shear'`` (no clear geological
         analog).
 
-        **Proximity warnings** — fired for ``'0Displacement0Slope'`` boundaries
+        **Proximity warnings** — fired for ``'zero_displacement_zero_slope'`` boundaries
         when the nearest loaded cell is within one flexural wavelength
         (:math:`\\lambda = 2\\pi\\alpha`, :math:`\\alpha = (4D/\\Delta\\rho g)^{1/4}`)
         of that boundary.  Within this distance the flexural forebulge is
@@ -408,24 +408,24 @@ class F1D(Flexure):
         """
         bc_sides = {"W": self.bc_west, "E": self.bc_east}
         for side, bc in bc_sides.items():
-            if bc == "0Moment0Shear":
+            if bc == "zero_moment_zero_shear":
                 warnings.warn(
-                    f"BC_{side} = '0Moment0Shear': assumes a free broken plate end "
+                    f"BC_{side} = 'zero_moment_zero_shear': assumes a free broken plate end "
                     "(zero moment and shear force). Verify this represents a rifted "
                     "margin, spreading ridge, or similar physically broken-plate setting.",
                     UserWarning,
                     stacklevel=4,
                 )
-            elif bc == "0Slope0Shear":
+            elif bc == "zero_slope_zero_shear":
                 warnings.warn(
-                    f"BC_{side} = '0Slope0Shear': requires the plate to be horizontal "
+                    f"BC_{side} = 'zero_slope_zero_shear': requires the plate to be horizontal "
                     "and experience no shear force at the boundary. No clear geological "
                     "analog is known where both conditions hold simultaneously in a "
                     "nontrivial (nonzero deflection) setting.",
                     UserWarning,
                     stacklevel=4,
                 )
-        # Load-proximity warning: only for 0Displacement0Slope boundaries
+        # Load-proximity warning: only for zero_displacement_zero_slope boundaries
         loaded = np.nonzero(self.qs)[0]
         if loaded.size == 0:
             return
@@ -444,7 +444,7 @@ class F1D(Flexure):
             "E": lambda: (nx - loaded - 0.5) * self.dx,
         }
         for side, bc in bc_sides.items():
-            if bc != "0Displacement0Slope":
+            if bc != "zero_displacement_zero_slope":
                 continue
             distances = dist_fns[side]()
             frac = distances / wavelength_loaded
@@ -452,7 +452,7 @@ class F1D(Flexure):
             if frac[worst] < 1.0:
                 i = loaded[worst]
                 warnings.warn(
-                    f"BC_{side} = '0Displacement0Slope': nearest loaded cell "
+                    f"BC_{side} = 'zero_displacement_zero_slope': nearest loaded cell "
                     f"(index {i}) is {distances[worst]/1e3:.1f} km from the boundary "
                     f"({frac[worst]:.2f} flexural wavelengths; "
                     f"wavelength ≈ {wavelength_loaded[worst]/1e3:.1f} km "
@@ -493,18 +493,18 @@ class F1D(Flexure):
 
         FFT inherently assumes a periodic domain.  Two modes are supported:
 
-        * ``BC_W = BC_E = 'Periodic'`` — the load array is used as-is.
+        * ``BC_W = BC_E = 'periodic'`` — the load array is used as-is.
           The solution is exact for a load that genuinely repeats with
           period L = N · dx.
 
-        * Any other BC (including ``'NoOutsideLoads'`` or unset) — the
+        * Any other BC (including ``'no_outside_loads'`` or unset) — the
           load array is zero-padded by four flexural wavelengths (α) on
           each side before the transform, then trimmed back to the original
           length afterwards.  This is mathematically identical to the
           periodic case, but with a padded domain large enough that the
           periodic images of the load are separated by ~8α of zeros and
           therefore do not influence the interior solution.  It is the
-          spectral equivalent of the ``'NoOutsideLoads'`` boundary
+          spectral equivalent of the ``'no_outside_loads'`` boundary
           condition used by the SAS solver.
 
         In both cases the solution is spectral (no spatial discretisation
@@ -533,12 +533,12 @@ class F1D(Flexure):
         # 1-D flexural parameter α = (4D / Δρg)^0.25
         alpha = (4.0 * D / (self.drho * self.g)) ** 0.25
 
-        periodic = (self.bc_west == "Periodic") and (self.bc_east == "Periodic")
+        periodic = (self.bc_west == "periodic") and (self.bc_east == "periodic")
 
         if periodic:
             qs_work = self.qs
         else:
-            # Zero-pad by 4α on each side (NoOutsideLoads assumption)
+            # Zero-pad by 4α on each side (no_outside_loads assumption)
             pad = int(np.ceil(4.0 * alpha / self.dx))
             qs_work = np.pad(self.qs, pad, mode="constant")
 
@@ -694,26 +694,26 @@ class F1D(Flexure):
         # FLEXURAL RIGIDITY BOUNDARY CONDITIONS #
         #########################################
         # West
-        if self.bc_west == "Periodic":
+        if self.bc_west == "periodic":
             self.bc_rigidity_west = "periodic"
         elif (
             self.bc_west
-            == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
+            == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear", "zero_slope_zero_shear"])
         ).any():
             self.bc_rigidity_west = "0 curvature"
-        elif self.bc_west in ("Mirror", "0Displacement0Moment"):
+        elif self.bc_west in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_west = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
         # East
-        if self.bc_east == "Periodic":
+        if self.bc_east == "periodic":
             self.bc_rigidity_east = "periodic"
         elif (
             self.bc_east
-            == np.array(["0Displacement0Slope", "0Moment0Shear", "0Slope0Shear"])
+            == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear", "zero_slope_zero_shear"])
         ).any():
             self.bc_rigidity_east = "0 curvature"
-        elif self.bc_east in ("Mirror", "0Displacement0Moment"):
+        elif self.bc_east in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_east = "mirror symmetry"
         else:
             sys.exit("Invalid Te B.C. case")
@@ -822,17 +822,17 @@ class F1D(Flexure):
         # In 2D, these are handled inside the function; in 1D, there are separate
         # defined functions. Keeping these due to inertia and fear of cut/paste
         # mistakes
-        if self.bc_east == "0Displacement0Slope" or self.bc_west == "0Displacement0Slope":
+        if self.bc_east == "zero_displacement_zero_slope" or self.bc_west == "zero_displacement_zero_slope":
             self.BC_0Displacement0Slope()
-        if self.bc_east == "0Slope0Shear" or self.bc_west == "0Slope0Shear":
+        if self.bc_east == "zero_slope_zero_shear" or self.bc_west == "zero_slope_zero_shear":
             self.BC_0Slope0Shear()
-        if self.bc_east == "0Moment0Shear" or self.bc_west == "0Moment0Shear":
+        if self.bc_east == "zero_moment_zero_shear" or self.bc_west == "zero_moment_zero_shear":
             self.BC_0Moment0Shear()
-        if self.bc_east == "Mirror" or self.bc_west == "Mirror":
+        if self.bc_east == "mirror" or self.bc_west == "mirror":
             self.BC_Mirror()
-        if self.bc_east == "0Displacement0Moment" or self.bc_west == "0Displacement0Moment":
+        if self.bc_east == "zero_displacement_zero_moment" or self.bc_west == "zero_displacement_zero_moment":
             self.BC_0Displacement0Moment()
-        if self.bc_east == "Periodic" and self.bc_west == "Periodic":
+        if self.bc_east == "periodic" and self.bc_west == "periodic":
             self.BC_Periodic()
         if self.bc_east == "Sandbox" or self.bc_west == "Sandbox":
             # Sandbox is the developer's testing ground
@@ -860,7 +860,7 @@ class F1D(Flexure):
         # can matter.
         if self.coeff_matrix is not None:
             pass
-        elif self.bc_east == "Periodic" and self.bc_west == "Periodic":
+        elif self.bc_east == "periodic" and self.bc_west == "periodic":
             # In this case, the boundary-condition-related stacking has already
             # happened inside b.c.-handling function. This is because periodic
             # boundary conditions require extra diagonals to exist on the edges of
@@ -877,15 +877,15 @@ class F1D(Flexure):
 
     def BC_Periodic(self):
         """
-        Periodic boundary conditions: wraparound to the other side.
+        periodic boundary conditions: wraparound to the other side.
         """
-        if self.bc_east == "Periodic" and self.bc_west == "Periodic":
+        if self.bc_east == "periodic" and self.bc_west == "periodic":
             # If both boundaries are periodic, we are good to go (and self-consistent)
             pass  # It is just a shift in the coeff. matrix creation.
         else:
             # If only one boundary is periodic and the other doesn't implicitly
             # involve a periodic boundary, this is illegal!
-            # I could allow it, but would have to rewrite the Periodic b.c. case,
+            # I could allow it, but would have to rewrite the periodic b.c. case,
             # which I don't want to do to allow something that doesn't make
             # physical sense... so if anyone wants to do this for some unforeseen
             # reason, they can just split my function into two pieces themselves.i
@@ -924,14 +924,14 @@ class F1D(Flexure):
 
     def BC_0Displacement0Slope(self):
         """
-        0Displacement0Slope boundary condition for 0 deflection.
+        zero_displacement_zero_slope boundary condition for 0 deflection.
         This requires that nothing be done to the edges of the solution array,
         because the lack of the off-grid terms implies that they go to 0
         Here we just turn the cells outside the array into nan, to ensure that
         we are not accidentally including the wrong cells here (and for consistency
         with the other solution types -- this takes negligible time)
         """
-        if self.bc_west == "0Displacement0Slope":
+        if self.bc_west == "zero_displacement_zero_slope":
             i = 0
             self.l2[i] = np.nan
             self.l1[i] = np.nan
@@ -944,7 +944,7 @@ class F1D(Flexure):
             self.c0[i] += 0
             self.r1[i] += 0
             self.r2[i] += 0
-        if self.bc_east == "0Displacement0Slope":
+        if self.bc_east == "zero_displacement_zero_slope":
             i = -2
             self.l2[i] += 0
             self.l1[i] += 0
@@ -973,7 +973,7 @@ class F1D(Flexure):
     that extends outside of the computational domain.
     """
 
-        if self.bc_west == "0Slope0Shear":
+        if self.bc_west == "zero_slope_zero_shear":
             i = 0
             self.l2[i] = np.nan
             self.l1[i] = np.nan
@@ -986,7 +986,7 @@ class F1D(Flexure):
             self.c0[i] += 0
             self.r1[i] += 0
             self.r2[i] += self.l2_coeff_i[i]
-        if self.bc_east == "0Slope0Shear":
+        if self.bc_east == "zero_slope_zero_shear":
             i = -2
             self.l2[i] += self.r2_coeff_i[i]
             self.l1[i] += 0
@@ -1018,7 +1018,7 @@ class F1D(Flexure):
         # for unfortunate typos!
 
         # Also using 0-curvature boundary condition for D (i.e. Te)
-        if self.bc_west == "0Moment0Shear":
+        if self.bc_west == "zero_moment_zero_shear":
             i = 0
             self.l2[i] += np.nan
             self.l1[i] += np.nan
@@ -1032,7 +1032,7 @@ class F1D(Flexure):
             self.r1[i] += -2 * self.l2_coeff_i[i]
             self.r2[i] += self.l2_coeff_i[i]
 
-        if self.bc_east == "0Moment0Shear":
+        if self.bc_east == "zero_moment_zero_shear":
             i = -2
             self.l2[i] += self.r2_coeff_i[i]
             self.l1[i] += -2 * self.r2_coeff_i[i]
@@ -1055,7 +1055,7 @@ class F1D(Flexure):
         a mountain range up to the range crest (or, more correctly, the halfway
         point across the mountain range).
         """
-        if self.bc_west == "Mirror":
+        if self.bc_west == "mirror":
             i = 0
             # self.l2[i] += np.nan
             # self.l1[i] += np.nan
@@ -1069,7 +1069,7 @@ class F1D(Flexure):
             self.r1[i] += 0
             self.r2[i] += 0
 
-        if self.bc_east == "Mirror":
+        if self.bc_east == "mirror":
             i = -2
             self.l2[i] += 0
             self.l1[i] += 0
@@ -1101,7 +1101,7 @@ class F1D(Flexure):
         positions are set to np.nan (dropped automatically); those that land at
         interior matrix positions are set to 0 explicitly.
         """
-        if self.bc_west == "0Displacement0Moment":
+        if self.bc_west == "zero_displacement_zero_moment":
             # Boundary node: Dirichlet w[0] = 0
             i = 0
             self.l2[i] = np.nan    # ghost at j=-2: out-of-bounds after roll → excluded
@@ -1117,7 +1117,7 @@ class F1D(Flexure):
             self.r1[i] += 0
             self.r2[i] += 0
 
-        if self.bc_east == "0Displacement0Moment":
+        if self.bc_east == "zero_displacement_zero_moment":
             # First interior node: encode M = 0 via odd-reflection ghost w[N] = -w[N-2]
             i = -2
             self.l2[i] += 0

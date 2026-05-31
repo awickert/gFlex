@@ -18,7 +18,7 @@ the kei normalisation together.
 Interior agreement with FD
 ---------------------------
 On a large domain with a block load at the centre, SAS (infinite plate)
-and FD (finite plate, 0Moment0Shear BC) agree in the interior once the
+and FD (finite plate, zero_moment_zero_shear BC) agree in the interior once the
 load sits many flexural wavelengths from the boundary.  BC corrections
 decay exponentially with distance from the edge.
 """
@@ -51,8 +51,8 @@ alpha = (D / (drho * g)) ** 0.25          # ≈ 46.9 km
 coeff = alpha**2 / (2.0 * np.pi * D)      # α²/2πD
 
 
-def _run(qs, method="SAS", bc_w="0Moment0Shear", bc_e="0Moment0Shear",
-         bc_n="0Moment0Shear", bc_s="0Moment0Shear"):
+def _run(qs, method="SAS", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_shear",
+         bc_n="zero_moment_zero_shear", bc_s="zero_moment_zero_shear"):
     """Run a 2-D flexure calculation and return the flex object."""
     flex = F2D()
     flex.quiet   = True
@@ -120,7 +120,7 @@ def test_2d_sas_vs_fd_large_domain():
 
     A 10×10-cell (40 km × 40 km) block load at the centre of a 200×200 grid
     sits ~8.5 α from each boundary (α ≈ 46.9 km ≈ 11.7 cells).  The
-    0Moment0Shear BC correction at the 70-cell margin decays as exp(−6 α)
+    zero_moment_zero_shear BC correction at the 70-cell margin decays as exp(−6 α)
     ≈ 0.25 %, and FD truncation for the dominant block-load modes adds
     another ~0.1 %, so rtol = 5e-3 is conservative.
     """

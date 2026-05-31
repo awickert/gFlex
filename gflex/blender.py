@@ -127,7 +127,7 @@ def export_for_blender(
         flex.Te = 35e3 * np.ones((100, 100))
         flex.qs = np.zeros((100, 100));  flex.qs[40:60, 40:60] = 1e6
         flex.dx = flex.dy = 5000.
-        flex.BC_W = flex.BC_E = flex.BC_N = flex.BC_S = '0Moment0Shear'
+        flex.BC_W = flex.BC_E = flex.BC_N = flex.BC_S = 'zero_moment_zero_shear'
         flex.initialize();  flex.run();  flex.finalize()
 
         export_for_blender(

@@ -55,11 +55,11 @@ def _run(qs, method="FFT", bc_w="", bc_e="", bc_n="", bc_s="",
 
 
 # ---------------------------------------------------------------------------
-# Periodic: exact match against analytical transfer function
+# periodic: exact match against analytical transfer function
 # ---------------------------------------------------------------------------
 
 def test_fft_2d_periodic_exact():
-    """2-D FFT (Periodic) matches the exact spectral formula for a cosine load.
+    """2-D FFT (periodic) matches the exact spectral formula for a cosine load.
 
     For a separable load q(x,y) = q0·cos(kx·x)·cos(ky·y) the exact solution is
     w(x,y) = -q0 / (D(kx²+ky²)² + Δρg) · cos(kx·x)·cos(ky·y).
@@ -75,18 +75,18 @@ def test_fft_2d_periodic_exact():
     q0 = 1e6
     qs = q0 * np.cos(kx * X) * np.cos(ky * Y)
 
-    flex = _run(qs, bc_w="Periodic", bc_e="Periodic", bc_n="Periodic", bc_s="Periodic")
+    flex = _run(qs, bc_w="periodic", bc_e="periodic", bc_n="periodic", bc_s="periodic")
 
     w_exact = -q0 / (D * (kx**2 + ky**2)**2 + drho * g) * np.cos(kx * X) * np.cos(ky * Y)
     np.testing.assert_allclose(flex.w, w_exact, rtol=1e-10)
 
 
 # ---------------------------------------------------------------------------
-# Periodic with non-zero rho_fill: exact match
+# periodic with non-zero rho_fill: exact match
 # ---------------------------------------------------------------------------
 
 def test_fft_2d_periodic_rho_fill_exact():
-    """2-D FFT (Periodic) with rho_fill ≠ 0 matches the exact spectral formula.
+    """2-D FFT (periodic) with rho_fill ≠ 0 matches the exact spectral formula.
 
     The Winkler restoring term uses Δρ = rho_m − rho_fill, not bare rho_m.
     With rho_fill = 1030 kg/m³ (seawater) the effective restoring modulus
@@ -119,7 +119,7 @@ def test_fft_2d_periodic_rho_fill_exact():
     flex.qs = qs.copy()
     flex.dx = dx
     flex.dy = dy
-    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "Periodic"
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "periodic"
     flex.initialize()
     flex.run()
     flex.finalize()
@@ -129,18 +129,18 @@ def test_fft_2d_periodic_rho_fill_exact():
     np.testing.assert_allclose(flex.w, w_exact, rtol=1e-10)
 
     # Deflection must be deeper (more negative) than with air fill (rho_fill=0)
-    flex_air = _run(qs, bc_w="Periodic", bc_e="Periodic", bc_n="Periodic", bc_s="Periodic")
+    flex_air = _run(qs, bc_w="periodic", bc_e="periodic", bc_n="periodic", bc_s="periodic")
     assert flex.w.min() < flex_air.w.min(), (
         "water fill (weaker Winkler restoring) should produce deeper deflection than air fill"
     )
 
 
 # ---------------------------------------------------------------------------
-# Periodic with sigma_xx: exact match
+# periodic with sigma_xx: exact match
 # ---------------------------------------------------------------------------
 
 def test_fft_2d_periodic_sigma_xx_exact():
-    """2-D FFT (Periodic) with sigma_xx matches the exact spectral formula."""
+    """2-D FFT (periodic) with sigma_xx matches the exact spectral formula."""
     Nx, Ny = 64, 64
     Lx, Ly = Nx * dx, Ny * dy
     nx_waves, ny_waves = 2, 3
@@ -153,7 +153,7 @@ def test_fft_2d_periodic_sigma_xx_exact():
     sigma_xx = 2e8
     qs = q0 * np.cos(kx * X) * np.cos(ky * Y)
 
-    flex = _run(qs, bc_w="Periodic", bc_e="Periodic", bc_n="Periodic", bc_s="Periodic",
+    flex = _run(qs, bc_w="periodic", bc_e="periodic", bc_n="periodic", bc_s="periodic",
                 sigma_xx=sigma_xx)
 
     K2 = kx**2 + ky**2
@@ -162,7 +162,7 @@ def test_fft_2d_periodic_sigma_xx_exact():
 
 
 # ---------------------------------------------------------------------------
-# Zero-padded: agrees with SAS (both use NoOutsideLoads assumption)
+# Zero-padded: agrees with SAS (both use no_outside_loads assumption)
 # ---------------------------------------------------------------------------
 
 def test_fft_2d_padded_vs_sas():
@@ -242,7 +242,7 @@ def test_fft_2d_sigma_yy_monotonicity():
 
 
 def test_fft_2d_periodic_sigma_xy_exact():
-    """2-D FFT (Periodic) with sigma_xy matches the exact spectral formula for both diagonals.
+    """2-D FFT (periodic) with sigma_xy matches the exact spectral formula for both diagonals.
 
     A separable cos(kx·X)·cos(ky·Y) load has rfft2 peaks at both (kx,+ky)
     and (kx,−ky), which see different denominators when σ_xy ≠ 0 and cannot
@@ -270,8 +270,8 @@ def test_fft_2d_periodic_sigma_xy_exact():
 
     # Diagonal (+): Kx=+kx, Ky=+ky → denom includes +2σ_xy·Te·kx·ky
     qs_plus = q0 * np.cos(kx * X + ky * Y)
-    flex_plus = _run(qs_plus, bc_w="Periodic", bc_e="Periodic",
-                     bc_n="Periodic", bc_s="Periodic",
+    flex_plus = _run(qs_plus, bc_w="periodic", bc_e="periodic",
+                     bc_n="periodic", bc_s="periodic",
                      sigma_xx=0.0, sigma_yy=0.0, sigma_xy=sigma_xy)
     denom_plus  = D * K2**2 + 2.0 * sigma_xy * Te * kx * ky + drho * g
     w_exact_plus = -q0 / denom_plus * np.cos(kx * X + ky * Y)
@@ -279,8 +279,8 @@ def test_fft_2d_periodic_sigma_xy_exact():
 
     # Diagonal (−): Kx=+kx, Ky=−ky → denom includes −2σ_xy·Te·kx·ky
     qs_minus = q0 * np.cos(kx * X - ky * Y)
-    flex_minus = _run(qs_minus, bc_w="Periodic", bc_e="Periodic",
-                      bc_n="Periodic", bc_s="Periodic",
+    flex_minus = _run(qs_minus, bc_w="periodic", bc_e="periodic",
+                      bc_n="periodic", bc_s="periodic",
                       sigma_xx=0.0, sigma_yy=0.0, sigma_xy=sigma_xy)
     denom_minus  = D * K2**2 - 2.0 * sigma_xy * Te * kx * ky + drho * g
     w_exact_minus = -q0 / denom_minus * np.cos(kx * X - ky * Y)
@@ -297,19 +297,19 @@ def test_fft_2d_periodic_sigma_xy_exact():
 # ---------------------------------------------------------------------------
 
 def test_fft_2d_padded_matches_manual_padding():
-    """2-D auto-padded FFT matches FFT/Periodic on the manually padded domain.
+    """2-D auto-padded FFT matches FFT/periodic on the manually padded domain.
 
-    The FFT solver pads by 4α in both x and y when BCs are not Periodic
+    The FFT solver pads by 4α in both x and y when BCs are not periodic
     (where α = (4D/Δρg)^0.25 is the 1-D flexural parameter used for the
     padding estimate).  This test verifies that the internal padding produces
-    bit-for-bit the same result as running FFT/Periodic on an explicitly
+    bit-for-bit the same result as running FFT/periodic on an explicitly
     constructed padded domain — i.e., the two code paths are equivalent.
     """
     N  = 60
     qs = np.zeros((N, N))
     qs[25:35, 25:35] = 1e6
 
-    flex_auto = _run(qs)   # non-Periodic BCs → internal zero-padding
+    flex_auto = _run(qs)   # non-periodic BCs → internal zero-padding
 
     # Replicate the padding formula used inside f2d.FFT
     D_val = E * Te**3 / (12.0 * (1.0 - nu**2))
@@ -318,8 +318,8 @@ def test_fft_2d_padded_matches_manual_padding():
     pad_y = int(np.ceil(4.0 * alpha / dy))
     qs_padded = np.pad(qs, ((pad_y, pad_y), (pad_x, pad_x)), mode="constant")
 
-    flex_manual = _run(qs_padded, bc_w="Periodic", bc_e="Periodic",
-                                  bc_n="Periodic", bc_s="Periodic")
+    flex_manual = _run(qs_padded, bc_w="periodic", bc_e="periodic",
+                                  bc_n="periodic", bc_s="periodic")
 
     np.testing.assert_allclose(
         flex_auto.w,

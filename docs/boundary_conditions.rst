@@ -8,12 +8,12 @@ slope, bending moment, and shear force — vanish at that edge.
 
 The spectral (FFT) and analytical-superposition (SAS / SAS_NG) methods do
 not use these named conditions.  FFT zero-pads the domain by
-:math:`4\alpha` on each side (approximating ``NoOutsideLoads`` except when
-all edges are set to ``Periodic``), and SAS / SAS_NG always assume
-``NoOutsideLoads``.
+:math:`4\alpha` on each side (approximating ``no_outside_loads`` except when
+all edges are set to ``periodic``), and SAS / SAS_NG always assume
+``no_outside_loads``.
 
 The following figure from Wickert (2016) illustrates five of the six
-conditions (``0Displacement0Moment`` was added after publication):
+conditions (``zero_displacement_zero_moment`` was added after publication):
 
 .. figure:: _static/fig4_bc_schematics.png
    :width: 55%
@@ -22,14 +22,14 @@ conditions (``0Displacement0Moment`` was added after publication):
 
    Schematics of five FD boundary condition types (a–e) from Wickert (2016),
    Fig. 4 (`CC BY 3.0 <https://creativecommons.org/licenses/by/3.0/>`_).
-   ``0Displacement0Moment`` (added post-publication) is not shown.
+   ``zero_displacement_zero_moment`` (added post-publication) is not shown.
 
 .. tip::
 
    Flexural solutions can be sensitive to boundary conditions.  When in
    doubt, use :func:`~gflex.pad_domain` (2-D) or
    :func:`~gflex.pad_domain_1d` (1-D) to push the boundaries far from the
-   region of interest, and choose ``0Moment0Shear`` (free end) to minimise
+   region of interest, and choose ``zero_moment_zero_shear`` (free end) to minimise
    their influence.
 
 ----
@@ -83,46 +83,46 @@ geological context, and ball-and-stick diagrams appear in the sections below.
      - Structural mechanics
      - Geophysical
      - Description
-   * - ``0Displacement0Slope``
+   * - ``zero_displacement_zero_slope``
      - :math:`w`,\ :math:`S`
      - clamped end
      - —
      - No deflection, no rotation
-   * - ``0Displacement0Moment``
+   * - ``zero_displacement_zero_moment``
      - :math:`w`,\ :math:`M`
      - simply supported
      - —
      - No deflection, free to rotate
-   * - ``0Moment0Shear``
+   * - ``zero_moment_zero_shear``
      - :math:`M`,\ :math:`V`
      - free end
      - broken plate
      - Free, unsupported plate end
-   * - ``0Slope0Shear``
+   * - ``zero_slope_zero_shear``
      - :math:`S`,\ :math:`V`
      - guided end
      - —
      - Plate is level at edge, free to deflect; no shear
-   * - ``Mirror``
+   * - ``mirror``
      - :math:`S`,\ :math:`V`
      - —
      - —
      - Even reflection; model half of a symmetric system
-   * - ``Periodic``
+   * - ``periodic``
      - —
      - —
      - —
      - Domain tiles infinitely in both directions
 
 The "Geophysical" column reflects established usage in the lithospheric
-flexure literature.  Only ``0Moment0Shear`` carries a geophysical-specific
+flexure literature.  Only ``zero_moment_zero_shear`` carries a geophysical-specific
 name ("broken plate"); the remaining conditions are referred to by their
 structural-mechanics names, or have no name at all.  This is a genuine gap
 in the discipline's vocabulary rather than a gap in documentation.
 
 ----
 
-0Displacement0Slope
+zero_displacement_zero_slope
 -------------------
 
 Zero displacement and zero slope: the plate is fully clamped at the
@@ -145,11 +145,11 @@ physical plate edge.
 .. figure:: _static/bc_diagram_0Displacement0Slope.svg
    :width: 80%
    :align: center
-   :alt: Diagram of the 0Displacement0Slope (clamped end) boundary condition
+   :alt: Diagram of the zero_displacement_zero_slope (clamped end) boundary condition
 
    *Clamped end* — zero deflection and zero slope at the boundary.
 
-0Displacement0Moment
+zero_displacement_zero_moment
 --------------------
 
 Zero displacement and zero bending moment: the classical simply-supported
@@ -168,41 +168,41 @@ is the natural condition for sine-series (Discrete Sine Transform) spectral
 solutions, where pinning both ends in deflection and freeing them in moment
 yields an odd-periodic extension that supports spectral computation without
 edge artefacts.  Sine modes vanish at a simply-supported boundary; cosine
-modes vanish at a ``Mirror`` boundary (see below).
+modes vanish at a ``mirror`` boundary (see below).
 
 .. _contrast-with-mirror:
 
-Contrast with Mirror
+Contrast with mirror
 ~~~~~~~~~~~~~~~~~~~~
 
-``Mirror`` and ``0Displacement0Moment`` are both reflection boundary
-conditions but encode opposite parities.  ``Mirror`` uses an *even*
+``mirror`` and ``zero_displacement_zero_moment`` are both reflection boundary
+conditions but encode opposite parities.  ``mirror`` uses an *even*
 reflection (:math:`w_\text{ghost} = +w_\text{interior}`): the symmetry
 plane lies between the last real node and its ghost, the plate is horizontal
 at the boundary, and the deflection there is generally non-zero — making it
 the correct choice for modelling one half of a symmetric system.
-``0Displacement0Moment`` uses an *odd* reflection
+``zero_displacement_zero_moment`` uses an *odd* reflection
 (:math:`w_\text{ghost} = -w_\text{interior}`): the boundary node is the
 fixed point of the reflection, so :math:`w = 0` there by definition, and
 the plate is free to rotate — the simply-supported end.  Sine modes
-satisfy ``0Displacement0Moment``; cosine modes satisfy ``Mirror``.
+satisfy ``zero_displacement_zero_moment``; cosine modes satisfy ``mirror``.
 
 .. figure:: _static/stencil_mirror_vs_0d0m.svg
    :width: 90%
    :align: center
    :alt: Even and odd ghost-node reflections compared
 
-   Even reflection (``Mirror``, left) vs. odd reflection (``0Displacement0Moment``, right):
+   Even reflection (``mirror``, left) vs. odd reflection (``zero_displacement_zero_moment``, right):
    the same four real nodes produce ghost values of opposite sign.
 
 .. figure:: _static/bc_diagram_0Displacement0Moment.svg
    :width: 80%
    :align: center
-   :alt: Diagram of the 0Displacement0Moment (simply supported) boundary condition
+   :alt: Diagram of the zero_displacement_zero_moment (simply supported) boundary condition
 
    *Simply supported* — zero deflection, free to rotate; no bending moment transmitted.
 
-0Moment0Shear
+zero_moment_zero_shear
 -------------
 
 The natural condition at a free edge: no bending moment and no shear
@@ -219,7 +219,7 @@ stays homogeneous.
 lithospheric flexure literature, referring to a plate whose edge is
 fractured and therefore transmits neither bending moment nor shear.
 
-*Geological context:* ``0Moment0Shear`` is the most physically motivated
+*Geological context:* ``zero_moment_zero_shear`` is the most physically motivated
 of the six conditions for Earth science applications:
 
 - Far-field boundary of an interior-loaded domain, where the plate
@@ -234,11 +234,11 @@ of the six conditions for Earth science applications:
 .. figure:: _static/bc_diagram_0Moment0Shear.svg
    :width: 80%
    :align: center
-   :alt: Diagram of the 0Moment0Shear (free end) boundary condition
+   :alt: Diagram of the zero_moment_zero_shear (free end) boundary condition
 
    *Free end* — no bending moment and no shear force; the plate ends freely ("broken plate").
 
-0Slope0Shear
+zero_slope_zero_shear
 ------------
 
 Zero slope and zero shear force: the plate is level at the boundary but
@@ -250,23 +250,23 @@ geophysical name.
 
 *Geological context:* No geophysical use case has been identified for this
 condition, and gFlex issues a warning when it is selected.  Although it
-superficially resembles ``Mirror`` — both enforce zero slope at the
+superficially resembles ``mirror`` — both enforce zero slope at the
 boundary — the two use different finite-difference stencils and produce
 noticeably different solutions, including well away from the boundary.
-``Mirror`` agrees with analytical solutions for symmetric problems;
-``0Slope0Shear`` does not.  For any problem involving a plane of symmetry,
-``Mirror`` is the correct choice.
+``mirror`` agrees with analytical solutions for symmetric problems;
+``zero_slope_zero_shear`` does not.  For any problem involving a plane of symmetry,
+``mirror`` is the correct choice.
 
-``0Slope0Shear`` is retained for mathematical completeness.
+``zero_slope_zero_shear`` is retained for mathematical completeness.
 
 .. figure:: _static/bc_diagram_0Slope0Shear.svg
    :width: 80%
    :align: center
-   :alt: Diagram of the 0Slope0Shear (guided end) boundary condition
+   :alt: Diagram of the zero_slope_zero_shear (guided end) boundary condition
 
    *Guided end* — zero slope, no shear force; plate is level and free to deflect.
 
-Mirror
+mirror
 ------
 
 Even reflection at the boundary: the system is identical on both sides,
@@ -276,28 +276,28 @@ interior node (:math:`w_\text{ghost} = +w_\text{interior}`), the plate is
 horizontal at the boundary, and the deflection there is generally non-zero.
 Naturally compatible with cosine-series (Discrete Cosine Transform)
 solutions.  For the distinction between even and odd reflections, see
-:ref:`contrast-with-mirror` in the ``0Displacement0Moment`` section above.
+:ref:`contrast-with-mirror` in the ``zero_displacement_zero_moment`` section above.
 
 *Standard names:* No standard structural-mechanics or geophysical name.
 The condition is universally understood as a symmetry or mirror boundary.
 
-*Geological context:* ``Mirror`` applies wherever the load and plate
+*Geological context:* ``mirror`` applies wherever the load and plate
 geometry are symmetric about the boundary plane:
 
 - One flank of a mountain range, orogenic belt, or subduction trench
 - One side of a continental ice sheet or ice cap
 - Half of a foreland basin profile
 - One quarter of a bilaterally symmetric ice dome or volcanic edifice
-  (``Mirror`` on two perpendicular axes)
+  (``mirror`` on two perpendicular axes)
 
 .. figure:: _static/bc_diagram_Mirror.svg
    :width: 80%
    :align: center
-   :alt: Diagram of the Mirror (symmetry plane) boundary condition
+   :alt: Diagram of the mirror (symmetry plane) boundary condition
 
    *Symmetry plane* — even reflection; use when the system is symmetric about the boundary.
 
-Periodic
+periodic
 --------
 
 Wrap-around: the domain tiles infinitely in both directions, and the
@@ -306,7 +306,7 @@ spectral solutions, where periodicity is inherent to the transform.
 
 *Standard names:* No standard structural-mechanics or geophysical name.
 
-*Geological context:* ``Periodic`` is appropriate when the load pattern
+*Geological context:* ``periodic`` is appropriate when the load pattern
 genuinely repeats, or when the domain is large enough relative to the
 flexural wavelength that the periodic images of the load do not influence
 the region of interest:
@@ -314,7 +314,7 @@ the region of interest:
 - Seamount or volcanic chain
 - Long linear load — mountain belt, fold-and-thrust belt, subduction
   trench, or rift system — where individual valley structure is below
-  the flexural wavelength (though ``Mirror`` at both flanks may be
+  the flexural wavelength (though ``mirror`` at both flanks may be
   preferable for a bilaterally symmetric belt)
 - Continental-scale glacial load
 - Broad-scale FFT calculations
@@ -322,6 +322,6 @@ the region of interest:
 .. figure:: _static/bc_diagram_Periodic.svg
    :width: 80%
    :align: center
-   :alt: Diagram of the Periodic boundary condition
+   :alt: Diagram of the periodic boundary condition
 
-   *Periodic* — the domain wraps around; opposite edges are connected.
+   *periodic* — the domain wraps around; opposite edges are connected.

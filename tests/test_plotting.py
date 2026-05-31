@@ -38,7 +38,7 @@ def _1d_fd():
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te * np.ones(N);  flex.qs = qs;  flex.dx = _dx
-    flex.bc_west = flex.bc_east = "Periodic"
+    flex.bc_west = flex.bc_east = "periodic"
     flex.initialize();  flex.run();  flex.finalize()
     return flex
 
@@ -63,7 +63,7 @@ def _1d_fft():
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te;  flex.qs = qs;  flex.dx = _dx
-    flex.bc_west = flex.bc_east = "Periodic"
+    flex.bc_west = flex.bc_east = "periodic"
     flex.initialize();  flex.run();  flex.finalize()
     return flex
 
@@ -91,7 +91,7 @@ def _2d_fd():
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te * np.ones((N, N));  flex.qs = qs
     flex.dx = flex.dy = _dx
-    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "Periodic"
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "periodic"
     flex.initialize();  flex.run();  flex.finalize()
     return flex
 
@@ -116,7 +116,7 @@ def _2d_fft():
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
     flex.te = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx   # scalar Te required
-    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "Periodic"
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "periodic"
     flex.initialize();  flex.run();  flex.finalize()
     return flex
 

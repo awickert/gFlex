@@ -59,7 +59,7 @@ flex.rho_m = rho_m;  flex.rho_fill = rho_fill
 flex.te = Te_grid
 flex.qs = qs
 flex.dx = dx;  flex.dy = dy
-flex.bc_west = flex.bc_east = flex.bc_south = flex.bc_north = "0Moment0Shear"
+flex.bc_west = flex.bc_east = flex.bc_south = flex.bc_north = "zero_moment_zero_shear"
 flex.initialize()
 flex.run()
 flex.finalize()

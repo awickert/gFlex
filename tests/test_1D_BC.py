@@ -2,12 +2,12 @@
 """Tests for 1-D FD boundary conditions, cross-validated against analytical references.
 
 Boundary conditions tested:
-  Periodic       — exact via FFT spectral formula (covered in test_1D_FFT.py)
-  Mirror         — exact: cosine eigenfunction; Mirror == Periodic on 2× even-extended domain
-  0Slope0Shear   — same physical intent as Mirror (symmetry BC) but different stencil;
-                   shown here to be genuinely distinct from Mirror
-  0Displacement0Slope — clamped end; vs SAS (infinite plate) for load far from boundary
-  0Moment0Shear  — free end; vs SAS (interior) + Hetényi semi-infinite plate formula (near end)
+  periodic       — exact via FFT spectral formula (covered in test_1D_FFT.py)
+  mirror         — exact: cosine eigenfunction; mirror == periodic on 2× even-extended domain
+  zero_slope_zero_shear   — same physical intent as mirror (symmetry BC) but different stencil;
+                   shown here to be genuinely distinct from mirror
+  zero_displacement_zero_slope — clamped end; vs SAS (infinite plate) for load far from boundary
+  zero_moment_zero_shear  — free end; vs SAS (interior) + Hetényi semi-infinite plate formula (near end)
 
 Grid convention: node-centred, x[i] = i*dx, boundary nodes at x[0]=0 and x[N-1]=(N-1)*dx.
 """
@@ -35,7 +35,7 @@ beta  = (drho * g / (4.0 * D)) ** 0.25   # 1 / alpha
 alpha = 1.0 / beta                         # flexural parameter [m]
 
 
-def _run(qs, method="FD", bc_w="0Moment0Shear", bc_e="0Moment0Shear",
+def _run(qs, method="FD", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_shear",
          sigma_xx=None, te=None):
     """Run a 1-D flexure calculation and return the flex object."""
     flex = F1D()
@@ -61,13 +61,13 @@ def _run(qs, method="FD", bc_w="0Moment0Shear", bc_e="0Moment0Shear",
 
 
 # ---------------------------------------------------------------------------
-# Mirror: exact cosine eigenfunction
+# mirror: exact cosine eigenfunction
 # ---------------------------------------------------------------------------
 
 def test_fd_mirror_cosine_eigenfunction():
-    """FD/Mirror with a cosine load matches the continuous analytical formula.
+    """FD/mirror with a cosine load matches the continuous analytical formula.
 
-    cos(nπx/L) is an eigenfunction of the 4th-order operator for Mirror BCs
+    cos(nπx/L) is an eigenfunction of the 4th-order operator for mirror BCs
     (zero slope at both endpoints): the deflection is the same cosine scaled by
     -q₀/(D(nπ/L)⁴ + Δρg).  The FD solution is exact in shape but has an
     O((k·dx)²) error in the eigenvalue — here < 0.1 % — so rtol = 1e-3 is safe.
@@ -80,55 +80,55 @@ def test_fd_mirror_cosine_eigenfunction():
     q0 = 1e6
     qs = q0 * np.cos(k * x)
 
-    flex = _run(qs, bc_w="Mirror", bc_e="Mirror")
+    flex = _run(qs, bc_w="mirror", bc_e="mirror")
 
     w_exact = -q0 / (D * k**4 + drho * g) * np.cos(k * x)
     np.testing.assert_allclose(flex.w, w_exact, rtol=1e-3)
 
 
 # ---------------------------------------------------------------------------
-# Mirror: exact equivalence with Periodic on the even-extended 2× domain
+# mirror: exact equivalence with periodic on the even-extended 2× domain
 # ---------------------------------------------------------------------------
 
 def test_fd_mirror_equals_periodic_2x():
-    """FD/Mirror on [0, L] equals FD/Periodic on [0, 2L] with even-extended load.
+    """FD/mirror on [0, L] equals FD/periodic on [0, 2L] with even-extended load.
 
-    Mirror BCs at both endpoints of a node-centred grid implement even reflection
+    mirror BCs at both endpoints of a node-centred grid implement even reflection
     about x = 0 and x = L.  The resulting ghost-cell assignments are identical to
-    running a Periodic problem on the period-2(N-1) even extension of the load.
+    running a periodic problem on the period-2(N-1) even extension of the load.
     Agreement to rtol = 1e-10 (limited by the direct solver) confirms both the
-    Mirror stencil and the Periodic stencil implement the same linear system.
+    mirror stencil and the periodic stencil implement the same linear system.
     """
     N = 80
     qs = np.zeros(N)
     qs[10:30] = 1e6    # off-centre so the even extension is non-trivial
 
-    flex_m = _run(qs, bc_w="Mirror", bc_e="Mirror")
+    flex_m = _run(qs, bc_w="mirror", bc_e="mirror")
 
     # Even extension on a node-centred grid: period = 2(N-1), sharing endpoints.
     # qs_ext = [qs[0], ..., qs[N-1], qs[N-2], ..., qs[1]]  (length 2N-2)
     qs_ext = np.concatenate([qs, qs[-2:0:-1]])
-    flex_p = _run(qs_ext, bc_w="Periodic", bc_e="Periodic")
+    flex_p = _run(qs_ext, bc_w="periodic", bc_e="periodic")
 
     np.testing.assert_allclose(flex_m.w, flex_p.w[:N], rtol=1e-8)
 
 
 # ---------------------------------------------------------------------------
-# 0Slope0Shear: distinct from Mirror despite same physical intent
+# zero_slope_zero_shear: distinct from mirror despite same physical intent
 # ---------------------------------------------------------------------------
 
 def test_fd_0slope0shear_and_mirror_are_distinct():
-    """Mirror and 0Slope0Shear are genuinely different stencils.
+    """mirror and zero_slope_zero_shear are genuinely different stencils.
 
     Both BCs are intended to represent the symmetry condition (zero slope and
-    zero shear at the boundary).  Mirror implements exact even reflection in the
-    ghost cells; 0Slope0Shear uses a different finite-difference approximation
+    zero shear at the boundary).  mirror implements exact even reflection in the
+    ghost cells; zero_slope_zero_shear uses a different finite-difference approximation
     that assigns the ghost cell at i = -1 the value of w[3] (not w[1]) for the
     i = 1 stencil row.  This difference propagates throughout the domain.
 
-    For a cosine load — the eigenfunction of the Mirror BC operator — the two
+    For a cosine load — the eigenfunction of the mirror BC operator — the two
     BCs give solutions that differ by > 10 % of the peak amplitude.
-    Mirror agrees with the exact cosine formula; 0Slope0Shear does not.
+    mirror agrees with the exact cosine formula; zero_slope_zero_shear does not.
     """
     N = 200
     L = (N - 1) * dx
@@ -138,24 +138,24 @@ def test_fd_0slope0shear_and_mirror_are_distinct():
     q0 = 1e6
     qs = q0 * np.cos(k * x)
 
-    w_mirror = _run(qs, bc_w="Mirror", bc_e="Mirror").w
-    w_0ss    = _run(qs, bc_w="0Slope0Shear", bc_e="0Slope0Shear").w
+    w_mirror = _run(qs, bc_w="mirror", bc_e="mirror").w
+    w_0ss    = _run(qs, bc_w="zero_slope_zero_shear", bc_e="zero_slope_zero_shear").w
     w_exact  = -q0 / (D * k**4 + drho * g) * np.cos(k * x)
 
-    # Mirror reproduces the cosine eigenfunction
+    # mirror reproduces the cosine eigenfunction
     np.testing.assert_allclose(w_mirror, w_exact, rtol=2e-3)
 
-    # 0Slope0Shear gives a substantially different result
+    # zero_slope_zero_shear gives a substantially different result
     amp = q0 / (D * k**4 + drho * g)       # peak deflection amplitude [m]
     max_diff = np.abs(w_mirror - w_0ss).max() / amp
     assert max_diff > 0.10, (
-        f"Mirror and 0Slope0Shear should differ by > 10 % of the amplitude "
+        f"mirror and zero_slope_zero_shear should differ by > 10 % of the amplitude "
         f"for this cosine load; got {max_diff:.1%}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Large-domain interior checks: 0Slope0Shear, 0Displacement0Slope, 0Moment0Shear
+# Large-domain interior checks: zero_slope_zero_shear, zero_displacement_zero_slope, zero_moment_zero_shear
 # ---------------------------------------------------------------------------
 
 def _central_load_sas_comparison(bc, margin=85):
@@ -166,7 +166,7 @@ def _central_load_sas_comparison(bc, margin=85):
     (cells *margin* to 200-margin) confirms the FD solver produces the
     physically correct infinite-plate solution far from the boundary.
 
-    Note: SAS ignores BC_W / BC_E; it always uses the NoOutsideLoads
+    Note: SAS ignores BC_W / BC_E; it always uses the no_outside_loads
     (infinite-plate) assumption.
     """
     N = 200      # 200 × 4 km = 800 km; α ≈ 66 km → load is ~6α from each edge
@@ -184,26 +184,26 @@ def _central_load_sas_comparison(bc, margin=85):
 
 
 def test_fd_0slope0shear_vs_sas():
-    """FD/0Slope0Shear matches SAS for a central load far from the boundary."""
-    _central_load_sas_comparison("0Slope0Shear")
+    """FD/zero_slope_zero_shear matches SAS for a central load far from the boundary."""
+    _central_load_sas_comparison("zero_slope_zero_shear")
 
 
 def test_fd_0displacement0slope_vs_sas():
-    """FD/0Displacement0Slope matches SAS for a central load far from the boundary."""
-    _central_load_sas_comparison("0Displacement0Slope")
+    """FD/zero_displacement_zero_slope matches SAS for a central load far from the boundary."""
+    _central_load_sas_comparison("zero_displacement_zero_slope")
 
 
 def test_fd_0moment0shear_vs_sas():
-    """FD/0Moment0Shear matches SAS for a central load far from the boundary."""
-    _central_load_sas_comparison("0Moment0Shear")
+    """FD/zero_moment_zero_shear matches SAS for a central load far from the boundary."""
+    _central_load_sas_comparison("zero_moment_zero_shear")
 
 
 # ---------------------------------------------------------------------------
-# 0Moment0Shear: Hetényi semi-infinite plate analytical formula
+# zero_moment_zero_shear: Hetényi semi-infinite plate analytical formula
 # ---------------------------------------------------------------------------
 
 def _hetenyi_free_end(x, x_load, qs_load):
-    """Deflection for a semi-infinite plate (x ≥ 0) with 0Moment0Shear at x = 0.
+    """Deflection for a semi-infinite plate (x ≥ 0) with zero_moment_zero_shear at x = 0.
 
     In gFlex the FD equation is D w'''' + Δρg w = −qs, so a grid cell of
     pressure qs_load [Pa] acts as a line source of strength P = qs_load·dx
@@ -238,12 +238,12 @@ def _hetenyi_free_end(x, x_load, qs_load):
 
 
 def test_fd_0moment0shear_hetenyi():
-    """FD/0Moment0Shear matches the Hetényi semi-infinite plate formula.
+    """FD/zero_moment_zero_shear matches the Hetényi semi-infinite plate formula.
 
     A point load is placed 2α from the free west end.  The domain extends 8α
     beyond the load so the east boundary correction is O(e⁻⁸) < 0.04 %.
 
-    The 0Moment0Shear stencil uses a one-sided finite-difference approximation
+    The zero_moment_zero_shear stencil uses a one-sided finite-difference approximation
     at the boundary cell (first-order in dx/α), giving an O(dx/α) ≈ 6 %
     error at x = 0 for dx = 4 km.  An absolute tolerance of 0.05 m covers
     this near-boundary truncation error while confirming the correct shape and
@@ -257,7 +257,7 @@ def test_fd_0moment0shear_hetenyi():
     qs[ia] = 1e6
     x = np.arange(N) * dx
 
-    flex_fd = _run(qs, bc_w="0Moment0Shear", bc_e="0Displacement0Slope")
+    flex_fd = _run(qs, bc_w="zero_moment_zero_shear", bc_e="zero_displacement_zero_slope")
 
     w_exact = _hetenyi_free_end(x, x[ia], qs[ia])
 
@@ -271,10 +271,10 @@ def test_fd_0moment0shear_hetenyi():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("bc", [
-    "0Moment0Shear",
-    "0Displacement0Slope",
-    "Mirror",
-    "0Slope0Shear",
+    "zero_moment_zero_shear",
+    "zero_displacement_zero_slope",
+    "mirror",
+    "zero_slope_zero_shear",
 ])
 def test_sigma_xx_monotonicity_all_bcs(bc):
     """Tensile sigma_xx reduces deflection; compressive increases it — for every BC."""
@@ -295,14 +295,14 @@ def test_sigma_xx_monotonicity_all_bcs(bc):
 
 
 # ---------------------------------------------------------------------------
-# 0Displacement0Moment: sine eigenfunction
+# zero_displacement_zero_moment: sine eigenfunction
 # ---------------------------------------------------------------------------
 
 def test_fd_0displacement0moment_sine_eigenfunction():
-    """FD/0Displacement0Moment matches the analytical formula for a sine load.
+    """FD/zero_displacement_zero_moment matches the analytical formula for a sine load.
 
     sin(nπx/L) is an eigenfunction of the biharmonic operator for
-    0Displacement0Moment BCs (zero displacement and zero moment at both ends).
+    zero_displacement_zero_moment BCs (zero displacement and zero moment at both ends).
     The exact deflection is:
 
         w = −q₀ / (D·k⁴ + Δρg) · sin(k·x)
@@ -320,7 +320,7 @@ def test_fd_0displacement0moment_sine_eigenfunction():
     q0 = 1e6
     qs = q0 * np.sin(k * x)
 
-    flex = _run(qs, bc_w="0Displacement0Moment", bc_e="0Displacement0Moment")
+    flex = _run(qs, bc_w="zero_displacement_zero_moment", bc_e="zero_displacement_zero_moment")
 
     w_exact = -q0 / (D * k**4 + drho * g) * np.sin(k * x)
     # Near-zero boundary nodes (sin(0)=sin(nπ)≈0 in float) need atol for the
@@ -329,15 +329,15 @@ def test_fd_0displacement0moment_sine_eigenfunction():
 
 
 # ---------------------------------------------------------------------------
-# 0Displacement0Moment: equivalence with Periodic on odd-extended 2× domain
+# zero_displacement_zero_moment: equivalence with periodic on odd-extended 2× domain
 # ---------------------------------------------------------------------------
 
 def test_fd_0displacement0moment_equals_periodic_odd_2x():
-    """FD/0Displacement0Moment on [0, L] equals FD/Periodic on [0, 2L] with odd load.
+    """FD/zero_displacement_zero_moment on [0, L] equals FD/periodic on [0, 2L] with odd load.
 
-    0Displacement0Moment BCs at both endpoints implement odd reflection about
+    zero_displacement_zero_moment BCs at both endpoints implement odd reflection about
     x = 0 and x = L.  The ghost-cell assignments are identical to running a
-    Periodic problem on the period-2(N-1) odd extension of the load.  Agreement
+    periodic problem on the period-2(N-1) odd extension of the load.  Agreement
     to rtol = 1e-8 (limited by the direct solver) confirms both stencils
     implement the same linear system.
 
@@ -350,32 +350,32 @@ def test_fd_0displacement0moment_equals_periodic_odd_2x():
     x = np.arange(N) * dx
     qs = np.sin(k * x)   # q[0] = q[N-1] = 0 by construction
 
-    flex_d = _run(qs, bc_w="0Displacement0Moment", bc_e="0Displacement0Moment")
+    flex_d = _run(qs, bc_w="zero_displacement_zero_moment", bc_e="zero_displacement_zero_moment")
 
     # Odd extension on a node-centred grid: period = 2(N-1), sharing endpoints.
     # qs_ext = [qs[0], ..., qs[N-1], -qs[N-2], ..., -qs[1]]  (length 2N-2)
     qs_ext = np.concatenate([qs, -qs[-2:0:-1]])
-    flex_p = _run(qs_ext, bc_w="Periodic", bc_e="Periodic")
+    flex_p = _run(qs_ext, bc_w="periodic", bc_e="periodic")
 
     # Both boundary nodes sit at the periodic zero-crossing; the FD values
-    # there are ~1e-17 (numerical noise) while the Periodic result is 0.0,
+    # there are ~1e-17 (numerical noise) while the periodic result is 0.0,
     # so atol is needed to avoid a spurious 100 % relative-difference failure.
     np.testing.assert_allclose(flex_d.w, flex_p.w[:N], atol=1e-12)
 
 
 # ---------------------------------------------------------------------------
-# 0Displacement0Moment: half-domain antisymmetric equivalence
+# zero_displacement_zero_moment: half-domain antisymmetric equivalence
 # ---------------------------------------------------------------------------
 
 def test_fd_0displacement0moment_half_domain_antisymmetric():
-    """Half-domain with 0Displacement0Moment at the symmetry edge matches the full domain.
+    """Half-domain with zero_displacement_zero_moment at the symmetry edge matches the full domain.
 
     For an antisymmetric load (q[i] = -q[N-1-i]) on a uniform-Te domain with
-    free (0Moment0Shear) ends, the solution is exactly antisymmetric:
+    free (zero_moment_zero_shear) ends, the solution is exactly antisymmetric:
     w[i] = -w[N-1-i] and in particular w[(N-1)//2] = 0.
 
-    Running the left half alone, with 0Moment0Shear at the free end and
-    0Displacement0Moment at the (virtual) symmetry edge, must produce the same
+    Running the left half alone, with zero_moment_zero_shear at the free end and
+    zero_displacement_zero_moment at the (virtual) symmetry edge, must produce the same
     deflection as the left half of the full-domain solution.  Agreement is exact
     to floating-point precision (rtol = 1e-6 to allow for rounding in the two
     different sparse-system solves).
@@ -385,11 +385,11 @@ def test_fd_0displacement0moment_half_domain_antisymmetric():
     qs_full[20] = +1e6
     qs_full[80] = -1e6   # antisymmetric: 100 - 20 = 80
 
-    flex_full = _run(qs_full, bc_w="0Moment0Shear", bc_e="0Moment0Shear")
+    flex_full = _run(qs_full, bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_shear")
 
     N_half = 51   # cells 0..50
     qs_half = qs_full[:N_half].copy()
-    flex_half = _run(qs_half, bc_w="0Moment0Shear", bc_e="0Displacement0Moment")
+    flex_half = _run(qs_half, bc_w="zero_moment_zero_shear", bc_e="zero_displacement_zero_moment")
 
     # The boundary node w[50] is ~1e-14 in the full domain (exact antisymmetry
     # produces 0 analytically but not to machine precision in two different
@@ -399,7 +399,7 @@ def test_fd_0displacement0moment_half_domain_antisymmetric():
 
 
 # ---------------------------------------------------------------------------
-# 0Displacement0Moment: variable Te (Dirichlet approach)
+# zero_displacement_zero_moment: variable Te (Dirichlet approach)
 # ---------------------------------------------------------------------------
 
 def test_fd_0displacement0moment_variable_Te_boundary_exactly_zero():
@@ -421,7 +421,7 @@ def test_fd_0displacement0moment_variable_Te_boundary_exactly_zero():
     # Linearly varying Te breaks stencil symmetry
     Te_var = np.linspace(20e3, 40e3, N)
 
-    flex = _run(qs, bc_w="0Displacement0Moment", bc_e="0Displacement0Moment",
+    flex = _run(qs, bc_w="zero_displacement_zero_moment", bc_e="zero_displacement_zero_moment",
                 te=Te_var)
 
     assert flex.w[0] == 0.0,  "West boundary must be exactly zero for variable Te"
@@ -436,7 +436,7 @@ def test_fd_0displacement0moment_variable_Te_mirror_symmetry():
     If Te(x) increases left-to-right and Te_flipped(x) = Te(L-x), then for any
     load q, the deflection under Te_flipped is the left-right mirror of the
     deflection under Te.  This holds for any BC that treats both boundaries
-    identically — including 0Displacement0Moment.  This cross-validates that
+    identically — including zero_displacement_zero_moment.  This cross-validates that
     the Dirichlet fix is applied consistently on both sides for variable D.
     """
     N = 80
@@ -446,9 +446,9 @@ def test_fd_0displacement0moment_variable_Te_mirror_symmetry():
     Te_fwd = np.linspace(20e3, 40e3, N)
     Te_rev = Te_fwd[::-1]
 
-    flex_fwd = _run(qs, bc_w="0Displacement0Moment", bc_e="0Displacement0Moment",
+    flex_fwd = _run(qs, bc_w="zero_displacement_zero_moment", bc_e="zero_displacement_zero_moment",
                     te=Te_fwd)
-    flex_rev = _run(qs[::-1], bc_w="0Displacement0Moment", bc_e="0Displacement0Moment",
+    flex_rev = _run(qs[::-1], bc_w="zero_displacement_zero_moment", bc_e="zero_displacement_zero_moment",
                     te=Te_rev)
 
     # Boundary nodes must be exactly zero in both runs (q[0]=q[-1]=0, direct solver)

@@ -25,9 +25,9 @@ Parameters
       thickness.  Requires a grid (``dx``, and ``dy`` in 2-D).
     * ``FFT`` — Spectral (Fast Fourier Transform).  Requires
       scalar (uniform) :math:`T_e`.  Spectrally accurate and fast.  When
-      all boundary conditions are ``Periodic`` the domain tiles exactly;
+      all boundary conditions are ``periodic`` the domain tiles exactly;
       for any other boundary condition the load is zero-padded by
-      :math:`4\alpha` on each side, approximating the ``NoOutsideLoads``
+      :math:`4\alpha` on each side, approximating the ``no_outside_loads``
       condition.  In-plane stresses (:math:`\sigma_{xx}`, :math:`\sigma_{yy}`,
       :math:`\sigma_{xy}`) are supported.
     * ``SAS`` — Superposition of Analytical Solutions.  Constant elastic
@@ -127,12 +127,12 @@ Parameters
 ``BoundaryCondition_West``, ``BoundaryCondition_East``
     Boundary conditions on the west and east edges.
 
-    For FD: ``0Displacement0Slope``, ``0Displacement0Moment``,
-    ``0Moment0Shear``, ``0Slope0Shear``, ``Mirror``, or ``Periodic``.
+    For FD: ``zero_displacement_zero_slope``, ``zero_displacement_zero_moment``,
+    ``zero_moment_zero_shear``, ``zero_slope_zero_shear``, ``mirror``, or ``periodic``.
     See :doc:`boundary_conditions` for the physical meaning of each and
     guidance on choosing.
 
-    For SAS / SAS_NG: ``NoOutsideLoads`` (assumed if left blank).
+    For SAS / SAS_NG: ``no_outside_loads`` (assumed if left blank).
 
 .. note::
 
@@ -219,8 +219,8 @@ Complete examples
 
     numerical:
       GridSpacing_x: 6000
-      BoundaryCondition_West: Periodic
-      BoundaryCondition_East: Periodic
+      BoundaryCondition_West: periodic
+      BoundaryCondition_East: periodic
 
     verbosity:
       Verbose: false
@@ -255,13 +255,13 @@ Complete examples
 
     numerical:
       GridSpacing_x: 4000
-      BoundaryCondition_West: 0Moment0Shear
-      BoundaryCondition_East: 0Displacement0Slope
+      BoundaryCondition_West: zero_moment_zero_shear
+      BoundaryCondition_East: zero_displacement_zero_slope
 
     numerical2D:
       GridSpacing_y: 4000
-      BoundaryCondition_North: Mirror
-      BoundaryCondition_South: 0Slope0Shear
+      BoundaryCondition_North: mirror
+      BoundaryCondition_South: zero_slope_zero_shear
 
     verbosity:
       Verbose: false

@@ -7,7 +7,7 @@ Three properties are checked:
    domain kept square (Lx = Ly), so dx = Ly / (2N) ≠ dy = Ly / N.
    Second-order convergence in max(dx, dy) must still hold.
 
-2. Bilateral symmetry — a square load centred on a non-square Periodic
+2. Bilateral symmetry — a square load centred on a non-square periodic
    domain must produce a deflection that is symmetric in both x and y.
    This catches axis-swap bugs in the stencil assembly.
 
@@ -47,7 +47,7 @@ _drho = _rho_m - _rho_fill
 _alpha = (_D / (_drho * _g)) ** 0.25   # ≈ 47 km
 
 
-def _run(ny, nx, qs, dx, dy, method="FD", bc="0Moment0Shear"):
+def _run(ny, nx, qs, dx, dy, method="FD", bc="zero_moment_zero_shear"):
     flex = F2D()
     flex.quiet = True
     flex.method = method
@@ -81,7 +81,7 @@ def test_2d_fd_nonsquare_convergence_anisotropic():
     gives the manufactured load
         q = (D · (β_x² + β_y²)² + k) · cos(β_x x) · cos(β_y y).
 
-    Periodic BCs on all sides eliminate boundary truncation error so the
+    periodic BCs on all sides eliminate boundary truncation error so the
     measured rate reflects only the interior stencil accuracy.
 
     Grid: Nx = 2·N cells, Ny = N cells, square domain Lx = Ly = L.
@@ -118,7 +118,7 @@ def test_2d_fd_nonsquare_convergence_anisotropic():
         X, Y = np.meshgrid(x, y)   # shape (Ny, Nx)
 
         qs = q_mms(X, Y)
-        flex = _run(Ny, Nx, qs, dx, dy, bc="Periodic")
+        flex = _run(Ny, Nx, qs, dx, dy, bc="periodic")
 
         err = np.max(np.abs(flex.w - w_exact(X, Y)))
         errors.append(err)
@@ -133,7 +133,7 @@ def test_2d_fd_nonsquare_convergence_anisotropic():
 
 
 # ---------------------------------------------------------------------------
-# 2. Bilateral symmetry on non-square Periodic domain
+# 2. Bilateral symmetry on non-square periodic domain
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("nx,ny", [
@@ -143,9 +143,9 @@ def test_2d_fd_nonsquare_convergence_anisotropic():
     (40, 160),   # 1:4 tall
 ])
 def test_2d_fd_nonsquare_symmetry(nx, ny):
-    """Symmetric load on a non-square Periodic domain → symmetric deflection.
+    """Symmetric load on a non-square periodic domain → symmetric deflection.
 
-    A square 6×6-cell load is placed at the domain centre.  Periodic BCs
+    A square 6×6-cell load is placed at the domain centre.  periodic BCs
     extend the solution periodically, so x-reflection about the load centre
     (w[i, j] = w[i, -j]) and y-reflection (w[i, j] = w[-i, j]) must hold
     to within floating-point rounding.
@@ -159,7 +159,7 @@ def test_2d_fd_nonsquare_symmetry(nx, ny):
     cy, cx = ny // 2, nx // 2
     qs[cy - 3 : cy + 3, cx - 3 : cx + 3] = 1e6
 
-    flex = _run(ny, nx, qs, dx, dy, bc="Periodic")
+    flex = _run(ny, nx, qs, dx, dy, bc="periodic")
     w = flex.w
 
     # x-symmetry: w[i, j] == w[i, nx-1-j]  (load is centred on nx/2)
@@ -199,8 +199,8 @@ def test_2d_fd_nonsquare_agrees_with_sas(nx, ny):
     half_load = 3
     qs[cy - half_load : cy + half_load, cx - half_load : cx + half_load] = 1e6
 
-    flex_fd  = _run(ny, nx, qs, dx, dy, method="FD",  bc="0Moment0Shear")
-    flex_sas = _run(ny, nx, qs, dx, dy, method="SAS", bc="0Moment0Shear")
+    flex_fd  = _run(ny, nx, qs, dx, dy, method="FD",  bc="zero_moment_zero_shear")
+    flex_sas = _run(ny, nx, qs, dx, dy, method="SAS", bc="zero_moment_zero_shear")
 
     half = 10
     w_fd  = flex_fd.w [cy - half : cy + half, cx - half : cx + half]

@@ -16,7 +16,7 @@ coefficient α³/8D, and the exponential-cosine-sine formula together.
 Interior agreement with FD
 ---------------------------
 On a large domain with a block load at the centre, SAS (infinite plate)
-and FD (finite plate, 0Moment0Shear BC) agree in the interior once the
+and FD (finite plate, zero_moment_zero_shear BC) agree in the interior once the
 load sits many flexural wavelengths from the boundary.  BC corrections
 decay exponentially with distance from the edge.
 """
@@ -47,7 +47,7 @@ alpha = (4.0 * D / (drho * g)) ** 0.25   # ≈ 66.3 km
 coeff = alpha**3 / (8.0 * D)
 
 
-def _run(qs, method="SAS", bc_w="0Moment0Shear", bc_e="0Moment0Shear"):
+def _run(qs, method="SAS", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_shear"):
     """Run a 1-D flexure calculation and return the flex object."""
     flex = F1D()
     flex.quiet  = True
@@ -112,7 +112,7 @@ def test_1d_sas_vs_fd_large_domain():
     """1-D SAS and FD agree to within 10 mm absolute in the interior.
 
     A 20-cell (80 km) block load at the centre of a 400-cell domain sits
-    ~12 α from each boundary (α ≈ 66 km ≈ 16.6 cells).  The 0Moment0Shear
+    ~12 α from each boundary (α ≈ 66 km ≈ 16.6 cells).  The zero_moment_zero_shear
     BC correction at the 100-cell margin decays as exp(−6 α) ≈ 0.24 %.
     FD truncation error for the block-load modes gives a peak absolute error
     of ~6.6 mm — about 0.09 % of the ~7.5 m peak deflection — but the

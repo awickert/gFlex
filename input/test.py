@@ -25,8 +25,8 @@ flex.te = 30000.0  # *np.ones(500) # Elastic thickness -- scalar but may be an a
 flex.qs = -1e6 * np.ones(100)
 flex.qs[:50] = 0  # surface load stresses
 flex.dx = 4000.0  # grid cell size [m]
-flex.bc_west = "0Displacement0Slope"  # west boundary condition
-flex.bc_east = "0Displacement0Slope"  # east boundary condition
+flex.bc_west = "zero_displacement_zero_slope"  # west boundary condition
+flex.bc_east = "zero_displacement_zero_slope"  # east boundary condition
 
 flex.initialize()
 flex.run()

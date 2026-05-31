@@ -21,10 +21,10 @@ flex.qs = np.zeros((720, 360))  # Template array for surface load stresses
 flex.qs[100:150, 100:150] += 1e6  # Populating this template
 flex.dx = 80000.0
 flex.dy = 111000.0
-flex.bc_west = "Periodic"  # west boundary condition
-flex.bc_east = "Periodic"  # east boundary condition
-flex.bc_south = "Periodic"  # south boundary condition
-flex.bc_north = "Periodic"  # north boundary condition
+flex.bc_west = "periodic"  # west boundary condition
+flex.bc_east = "periodic"  # east boundary condition
+flex.bc_south = "periodic"  # south boundary condition
+flex.bc_north = "periodic"  # north boundary condition
 
 flex.initialize()
 flex.run()
