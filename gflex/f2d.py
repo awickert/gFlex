@@ -24,14 +24,7 @@ import warnings
 import numpy as np
 import scipy
 from scipy.special import kei
-from scipy.sparse.linalg import LinearOperator, lgmres, spsolve
-
-try:
-    import pyamg as _pyamg
-    _HAS_PYAMG = True
-except ImportError:
-    _pyamg = None
-    _HAS_PYAMG = False
+from scipy.sparse.linalg import spsolve
 
 from gflex.base import Flexure
 
@@ -327,8 +320,7 @@ class F2D(Flexure):
         ``'SAS'`` (superposition of analytical solutions, constant *Te*
         only), or ``'SAS_NG'`` (SAS on an ungridded point cloud).
     Solver : str
-        Linear solver: ``'direct'`` (sparse LU, default) or
-        ``'iterative'``.
+        Linear solver: ``'direct'`` (sparse LU, default).
     g : float
         Gravitational acceleration [m s⁻²].
     E : float
@@ -954,52 +946,6 @@ class F2D(Flexure):
             self.D[0, :] = self.D[-2, :]
         if self.BC_Rigidity_S == "periodic":
             self.D[-1, :] = self.D[-3, :]
-
-    def _fft_preconditioner(self):
-        """Return (M, x0): FFT-based LinearOperator approximating A0⁻¹ and
-        FFT warm-start vector, both for the geometric-mean rigidity D0.
-
-        The preconditioner applies the inverse of the constant-rigidity
-        biharmonic operator in the wavenumber domain:
-            M·v = IFFT2( FFT2(v_grid) / (D0·(kx²+ky²)² + Δρg) )
-        This clusters the spectrum of M·A near 1 for modest Te contrast,
-        outperforming ILU which ignores the near-biharmonic structure.
-        The warm start x0 = M·(−qs) is the full FFT solve at rigidity D0.
-        """
-        ny, nx = self.qs.shape
-        D_vals = np.asarray(self.D).ravel()
-        D_vals = D_vals[np.isfinite(D_vals) & (D_vals > 0)]
-        D0 = float(np.exp(np.mean(np.log(D_vals))))
-
-        kx = np.fft.rfftfreq(nx, d=self.dx) * 2.0 * np.pi
-        ky = np.fft.fftfreq(ny, d=self.dy) * 2.0 * np.pi
-        Kx, Ky = np.meshgrid(kx, ky)
-        denom = D0 * (Kx**2 + Ky**2)**2 + self.drho * self.g
-
-        def matvec(v):
-            v_grid = v.reshape(ny, nx)
-            W = np.fft.rfft2(v_grid) / denom
-            return np.fft.irfft2(W, s=(ny, nx)).real.flatten()
-
-        n = ny * nx
-        M = LinearOperator((n, n), matvec=matvec)
-        x0 = matvec((-self.qs).flatten())
-        return M, x0
-
-    def _amg_preconditioner(self):
-        """Return (M, x0): AMG-based LinearOperator and warm-start vector.
-
-        Builds a smoothed-aggregation multigrid hierarchy from the assembled
-        coefficient matrix.  Each preconditioner application performs one
-        V-cycle, which achieves grid-independent convergence for smooth-Te
-        problems and substantially better convergence than the FFT preconditioner
-        for discontinuous or high-contrast Te fields.  Requires PyAMG.
-        """
-        A = self.coeff_matrix.tocsr()
-        ml = _pyamg.smoothed_aggregation_solver(A, B=np.ones((A.shape[0], 1)))
-        M = ml.aspreconditioner()
-        x0 = M @ (-self.qs).flatten()
-        return M, x0
 
     def get_coeff_values(self):
         """
@@ -2154,8 +2100,8 @@ class F2D(Flexure):
         from boundary ghost cells are zeroed before assembly.
 
         The result is stored in ``self.coeff_matrix`` as a
-        :class:`scipy.sparse.dia_matrix`, ready for the direct or iterative
-        solver called by :meth:`F2D.FD`.
+        :class:`scipy.sparse.dia_matrix`, ready for the direct solver called
+        by :meth:`F2D.FD`.
         """
         ##########################################################
         # INCORPORATE BOUNDARY CONDITIONS INTO COEFFICIENT ARRAY #
@@ -2536,11 +2482,8 @@ class F2D(Flexure):
     def fd_solve(self):
         """
         w = fd_solve()
-        Sparse flexural response calculation.
-        Can be performed by direct factorization with UMFpack (defuault)
-        or by an iterative minimum residual technique
-        These are both the fastest of the standard Scipy builtin techniques in
-        their respective classes
+        Sparse flexural response calculation via direct factorization with
+        UMFpack.
         Requires the coefficient matrix from "2D.coeff_matrix"
         """
 
@@ -2556,46 +2499,20 @@ class F2D(Flexure):
                 self.maxFlexuralWavelength_ncells_y,
             )
 
+        if self.Debug:
+            print("Using direct solution with UMFpack")
+        elif self.Solver not in ("direct", "Direct"):
+            if not self.Quiet:
+                print("Solution type not understood:")
+                print("Defaulting to direct solution with UMFpack")
+
         # qs negative so the plate bends down under a positive (downward) load
         # and up under a negative load (material removed).  The coefficient
         # matrix A encodes D∇⁴ + Δρg, which is positive definite; solving
         # A·w = −q therefore gives w < 0 for q > 0, matching the
         # positive-upward sign convention used throughout gFlex.
         q0vector = -self.qs.reshape(-1, order="C")
-        if self.Solver == "iterative" or self.Solver == "Iterative":
-            if self.Debug:
-                print(
-                    "Using generalized minimal residual method for iterative solution"
-                )
-            if self.Verbose:
-                print(
-                    "Converging to a tolerance of",
-                    self.iterative_ConvergenceTolerance,
-                    "m between iterations",
-                )
-            M, x0 = self._fft_preconditioner()
-            wvector, info = lgmres(
-                self.coeff_matrix, q0vector, M=M, x0=x0,
-                rtol=self.iterative_ConvergenceTolerance, maxiter=40,
-            )
-            if info != 0:
-                if not self.Quiet:
-                    print(
-                        f"FFT-preconditioned lgmres did not converge (info={info}); "
-                        "falling back to direct solver."
-                    )
-                wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
-        else:
-            if self.Solver == "direct" or self.Solver == "Direct":
-                if self.Debug:
-                    print("Using direct solution with UMFpack")
-            else:
-                if not self.Quiet:
-                    print("Solution type not understood:")
-                    print("Defaulting to direct solution with UMFpack")
-            wvector = spsolve(
-                self.coeff_matrix, q0vector, use_umfpack=True
-            )
+        wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
 
         # Reshape into grid
         self.w = wvector.reshape(self.qs.shape)
