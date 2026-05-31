@@ -14,7 +14,7 @@ flex.g = 9.8  # acceleration due to gravity
 flex.E = 65e9  # Young's Modulus
 flex.nu = 0.25  # Poisson's Ratio
 flex.rho_m = 3300.0  # MantleDensity
-flex.rho_fill = 0.0  # InfiillMaterialDensity
+flex.rho_fill = 0.0  # InfillMaterialDensity
 
 flex.Te = 80000.0  # Elastic thickness -- scalar but may be an array
 flex.qs = np.zeros((720, 360))  # Template array for surface load stresses
