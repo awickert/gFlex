@@ -22,6 +22,7 @@ import time
 import warnings
 
 import numpy as np
+from scipy.signal import fftconvolve
 from scipy.sparse import spdiags
 from scipy.sparse.linalg import spsolve
 
@@ -610,21 +611,16 @@ class F1D(Flexure):
 
     def spatialDomainGridded(self):
         """Compute deflection by summing 1D Green's functions over the load grid."""
-        self.w = np.zeros(self.nx)  # Deflection array
-
-        for i in range(self.nx):
-            # Loop over locations that have loads, and sum
-            if self.qs[i]:
-                dist = abs(self._x_local[i] - self._x_local)
-                # -= b/c pos load leads to neg (downward) deflection
-                self.w -= (
-                    self.qs[i]
-                    * self.coeff
-                    * self.dx
-                    * np.exp(-dist / self.alpha)
-                    * (np.cos(dist / self.alpha) + np.sin(dist / self.alpha))
-                )
-        # No need to return: w already belongs to "self"
+        # Build the beam Green's function kernel for all relative offsets
+        # [-(nx-1), nx-1].  G(r) = exp(-r/α)(cos(r/α) + sin(r/α)) is even,
+        # so the kernel is symmetric about its centre.
+        r = np.abs(np.arange(-(self.nx - 1), self.nx)) * self.dx
+        kernel = np.exp(-r / self.alpha) * (
+            np.cos(r / self.alpha) + np.sin(r / self.alpha)
+        )
+        # fftconvolve is identical to the loop (positive load → negative
+        # deflection, hence the minus sign) but O(N log N) instead of O(N²).
+        self.w = -self.coeff * fftconvolve(self.qs * self.dx, kernel, mode="same")
 
     # NONUNIFORM DX (NO GRID): ARBITRARILY-SPACED POINT LOADS
     # So essentially a sum of Green's functions for flexural response
