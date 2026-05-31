@@ -1171,17 +1171,10 @@ class Flexure(Utility, Plotting):
             # If wOutFile exists, has already been set by a setter
             self.wOutFile
         except AttributeError:
-            # Otherwise, it needs to be set by an configuration file
-            try:
-                self.wOutFile = self.configGet(
-                    "string", "output", "DeflectionOut", optional=True
-                )
-            except Exception:
-                # if there is no parsable output string, do not generate output;
-                # this allows the user to leave the line blank and produce no output
-                if self.Debug:
-                    print("No output filename provided:")
-                    print("  not writing any deflection output to file")
+            # Otherwise, set from config; None means no output file
+            self.wOutFile = self.configGet(
+                "string", "output", "DeflectionOut", optional=True
+            )
         else:
             if self.Verbose:
                 print("Output filename provided.")
@@ -1614,12 +1607,7 @@ class Flexure(Utility, Plotting):
         try:
             self.xw
         except AttributeError:
-            try:
-                self.xw = self.configGet("string", "input", "xw", optional=True)
-                if self.xw == "":
-                    self.xw = None
-            except Exception:
-                self.xw = None
+            self.xw = self.configGet("string", "input", "xw", optional=True) or None
         # If strings, load arrays
         if isinstance(self.xw, str):
             self.xw = self.loadFile(self.xw)
@@ -1628,17 +1616,12 @@ class Flexure(Utility, Plotting):
                 # already set by setter?
                 self.yw
             except AttributeError:
-                try:
-                    self.yw = self.configGet("string", "input", "yw", optional=True)
-                    if self.yw == "":
-                        self.yw = None
-                except Exception:
-                    self.yw = None
+                self.yw = self.configGet("string", "input", "yw", optional=True) or None
             # At this point, can check if we have both None or both defined
             if (self.xw is not None and self.yw is None) or (
                 self.xw is None and self.yw is not None
             ):
-                sys.exit(
+                raise ValueError(
                     "SAS_NG output at specified points requires both xw and yw to be defined"
                 )
             # All right, now just finish defining
