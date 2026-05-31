@@ -270,8 +270,8 @@ class F1D(Flexure):
         Grid spacing [m].
     BC_W, BC_E : str
         Boundary conditions on the west (left) and east (right) ends.
-        FD options: ``'0Displacement0Slope'``, ``'0Slope0Shear'``,
-        ``'0Moment0Shear'``, ``'Mirror'``, ``'Periodic'``.
+        FD options: ``'0Displacement0Slope'``, ``'0Displacement0Moment'``,
+        ``'0Slope0Shear'``, ``'0Moment0Shear'``, ``'Mirror'``, ``'Periodic'``.
         SAS option: ``'NoOutsideLoads'`` (the default when unset).
     sigma_xx : float, optional
         Normal stress applied at the plate ends [Pa].  FD only.

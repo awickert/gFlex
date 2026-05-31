@@ -344,8 +344,8 @@ class F2D(Flexure):
         Grid spacing in the y (row) direction [m].
     BC_W, BC_E, BC_N, BC_S : str
         Boundary conditions on the west, east, north, and south edges.
-        FD options: ``'0Displacement0Slope'``, ``'0Slope0Shear'``,
-        ``'0Moment0Shear'``, ``'Mirror'``, ``'Periodic'``.
+        FD options: ``'0Displacement0Slope'``, ``'0Displacement0Moment'``,
+        ``'0Slope0Shear'``, ``'0Moment0Shear'``, ``'Mirror'``, ``'Periodic'``.
         SAS option: ``'NoOutsideLoads'`` (the default when unset).
     sigma_xx : float, optional
         Normal in-plane stress in the x-direction :math:`\\sigma_{xx}` [Pa].
