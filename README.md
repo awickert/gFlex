@@ -61,24 +61,24 @@ mode:
   dimension: 2
   method: FD
 parameter:
-  YoungsModulus: 6.5e10
-  PoissonsRatio: 0.25
-  GravAccel: 9.8
-  MantleDensity: 3300
-  InfillMaterialDensity: 0
+  youngs_modulus: 6.5e10
+  poissons_ratio: 0.25
+  gravitational_acceleration: 9.8
+  mantle_density: 3300
+  infill_material_density: 0
 input:
-  Loads: path/to/loads.txt
-  ElasticThickness: path/to/Te.txt
+  loads: path/to/loads.txt
+  elastic_thickness: path/to/Te.txt
 output:
-  Plot: both
+  plot: both
 numerical:
-  GridSpacing_x: 4000
-  BoundaryCondition_West: 0Moment0Shear
-  BoundaryCondition_East: 0Displacement0Slope
+  grid_spacing_x: 4000
+  boundary_condition_west: zero_moment_zero_shear
+  boundary_condition_east: zero_displacement_zero_slope
 numerical2D:
-  GridSpacing_y: 4000
-  BoundaryCondition_North: Mirror
-  BoundaryCondition_South: 0Slope0Shear
+  grid_spacing_y: 4000
+  boundary_condition_north: mirror
+  boundary_condition_south: zero_slope_zero_shear
 ```
 
 For a full parameter reference, see the [Configuration Files](https://gflex.readthedocs.io/en/latest/configuration.html) page on ReadTheDocs.
@@ -89,18 +89,18 @@ Six boundary conditions are available for FD solutions (see also Table 1 in Wick
 
 | Name | Condition | Physical interpretation |
 |------|-----------|------------------------|
-| `0Displacement0Slope` | w = 0, dw/dx = 0 | Clamped end: zero deflection and zero slope (no rotation) |
-| `0Displacement0Moment` | w = 0, d²w/dx² = 0 | Simply supported (pinned) end: zero deflection, free to rotate |
-| `0Moment0Shear` | d²w/dx² = d³w/dx³ = 0 | Broken plate: free end with no moment or shear |
-| `0Slope0Shear` | dw/dx = d³w/dx³ = 0 | Plate is level at the boundary but free to deflect there; no shear transmitted |
-| `Mirror` | w(b − x) = w(b + x) | Mirror-symmetry plane — model only half of a symmetric system |
-| `Periodic` | w(0) = w(L) | Wrap-around: the domain tiles infinitely in both directions |
+| `zero_displacement_zero_slope` | w = 0, dw/dx = 0 | Clamped end: zero deflection and zero slope (no rotation) |
+| `zero_displacement_zero_moment` | w = 0, d²w/dx² = 0 | Simply supported (pinned) end: zero deflection, free to rotate |
+| `zero_moment_zero_shear` | d²w/dx² = d³w/dx³ = 0 | Broken plate: free end with no moment or shear |
+| `zero_slope_zero_shear` | dw/dx = d³w/dx³ = 0 | Plate is level at the boundary but free to deflect there; no shear transmitted |
+| `mirror` | w(b − x) = w(b + x) | Mirror-symmetry plane — model only half of a symmetric system |
+| `periodic` | w(0) = w(L) | Wrap-around: the domain tiles infinitely in both directions |
 
-For SAS and SAS_NG, `NoOutsideLoads` (or a blank entry) is used instead; the plate is assumed undeflected at infinity.
+For SAS and SAS_NG, `no_outside_loads` (or a blank entry) is used instead; the plate is assumed undeflected at infinity.
 
-**FD boundary-condition warnings:** when running F1D or F2D with the finite-difference solver, gFlex issues `UserWarning` messages for `'0Moment0Shear'` (free broken plate end — verify a rifted margin is intended), `'0Slope0Shear'` (no clear geological analog), and when the nearest loaded cell is within one flexural wavelength of a `'0Displacement0Slope'` boundary (the forebulge would be suppressed). See the [API reference](https://gflex.readthedocs.io/en/latest/api.html#fd-boundary-condition-warnings) for how to suppress or re-enable these warnings.
+**FD boundary-condition warnings:** when running F1D or F2D with the finite-difference solver, gFlex issues `UserWarning` messages for `'zero_moment_zero_shear'` (free broken plate end — verify a rifted margin is intended), `'zero_slope_zero_shear'` (no clear geological analog), and when the nearest loaded cell is within one flexural wavelength of a `'zero_displacement_zero_slope'` boundary (the forebulge would be suppressed). See the [API reference](https://gflex.readthedocs.io/en/latest/api.html#fd-boundary-condition-warnings) for how to suppress or re-enable these warnings.
 
-**A note on `0Slope0Shear`:** the label in Wickert (2016) is "free displacement of a horizontally clamped boundary." The plate is forced to be exactly level at the boundary (dw/dx = 0) — as if it were clamped against rotation — while its vertical position is unconstrained and no shear force is transmitted (d³w/dx³ = 0). This is superficially similar to `Mirror` (both enforce zero slope at the boundary), but `0Slope0Shear` uses a different finite-difference stencil and the two produce noticeably different solutions even far from the boundary. For symmetry problems — e.g., modelling half of a symmetric mountain range or ice sheet — `Mirror` is the more accurate choice.
+**A note on `zero_slope_zero_shear`:** the label in Wickert (2016) is "free displacement of a horizontally clamped boundary." The plate is forced to be exactly level at the boundary (dw/dx = 0) — as if it were clamped against rotation — while its vertical position is unconstrained and no shear force is transmitted (d³w/dx³ = 0). This is superficially similar to `mirror` (both enforce zero slope at the boundary), but `zero_slope_zero_shear` uses a different finite-difference stencil and the two produce noticeably different solutions even far from the boundary. For symmetry problems — e.g., modelling half of a symmetric mountain range or ice sheet — `mirror` is the more accurate choice.
 
 #### Within a Python script (with or without a configuration file)
 
@@ -127,8 +127,8 @@ flex.method = 'FD' # Solution method: * FD (finite difference)
 flex.g = 9.8 # acceleration due to gravity
 flex.E = 65E9 # Young's Modulus
 flex.nu = 0.25 # Poisson's Ratio
-flex.rho_m = 3300. # MantleDensity
-flex.rho_fill = 0. # InfillMaterialDensity
+flex.rho_m = 3300. # mantle_density
+flex.rho_fill = 0. # infill_material_density
 
 flex.te = 35000.*np.ones((50, 50)) # Elastic thickness [m] -- scalar but may be an array
 flex.te[:,-3:] = 0.
@@ -137,16 +137,16 @@ flex.qs[10:40, 10:40] += 1E6 # Populating this template
 flex.dx = 5000. # grid cell size, x-oriented [m]
 flex.dy = 5000. # grid cell size, y-oriented [m]
 # Boundary conditions can be:
-# (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
-# For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
-flex.bc_west = '0Displacement0Slope' # west boundary condition
-flex.bc_east = '0Moment0Shear' # east boundary condition
-flex.bc_south = '0Displacement0Slope' # south boundary condition
-flex.bc_north = '0Displacement0Slope' # north boundary condition
+# (FD): zero_displacement_zero_slope, zero_displacement_zero_moment, zero_moment_zero_shear, zero_slope_zero_shear, mirror, or periodic
+# For SAS or SAS_NG, no_outside_loads is valid, and no entry defaults to this
+flex.bc_west = 'zero_displacement_zero_slope' # west boundary condition
+flex.bc_east = 'zero_moment_zero_shear' # east boundary condition
+flex.bc_south = 'zero_displacement_zero_slope' # south boundary condition
+flex.bc_north = 'zero_displacement_zero_slope' # north boundary condition
 
 # latitude/longitude solutions are exact for SAS, approximate otherwise
 #latlon = # true/false: flag to enable lat/lon input. Defaults False.
-#PlanetaryRadius = # radius of planet [m], for lat/lon solutions
+#planetary_radius = # radius of planet [m], for lat/lon solutions
 
 # Optional: in-plane stresses [Pa] (supported by FD and FFT solvers)
 #flex.sigma_xx = 0.  # east–west compression/tension
