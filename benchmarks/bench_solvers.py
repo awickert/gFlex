@@ -10,23 +10,17 @@ records the full commit hash, branch, whether the working tree is clean,
 and key hardware/software details so runs are reproducible and comparable.
 
 FD benchmarks cover:
-  - direct sparse LU vs ILU-preconditioned LGMRES (iterative)
-  - three Te profiles: constant, sinusoidally varying, abrupt step
-
-This makes it easy to measure the benefit of an FFT preconditioner
-(constant-Te FFT solve used as M for the iterative solve) relative to
-the ILU baseline.
+  - direct sparse LU across a range of Te profiles and grid sizes
+  - square and non-square (aspect-ratio) domains
 
 Grid-size notes:
   - SAS:  O(N²) in 1D, O(N⁴) in 2D — kept small to avoid long runs.
   - FFT:  O(N log N) — handles large grids easily.
   - FD direct:  roughly O(N^1.5) for the sparse LU factorisation.
-  - FD iterative:  problem-dependent; may be slower than direct for small N.
 """
 
 import os
 import platform
-import signal
 import subprocess
 import sys
 import time
@@ -35,7 +29,6 @@ import numpy as np
 import scipy
 import scipy.sparse
 from scipy.ndimage import gaussian_filter, gaussian_filter1d
-from scipy.sparse.linalg import lgmres, spilu, LinearOperator
 
 from gflex.f1d import F1D
 from gflex.f2d import F2D
@@ -389,120 +382,7 @@ def _hdr(cols):
     print("  ".join("-" * w for _, w in cols))
 
 
-# ── iterative solver with diagnostics ────────────────────────────────────────
-
-def _iter_solve(matrix, rhs, tol=1e-3, maxiter=200):
-    """ILU-preconditioned LGMRES with iteration counting.
-
-    Returns (elapsed_s, n_iters, w, converged).
-    Kept for reference; the main benchmarks now use _fft_iter_solve.
-    """
-    iters = [0]
-
-    def _cb(_r):
-        iters[0] += 1
-
-    try:
-        ilu = spilu(matrix.tocsc(), fill_factor=20, drop_tol=1e-4)
-        M = LinearOperator(matrix.shape, ilu.solve)
-    except RuntimeError:
-        M = scipy.sparse.diags(1.0 / matrix.diagonal())
-
-    t0 = _tick()
-    w, info = lgmres(matrix, rhs, M=M, rtol=tol, maxiter=maxiter, callback=_cb)
-    t = _tick() - t0
-    return t, iters[0], w, info == 0
-
-
-class _SolverTimeout(Exception):
-    pass
-
-
-def _timeout_iter_solve(matrix, rhs, tol=1e-3, maxiter=10, timeout_s=10):
-    """ILU-preconditioned LGMRES with wall-time cap (kept for reference)."""
-    def _handler(sig, frame):
-        raise _SolverTimeout()
-
-    old_handler = signal.signal(signal.SIGALRM, _handler)
-    signal.alarm(timeout_s)
-    try:
-        result = _iter_solve(matrix, rhs, tol=tol, maxiter=maxiter)
-    except _SolverTimeout:
-        result = None
-    finally:
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, old_handler)
-    return result
-
-
-def _fft_iter_solve(flex, rhs, tol=1e-3, maxiter=40, timeout_s=60):
-    """FFT-preconditioned LGMRES with iteration counting and wall-time cap.
-
-    Uses flex._fft_preconditioner() to obtain the spectral preconditioner
-    M and warm-start vector x0, matching what gFlex's fd_solve() now does.
-    Returns (elapsed_s, n_iters, w, converged), or None on timeout.
-    """
-    iters = [0]
-
-    def _cb(_r):
-        iters[0] += 1
-
-    def _handler(sig, frame):
-        raise _SolverTimeout()
-
-    M, x0 = flex._fft_preconditioner()
-
-    old_handler = signal.signal(signal.SIGALRM, _handler)
-    signal.alarm(timeout_s)
-    t0 = _tick()
-    try:
-        w, info = lgmres(
-            flex.coeff_matrix, rhs, M=M, x0=x0,
-            rtol=tol, maxiter=maxiter, callback=_cb,
-        )
-        t = _tick() - t0
-        return t, iters[0], w, info == 0
-    except _SolverTimeout:
-        return None
-    finally:
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, old_handler)
-
-
-def _amg_iter_solve(flex, rhs, tol=1e-3, maxiter=40, timeout_s=60):
-    """AMG-preconditioned LGMRES with iteration counting and wall-time cap.
-
-    Uses flex._amg_preconditioner() (smoothed aggregation via PyAMG).
-    Includes AMG hierarchy build time in the elapsed total.
-    Returns (elapsed_s, n_iters, w, converged), or None on timeout.
-    """
-    iters = [0]
-
-    def _cb(_r):
-        iters[0] += 1
-
-    def _handler(sig, frame):
-        raise _SolverTimeout()
-
-    old_handler = signal.signal(signal.SIGALRM, _handler)
-    signal.alarm(timeout_s)
-    t0 = _tick()
-    try:
-        M, x0 = flex._amg_preconditioner()   # hierarchy build inside timeout
-        w, info = lgmres(
-            flex.coeff_matrix, rhs, M=M, x0=x0,
-            rtol=tol, maxiter=maxiter, callback=_cb,
-        )
-        t = _tick() - t0
-        return t, iters[0], w, info == 0
-    except _SolverTimeout:
-        return None
-    finally:
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, old_handler)
-
-
-# ── FD benchmarks: direct vs iterative, three Te profiles ────────────────────
+# ── FD benchmarks ────────────────────────────────────────────────────────────
 
 _TE_PROFILES_1D = (
     "constant",
@@ -530,13 +410,12 @@ _TE_PROFILES_2D_NONSQ = (
 )
 
 
-def bench_1d_fd(sizes, iter_timeout=60, profiles=_TE_PROFILES_1D):
-    """Benchmark 1-D FD: direct vs FFT-preconditioned LGMRES."""
-    print("\n1D FD  (direct vs FFT-preconditioned iterative)")
+def bench_1d_fd(sizes, profiles=_TE_PROFILES_1D):
+    """Benchmark 1-D FD direct solver across Te profiles and grid sizes."""
+    print("\n1D FD  (direct sparse LU)")
     cols = [
         ("n", 7), ("Te profile", 14),
         ("assemble(s)", 12), ("direct(s)", 10),
-        ("iter(s)", 9), ("iters", 6), ("rel_err", 9), ("iter/dir", 9),
     ]
     _hdr(cols)
     for n in sizes:
@@ -551,38 +430,21 @@ def bench_1d_fd(sizes, iter_timeout=60, profiles=_TE_PROFILES_1D):
             flex.BC_selector_and_coeff_matrix_creator()
             t_asm = _tick() - t0
 
-            flex.Solver = "direct"
             t0 = _tick()
             flex.fd_solve()
             t_direct = _tick() - t0
-            w_direct = flex.w.copy()
 
-            result = _fft_iter_solve(flex, -flex.qs, timeout_s=iter_timeout)
-            if result is not None:
-                t_iter, n_iter, w_iter, ok = result
-                rel_err = (np.linalg.norm(w_iter - w_direct)
-                           / np.linalg.norm(w_direct))
-                ratio = t_iter / t_direct if t_direct > 1e-9 else float("nan")
-                sfx = "" if ok else "!"
-                print(f"  {n:>7}  {prof:>14}  {t_asm:>12.4f}"
-                      f"  {t_direct:>10.4f}"
-                      f"  {t_iter:>9.4f}  {n_iter:>5}{sfx}"
-                      f"  {rel_err:>9.2e}  {ratio:>9.2f}")
-            else:
-                print(f"  {n:>7}  {prof:>14}  {t_asm:>12.4f}"
-                      f"  {t_direct:>10.4f}"
-                      f"  {'T/O':>9}  {'—':>6}  {'—':>9}  {'—':>9}")
+            print(f"  {n:>7}  {prof:>14}  {t_asm:>12.4f}  {t_direct:>10.4f}")
         if n != sizes[-1]:
             print()
 
 
-def bench_2d_fd(sizes, iter_timeout=60, profiles=_TE_PROFILES_2D):
-    """Benchmark 2-D FD: direct vs FFT-preconditioned LGMRES."""
-    print("\n2D FD  (direct vs FFT-preconditioned iterative)")
+def bench_2d_fd(sizes, profiles=_TE_PROFILES_2D):
+    """Benchmark 2-D FD direct solver across Te profiles and grid sizes."""
+    print("\n2D FD  (direct sparse LU)")
     cols = [
         ("n×n", 9), ("Te profile", 14),
         ("assemble(s)", 12), ("direct(s)", 10),
-        ("iter(s)", 9), ("iters", 6), ("rel_err", 9), ("iter/dir", 9),
     ]
     _hdr(cols)
     for n in sizes:
@@ -597,45 +459,28 @@ def bench_2d_fd(sizes, iter_timeout=60, profiles=_TE_PROFILES_2D):
             flex.BC_selector_and_coeff_matrix_creator()
             t_asm = _tick() - t0
 
-            flex.Solver = "direct"
             t0 = _tick()
             flex.fd_solve()
             t_direct = _tick() - t0
-            w_direct = flex.w.flatten()
 
-            rhs = -flex.qs.reshape(-1, order="C")
-            result = _fft_iter_solve(flex, rhs, timeout_s=iter_timeout)
-            if result is not None:
-                t_iter, n_iter, w_iter, ok = result
-                rel_err = (np.linalg.norm(w_iter - w_direct)
-                           / np.linalg.norm(w_direct))
-                ratio = t_iter / t_direct if t_direct > 1e-9 else float("nan")
-                sfx = "" if ok else "!"
-                print(f"  {label:>9}  {prof:>14}  {t_asm:>12.4f}"
-                      f"  {t_direct:>10.4f}"
-                      f"  {t_iter:>9.4f}  {n_iter:>5}{sfx}"
-                      f"  {rel_err:>9.2e}  {ratio:>9.2f}")
-            else:
-                print(f"  {label:>9}  {prof:>14}  {t_asm:>12.4f}"
-                      f"  {t_direct:>10.4f}"
-                      f"  {'T/O':>9}  {'—':>6}  {'—':>9}  {'—':>9}")
+            print(f"  {label:>9}  {prof:>14}  {t_asm:>12.4f}  {t_direct:>10.4f}")
         if n != sizes[-1]:
             print()
 
 
 # ── 2D FD non-square domains ─────────────────────────────────────────────────
 
-def bench_2d_fd_nonsquare(shapes, iter_timeout=60, profiles=_TE_PROFILES_2D_NONSQ):
-    """FD benchmark on non-square grids (nx ≠ ny): direct and FFT-iterative.
+def bench_2d_fd_nonsquare(shapes, profiles=_TE_PROFILES_2D_NONSQ):
+    """FD benchmark on non-square grids (nx ≠ ny): direct solver.
 
-    Aspect ratios up to 4:1 test anisotropic stencil behaviour.
+    Aspect ratios up to 4:1 test anisotropic stencil behaviour and the
+    effect of grid shape on sparse-LU factorisation cost.
     A representative subset of Te profiles is used to keep run time manageable.
     """
-    print("\n2D FD  non-square domains  (direct and FFT-preconditioned iterative)")
+    print("\n2D FD  non-square domains  (direct sparse LU)")
     cols = [
         ("nx×ny", 11), ("Te profile", 14),
         ("assemble(s)", 12), ("direct(s)", 10),
-        ("iter(s)", 9), ("iters", 6), ("rel_err", 9), ("iter/dir", 9),
     ]
     _hdr(cols)
     for (nx, ny) in shapes:
@@ -650,28 +495,11 @@ def bench_2d_fd_nonsquare(shapes, iter_timeout=60, profiles=_TE_PROFILES_2D_NONS
             flex.BC_selector_and_coeff_matrix_creator()
             t_asm = _tick() - t0
 
-            flex.Solver = "direct"
             t0 = _tick()
             flex.fd_solve()
             t_direct = _tick() - t0
-            w_direct = flex.w.flatten()
 
-            rhs = -flex.qs.reshape(-1, order="C")
-            result = _fft_iter_solve(flex, rhs, timeout_s=iter_timeout)
-            if result is not None:
-                t_iter, n_iter, w_iter, ok = result
-                rel_err = (np.linalg.norm(w_iter - w_direct)
-                           / np.linalg.norm(w_direct))
-                ratio = t_iter / t_direct if t_direct > 1e-9 else float("nan")
-                sfx = "" if ok else "!"
-                print(f"  {label:>11}  {prof:>14}  {t_asm:>12.4f}"
-                      f"  {t_direct:>10.4f}"
-                      f"  {t_iter:>9.4f}  {n_iter:>5}{sfx}"
-                      f"  {rel_err:>9.2e}  {ratio:>9.2f}")
-            else:
-                print(f"  {label:>11}  {prof:>14}  {t_asm:>12.4f}"
-                      f"  {t_direct:>10.4f}"
-                      f"  {'T/O':>9}  {'—':>6}  {'—':>9}  {'—':>9}")
+            print(f"  {label:>11}  {prof:>14}  {t_asm:>12.4f}  {t_direct:>10.4f}")
         if shapes.index((nx, ny)) != len(shapes) - 1:
             print()
 
@@ -724,58 +552,6 @@ def bench_2d_sas(sizes):
         print("  ".join([f"{label:>9}", f"{_tick() - t0:>12.4f}"]))
 
 
-# ── AMG vs FFT preconditioner comparison ─────────────────────────────────────
-
-def bench_amg_vs_fft(sizes, iter_timeout=30, profiles=_TE_PROFILES_2D):
-    """Compare AMG and FFT preconditioners head-to-head for 2D FD.
-
-    Shows direct, FFT-iterative, and AMG-iterative side by side so the
-    benefit (or lack thereof) of AMG over the spectral preconditioner is
-    immediately visible across Te profiles and grid sizes.
-    """
-    print("\n2D FD  AMG vs FFT preconditioner")
-    cols = [
-        ("n×n", 9), ("Te profile", 14),
-        ("direct(s)", 10),
-        ("FFT(s)", 8), ("Fi", 4), ("Ferr", 9),
-        ("AMG(s)", 8), ("Ai", 4), ("Aerr", 9),
-    ]
-    _hdr(cols)
-    for n in sizes:
-        label = f"{n}×{n}"
-        for prof in profiles:
-            te = _te_2d(n, n, prof)
-            flex = _make_f2d(n, n, "FD", te)
-            flex.bc_check()
-            flex.elasprep()
-            flex.BC_selector_and_coeff_matrix_creator()
-
-            flex.Solver = "direct"
-            flex.fd_solve()
-            t0 = _tick()
-            flex.fd_solve()
-            t_direct = _tick() - t0
-            w_direct = flex.w.flatten()
-
-            rhs = -flex.qs.reshape(-1, order="C")
-
-            rf = _fft_iter_solve(flex, rhs, timeout_s=iter_timeout)
-            ra = _amg_iter_solve(flex, rhs, timeout_s=iter_timeout)
-
-            def _fmt(r):
-                if r is None:
-                    return f"{'T/O':>8}  {'—':>4}  {'—':>9}"
-                t, ni, w, ok = r
-                err = np.linalg.norm(w - w_direct) / np.linalg.norm(w_direct)
-                sfx = "" if ok else "!"
-                return f"{t:>8.3f}  {ni:>3}{sfx}  {err:>9.2e}"
-
-            print(f"  {label:>9}  {prof:>14}  {t_direct:>10.4f}"
-                  f"  {_fmt(rf)}  {_fmt(ra)}")
-        if n != sizes[-1]:
-            print()
-
-
 # ── entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -792,18 +568,15 @@ if __name__ == "__main__":
         print(_header(git, ts))
 
         print("\n--- 1D ---")
-        bench_1d_fd(sizes=[100, 500, 2000, 5000], iter_timeout=60)
+        bench_1d_fd(sizes=[100, 500, 2000, 5000])
         bench_1d_fft(sizes=[100, 500, 2000, 5000, 20000])
         bench_1d_sas(sizes=[100, 500, 2000, 5000])
 
         print("\n--- 2D ---")
-        bench_2d_fd(sizes=[50, 100, 200, 400], iter_timeout=10)
-        bench_2d_fd_nonsquare(shapes=[(200, 50), (400, 100), (200, 25)], iter_timeout=10)
+        bench_2d_fd(sizes=[50, 100, 200, 400])
+        bench_2d_fd_nonsquare(shapes=[(200, 50), (400, 100), (200, 25)])
         bench_2d_fft(sizes=[50, 100, 500, 1000])
         bench_2d_sas(sizes=[10, 25, 50, 100])
-
-        print("\n--- AMG vs FFT ---")
-        bench_amg_vs_fft(sizes=[100, 200, 400], iter_timeout=30)
     finally:
         tee.close()
 
