@@ -196,17 +196,27 @@ def _te_1d(n, profile, dx=5000.0):
         Te = np.full(n, 0.5 * _TE_REF)
         Te[n // 2:] = 1.5 * _TE_REF
         return Te
+    if profile == "gradient":
+        # Linear ramp: ½ × ref at west edge, 1½ × ref at east edge
+        return _TE_REF * (0.5 + np.linspace(0.0, 1.0, n))
     raise ValueError(f"unknown Te profile: {profile!r}")
 
 
 def _te_2d(ny, nx, profile, dx=5000.0, dy=5000.0):
-    """Return a Te scalar or array for a 2-D grid of (ny, nx) points."""
+    """Return a Te scalar or array for a 2-D grid of (ny, nx) points.
+
+    Profiles ending in ``_45`` vary along the diagonal direction
+    (x + y) / (Lx + Ly), which maximises the cross-derivative coupling
+    term (1 - ν) ∂²D/∂x∂y · ∂²w/∂x∂y in the variable-D 2-D equation.
+    """
     if profile == "constant":
         return _TE_REF
     x = np.arange(nx) * dx
     y = np.arange(ny) * dy
     xx, yy = np.meshgrid(x, y)
     Lx, Ly = x[-1], y[-1]
+
+    # Axis-aligned profiles
     if profile == "sinusoidal":
         # One full cycle in each direction; amplitude ±50 % of reference
         return _TE_REF * (1.0 + 0.5 * np.sin(2.0 * np.pi * xx / Lx)
@@ -217,6 +227,22 @@ def _te_2d(ny, nx, profile, dx=5000.0, dy=5000.0):
         Te[:ny // 2, :nx // 2] = 0.5 * _TE_REF
         Te[ny // 2:, nx // 2:] = 1.5 * _TE_REF
         return Te
+    if profile == "gradient":
+        # Linear ramp along x: ½ × ref at west, 1½ × ref at east
+        return _TE_REF * (0.5 + xx / Lx)
+
+    # 45-degree profiles: variation along normalised diagonal r ∈ [0, 1]
+    r = (xx / Lx + yy / Ly) / 2.0   # 0 at (0,0), 1 at (Lx,Ly)
+    if profile == "sinusoidal_45":
+        return _TE_REF * (1.0 + 0.5 * np.sin(2.0 * np.pi * r))
+    if profile == "abrupt_45":
+        # Step across the main diagonal
+        Te = np.where(r < 0.5, 0.5 * _TE_REF, 1.5 * _TE_REF)
+        return Te
+    if profile == "gradient_45":
+        # Linear ramp along diagonal: ½ × ref at (0,0), 1½ × ref at (Lx,Ly)
+        return _TE_REF * (0.5 + r)
+
     raise ValueError(f"unknown Te profile: {profile!r}")
 
 
@@ -272,19 +298,25 @@ def _hdr(cols):
 
 # ── FD benchmarks: direct vs iterative, three Te profiles ────────────────────
 
-_TE_PROFILES = ("constant", "sinusoidal", "abrupt")
+_TE_PROFILES_1D = ("constant", "sinusoidal", "abrupt", "gradient")
+_TE_PROFILES_2D = (
+    "constant",
+    "sinusoidal", "sinusoidal_45",
+    "abrupt",     "abrupt_45",
+    "gradient",   "gradient_45",
+)
 
 
-def bench_1d_fd(sizes, iter_max=2000, profiles=_TE_PROFILES):
+def bench_1d_fd(sizes, iter_max=2000, profiles=_TE_PROFILES_1D):
     """Benchmark 1-D FD.
 
     Iterative solve is skipped for n > iter_max: the ILU-preconditioned
     LGMRES converges reliably up to ~2000 nodes but offers little
     advantage over the direct sparse LU at that scale.
     """
-    print("\n1D FD  (direct vs iterative, three Te profiles)")
+    print("\n1D FD  (direct vs iterative)")
     cols = [
-        ("n", 7), ("Te profile", 12),
+        ("n", 7), ("Te profile", 14),
         ("assemble(s)", 12), ("direct(s)", 10), ("iterative(s)", 13), ("iter/direct", 11),
     ]
     _hdr(cols)
@@ -317,13 +349,13 @@ def bench_1d_fd(sizes, iter_max=2000, profiles=_TE_PROFILES):
                 iter_str = f"{'—':>13}"
                 ratio_str = f"{'—':>11}"
 
-            print(f"  {n:>7}  {prof:>12}  {t_asm:>12.4f}"
+            print(f"  {n:>7}  {prof:>14}  {t_asm:>12.4f}"
                   f"  {t_direct:>10.4f}  {iter_str}  {ratio_str}")
         if n != sizes[-1]:
             print()
 
 
-def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES):
+def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES_2D):
     """Benchmark 2-D FD.
 
     Iterative solve is skipped for n > iter_max: the biharmonic
@@ -332,9 +364,9 @@ def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES):
     keeps the benchmark run to a reasonable wall time; raise iter_max
     to explore larger sizes once a better preconditioner is in place.
     """
-    print("\n2D FD  (direct vs iterative, three Te profiles)")
+    print("\n2D FD  (direct vs iterative)")
     cols = [
-        ("n×n", 9), ("Te profile", 12),
+        ("n×n", 9), ("Te profile", 14),
         ("assemble(s)", 12), ("direct(s)", 10), ("iterative(s)", 13), ("iter/direct", 11),
     ]
     _hdr(cols)
@@ -367,7 +399,7 @@ def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES):
                 iter_str = f"{'—':>13}"
                 ratio_str = f"{'—':>11}"
 
-            print(f"  {label:>9}  {prof:>12}  {t_asm:>12.4f}"
+            print(f"  {label:>9}  {prof:>14}  {t_asm:>12.4f}"
                   f"  {t_direct:>10.4f}  {iter_str}  {ratio_str}")
         if n != sizes[-1]:
             print()
