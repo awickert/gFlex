@@ -120,6 +120,23 @@ name ("broken plate"); the remaining conditions are referred to by their
 structural-mechanics names, or have no name at all.  This is a genuine gap
 in the discipline's vocabulary rather than a gap in documentation.
 
+.. deprecated:: 2.0
+
+   The v1.x PascalCase boundary-condition strings are no longer accepted.
+   Rename them as follows:
+
+   ================================  ===================================
+   Old name (v1.x)                   New name (v2.0+)
+   ================================  ===================================
+   ``0Displacement0Slope``           ``zero_displacement_zero_slope``
+   ``0Displacement0Moment``          ``zero_displacement_zero_moment``
+   ``0Moment0Shear``                 ``zero_moment_zero_shear``
+   ``0Slope0Shear``                  ``zero_slope_zero_shear``
+   ``Mirror``                        ``mirror``
+   ``Periodic``                      ``periodic``
+   ``NoOutsideLoads``                ``no_outside_loads``
+   ================================  ===================================
+
 ----
 
 zero_displacement_zero_slope
