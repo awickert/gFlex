@@ -248,8 +248,8 @@ governing equations on a regular Cartesian grid and, following van Wees and
 Cloetingh (1994), permit computations with spatially varying flexural rigidity.
 The grid spacings :math:`\Delta x` and :math:`\Delta y` may differ from one
 another, but each must be constant.  The resulting sparse linear system is
-solved directly using a sparse LU factorization or, at the user's choice,
-iteratively.  Six boundary conditions are available; see :doc:`configuration`
+solved directly using a sparse LU factorization.  Six boundary conditions are
+available; see :doc:`configuration`
 for details and physical interpretations.
 
 Fast Fourier Transform (``FFT``)
