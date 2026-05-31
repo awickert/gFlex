@@ -24,7 +24,7 @@ import warnings
 import numpy as np
 import scipy
 from scipy.special import kei
-from scipy.sparse.linalg import LinearOperator, lgmres, spilu, spsolve
+from scipy.sparse.linalg import LinearOperator, lgmres, spsolve
 
 from gflex.base import Flexure
 
@@ -947,6 +947,37 @@ class F2D(Flexure):
             self.D[0, :] = self.D[-2, :]
         if self.BC_Rigidity_S == "periodic":
             self.D[-1, :] = self.D[-3, :]
+
+    def _fft_preconditioner(self):
+        """Return (M, x0): FFT-based LinearOperator approximating A0⁻¹ and
+        FFT warm-start vector, both for the geometric-mean rigidity D0.
+
+        The preconditioner applies the inverse of the constant-rigidity
+        biharmonic operator in the wavenumber domain:
+            M·v = IFFT2( FFT2(v_grid) / (D0·(kx²+ky²)² + Δρg) )
+        This clusters the spectrum of M·A near 1 for modest Te contrast,
+        outperforming ILU which ignores the near-biharmonic structure.
+        The warm start x0 = M·(−qs) is the full FFT solve at rigidity D0.
+        """
+        ny, nx = self.qs.shape
+        D_vals = np.asarray(self.D).ravel()
+        D_vals = D_vals[np.isfinite(D_vals) & (D_vals > 0)]
+        D0 = float(np.exp(np.mean(np.log(D_vals))))
+
+        kx = np.fft.rfftfreq(nx, d=self.dx) * 2.0 * np.pi
+        ky = np.fft.fftfreq(ny, d=self.dy) * 2.0 * np.pi
+        Kx, Ky = np.meshgrid(kx, ky)
+        denom = D0 * (Kx**2 + Ky**2)**2 + self.drho * self.g
+
+        def matvec(v):
+            v_grid = v.reshape(ny, nx)
+            W = np.fft.rfft2(v_grid) / denom
+            return np.fft.irfft2(W, s=(ny, nx)).real.flatten()
+
+        n = ny * nx
+        M = LinearOperator((n, n), matvec=matvec)
+        x0 = matvec((-self.qs).flatten())
+        return M, x0
 
     def get_coeff_values(self):
         """
@@ -2520,20 +2551,15 @@ class F2D(Flexure):
                     self.iterative_ConvergenceTolerance,
                     "m between iterations",
                 )
-            try:
-                ilu = spilu(self.coeff_matrix.tocsc(), fill_factor=20, drop_tol=1e-4)
-                M = LinearOperator(self.coeff_matrix.shape, ilu.solve)
-            except RuntimeError:
-                if not self.Quiet:
-                    print("ILU preconditioner failed; falling back to Jacobi.")
-                M = scipy.sparse.diags(1.0 / self.coeff_matrix.diagonal())
+            M, x0 = self._fft_preconditioner()
             wvector, info = lgmres(
-                self.coeff_matrix, q0vector, M=M, rtol=self.iterative_ConvergenceTolerance
+                self.coeff_matrix, q0vector, M=M, x0=x0,
+                rtol=self.iterative_ConvergenceTolerance, maxiter=40,
             )
             if info != 0:
                 if not self.Quiet:
                     print(
-                        f"lgmres did not converge (info={info}); "
+                        f"FFT-preconditioned lgmres did not converge (info={info}); "
                         "falling back to direct solver."
                     )
                 wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
