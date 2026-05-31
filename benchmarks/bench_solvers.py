@@ -351,7 +351,8 @@ def _make_f1d(n, method, te=_TE_REF, solver="direct", bc="0Displacement0Slope"):
     return flex
 
 
-def _make_f2d(nx, ny, method, te=_TE_REF, solver="direct", bc="0Displacement0Slope"):
+def _make_f2d(nx, ny, method, te=_TE_REF, solver="direct", bc="0Displacement0Slope",
+              qs=None):
     flex = F2D()
     flex.Quiet = True
     flex.Method = method
@@ -359,11 +360,14 @@ def _make_f2d(nx, ny, method, te=_TE_REF, solver="direct", bc="0Displacement0Slo
     flex.dx = 5000.0
     flex.dy = 5000.0
     flex.Te = te
-    flex.qs = np.zeros((ny, nx))
-    # Central quarter-area load (central 50 % of each axis = 25 % of domain
-    # area).  SAS timing scales as O(N_load × N_grid): each loaded cell
-    # contributes a kei evaluation at every grid point.
-    flex.qs[ny // 4 : 3 * ny // 4, nx // 4 : 3 * nx // 4] = 1e6
+    if qs is None:
+        flex.qs = np.zeros((ny, nx))
+        # Central quarter-area load (central 50 % of each axis = 25 % of domain
+        # area).  SAS timing scales as O(N_load × N_grid): each loaded cell
+        # contributes a kei evaluation at every grid point.
+        flex.qs[ny // 4 : 3 * ny // 4, nx // 4 : 3 * nx // 4] = 1e6
+    else:
+        flex.qs = qs.copy()
     flex.BC_W = bc
     flex.BC_E = bc
     flex.BC_N = bc
@@ -372,6 +376,26 @@ def _make_f2d(nx, ny, method, te=_TE_REF, solver="direct", bc="0Displacement0Slo
         setattr(flex, k, v)
     flex.initialize()
     return flex
+
+
+def _make_qs_2d(ny, nx, pattern):
+    """Return a (ny, nx) load array for the named pattern.
+
+    ``'small'``   : 3×3 central patch (N_load = 9)
+    ``'quarter'`` : central 50 % of each axis (N_load ≈ nx·ny / 4)
+    ``'full'``    : entire domain (N_load = nx·ny)
+    """
+    qs = np.zeros((ny, nx))
+    if pattern == "small":
+        cy, cx = ny // 2, nx // 2
+        qs[cy - 1 : cy + 2, cx - 1 : cx + 2] = 1e6
+    elif pattern == "quarter":
+        qs[ny // 4 : 3 * ny // 4, nx // 4 : 3 * nx // 4] = 1e6
+    elif pattern == "full":
+        qs[:] = 1e6
+    else:
+        raise ValueError(f"unknown load pattern: {pattern!r}")
+    return qs
 
 
 # ── formatting helpers ────────────────────────────────────────────────────────
