@@ -1,9 +1,7 @@
 These are sample input files.
 
-* See **input_help** for a full description of what the possible configuration file parameters are.
-* **template1D** and **template2D** are starting points from which to make configuration files.
-* Other configuration files (text files here with no file name extension) are examples of how gFlex works with different sets of inputs.
+* **input_f1d.yaml** and **input_f2d.yaml** are complete 1-D and 2-D YAML configuration file examples. See the [Configuration Files](https://gflex.readthedocs.io/en/latest/configuration.html) page for a full parameter reference.
 * **q0_sample/** contains input load grids.
-* **Te_sample/** contains input flexural rigidity grids
-* **xy_sample/** contains files to run the ungridded superposition of analytical solutions (SAS_NG)
-* **run_in_script_1D** and **run_in_script_2D** show how to run gFlex by accessing its functions from within a Python script.
+* **Te_sample/** contains input elastic thickness grids.
+* **xy_sample/** contains files to run the ungridded superposition of analytical solutions (SAS_NG).
+* **run_in_script_1D.py** and **run_in_script_2D.py** show how to run gFlex by accessing its functions from within a Python script.
