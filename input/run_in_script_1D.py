@@ -6,9 +6,9 @@ import gflex
 
 flex = gflex.F1D()
 
-flex.Quiet = True
+flex.quiet = True
 
-flex.Method = "FD"  # Solution method: * FD (finite difference)
+flex.method = "FD"  # Solution method: * FD (finite difference)
 #                  * FFT (spectral)
 #                  * SAS (superposition of analytical solutions)
 #                  * SAS_NG (ungridded SAS)
@@ -20,13 +20,13 @@ flex.nu = 0.25  # Poisson's Ratio
 flex.rho_m = 3300.0  # MantleDensity
 flex.rho_fill = 1000.0  # InfillMaterialDensity
 
-flex.Te = 30000.0  # *np.ones(500) # Elastic thickness -- scalar but may be an array
-# flex.Te[-3:] = 0
+flex.te = 30000.0  # *np.ones(500) # Elastic thickness -- scalar but may be an array
+# flex.te[-3:] = 0
 flex.qs = np.zeros(300)
 flex.qs[100:200] += 1e6  # surface load stresses
 flex.dx = 4000.0  # grid cell size [m]
-flex.BC_W = "0Displacement0Slope"  # west boundary condition
-flex.BC_E = "0Moment0Shear"  # east boundary condition
+flex.bc_west = "0Displacement0Slope"  # west boundary condition
+flex.bc_east = "0Moment0Shear"  # east boundary condition
 
 flex.sigma_xx = 100.0  # Normal stress on the edge of the plate
 
