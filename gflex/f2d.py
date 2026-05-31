@@ -26,6 +26,13 @@ import scipy
 from scipy.special import kei
 from scipy.sparse.linalg import LinearOperator, lgmres, spsolve
 
+try:
+    import pyamg as _pyamg
+    _HAS_PYAMG = True
+except ImportError:
+    _pyamg = None
+    _HAS_PYAMG = False
+
 from gflex.base import Flexure
 
 
@@ -977,6 +984,21 @@ class F2D(Flexure):
         n = ny * nx
         M = LinearOperator((n, n), matvec=matvec)
         x0 = matvec((-self.qs).flatten())
+        return M, x0
+
+    def _amg_preconditioner(self):
+        """Return (M, x0): AMG-based LinearOperator and warm-start vector.
+
+        Builds a smoothed-aggregation multigrid hierarchy from the assembled
+        coefficient matrix.  Each preconditioner application performs one
+        V-cycle, which achieves grid-independent convergence for smooth-Te
+        problems and substantially better convergence than the FFT preconditioner
+        for discontinuous or high-contrast Te fields.  Requires PyAMG.
+        """
+        A = self.coeff_matrix.tocsr()
+        ml = _pyamg.smoothed_aggregation_solver(A, B=np.ones((A.shape[0], 1)))
+        M = ml.aspreconditioner()
+        x0 = M @ (-self.qs).flatten()
         return M, x0
 
     def get_coeff_values(self):
@@ -2551,7 +2573,12 @@ class F2D(Flexure):
                     self.iterative_ConvergenceTolerance,
                     "m between iterations",
                 )
-            M, x0 = self._fft_preconditioner()
+            if _HAS_PYAMG:
+                M, x0 = self._amg_preconditioner()
+                precond_name = "AMG"
+            else:
+                M, x0 = self._fft_preconditioner()
+                precond_name = "FFT"
             wvector, info = lgmres(
                 self.coeff_matrix, q0vector, M=M, x0=x0,
                 rtol=self.iterative_ConvergenceTolerance, maxiter=40,
@@ -2559,7 +2586,7 @@ class F2D(Flexure):
             if info != 0:
                 if not self.Quiet:
                     print(
-                        f"FFT-preconditioned lgmres did not converge (info={info}); "
+                        f"{precond_name}-preconditioned lgmres did not converge (info={info}); "
                         "falling back to direct solver."
                     )
                 wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)

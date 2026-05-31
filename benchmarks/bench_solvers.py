@@ -469,6 +469,39 @@ def _fft_iter_solve(flex, rhs, tol=1e-3, maxiter=40, timeout_s=60):
         signal.signal(signal.SIGALRM, old_handler)
 
 
+def _amg_iter_solve(flex, rhs, tol=1e-3, maxiter=40, timeout_s=60):
+    """AMG-preconditioned LGMRES with iteration counting and wall-time cap.
+
+    Uses flex._amg_preconditioner() (smoothed aggregation via PyAMG).
+    Includes AMG hierarchy build time in the elapsed total.
+    Returns (elapsed_s, n_iters, w, converged), or None on timeout.
+    """
+    iters = [0]
+
+    def _cb(_r):
+        iters[0] += 1
+
+    def _handler(sig, frame):
+        raise _SolverTimeout()
+
+    old_handler = signal.signal(signal.SIGALRM, _handler)
+    signal.alarm(timeout_s)
+    t0 = _tick()
+    try:
+        M, x0 = flex._amg_preconditioner()   # hierarchy build inside timeout
+        w, info = lgmres(
+            flex.coeff_matrix, rhs, M=M, x0=x0,
+            rtol=tol, maxiter=maxiter, callback=_cb,
+        )
+        t = _tick() - t0
+        return t, iters[0], w, info == 0
+    except _SolverTimeout:
+        return None
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
+
+
 # ── FD benchmarks: direct vs iterative, three Te profiles ────────────────────
 
 _TE_PROFILES_1D = (
@@ -691,6 +724,58 @@ def bench_2d_sas(sizes):
         print("  ".join([f"{label:>9}", f"{_tick() - t0:>12.4f}"]))
 
 
+# ── AMG vs FFT preconditioner comparison ─────────────────────────────────────
+
+def bench_amg_vs_fft(sizes, iter_timeout=30, profiles=_TE_PROFILES_2D):
+    """Compare AMG and FFT preconditioners head-to-head for 2D FD.
+
+    Shows direct, FFT-iterative, and AMG-iterative side by side so the
+    benefit (or lack thereof) of AMG over the spectral preconditioner is
+    immediately visible across Te profiles and grid sizes.
+    """
+    print("\n2D FD  AMG vs FFT preconditioner")
+    cols = [
+        ("n×n", 9), ("Te profile", 14),
+        ("direct(s)", 10),
+        ("FFT(s)", 8), ("Fi", 4), ("Ferr", 9),
+        ("AMG(s)", 8), ("Ai", 4), ("Aerr", 9),
+    ]
+    _hdr(cols)
+    for n in sizes:
+        label = f"{n}×{n}"
+        for prof in profiles:
+            te = _te_2d(n, n, prof)
+            flex = _make_f2d(n, n, "FD", te)
+            flex.bc_check()
+            flex.elasprep()
+            flex.BC_selector_and_coeff_matrix_creator()
+
+            flex.Solver = "direct"
+            flex.fd_solve()
+            t0 = _tick()
+            flex.fd_solve()
+            t_direct = _tick() - t0
+            w_direct = flex.w.flatten()
+
+            rhs = -flex.qs.reshape(-1, order="C")
+
+            rf = _fft_iter_solve(flex, rhs, timeout_s=iter_timeout)
+            ra = _amg_iter_solve(flex, rhs, timeout_s=iter_timeout)
+
+            def _fmt(r):
+                if r is None:
+                    return f"{'T/O':>8}  {'—':>4}  {'—':>9}"
+                t, ni, w, ok = r
+                err = np.linalg.norm(w - w_direct) / np.linalg.norm(w_direct)
+                sfx = "" if ok else "!"
+                return f"{t:>8.3f}  {ni:>3}{sfx}  {err:>9.2e}"
+
+            print(f"  {label:>9}  {prof:>14}  {t_direct:>10.4f}"
+                  f"  {_fmt(rf)}  {_fmt(ra)}")
+        if n != sizes[-1]:
+            print()
+
+
 # ── entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -716,6 +801,9 @@ if __name__ == "__main__":
         bench_2d_fd_nonsquare(shapes=[(200, 50), (400, 100), (200, 25)], iter_timeout=10)
         bench_2d_fft(sizes=[50, 100, 500, 1000])
         bench_2d_sas(sizes=[10, 25, 50, 100])
+
+        print("\n--- AMG vs FFT ---")
+        bench_amg_vs_fft(sizes=[100, 200, 400], iter_timeout=30)
     finally:
         tee.close()
 
