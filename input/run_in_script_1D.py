@@ -9,6 +9,7 @@ flex = gflex.F1D()
 flex.Quiet = True
 
 flex.Method = "FD"  # Solution method: * FD (finite difference)
+#                  * FFT (spectral)
 #                  * SAS (superposition of analytical solutions)
 #                  * SAS_NG (ungridded SAS)
 

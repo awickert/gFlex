@@ -9,6 +9,7 @@ flex = gflex.F2D()
 flex.Quiet = False
 
 flex.Method = "FD"  # Solution method: * FD (finite difference)
+#                  * FFT (spectral)
 #                  * SAS (superposition of analytical solutions)
 #                  * SAS_NG (ungridded SAS)
 
@@ -27,7 +28,7 @@ flex.qs[10:40, 10:40] += 1e6  # Populating this template
 flex.dx = 5000.0  # grid cell size, x-oriented [m]
 flex.dy = 5000.0  # grid cell size, y-oriented [m]
 # Boundary conditions can be:
-# (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
+# (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
 # For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 flex.BC_W = "0Displacement0Slope"  # west boundary condition
 flex.BC_E = "0Moment0Shear"  # east boundary condition

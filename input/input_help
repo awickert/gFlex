@@ -5,9 +5,9 @@
 [mode]
 ; 1 (line) or 2 (surface) dimensions
 dimension=2
-; Solution method: FD (Finite Difference), SAS (Spatial domain
-; analytical solutions), or SAS_NG (SAS, but on an unstructured
-; grid — NG = "no grid").
+; Solution method: FD (Finite Difference), FFT (spectral),
+; SAS (Spatial domain analytical solutions), or SAS_NG (SAS, but
+; on an unstructured grid — NG = "no grid").
 ; For SAS_NG, 1D data must be provided and will be returned in
 ; two columns: (x,q0) --> (x,w). 2D data are similar, except
 ; will be of the form (x,y,[q0/in or w/out]).
@@ -64,7 +64,7 @@ Plot=both
 GridSpacing_x=
 ;
 ; Boundary conditions can be:
-; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
+; (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
 ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 BoundaryCondition_West=
 BoundaryCondition_East=
@@ -75,7 +75,7 @@ BoundaryCondition_East=
 GridSpacing_y=
 ;
 ; Boundary conditions can be:
-; (FD): 0Slope0Shear, 0Moment0Shear, 0Displacement0Slope, Mirror, or Periodic
+; (FD): 0Displacement0Slope, 0Displacement0Moment, 0Moment0Shear, 0Slope0Shear, Mirror, or Periodic
 ; For SAS or SAS_NG, NoOutsideLoads is valid, and no entry defaults to this
 BoundaryCondition_North=
 BoundaryCondition_South=
