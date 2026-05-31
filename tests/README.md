@@ -61,7 +61,7 @@ The 2-D parameter uses D (not 4D as in the 1-D case).  The 1-D
 parameter is α₁D = (4D / (Δρ g))^(1/4) = √2 · α.
 
 The test uses a 100 × 100 grid at dx = 5 km (Te = 10 km, α ≈ 21 km,
-domain ≈ 24 α wide) with `0Moment0Shear` boundary conditions.
+domain ≈ 24 α wide) with `zero_moment_zero_shear` boundary conditions.
 Comparison points are sampled in the interior at radii 1.5–3.5 α from
 the load centre and at least 3 α from every boundary, keeping the
 comparison well below the kei zero crossing (forebulge onset at
