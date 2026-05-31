@@ -255,7 +255,7 @@ for details and physical interpretations.
 Fast Fourier Transform (``FFT``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The FFT spectral solver (two dimensions only) exploits the fact that, for a
+The FFT spectral solver exploits the fact that, for a
 uniform flexural rigidity :math:`D`, the thin plate equation is a convolution
 in the spatial domain — and therefore diagonal in the wavenumber domain.
 Taking the two-dimensional Fourier transform of the governing equation with
