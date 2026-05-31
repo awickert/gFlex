@@ -26,6 +26,7 @@ Grid-size notes:
 
 import os
 import platform
+import signal
 import subprocess
 import sys
 import time
@@ -339,12 +340,16 @@ def _hdr(cols):
 
 # ── iterative solver with diagnostics ────────────────────────────────────────
 
-def _iter_solve(matrix, rhs, tol=1e-3):
+def _iter_solve(matrix, rhs, tol=1e-3, maxiter=200):
     """ILU-preconditioned LGMRES with iteration counting.
 
     Returns (elapsed_s, n_iters, w, converged).
     Mirrors the preconditioner logic in gFlex's fd_solve() so timings
     are directly comparable.
+
+    maxiter caps the iteration count so that poorly-conditioned large
+    problems (the 2D biharmonic condition number grows as O(N⁴)) do not
+    run indefinitely.  Non-convergence is flagged with a "!" in the table.
     """
     iters = [0]
 
@@ -358,9 +363,35 @@ def _iter_solve(matrix, rhs, tol=1e-3):
         M = scipy.sparse.diags(1.0 / matrix.diagonal())
 
     t0 = _tick()
-    w, info = lgmres(matrix, rhs, M=M, rtol=tol, callback=_cb)
+    w, info = lgmres(matrix, rhs, M=M, rtol=tol, maxiter=maxiter, callback=_cb)
     t = _tick() - t0
     return t, iters[0], w, info == 0
+
+
+class _SolverTimeout(Exception):
+    pass
+
+
+def _timeout_iter_solve(matrix, rhs, tol=1e-3, maxiter=10, timeout_s=10):
+    """Wrap _iter_solve with a wall-time cap via SIGALRM (Linux/macOS only).
+
+    Returns (elapsed_s, n_iters, w, converged) on success, or None if the
+    timeout fires before the solve completes (covers both the ILU
+    factorisation and the lgmres iterations).
+    """
+    def _handler(sig, frame):
+        raise _SolverTimeout()
+
+    old_handler = signal.signal(signal.SIGALRM, _handler)
+    signal.alarm(timeout_s)
+    try:
+        result = _iter_solve(matrix, rhs, tol=tol, maxiter=maxiter)
+    except _SolverTimeout:
+        result = None
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
+    return result
 
 
 # ── FD benchmarks: direct vs iterative, three Te profiles ────────────────────
@@ -438,14 +469,16 @@ def bench_1d_fd(sizes, iter_max=2000, profiles=_TE_PROFILES_1D):
             print()
 
 
-def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES_2D):
+def bench_2d_fd(sizes, iter_timeout=60, profiles=_TE_PROFILES_2D):
     """Benchmark 2-D FD.
 
-    Iterative solve is skipped for n > iter_max: the biharmonic
-    operator's condition number grows as O(N⁴), so ILU-preconditioned
-    LGMRES can be very slow or non-convergent for large grids.  The cap
-    keeps the benchmark run to a reasonable wall time; raise iter_max
-    to explore larger sizes once a better preconditioner is in place.
+    The iterative solve is attempted for every grid size but is abandoned
+    after iter_timeout seconds (wall time).  This cap covers both the ILU
+    factorisation and the lgmres iterations: the biharmonic operator's
+    condition number grows as O(N⁴), so ILU preconditioning becomes
+    prohibitively expensive for large grids.  Timed-out rows are marked
+    "T/O"; raise iter_timeout to explore larger sizes once a better
+    preconditioner (e.g. FFT-based) is in place.
     """
     print("\n2D FD  (direct vs iterative)")
     cols = [
@@ -472,9 +505,11 @@ def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES_2D):
             t_direct = _tick() - t0
             w_direct = flex.w.flatten()
 
-            if n <= iter_max:
-                rhs = -flex.qs.reshape(-1, order="C")
-                t_iter, n_iter, w_iter, ok = _iter_solve(flex.coeff_matrix, rhs)
+            rhs = -flex.qs.reshape(-1, order="C")
+            result = _timeout_iter_solve(flex.coeff_matrix, rhs,
+                                         timeout_s=iter_timeout)
+            if result is not None:
+                t_iter, n_iter, w_iter, ok = result
                 rel_err = (np.linalg.norm(w_iter - w_direct)
                            / np.linalg.norm(w_direct))
                 ratio = t_iter / t_direct if t_direct > 1e-9 else float("nan")
@@ -486,7 +521,7 @@ def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES_2D):
             else:
                 print(f"  {label:>9}  {prof:>14}  {t_asm:>12.4f}"
                       f"  {t_direct:>10.4f}"
-                      f"  {'—':>9}  {'—':>6}  {'—':>9}  {'—':>9}")
+                      f"  {'T/O':>9}  {'—':>6}  {'—':>9}  {'—':>9}")
         if n != sizes[-1]:
             print()
 
@@ -597,7 +632,7 @@ if __name__ == "__main__":
         bench_1d_sas(sizes=[100, 500, 2000, 5000])
 
         print("\n--- 2D ---")
-        bench_2d_fd(sizes=[50, 100, 200, 400])
+        bench_2d_fd(sizes=[50, 100, 200, 400], iter_timeout=10)
         bench_2d_fd_nonsquare(shapes=[(200, 50), (400, 100), (200, 25)])
         bench_2d_fft(sizes=[50, 100, 500, 1000])
         bench_2d_sas(sizes=[10, 25, 50, 100])
