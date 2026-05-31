@@ -200,6 +200,17 @@ def _te_1d(n, profile, dx=5000.0):
     if profile == "gradient":
         # Linear ramp: ½ × ref at west edge, 1½ × ref at east edge
         return _TE_REF * (0.5 + np.linspace(0.0, 1.0, n))
+    if profile == "wide_range":
+        # 10:1 ramp: 10 km west, 100 km east (craton–ocean range)
+        return np.linspace(10000.0, 100000.0, n)
+    if profile == "noisy_mild":
+        # White noise ±20 % of reference, seeded for reproducibility
+        rng = np.random.default_rng(42)
+        return _TE_REF * (1.0 + 0.2 * rng.uniform(-1.0, 1.0, n))
+    if profile == "noisy_strong":
+        # White noise ±50 % of reference
+        rng = np.random.default_rng(42)
+        return _TE_REF * (1.0 + 0.5 * rng.uniform(-1.0, 1.0, n))
     raise ValueError(f"unknown Te profile: {profile!r}")
 
 
@@ -243,6 +254,35 @@ def _te_2d(ny, nx, profile, dx=5000.0, dy=5000.0):
     if profile == "gradient_45":
         # Linear ramp along diagonal: ½ × ref at (0,0), 1½ × ref at (Lx,Ly)
         return _TE_REF * (0.5 + r)
+
+    # Wide dynamic range
+    if profile == "wide_range":
+        # 10:1 ramp along x: 10 km west, 100 km east
+        return np.linspace(10000.0, 100000.0, nx)[np.newaxis, :] * np.ones((ny, 1))
+    if profile == "wide_range_45":
+        return np.linspace(10000.0, 100000.0, 1)[0] + r * (100000.0 - 10000.0)
+
+    # Noisy Te (spatially uncorrelated white noise, seeded for reproducibility)
+    rng = np.random.default_rng(42)
+    if profile == "noisy_mild":
+        return _TE_REF * (1.0 + 0.2 * rng.uniform(-1.0, 1.0, (ny, nx)))
+    if profile == "noisy_strong":
+        return _TE_REF * (1.0 + 0.5 * rng.uniform(-1.0, 1.0, (ny, nx)))
+
+    # Circular inclusion centred in domain (radius = Lx / 5)
+    cx, cy = Lx / 2.0, Ly / 2.0
+    dist = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
+    mask = dist < Lx / 5.0
+    if profile == "disk_thin":
+        # Thin disk (0.3 × ref) in reference background
+        Te = np.full((ny, nx), _TE_REF)
+        Te[mask] = 0.3 * _TE_REF
+        return Te
+    if profile == "disk_thick":
+        # Thick disk (3 × ref) — rigid craton or seamount
+        Te = np.full((ny, nx), _TE_REF)
+        Te[mask] = 3.0 * _TE_REF
+        return Te
 
     raise ValueError(f"unknown Te profile: {profile!r}")
 
@@ -325,12 +365,25 @@ def _iter_solve(matrix, rhs, tol=1e-3):
 
 # ── FD benchmarks: direct vs iterative, three Te profiles ────────────────────
 
-_TE_PROFILES_1D = ("constant", "sinusoidal", "abrupt", "gradient")
+_TE_PROFILES_1D = (
+    "constant",
+    "sinusoidal", "abrupt", "gradient",
+    "wide_range",
+    "noisy_mild", "noisy_strong",
+)
 _TE_PROFILES_2D = (
     "constant",
     "sinusoidal", "sinusoidal_45",
     "abrupt",     "abrupt_45",
     "gradient",   "gradient_45",
+    "wide_range", "wide_range_45",
+    "noisy_mild", "noisy_strong",
+    "disk_thin",  "disk_thick",
+)
+# Subset used for non-square domain benchmarks: one smooth, one abrupt diagonal,
+# one high-dynamic-range, one disk — enough to reveal anisotropic effects
+_TE_PROFILES_2D_NONSQ = (
+    "constant", "abrupt_45", "wide_range", "disk_thick",
 )
 
 
@@ -438,6 +491,43 @@ def bench_2d_fd(sizes, iter_max=100, profiles=_TE_PROFILES_2D):
             print()
 
 
+# ── 2D FD non-square domains ─────────────────────────────────────────────────
+
+def bench_2d_fd_nonsquare(shapes, iter_max=100, profiles=_TE_PROFILES_2D_NONSQ):
+    """FD benchmark on non-square grids (nx ≠ ny), direct solve only.
+
+    Aspect ratios up to 4:1 test anisotropic stencil behaviour.
+    A representative subset of Te profiles is used to keep run time manageable.
+    """
+    print("\n2D FD  non-square domains  (direct only, subset of Te profiles)")
+    cols = [
+        ("nx×ny", 11), ("Te profile", 14),
+        ("assemble(s)", 12), ("direct(s)", 10),
+    ]
+    _hdr(cols)
+    for (nx, ny) in shapes:
+        label = f"{nx}×{ny}"
+        for prof in profiles:
+            te = _te_2d(ny, nx, prof)
+            flex = _make_f2d(nx, ny, "FD", te)
+            flex.bc_check()
+
+            t0 = _tick()
+            flex.elasprep()
+            flex.BC_selector_and_coeff_matrix_creator()
+            t_asm = _tick() - t0
+
+            flex.Solver = "direct"
+            t0 = _tick()
+            flex.fd_solve()
+            t_direct = _tick() - t0
+
+            print(f"  {label:>11}  {prof:>14}"
+                  f"  {t_asm:>12.4f}  {t_direct:>10.4f}")
+        if shapes.index((nx, ny)) != len(shapes) - 1:
+            print()
+
+
 # ── FFT and SAS benchmarks (constant Te only) ─────────────────────────────────
 
 def bench_1d_fft(sizes):
@@ -508,6 +598,7 @@ if __name__ == "__main__":
 
         print("\n--- 2D ---")
         bench_2d_fd(sizes=[50, 100, 200, 400])
+        bench_2d_fd_nonsquare(shapes=[(200, 50), (400, 100), (200, 25)])
         bench_2d_fft(sizes=[50, 100, 500, 1000])
         bench_2d_sas(sizes=[10, 25, 50, 100])
     finally:
