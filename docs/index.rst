@@ -88,14 +88,9 @@ Configuration files
 
 As an alternative to the programmatic API, gFlex can be driven by a
 configuration file — passed to the ``gflex`` CLI or to the
-:class:`~gflex.F1D` / :class:`~gflex.F2D` constructor.  Two formats
-are supported:
-
-* **YAML** (``.yaml`` / ``.yml``) — recommended for new workflows.
-  See ``input/input_f1d.yaml`` and ``input/input_f2d.yaml`` for
-  complete 1-D and 2-D examples.
-* **INI** (any extension) — the legacy format; see ``input/input_f1d``
-  and ``input/input_f2d``.
+:class:`~gflex.F1D` / :class:`~gflex.F2D` constructor.  The file must
+be YAML (``.yaml`` / ``.yml``); see ``input/input_f1d.yaml`` and
+``input/input_f2d.yaml`` for complete 1-D and 2-D examples.
 
 A minimal 2-D YAML configuration:
 
@@ -124,10 +119,9 @@ A minimal 2-D YAML configuration:
      BoundaryCondition_North: Mirror
      BoundaryCondition_South: 0Slope0Shear
 
-Run either format from the command line::
+Run from the command line::
 
-   gflex path/to/config.yaml   # YAML (extension required)
-   gflex path/to/config        # INI (any extension)
+   gflex path/to/config.yaml
 
 See :doc:`configuration` for a full parameter reference and annotated
 examples.

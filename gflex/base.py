@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import configparser
 import contextlib
 import os
 import sys
@@ -133,31 +132,35 @@ class Utility:
     def _load_config(self, filename):
         """Return a :class:`configparser.ConfigParser` populated from *filename*.
 
-        Accepts both INI (any extension) and YAML (``.yaml`` / ``.yml``).
-        YAML files must use the same section names as the INI format
-        (``mode``, ``parameter``, ``input``, ``output``, ``numerical``,
-        ``numerical2D``, ``verbosity``).
+        Only YAML (``.yaml`` / ``.yml``) configuration files are supported.
+        The file must use the standard section names (``mode``, ``parameter``,
+        ``input``, ``output``, ``numerical``, ``numerical2D``, ``verbosity``).
         """
+        import configparser
+
         config = configparser.ConfigParser()
         ext = os.path.splitext(filename)[1].lower()
-        if ext in (".yaml", ".yml"):
-            try:
-                import yaml
-            except ImportError:
-                sys.exit(
-                    "PyYAML is required to read YAML configuration files.\n"
-                    "Install it with: pip install pyyaml"
-                )
-            with open(filename) as fh:
-                data = yaml.safe_load(fh)
-            for section, values in data.items():
-                if not isinstance(values, dict):
-                    continue
-                config.add_section(section)
-                for key, val in values.items():
-                    config.set(section, key, "" if val is None else str(val))
-        else:
-            config.read(filename)
+        if ext not in (".yaml", ".yml"):
+            sys.exit(
+                f"Configuration file '{filename}' does not have a .yaml or .yml "
+                "extension. INI-format configuration files are no longer supported. "
+                "Convert to YAML format."
+            )
+        try:
+            import yaml
+        except ImportError:
+            sys.exit(
+                "PyYAML is required to read YAML configuration files.\n"
+                "Install it with: pip install pyyaml"
+            )
+        with open(filename) as fh:
+            data = yaml.safe_load(fh)
+        for section, values in data.items():
+            if not isinstance(values, dict):
+                continue
+            config.add_section(section)
+            for key, val in values.items():
+                config.set(section, key, "" if val is None else str(val))
         return config
 
     def readyCoeff(self):

@@ -112,7 +112,7 @@ class BmiGflex(_BmiBase):
         Parameters
         ----------
         config_file : str
-            Path to a gFlex configuration file (INI or YAML).
+            Path to a gFlex YAML configuration file.
         """
         obj = WhichModel(config_file)
         if obj.dimension == 1:
