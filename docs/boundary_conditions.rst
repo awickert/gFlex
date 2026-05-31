@@ -68,6 +68,38 @@ meaning and derivative order.
 
 ----
 
+Finite-difference stencils
+--------------------------
+
+The FD solver discretises the biharmonic equation on a regular grid.
+Each deflection value :math:`w_i` (1-D) or :math:`w_{i,j}` (2-D) is
+coupled to its neighbours through a stencil of fixed integer coefficients
+(scaled by :math:`D/\Delta x^4` in 1-D, or :math:`D/h^4` in 2-D).
+
+**1-D interior stencil** — five-point stencil spanning two nodes on each
+side of the evaluation point:
+
+.. figure:: _static/stencil_1d_interior.svg
+   :width: 90%
+   :align: center
+   :alt: 1-D interior finite-difference stencil
+
+   Five-point 1-D stencil: :math:`\tfrac{D}{\Delta x^4}(+1,-4,+6,-4,+1)` applied at each interior node (uniform :math:`D`).
+
+**2-D interior stencil** — thirteen-point stencil on a square
+:math:`(\Delta x = \Delta y = h)` grid: centre coefficient +20, the four
+nearest neighbours −8, the four next-nearest along each axis +1, and the
+four diagonal neighbours +2.
+
+.. figure:: _static/stencil_2d_interior.svg
+   :width: 70%
+   :align: center
+   :alt: 2-D interior finite-difference stencil
+
+   Thirteen-point 2-D stencil for the biharmonic operator on a square grid (uniform :math:`D`).
+
+----
+
 Conditions
 ----------
 
@@ -186,6 +218,14 @@ the correct choice for modelling one half of a symmetric system.
 fixed point of the reflection, so :math:`w = 0` there by definition, and
 the plate is free to rotate — the simply-supported end.  Sine modes
 satisfy ``0Displacement0Moment``; cosine modes satisfy ``Mirror``.
+
+.. figure:: _static/stencil_mirror_vs_0d0m.svg
+   :width: 90%
+   :align: center
+   :alt: Even and odd ghost-node reflections compared
+
+   Even reflection (``Mirror``, left) vs. odd reflection (``0Displacement0Moment``, right):
+   the same four real nodes produce ghost values of opposite sign.
 
 .. figure:: _static/bc_diagram_0Displacement0Moment.svg
    :width: 80%
