@@ -94,7 +94,7 @@ For a full parameter reference, see the [Configuration Files](https://gflex.read
 [mode]
 ; 1 (line) or 2 (surface) dimensions
 dimension=2
-; Solution method: FD (Finite Difference), FFT (spectral, 2-D only),
+; Solution method: FD (Finite Difference), FFT (spectral),
 ; SAS (Superposition of Analytical Solutions), or SAS_NG (SAS, but
 ; on an unstructured grid — NG = "no grid").
 ; For SAS_NG, 1D data must be provided and will be returned in
@@ -217,7 +217,7 @@ flex = gflex.F2D()
 flex.Quiet = False
 
 flex.Method = 'FD' # Solution method: * FD (finite difference)
-                   #                  * FFT (spectral, 2-D only)
+                   #                  * FFT (spectral)
                    #                  * SAS (superposition of analytical solutions)
                    #                  * SAS_NG (ungridded SAS)
 
