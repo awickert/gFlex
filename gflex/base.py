@@ -21,6 +21,7 @@ import contextlib
 import os
 import sys
 import warnings
+from enum import Enum
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -47,6 +48,13 @@ except ImportError:
         UserWarning,
         stacklevel=2,
     )
+
+
+class _RigidityBC(Enum):
+    """Internal enum for flexural-rigidity boundary condition type."""
+    PERIODIC = "periodic"
+    MIRROR = "mirror_symmetry"
+    ZERO_CURVATURE = "zero_curvature"
 
 
 class Utility:

@@ -27,7 +27,7 @@ from scipy.signal import fftconvolve
 from scipy.sparse import spdiags
 from scipy.sparse.linalg import spsolve
 
-from gflex.base import Flexure
+from gflex.base import Flexure, _RigidityBC
 
 
 def recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
@@ -695,26 +695,26 @@ class F1D(Flexure):
         #########################################
         # West
         if self.bc_west == "periodic":
-            self.bc_rigidity_west = "periodic"
+            self.bc_rigidity_west = _RigidityBC.PERIODIC
         elif (
             self.bc_west
             == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear", "zero_slope_zero_shear"])
         ).any():
-            self.bc_rigidity_west = "0 curvature"
+            self.bc_rigidity_west = _RigidityBC.ZERO_CURVATURE
         elif self.bc_west in ("mirror", "zero_displacement_zero_moment"):
-            self.bc_rigidity_west = "mirror symmetry"
+            self.bc_rigidity_west = _RigidityBC.MIRROR
         else:
             sys.exit("Invalid Te B.C. case")
         # East
         if self.bc_east == "periodic":
-            self.bc_rigidity_east = "periodic"
+            self.bc_rigidity_east = _RigidityBC.PERIODIC
         elif (
             self.bc_east
             == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear", "zero_slope_zero_shear"])
         ).any():
-            self.bc_rigidity_east = "0 curvature"
+            self.bc_rigidity_east = _RigidityBC.ZERO_CURVATURE
         elif self.bc_east in ("mirror", "zero_displacement_zero_moment"):
-            self.bc_rigidity_east = "mirror symmetry"
+            self.bc_rigidity_east = _RigidityBC.MIRROR
         else:
             sys.exit("Invalid Te B.C. case")
 
@@ -735,17 +735,17 @@ class F1D(Flexure):
         ###############################################################
         # APPLY FLEXURAL RIGIDITY BOUNDARY CONDITIONS TO PADDED ARRAY #
         ###############################################################
-        if self.bc_rigidity_west == "0 curvature":
+        if self.bc_rigidity_west == _RigidityBC.ZERO_CURVATURE:
             self.D[0] = 2 * self.D[1] - self.D[2]
-        if self.bc_rigidity_east == "0 curvature":
+        if self.bc_rigidity_east == _RigidityBC.ZERO_CURVATURE:
             self.D[-1] = 2 * self.D[-2] - self.D[-3]
-        if self.bc_rigidity_west == "mirror symmetry":
+        if self.bc_rigidity_west == _RigidityBC.MIRROR:
             self.D[0] = self.D[2]
-        if self.bc_rigidity_east == "mirror symmetry":
+        if self.bc_rigidity_east == _RigidityBC.MIRROR:
             self.D[-1] = self.D[-3]
-        if self.bc_rigidity_west == "periodic":
+        if self.bc_rigidity_west == _RigidityBC.PERIODIC:
             self.D[0] = self.D[-2]
-        if self.bc_rigidity_east == "periodic":
+        if self.bc_rigidity_east == _RigidityBC.PERIODIC:
             self.D[-1] = self.D[-3]
 
     def get_coeff_values(self):
