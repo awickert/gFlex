@@ -141,8 +141,12 @@ Conditions
    * - ``Periodic``
      - Domain tiles infinitely in both directions; the solution wraps
        around.  Native to FFT-based spectral solutions.
-     - Regularly spaced seamount or volcanic chain; broad-scale FFT
-       calculations
+     - Seamount or volcanic chain; long linear load (mountain belt,
+       fold-and-thrust belt, subduction trench, or rift) where
+       individual valley structure is below the flexural wavelength
+       (though ``Mirror`` at both flanks may be preferable for a
+       bilaterally symmetric belt); continental-scale glacial load;
+       broad-scale FFT calculations
 
 The following figure from Wickert (2016) shows schematics of five of the six
 conditions (``0Displacement0Moment`` was added after publication):
