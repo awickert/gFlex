@@ -1168,7 +1168,7 @@ class F1D(Flexure):
             self.calc_max_flexural_wavelength()
             print("maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells")
 
-        if self.solver == "direct" or self.solver == "Direct":
+        if self.solver == "direct":
             if self.debug:
                 print("Using direct solution with UMFpack")
         else:

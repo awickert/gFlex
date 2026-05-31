@@ -2490,7 +2490,7 @@ class F2D(Flexure):
 
         if self.debug:
             print("Using direct solution with UMFpack")
-        elif self.solver not in ("direct", "Direct"):
+        elif self.solver != "direct":
             if not self.quiet:
                 print("Solution type not understood:")
                 print("Defaulting to direct solution with UMFpack")
