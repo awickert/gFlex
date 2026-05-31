@@ -727,27 +727,22 @@ class F2D(Flexure):
             print("w = ")
             print(self.w.shape)
 
+        # r shape: (N_out, N_load); vectorised over both dimensions at once.
+        # Memory cost is O(N_out × N_load) floats — batch if that is too large.
         if self.latlon:
-            for i in range(len(self.x)):
-                # More efficient if we have created some 0-load points
-                # (e.g., for where we want output)
-                if self.q[i] != 0:
-                    # Create array of distances from point of load
-                    r = self.greatCircleDistance(
-                        lat1=self.y[i],
-                        long1=self.x[i],
-                        lat2=self.yw,
-                        long2=self.xw,
-                        radius=self.PlanetaryRadius,
-                    )
-                    self.w += self.q[i] * self.coeff * kei(r / self.alpha)
-                    # Compute and sum deflection
-                    self.w += self.q[i] * self.coeff * kei(r / self.alpha)
+            r = self.greatCircleDistance(
+                lat1=self.y[None, :],
+                long1=self.x[None, :],
+                lat2=self.yw[:, None],
+                long2=self.xw[:, None],
+                radius=self.PlanetaryRadius,
+            )   # (N_out, N_load)
         else:
-            for i in range(len(self.x)):
-                if self.q[i] != 0:
-                    r = ((self.xw - self.x[i]) ** 2 + (self.yw - self.y[i]) ** 2) ** 0.5
-                    self.w += self.q[i] * self.coeff * kei(r / self.alpha)
+            r = np.sqrt(
+                (self.xw[:, None] - self.x[None, :]) ** 2
+                + (self.yw[:, None] - self.y[None, :]) ** 2
+            )   # (N_out, N_load)
+        self.w = self.coeff * (kei(r / self.alpha) * self.q[None, :]).sum(axis=1)
 
     ## FINITE DIFFERENCE
     ######################
