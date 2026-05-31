@@ -14,7 +14,7 @@ FD benchmarks cover:
   - square and non-square (aspect-ratio) domains
 
 Grid-size notes:
-  - SAS:  O(N²) in 1D, O(N⁴) in 2D — kept small to avoid long runs.
+  - SAS:  O(N²) in 1D; O(N² log N) in 2D (fftconvolve, load-pattern-independent).
   - FFT:  O(N log N) — handles large grids easily.
   - FD direct:  roughly O(N^1.5) for the sparse LU factorisation.
 """
@@ -363,8 +363,7 @@ def _make_f2d(nx, ny, method, te=_TE_REF, solver="direct", bc="0Displacement0Slo
     if qs is None:
         flex.qs = np.zeros((ny, nx))
         # Central quarter-area load (central 50 % of each axis = 25 % of domain
-        # area).  SAS timing scales as O(N_load × N_grid): each loaded cell
-        # contributes a kei evaluation at every grid point.
+        # area).  SAS timing is now load-pattern-independent (fftconvolve).
         flex.qs[ny // 4 : 3 * ny // 4, nx // 4 : 3 * nx // 4] = 1e6
     else:
         flex.qs = qs.copy()
@@ -568,7 +567,7 @@ def bench_2d_fft(sizes):
 
 
 def bench_2d_sas(sizes):
-    print("\n2D SAS  (O(N⁴) Python loops — kept small)")
+    print("\n2D SAS  (O(N² log N) fftconvolve — load-pattern-independent)")
     cols = [("n×n", 9), ("total (s)", 12)]
     _hdr(cols)
     for n in sizes:
@@ -580,7 +579,8 @@ def bench_2d_sas(sizes):
 
 
 # Maximum grid side length (cells) at which SAS is run per load pattern.
-# SAS scales as O(N_load × N_grid); full-domain SAS on large grids is very slow.
+# SAS now uses fftconvolve (O(N² log N), load-pattern-independent), so the
+# caps are conservative; adjust upward if runtimes are acceptable.
 _SAS_CAP = {"small": 200, "quarter": 100, "full": 50}
 
 
@@ -588,17 +588,19 @@ def bench_2d_load_geometry(sizes_fd):
     """Compare FD, FFT, and SAS timing across load-pattern geometries.
 
     Three load patterns are tested on square grids (constant Te):
-    - ``'small'``   : 3×3 central patch (N_load = 9); SAS ≈ O(N_grid)
+    - ``'small'``   : 3×3 central patch (N_load = 9)
     - ``'quarter'`` : central 50 % per axis (N_load ≈ N²/4)
     - ``'full'``    : entire domain (N_load = N²)
 
-    FD and FFT timing is independent of load pattern (the stiffness matrix
-    and spectral operator depend only on the grid and Te, not on the load).
-    SAS time scales as O(N_load × N_grid), so the SAS column varies
-    dramatically across patterns.
+    All three methods are load-pattern-independent: FD and FFT because the
+    stiffness matrix and spectral operator depend only on the grid and Te;
+    SAS because the fftconvolve rewrite is O(N² log N) regardless of how
+    many cells are loaded.  The SAS column should be flat across patterns
+    at a given grid size.
 
     A ``'--'`` in the SAS column means n exceeds the per-pattern cap
-    (small ≤ 200, quarter ≤ 100, full ≤ 50) to avoid excessively long runs.
+    (small ≤ 200, quarter ≤ 100, full ≤ 50); caps are conservative and
+    can be raised now that SAS no longer scales with N_load.
 
     Note: ``'full'`` with FD (0Displacement0Slope BCs) produces a
     bowl-shaped deflection — the plate is clamped at its edges, so
@@ -606,8 +608,8 @@ def bench_2d_load_geometry(sizes_fd):
     measurement regardless.
     """
     print("\n2D load geometry  (FD direct + FFT + SAS, constant Te, square grids)")
-    print("  FD and FFT timing is load-pattern-independent.")
-    print("  '--' in SAS column = n exceeds per-pattern cap.")
+    print("  All three methods are load-pattern-independent (SAS uses fftconvolve).")
+    print("  '--' in SAS column = n exceeds per-pattern cap (conservative; can raise).")
     print("  'full' with FD: 0Displacement0Slope BCs give bowl-shaped deflection.")
     cols = [
         ("n×n",   9), ("pattern",  9), ("N_load",  9),
