@@ -210,7 +210,7 @@ class Utility:
 
     def define_points_grid(self):
         """
-        This is experimental code that could be used in the spatialDomainNoGrid
+        This is experimental code that could be used in the spatial_domain_no_grid
         section to build a grid of points on which to generate the solution.
         However, the current development plan (as of 27 Jan 2015) is to have the
         end user supply the list of points where they want a solution (and/or for
@@ -312,7 +312,7 @@ class Plotting:
     Mixin that provides quick-look plotting for F1D and F2D results.
 
     Methods are called by :meth:`Flexure.output`; they are not intended to
-    be called directly by users.  Set ``self.plotChoice`` before calling
+    be called directly by users.  Set ``self.plot_choice`` before calling
     :meth:`output` to trigger a plot.
 
     .. note::
@@ -327,9 +327,9 @@ class Plotting:
 
     def plotting(self):
         """
-        Dispatch to the appropriate plot routine based on ``self.plotChoice``.
+        Dispatch to the appropriate plot routine based on ``self.plot_choice``.
 
-        Valid values for ``plotChoice``:
+        Valid values for ``plot_choice``:
 
         * ``'q'`` — surface load only
         * ``'w'`` — deflection only
@@ -337,14 +337,14 @@ class Plotting:
         * ``'combo'`` — load and deflection overlaid (1D only)
         """
         # try:
-        #  self.plotChoice
+        #  self.plot_choice
         # except:
-        #  self.plotChoice = None
-        if self.plotChoice:
+        #  self.plot_choice = None
+        if self.plot_choice:
             if self.verbose:
-                print("Starting to plot " + self.plotChoice)
+                print("Starting to plot " + self.plot_choice)
             if self.dimension == 1:
-                if self.plotChoice == "q":
+                if self.plot_choice == "q":
                     plt.figure(1)
                     if self.method == "SAS_NG":
                         plt.plot(self.x / 1000.0, self.q / (self.rho_m * self.g), "ko-")
@@ -365,7 +365,7 @@ class Plotting:
                     )
                     plt.tight_layout()
                     plt.show()
-                elif self.plotChoice == "w":
+                elif self.plot_choice == "w":
                     plt.figure(1)
                     if self.method == "SAS_NG":
                         plt.plot(self.xw / 1000.0, self.w, "k-")
@@ -377,7 +377,7 @@ class Plotting:
                     )
                     plt.tight_layout()
                     plt.show()
-                elif self.plotChoice == "both":
+                elif self.plot_choice == "both":
                     plt.figure(1, figsize=(6, 9))
                     ax = plt.subplot(212)
                     if self.method == "SAS_NG":
@@ -410,7 +410,7 @@ class Plotting:
                     )
                     plt.tight_layout()
                     plt.show()
-                elif self.plotChoice == "combo":
+                elif self.plot_choice == "combo":
                     fig = plt.figure(1, figsize=(10, 6))
                     titletext = "Loads and Lithospheric Deflections"
                     ax = fig.add_subplot(1, 1, 1)
@@ -513,8 +513,8 @@ class Plotting:
                 else:
                     if not self.quiet:
                         print(
-                            'Incorrect plotChoice input, "'
-                            + self.plotChoice
+                            'Incorrect plot_choice input, "'
+                            + self.plot_choice
                             + '" provided.'
                         )
                         print(
@@ -522,7 +522,7 @@ class Plotting:
                         )
                         print("Unable to produce plot.")
             elif self.dimension == 2:
-                if self.plotChoice == "q":
+                if self.plot_choice == "q":
                     fig = plt.figure(1, figsize=(8, 6))
                     if self.method != "SAS_NG":
                         self.surfplot(
@@ -541,7 +541,7 @@ class Plotting:
                         )
                     plt.tight_layout()
                     plt.show()
-                elif self.plotChoice == "w":
+                elif self.plot_choice == "w":
                     fig = plt.figure(1, figsize=(8, 6))
                     w_abs = float(np.abs(self.w).max())
                     if self.method != "SAS_NG":
@@ -553,7 +553,7 @@ class Plotting:
                                        cmap=_cmap_deflection, vmin=-w_abs, vmax=w_abs)
                     plt.tight_layout()
                     plt.show()
-                elif self.plotChoice == "both":
+                elif self.plot_choice == "both":
                     plt.figure(1, figsize=(6, 9))
                     if self.method != "SAS_NG":
                         self.twoSurfplots()
@@ -576,8 +576,8 @@ class Plotting:
                 else:
                     if not self.quiet:
                         print(
-                            'Incorrect plotChoice input, "'
-                            + self.plotChoice
+                            'Incorrect plot_choice input, "'
+                            + self.plot_choice
                             + '" provided.'
                         )
                         print(
@@ -1064,7 +1064,7 @@ class Flexure(Utility, Plotting):
                     sys.exit()
 
         # Plotting selection
-        self.plotChoice = self.configGet("string", "output", "plot", optional=True)
+        self.plot_choice = self.configGet("string", "output", "plot", optional=True)
 
         # Ensure that Te is of floating-point type to avoid integer math
         # and floor division
@@ -1145,10 +1145,10 @@ class Flexure(Utility, Plotting):
         """
         Save deflection to file and/or plot, based on optional attributes.
 
-        Does nothing if neither ``wOutFile`` nor ``plotChoice`` has been
-        set.  Set ``wOutFile`` to a path ending in ``'.npy'`` for a binary
+        Does nothing if neither ``w_out_file`` nor ``plot_choice`` has been
+        set.  Set ``w_out_file`` to a path ending in ``'.npy'`` for a binary
         NumPy array, or any other extension for an ASCII grid.  Set
-        ``plotChoice`` to ``'q'``, ``'w'``, ``'both'``, or (1D only)
+        ``plot_choice`` to ``'q'``, ``'w'``, ``'both'``, or (1D only)
         ``'combo'`` to display plots.
         """
         if self.verbose:
@@ -1168,28 +1168,28 @@ class Flexure(Utility, Plotting):
         Otherwise, an ASCII grid will be exported.
         """
         try:
-            # If wOutFile exists, has already been set by a setter
-            self.wOutFile
+            # If w_out_file exists, has already been set by a setter
+            self.w_out_file
         except AttributeError:
             # Otherwise, set from config; None means no output file
-            self.wOutFile = self.configGet(
+            self.w_out_file = self.configGet(
                 "string", "output", "deflection_out", optional=True
             )
         else:
             if self.verbose:
                 print("Output filename provided.")
-        if self.wOutFile:
-            if self.wOutFile[-4:] == ".npy":
+        if self.w_out_file:
+            if self.w_out_file[-4:] == ".npy":
                 from numpy import save
 
-                save(self.wOutFile, self.w)
+                save(self.w_out_file, self.w)
             else:
                 from numpy import savetxt
 
                 # Shouldn't need more than mm precision, at very most
-                savetxt(self.wOutFile, self.w, fmt="%.3f")
+                savetxt(self.w_out_file, self.w, fmt="%.3f")
                 if self.verbose:
-                    print("Saving deflections --> " + self.wOutFile)
+                    print("Saving deflections --> " + self.w_out_file)
 
     def bc_check(self):
         """

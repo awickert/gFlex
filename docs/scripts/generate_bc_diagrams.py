@@ -153,7 +153,7 @@ def draw_bc(*, name, title, subtitle,
     ax.axhline(0, color="#c8c8c8", lw=0.8, zorder=1)
 
     # Deflection curve through active ghost nodes + all real nodes.
-    # Excluded ghost nodes (0Displacement0Slope) are replaced by a flat line
+    # Excluded ghost nodes (zero_displacement_zero_slope) are replaced by a flat line
     # at w₁ height: the clamped BC enforces zero slope at the boundary.
     excl_mask = np.array([k == "excl" for k in ghost_kinds])
     curve_mask = ~excl_mask
@@ -275,14 +275,14 @@ def draw_bc(*, name, title, subtitle,
 def run():
 
     # ------------------------------------------------------------------
-    # 0Displacement0Slope — clamped end
+    # zero_displacement_zero_slope — clamped end
     # w = 0 AND dw/dx = 0 at boundary.  Ghost columns absent from the
     # stiffness matrix (stencil truncated); ghosts shown grey/dashed.
     # ------------------------------------------------------------------
     real = [(0, 0.00), (1, 0.18), (2, 0.32), (3, 0.40)]
     draw_bc(
-        name         = "0Displacement0Slope",
-        title        = "0Displacement0Slope",
+        name         = "zero_displacement_zero_slope",
+        title        = "zero_displacement_zero_slope",
         subtitle     = "clamped end:\n  w = 0,  dw/dx = 0",
         bdy_x        = -0.5,
         real_xy      = real,
@@ -294,15 +294,15 @@ def run():
     )
 
     # ------------------------------------------------------------------
-    # 0Displacement0Moment — simply-supported (pinned) end
+    # zero_displacement_zero_moment — simply-supported (pinned) end
     # w = 0 at boundary (Dirichlet); M = 0 via odd-reflection ghost.
     # w₀ = −w₂  (inner ghost),  w₋₁ = −w₃  (outer ghost).
     # ------------------------------------------------------------------
     ry = [0.00, 0.44, 0.60, 0.50]
     real = list(zip([0, 1, 2, 3], ry))
     draw_bc(
-        name        = "0Displacement0Moment",
-        title       = "0Displacement0Moment",
+        name        = "zero_displacement_zero_moment",
+        title       = "zero_displacement_zero_moment",
         subtitle    = "simply-supported end:\n  w = 0,  M = 0",
         bdy_x       = -0.5,
         real_xy     = real,
@@ -313,16 +313,16 @@ def run():
     )
 
     # ------------------------------------------------------------------
-    # Mirror — even reflection; correct discrete symmetry BC.
+    # mirror — even reflection; correct discrete symmetry BC.
     # Ghost values: w₀ = +w₂, w₋₁ = +w₃ (even reflection about boundary
-    # node w₁).  Exactly equivalent to Periodic on the 2× even-extended
+    # node w₁).  Exactly equivalent to periodic on the 2× even-extended
     # domain.
     # ------------------------------------------------------------------
     ry = [0.58, 0.72, 0.68, 0.52]
     real = list(zip([0, 1, 2, 3], ry))
     draw_bc(
-        name        = "Mirror",
-        title       = "Mirror",
+        name        = "mirror",
+        title       = "mirror",
         subtitle    = "symmetry (even reflection):\n  dw/dx = 0 at boundary",
         bdy_x       = -0.5,
         real_xy     = real,
@@ -333,16 +333,16 @@ def run():
     )
 
     # ------------------------------------------------------------------
-    # 0Slope0Shear — level, shear-free boundary
-    # Same ghost equations as Mirror (w₀ = +w₂, w₋₁ = +w₃), but uses a
+    # zero_slope_zero_shear — level, shear-free boundary
+    # Same ghost equations as mirror (w₀ = +w₂, w₋₁ = +w₃), but uses a
     # different stencil at the second boundary row.  An approximation to
-    # the symmetry condition; Mirror is the exact discrete implementation.
+    # the symmetry condition; mirror is the exact discrete implementation.
     # ------------------------------------------------------------------
     ry = [0.58, 0.72, 0.68, 0.52]
     real = list(zip([0, 1, 2, 3], ry))
     draw_bc(
-        name        = "0Slope0Shear",
-        title       = "0Slope0Shear",
+        name        = "zero_slope_zero_shear",
+        title       = "zero_slope_zero_shear",
         subtitle    = "level, shear-free:\n  dw/dx = 0,  V = 0",
         bdy_x       = -0.5,
         real_xy     = real,
@@ -353,7 +353,7 @@ def run():
     )
 
     # ------------------------------------------------------------------
-    # 0Moment0Shear — free (broken) end
+    # zero_moment_zero_shear — free (broken) end
     # M = 0 → w₀  = 2w₁ − w₂     (zero-curvature linear extrapolation)
     # V = 0 → w₋₁ = 4w₁ − 4w₂ + w₃
     # Profile ascends into the domain; ghost extrapolation curves below
@@ -364,8 +364,8 @@ def run():
     gy1 = 2*ry[0] - ry[1]              # w₀  = −0.10
     gy2 = 4*ry[0] - 4*ry[1] + ry[2]   # w₋₁ = −0.40
     draw_bc(
-        name        = "0Moment0Shear",
-        title       = "0Moment0Shear",
+        name        = "zero_moment_zero_shear",
+        title       = "zero_moment_zero_shear",
         subtitle    = "free (broken) end:\n  M = 0,  V = 0",
         bdy_x       = -0.5,
         real_xy     = real,
@@ -376,13 +376,13 @@ def run():
     )
 
     # ------------------------------------------------------------------
-    # Periodic — wrap-around
+    # periodic — wrap-around
     # Ghost values come from the far end of the domain:
     #   w₀  = w_N   (inner ghost = last domain node)
     #   w₋₁ = w_{N-1}  (outer ghost = second-to-last domain node)
     # Four domain nodes w₁–w₄ are shown near the left boundary; w_{N-1}
     # and w_N at the right are the explicit wrap-around sources.
-    # The wider figure (vs. other BCs) intentionally signals that Periodic
+    # The wider figure (vs. other BCs) intentionally signals that periodic
     # is categorically different: no physical wall, just wrap-around.
     # ------------------------------------------------------------------
     ry    = [0.32, 0.55, 0.65, 0.52]
@@ -390,8 +390,8 @@ def run():
     y_N   = 0.18   # w_N value      (= inner ghost w₀)
     real  = list(zip([0, 1, 2, 3], ry))
     draw_bc(
-        name        = "Periodic",
-        title       = "Periodic",
+        name        = "periodic",
+        title       = "periodic",
         subtitle    = "wrap-around:  domain tiles infinitely",
         bdy_x       = -0.5,
         real_xy     = real,

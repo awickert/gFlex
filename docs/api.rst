@@ -89,15 +89,15 @@ problematic boundary conditions.
 **BC-type warnings** fire whenever a side carries a BC whose physical
 interpretation deserves verification:
 
-* ``'0Moment0Shear'`` — assumes a free broken plate end (zero moment and shear
+* ``'zero_moment_zero_shear'`` — assumes a free broken plate end (zero moment and shear
   force).  This is physically appropriate for a rifted margin or spreading ridge
   where the plate really is broken, but is often applied uncritically elsewhere
   in the literature.
-* ``'0Slope0Shear'`` — requires the plate to be simultaneously horizontal and
+* ``'zero_slope_zero_shear'`` — requires the plate to be simultaneously horizontal and
   shear-free at the boundary.  No clear geological analog is known for this
   combination in a non-trivial deflection setting.
 
-**Proximity warnings** fire for ``'0Displacement0Slope'`` boundaries when the
+**Proximity warnings** fire for ``'zero_displacement_zero_slope'`` boundaries when the
 nearest loaded cell is within one flexural wavelength
 (:math:`\lambda = 2\pi\alpha`, where
 :math:`\alpha = (4D / \Delta\rho g)^{1/4}`)
@@ -129,7 +129,7 @@ Once you have confirmed that a boundary condition is appropriate for your setup,
 suppress the corresponding warning by message text::
 
    import warnings
-   warnings.filterwarnings("ignore", message=".*0Moment0Shear.*")
+   warnings.filterwarnings("ignore", message=".*zero_moment_zero_shear.*")
 
 To suppress all gFlex warnings::
 

@@ -556,13 +556,13 @@ class F1D(Flexure):
     def SAS(self):
         """Run the gridded superposition-of-analytical-solutions pipeline."""
         self.gridded_x()
-        self.spatialDomainVarsSAS()
-        self.spatialDomainGridded()
+        self.spatial_domain_vars_sas()
+        self.spatial_domain_gridded()
 
     def SAS_NG(self):
         """Run the ungridded (non-uniform points) SAS pipeline."""
-        self.spatialDomainVarsSAS()
-        self.spatialDomainNoGrid()
+        self.spatial_domain_vars_sas()
+        self.spatial_domain_no_grid()
 
     ######################################
     ## FUNCTIONS TO SOLVE THE EQUATIONS ##
@@ -581,7 +581,7 @@ class F1D(Flexure):
 
     # SETUP
 
-    def spatialDomainVarsSAS(self):
+    def spatial_domain_vars_sas(self):
         """Compute flexural rigidity D, parameter alpha, and Green's-function coefficient for SAS."""
         # Check Te:
         # * If scalar, okay.
@@ -610,7 +610,7 @@ class F1D(Flexure):
     # UNIFORM DX ("GRIDDED"): LOADS PROVIDED AS AN ARRAY WITH KNOWN DX TO
     # CONVERT LOAD MAGNITUDE AT A POINT INTO MASS INTEGRATED ACROSS DX
 
-    def spatialDomainGridded(self):
+    def spatial_domain_gridded(self):
         """Compute deflection by summing 1D Green's functions over the load grid."""
         # Build the beam Green's function kernel for all relative offsets
         # [-(nx-1), nx-1].  G(r) = exp(-r/α)(cos(r/α) + sin(r/α)) is even,
@@ -626,7 +626,7 @@ class F1D(Flexure):
     # NONUNIFORM DX (NO GRID): ARBITRARILY-SPACED POINT LOADS
     # So essentially a sum of Green's functions for flexural response
 
-    def spatialDomainNoGrid(self):
+    def spatial_domain_no_grid(self):
         """
         Superposition of analytical solutions without a gridded domain
         """
@@ -1148,9 +1148,9 @@ class F1D(Flexure):
         # This is an approximation if there is fill that evolves with iterations
         # (e.g., water), but should be good enough that this won't do much to it
         alpha = (4 * Dmax / (self.drho * self.g)) ** 0.25  # 2D flexural parameter
-        self.maxFlexuralWavelength = 2 * np.pi * alpha
+        self.max_flexural_wavelength = 2 * np.pi * alpha
         self.maxFlexuralWavelength_ncells = int(
-            np.ceil(self.maxFlexuralWavelength / self.dx)
+            np.ceil(self.max_flexural_wavelength / self.dx)
         )
 
     def fd_solve(self):

@@ -645,13 +645,13 @@ class F2D(Flexure):
 
     def SAS(self):
         """Run the gridded superposition-of-analytical-solutions pipeline."""
-        self.spatialDomainVarsSAS()
-        self.spatialDomainGridded()
+        self.spatial_domain_vars_sas()
+        self.spatial_domain_gridded()
 
     def SAS_NG(self):
         """Run the ungridded (non-uniform points) SAS pipeline."""
-        self.spatialDomainVarsSAS()
-        self.spatialDomainNoGrid()
+        self.spatial_domain_vars_sas()
+        self.spatial_domain_no_grid()
 
     ######################################
     ## FUNCTIONS TO SOLVE THE EQUATIONS ##
@@ -662,7 +662,7 @@ class F2D(Flexure):
 
     # SETUP
 
-    def spatialDomainVarsSAS(self):
+    def spatial_domain_vars_sas(self):
         """Compute flexural rigidity D, parameter alpha, and Green's-function coefficient for SAS."""
         # Check Te:
         # * If scalar, okay.
@@ -688,7 +688,7 @@ class F2D(Flexure):
 
     # GRIDDED
 
-    def spatialDomainGridded(self):
+    def spatial_domain_gridded(self):
         """Compute deflection by summing 2D Kelvin-function Green's functions over the load grid."""
         self.nx = self.qs.shape[1]
         self.ny = self.qs.shape[0]
@@ -721,7 +721,7 @@ class F2D(Flexure):
 
     # NO GRID
 
-    def spatialDomainNoGrid(self):
+    def spatial_domain_no_grid(self):
         """Compute deflection by summing 2D Kelvin-function Green's functions at ungridded output points."""
         self.w = np.zeros(self.xw.shape)
         if self.debug:
@@ -2460,12 +2460,12 @@ class F2D(Flexure):
         # This is an approximation if there is fill that evolves with iterations
         # (e.g., water), but should be good enough that this won't do much to it
         alpha = (4 * Dmax / (self.drho * self.g)) ** 0.25  # 2D flexural parameter
-        self.maxFlexuralWavelength = 2 * np.pi * alpha
+        self.max_flexural_wavelength = 2 * np.pi * alpha
         self.maxFlexuralWavelength_ncells_x = int(
-            np.ceil(self.maxFlexuralWavelength / self.dx)
+            np.ceil(self.max_flexural_wavelength / self.dx)
         )
         self.maxFlexuralWavelength_ncells_y = int(
-            np.ceil(self.maxFlexuralWavelength / self.dy)
+            np.ceil(self.max_flexural_wavelength / self.dy)
         )
 
     def fd_solve(self):

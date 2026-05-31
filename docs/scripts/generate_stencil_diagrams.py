@@ -283,11 +283,11 @@ def draw_2d_stencil():
     _save(fig, out)
 
 
-# ── Mirror vs 0Displacement0Moment ghost comparison ──────────────────────────
+# ── mirror vs zero_displacement_zero_moment ghost comparison ──────────────────────────
 
 def draw_ghost_comparison():
     """
-    Side-by-side: even reflection (Mirror) and odd reflection (0D0M).
+    Side-by-side: even reflection (mirror) and odd reflection (0D0M).
     Both panels use the same real-node deflection profile so that the only
     visual difference is the sign of the ghost values.
     """
@@ -298,7 +298,7 @@ def draw_ghost_comparison():
 
     panels = [
         dict(
-            title    = "Mirror",
+            title    = "mirror",
             subtitle = "even reflection",
             ghost_ys = [+ry[2], +ry[1]],     # w₀ = +w₃, w₋₁ = +w₂  (ghost_x[0]=-2, [1]=-1)
             ghost_eqs= [r"$w_0 = +w_3$",
@@ -306,7 +306,7 @@ def draw_ghost_comparison():
             pin      = False,
         ),
         dict(
-            title    = "0Displacement0Moment",
+            title    = "zero_displacement_zero_moment",
             subtitle = "odd reflection",
             ghost_ys = [-ry[2], -ry[1]],     # w₀ = −w₃, w₋₁ = −w₂
             ghost_eqs= [r"$w_0 = -w_3$",

@@ -3,7 +3,7 @@
 All tests use a monkeypatched plt.show so no windows open.  Each test closes
 all figures in its teardown to prevent figure accumulation.
 
-Valid plotChoice strings are 'q', 'w', 'both', and (1-D only) 'combo'.
+Valid plot_choice strings are 'q', 'w', 'both', and (1-D only) 'combo'.
 """
 
 import numpy as np
@@ -161,9 +161,9 @@ def _no_show_close(monkeypatch):
                           ids=["FD", "SAS", "FFT", "SAS_NG"])
 @pytest.mark.parametrize("choice", ["q", "w", "both"])
 def test_1d_plot(make, choice):
-    """1-D plotting smoke test: no exception for any valid plotChoice × solver."""
+    """1-D plotting smoke test: no exception for any valid plot_choice × solver."""
     flex = make()
-    flex.plotChoice = choice
+    flex.plot_choice = choice
     flex.output()
 
 
@@ -177,7 +177,7 @@ def test_1d_plot(make, choice):
 def test_1d_plot_combo(make):
     """1-D combo plot smoke test."""
     flex = make()
-    flex.plotChoice = "combo"
+    flex.plot_choice = "combo"
     flex.output()
 
 
@@ -189,31 +189,31 @@ def test_1d_plot_combo(make):
                           ids=["FD", "SAS", "FFT", "SAS_NG"])
 @pytest.mark.parametrize("choice", ["q", "w", "both"])
 def test_2d_plot(make, choice):
-    """2-D plotting smoke test: no exception for any valid plotChoice × solver."""
+    """2-D plotting smoke test: no exception for any valid plot_choice × solver."""
     flex = make()
-    flex.plotChoice = choice
+    flex.plot_choice = choice
     flex.output()
 
 
 # ---------------------------------------------------------------------------
-# output() with no plotChoice and no wOutFile — should be a silent no-op
+# output() with no plot_choice and no w_out_file — should be a silent no-op
 # ---------------------------------------------------------------------------
 
 def test_output_no_plotchoice():
-    """output() with no plotChoice set is a silent no-op that creates no figures."""
+    """output() with no plot_choice set is a silent no-op that creates no figures."""
     flex = _1d_fd()
     flex.output()
     assert plt.get_fignums() == []
 
 
 # ---------------------------------------------------------------------------
-# Invalid plotChoice — prints a message but does not raise
+# Invalid plot_choice — prints a message but does not raise
 # ---------------------------------------------------------------------------
 
 def test_invalid_plotchoice_silent():
-    """An unrecognised plotChoice string does not raise an exception."""
+    """An unrecognised plot_choice string does not raise an exception."""
     flex = _1d_fd()
-    flex.plotChoice = "not_a_valid_choice"
+    flex.plot_choice = "not_a_valid_choice"
     flex.output()
 
 
@@ -222,10 +222,10 @@ def test_invalid_plotchoice_silent():
 # ---------------------------------------------------------------------------
 
 def test_output_file_1d_ascii(tmp_path):
-    """wOutFile writes a 1-D deflection array as ASCII."""
+    """w_out_file writes a 1-D deflection array as ASCII."""
     flex = _1d_fd()
     out = tmp_path / "deflection.txt"
-    flex.wOutFile = str(out)
+    flex.w_out_file = str(out)
     flex.output()
     assert out.exists()
     loaded = np.loadtxt(str(out))
@@ -233,20 +233,20 @@ def test_output_file_1d_ascii(tmp_path):
 
 
 def test_output_file_1d_npy(tmp_path):
-    """wOutFile ending in .npy writes a binary NumPy array that round-trips."""
+    """w_out_file ending in .npy writes a binary NumPy array that round-trips."""
     flex = _1d_fd()
     out = tmp_path / "deflection.npy"
-    flex.wOutFile = str(out)
+    flex.w_out_file = str(out)
     flex.output()
     assert out.exists()
     np.testing.assert_array_equal(np.load(str(out)), flex.w)
 
 
 def test_output_file_2d_ascii(tmp_path):
-    """wOutFile writes a 2-D deflection grid as ASCII."""
+    """w_out_file writes a 2-D deflection grid as ASCII."""
     flex = _2d_fd()
     out = tmp_path / "deflection_2d.txt"
-    flex.wOutFile = str(out)
+    flex.w_out_file = str(out)
     flex.output()
     assert out.exists()
     loaded = np.loadtxt(str(out))
