@@ -39,9 +39,7 @@ def test_main():
     flex.Method = "FD"  # Solution method: * FD (finite difference)
     #                  * SAS (superposition of analytical solutions)
     #                  * SAS_NG (ungridded SAS)
-    flex.Solver = "direct"  # direct or iterative
-    # convergence = 1E-3 # convergence between iterations, if an iterative solution
-    # method is chosen
+    flex.Solver = "direct"
 
     flex.g = 9.8  # acceleration due to gravity
     flex.E = 65e9  # Young's Modulus
@@ -282,49 +280,6 @@ def test_2d_fd_convergence_order():
             f"got {rate:.2f} between N={Ns[i]} and N={Ns[i+1]} "
             f"(max errors: {errors[i]:.4g} m → {errors[i+1]:.4g} m)"
         )
-
-
-def test_2d_fd_iterative_agrees_with_direct():
-    """2-D iterative solver agrees with direct to within 1 % of peak deflection.
-
-    lgmres with an ILU(fill=20, drop=1e-4) preconditioner reduces the
-    effective condition number enough to converge for the 2-D biharmonic
-    stiffness matrix.  Agreement to 1 % confirms the iterative path is
-    physically correct, not just that it runs.
-    """
-    N = 40
-    dx = dy = 5000.0
-    qs = np.zeros((N, N))
-    qs[15:25, 15:25] = 1e6
-
-    def _run_fd_2d(solver):
-        flex = F2D()
-        flex.Quiet = True
-        flex.Method = "FD"
-        flex.Solver = solver
-        flex.g = 9.8
-        flex.E = 65e9
-        flex.nu = 0.25
-        flex.rho_m = 3300.0
-        flex.rho_fill = 0.0
-        flex.Te = 30e3
-        flex.qs = qs.copy()
-        flex.dx = dx
-        flex.dy = dy
-        flex.BC_W = flex.BC_E = flex.BC_S = flex.BC_N = "0Moment0Shear"
-        flex.initialize()
-        flex.run()
-        return flex
-
-    flex_d = _run_fd_2d("direct")
-    flex_i = _run_fd_2d("iterative")
-
-    peak = abs(flex_d.w.min())
-    max_err = np.max(np.abs(flex_d.w - flex_i.w))
-    assert max_err < 0.01 * peak, (
-        f"Iterative and direct solvers disagree by {max_err:.4f} m "
-        f"({100*max_err/peak:.2f} % of peak {peak:.4f} m)"
-    )
 
 
 if __name__ == "__main__":

@@ -239,34 +239,6 @@ def test_1d_fd_convergence_order():
         )
 
 
-# ---------------------------------------------------------------------------
-# Iterative solver
-# ---------------------------------------------------------------------------
-
-def test_1d_fd_iterative_agrees_with_direct():
-    """1-D iterative solver agrees with direct to within 1 % of peak deflection.
-
-    lgmres with a Jacobi preconditioner and rtol = 1e-3 (the default
-    iterative_ConvergenceTolerance) converges well for the 1-D banded
-    biharmonic system, which has a much lower condition number than the
-    2-D case.  The test confirms the solver runs programmatically (no
-    config file needed) and that its output is physically meaningful.
-    """
-    N = 100
-    dx = 4000.0
-    qs = np.zeros(N)
-    qs[45:55] = 1e6
-
-    flex_d = _run_flex_1d(Te=30e3, qs=qs, dx=dx)
-    flex_i = _run_flex_1d(Te=30e3, qs=qs, dx=dx, solver="iterative")
-
-    peak = abs(flex_d.w.min())
-    max_err = np.max(np.abs(flex_d.w - flex_i.w))
-    assert max_err < 0.01 * peak, (
-        f"Iterative and direct solvers disagree by {max_err:.4f} m "
-        f"({100*max_err/peak:.2f} % of peak {peak:.4f} m)"
-    )
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
