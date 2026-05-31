@@ -160,3 +160,151 @@ cells per flexural parameter) is sufficient to keep errors below 1 %.  At
 errors can be several percent, particularly near the load centre and the
 forebulge.  Use :func:`gflex.flexural_wavelengths` to estimate :math:`\alpha`
 before choosing a grid spacing.
+
+----
+
+1-D ``zero_displacement_zero_slope`` boundary condition: ghost-node correction (2026)
+--------------------------------------------------------------------------------------
+
+.. figure:: _static/clamped_bc_error.png
+   :width: 100%
+   :align: center
+   :alt: MMS error analysis — zero_displacement_zero_slope old vs corrected
+
+   **Left:** Deflection profiles at :math:`\Delta x = 3` km; exact (MMS),
+   corrected, and original implementations are indistinguishable at this scale.
+   **Centre:** Residuals (numerical − exact). The original implementation has a
+   systematic error that grows toward the boundaries; the corrected implementation
+   is everywhere within floating-point noise. **Right:** Convergence with grid
+   refinement. The original implementation converges at :math:`\mathcal{O}(\Delta
+   x^{0.97})` — first order — while the corrected implementation achieves
+   :math:`\mathcal{O}(\Delta x^{2.0})`, consistent with the interior stencil.
+
+Background
+~~~~~~~~~~
+
+The ``zero_displacement_zero_slope`` (clamped) finite-difference boundary
+condition requires the elimination of two ghost nodes outside the domain at
+each end of the plate.  In a clamped (zero-slope) condition, the ghost node
+immediately outside the boundary satisfies an **even reflection**:
+
+.. math::
+
+   w_{-1} = w_{+1} \quad\text{(west end)}
+
+rather than the odd reflection used by the zero-moment (zero-curvature)
+condition.  Additionally, the boundary row itself must be **decoupled** from
+interior nodes so that the linear system directly enforces :math:`w_0 = 0`
+as a Dirichlet constraint.
+
+The original implementation (present since gFlex 1.0, 2016) dropped ghost
+nodes by setting them to ``NaN`` rather than eliminating them via even
+reflection, and did not decouple the boundary row.  As a result:
+
+* :math:`w_0` was not strictly zero — the linear system retained off-diagonal
+  coupling that allowed the boundary value to drift.
+* The zero-slope condition was not enforced at the discrete level.
+* The convergence rate was :math:`\mathcal{O}(\Delta x)` rather than
+  :math:`\mathcal{O}(\Delta x^2)`.
+
+MMS verification
+~~~~~~~~~~~~~~~~
+
+The error is quantified with a Method of Manufactured Solutions (MMS) test.
+The exact solution
+
+.. math::
+
+   w_\mathrm{exact}(\xi) = -W_0\,\xi^2\,(1-\xi)^2, \quad \xi = x/L,
+
+satisfies both boundary conditions at :math:`\xi = 0` and :math:`\xi = 1`
+exactly (:math:`w = 0`, :math:`dw/d\xi = 0`).  Its fourth derivative is
+constant, so the manufactured load
+
+.. math::
+
+   q_s(\xi) = \frac{24\,D\,W_0}{L^4}
+              + \Delta\rho\,g\,W_0\,\xi^2(1-\xi)^2
+
+includes a spatially varying elastic-foundation term — making this a
+nontrivial test of the full governing equation, not just the biharmonic
+operator alone.
+
+The error metric is the :math:`L^\infty` relative error:
+
+.. math::
+
+   e = \frac{\max|w_\mathrm{num} - w_\mathrm{exact}|}
+            {\max|w_\mathrm{exact}|}
+
+Physical parameters used: :math:`T_e = 30` km, :math:`E = 65` GPa,
+:math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\mathrm{fill}
+= 0`, :math:`g = 9.81` m s⁻², :math:`L = 600` km.
+
+Results
+~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 12 16 16 12
+
+   * - :math:`n_x`
+     - :math:`\Delta x` [km]
+     - original error
+     - corrected error
+     - factor
+   * - 26
+     - 24.0
+     - 4.34 × 10⁻²
+     - 1.84 × 10⁻³
+     - 24×
+   * - 51
+     - 12.0
+     - 2.75 × 10⁻²
+     - 4.55 × 10⁻⁴
+     - 60×
+   * - 101
+     - 6.0
+     - 1.54 × 10⁻²
+     - 1.14 × 10⁻⁴
+     - 135×
+   * - 201
+     - 3.0
+     - 8.11 × 10⁻³
+     - 2.85 × 10⁻⁵
+     - 285×
+   * - 401
+     - 1.5
+     - 4.16 × 10⁻³
+     - 7.12 × 10⁻⁶
+     - 584×
+   * - 801
+     - 0.75
+     - 2.11 × 10⁻³
+     - 1.78 × 10⁻⁶
+     - 1184×
+
+Convergence slopes (finest three points): original :math:`\mathcal{O}(\Delta
+x^{0.97})`; corrected :math:`\mathcal{O}(\Delta x^{2.00})`.  The boundary
+value :math:`w[0]` (exactly zero in the MMS solution) was :math:`-4.9 \times
+10^{-3}` m in the original and :math:`-1.6 \times 10^{-8}` m in the
+corrected implementation at :math:`\Delta x = 0.75` km.
+
+Practical impact
+~~~~~~~~~~~~~~~~
+
+The original implementation gave acceptably small errors **when the boundary
+was far from any load** — the intended use case, reinforced by the
+``zero_displacement_zero_slope`` proximity warning added in gFlex 1.4.  When
+a load was placed close to a clamped boundary, the first-order error could
+produce boundary deflections of order :math:`10^{-3}` relative to the
+maximum deflection.  For a 1 km deflection this corresponds to roughly 1 mm
+of spurious boundary motion — negligible in most geoscience applications, but
+detectable in high-resolution model comparisons.
+
+The correction is in commit ``6f68270`` and is included in all releases from
+gFlex 1.4.0 onward.  See the :doc:`changelog` for the full bug-fix note.
+
+The standalone error-analysis script is at
+``benchmarks/analyze_clamped_bc_error.py``, and a git-worktree–based
+cross-version comparator is at ``analysis/compare_bc_versions.py``.
