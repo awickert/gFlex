@@ -158,11 +158,11 @@ flex.run()
 flex.finalize()
 
 # If you want to plot the output
-flex.plotChoice='both'
+flex.plot_choice='both'
 # An output file for deflections could also be defined here
-# flex.wOutFile =
+# flex.w_out_file =
 flex.output() # Plots and/or saves output, or does nothing, depending on
-              # whether flex.plotChoice and/or flex.wOutFile have been set
+              # whether flex.plot_choice and/or flex.w_out_file have been set
 # TO OBTAIN OUTPUT DIRECTLY IN PYTHON, you can assign the internal variable,
 # flex.w, to another variable -- or as an element in a list if you are looping
 # over many runs of gFlex:
@@ -193,7 +193,7 @@ obj.run()
 obj.finalize()
 
 # Standalone plotting output if you so desire
-obj.plotChoice='w'
+obj.plot_choice='w'
 obj.output()
 ```
 
@@ -223,7 +223,7 @@ pip install gflex[bmi]
 
 ### Plotting
 
-There are four plot choices, defined via `self.plotChoice`:
+There are four plot choices, defined via `self.plot_choice`:
 * `'q'`: plots the load in mantle-density-equivalent units of length
 * `'w'`: plots the deflection in units of length
 * `'both'`: plots both deflection and loads in separate panels of a 2-subplot figure
