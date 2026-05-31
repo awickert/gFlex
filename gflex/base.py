@@ -354,7 +354,7 @@ class Plotting:
             if self.dimension == 1:
                 if self.plot_choice == "q":
                     plt.figure(1)
-                    if self.method == "SAS_NG":
+                    if self.method == "sas_ng":
                         plt.plot(self.x / 1000.0, self.q / (self.rho_m * self.g), "ko-")
                         plt.ylabel(
                             "Load volume, mantle equivalent [m$^3$]",
@@ -375,7 +375,7 @@ class Plotting:
                     plt.show()
                 elif self.plot_choice == "w":
                     plt.figure(1)
-                    if self.method == "SAS_NG":
+                    if self.method == "sas_ng":
                         plt.plot(self.xw / 1000.0, self.w, "k-")
                     else:
                         plt.plot(self.x / 1000.0, self.w, "k-")
@@ -388,7 +388,7 @@ class Plotting:
                 elif self.plot_choice == "both":
                     plt.figure(1, figsize=(6, 9))
                     ax = plt.subplot(212)
-                    if self.method == "SAS_NG":
+                    if self.method == "sas_ng":
                         ax.plot(self.xw / 1000.0, self.w, "k-")
                     else:
                         ax.plot(self.x / 1000.0, self.w, "k-")
@@ -398,7 +398,7 @@ class Plotting:
                     )
                     plt.subplot(211)
                     plt.title("Loads and Lithospheric Deflections", fontsize=16)
-                    if self.method == "SAS_NG":
+                    if self.method == "sas_ng":
                         plt.plot(self.x / 1000.0, self.q / (self.rho_m * self.g), "ko-")
                         plt.ylabel(
                             "Load volume, mantle equivalent [m$^3$]",
@@ -423,7 +423,7 @@ class Plotting:
                     titletext = "Loads and Lithospheric Deflections"
                     ax = fig.add_subplot(1, 1, 1)
                     # Plot undeflected load
-                    if self.method == "SAS_NG":
+                    if self.method == "sas_ng":
                         if not self.quiet:
                             print(
                                 "Combo plot can't work with SAS_NG! Don't have mechanism"
@@ -442,7 +442,7 @@ class Plotting:
                             label="Load thickness [m mantle equivalent]",
                         )
                     # Plot deflected load
-                    if self.method == "SAS_NG":
+                    if self.method == "sas_ng":
                         pass
                         # ax.plot(
                         #     self.x / 1000.0,
@@ -460,7 +460,7 @@ class Plotting:
                             label="Deflection [m] + load thickness [m mantle equivalent]",
                         )
                     # Plot deflection
-                    if self.method == "SAS_NG":
+                    if self.method == "sas_ng":
                         ax.plot(
                             self.xw / 1000.0,
                             self.w,
@@ -484,7 +484,7 @@ class Plotting:
                     # Plot title selector -- be infomrative
                     try:
                         self.te
-                        if self.method == "FD":
+                        if self.method == "fd":
                             if type(self.te) is np.ndarray:
                                 if (self.te != (self.te).mean()).any():
                                     plt.title(titletext, fontsize=16)
@@ -532,7 +532,7 @@ class Plotting:
             elif self.dimension == 2:
                 if self.plot_choice == "q":
                     fig = plt.figure(1, figsize=(8, 6))
-                    if self.method != "SAS_NG":
+                    if self.method != "sas_ng":
                         self.surfplot(
                             self.qs / (self.rho_m * self.g),
                             "Load thickness, mantle equivalent [m]",
@@ -552,7 +552,7 @@ class Plotting:
                 elif self.plot_choice == "w":
                     fig = plt.figure(1, figsize=(8, 6))
                     w_abs = float(np.abs(self.w).max())
-                    if self.method != "SAS_NG":
+                    if self.method != "sas_ng":
                         self.surfplot(self.w, "Deflection [m]",
                                       cmap=_cmap_deflection, vmin=-w_abs, vmax=w_abs)
                         plt.show()
@@ -563,7 +563,7 @@ class Plotting:
                     plt.show()
                 elif self.plot_choice == "both":
                     plt.figure(1, figsize=(6, 9))
-                    if self.method != "SAS_NG":
+                    if self.method != "sas_ng":
                         self.twoSurfplots()
                         plt.show()
                     else:
@@ -884,6 +884,9 @@ class Flexure(Utility, Plotting):
         # Default solver; may be overridden programmatically or via config file
         self.solver = "direct"
 
+        # Backing store for the method property (see below)
+        self._method = None
+
         # Default values for lat/lon usage -- defaulting not to use it
         try:
             self.latlon
@@ -893,6 +896,26 @@ class Flexure(Utility, Plotting):
             self.planetary_radius
         except AttributeError:
             self.planetary_radius = None
+
+    @property
+    def method(self):
+        """Solution method: ``'fd'``, ``'fft'``, ``'sas'``, or ``'sas_ng'``."""
+        return self._method
+
+    @method.setter
+    def method(self, value):
+        if isinstance(value, str):
+            lo = value.lower()
+            if value != lo:
+                import warnings
+                warnings.warn(
+                    f"method='{value}' is deprecated and will likely be removed in v2.0; use '{lo}' instead.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+            self._method = lo
+        else:
+            self._method = value
 
     def initialize(self, filename=None):
         """
@@ -1002,7 +1025,7 @@ class Flexure(Utility, Plotting):
             )
 
             # Grid spacing
-            if self.method != "SAS_NG":
+            if self.method != "sas_ng":
                 # No meaning for ungridded superimposed analytical solutions
                 # From configuration file
                 self.dx = self.configGet("float", "numerical", "grid_spacing_x")
@@ -1061,7 +1084,7 @@ class Flexure(Utility, Plotting):
 
         # Check consistency of dimensions
         if self.q0 is not None:
-            if self.method != "SAS_NG":
+            if self.method != "sas_ng":
                 if self.q0.ndim != self.dimension:
                     print("Number of dimensions in loads file is inconsistent with")
                     print("number of dimensions in solution technique.")
@@ -1095,7 +1118,7 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.sigma_xx = 0
         else:
-            if self.method not in ("FD", "FFT"):
+            if self.method not in ("fd", "fft"):
                 warnings.warn(
                     "End loads have been set but will not be implemented because the"
                     " solution method is not finite difference or FFT",
@@ -1107,7 +1130,7 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.sigma_xy = 0
         else:
-            if self.method not in ("FD", "FFT"):
+            if self.method not in ("fd", "fft"):
                 warnings.warn(
                     "End loads have been set but will not be implemented because the"
                     " solution method is not finite difference or FFT",
@@ -1119,7 +1142,7 @@ class Flexure(Utility, Plotting):
         except AttributeError:
             self.sigma_yy = 0
         else:
-            if self.method not in ("FD", "FFT"):
+            if self.method not in ("fd", "fft"):
                 warnings.warn(
                     "End loads have been set but will not be implemented because the"
                     " solution method is not finite difference or FFT",
@@ -1219,7 +1242,7 @@ class Flexure(Utility, Plotting):
         """
         # Check that boundary conditions are acceptable with code implementation
         # Acceptable b.c.'s
-        if self.method == "FFT":
+        if self.method == "fft":
             # Ensure BC attributes exist; FFT handles them internally
             # 'periodic' → exact transform; anything else → zero-padded (no_outside_loads)
             for attr in ("BC_E", "BC_W"):
@@ -1232,7 +1255,7 @@ class Flexure(Utility, Plotting):
             else:
                 self.bc_south = None
                 self.bc_north = None
-        elif self.method == "FD":
+        elif self.method == "fd":
             # Check if a coefficient array has been defined
             # It would only be by a getter or setter;
             # no way to do I/O with this with present configuration files

@@ -420,25 +420,25 @@ class F2D(Flexure):
         self.bc_check()
         self.solver_start_time = time.time()
 
-        if self.method == "FD":
+        if self.method == "fd":
             # Finite difference
             super()._solve_fd()
             self.method_func = self._solve_fd
-        elif self.method == "FFT":
+        elif self.method == "fft":
             # Fast Fourier transform
             super()._solve_fft()
             self.method_func = self._solve_fft
-        elif self.method == "SAS":
+        elif self.method == "sas":
             # Superposition of analytical solutions
             super()._solve_sas()
             self.method_func = self._solve_sas
-        elif self.method == "SAS_NG":
+        elif self.method == "sas_ng":
             # Superposition of analytical solutions,
             # nonuniform points (no grid)
             super()._solve_sas_ng()
             self.method_func = self._solve_sas_ng
         else:
-            sys.exit('Error: method must be "FD", "FFT", "SAS", or "SAS_NG"')
+            sys.exit('Error: method must be "fd", "fft", "sas", or "sas_ng"')
 
         if self.verbose:
             print("F2D run")
@@ -751,7 +751,7 @@ class F2D(Flexure):
     def elasprep(self):
         """Precompute dx⁴, dy⁴, dx²dy², and the flexural rigidity array D for the FD solver."""
 
-        if self.method != "SAS_NG":
+        if self.method != "sas_ng":
             self.dx4 = self.dx**4
             self.dy4 = self.dy**4
             self.dx2dy2 = self.dx**2 * self.dy**2

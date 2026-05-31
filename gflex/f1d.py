@@ -252,7 +252,7 @@ def _sandbox_easter_egg():
     solver.rho_m = 1.0     # negligible buoyancy (floor on a table)
     solver.rho_fill = 0.0
     solver.g = 9.81
-    solver.method = "FD"
+    solver.method = "fd"
     solver.bc_west = "zero_displacement_zero_slope"
     solver.bc_east = "zero_displacement_zero_slope"
     solver.quiet = True
@@ -457,25 +457,25 @@ class F1D(Flexure):
         """
         self.bc_check()
         self.solver_start_time = time.time()
-        if self.method == "FD":
+        if self.method == "fd":
             # Finite difference
             super()._solve_fd()
             self.method_func = self._solve_fd
-        elif self.method == "FFT":
+        elif self.method == "fft":
             # Fast Fourier transform
             super()._solve_fft()
             self.method_func = self._solve_fft
-        elif self.method == "SAS":
+        elif self.method == "sas":
             # Superposition of analytical solutions
             super()._solve_sas()
             self.method_func = self._solve_sas
-        elif self.method == "SAS_NG":
+        elif self.method == "sas_ng":
             # Superposition of analytical solutions,
             # nonuniform points
             super()._solve_sas_ng()
             self.method_func = self._solve_sas_ng
         else:
-            sys.exit('Error: method must be "FD", "FFT", "SAS", or "SAS_NG"')
+            sys.exit('Error: method must be "fd", "fft", "sas", or "sas_ng"')
 
         if self.verbose:
             print("F1D run")
