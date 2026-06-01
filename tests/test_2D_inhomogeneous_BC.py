@@ -1085,3 +1085,45 @@ class TestZeroValueDictDegeneracy:
         np.testing.assert_array_equal(w_dict, w_str)
 
 
+# ---------------------------------------------------------------------------
+# Superposition under non-zero distributed load
+# ---------------------------------------------------------------------------
+
+class TestLoadSuperposition:
+    """Prescribed-value BC corrections must be additive with distributed load.
+
+    For any linear load q₀ and BC value B, linearity demands:
+        w(q₀, B) = w(q₀, B=0) + w(q₀=0, B)
+
+    This holds to machine precision (rtol ≈ 1e-13) and catches any bug
+    where the RHS correction interacts non-linearly with the load vector.
+    All existing inhomogeneous BC tests use qs = 0; this is the first
+    test with a real distributed load.
+    """
+
+    M0 = 1.0e12   # N·m / m
+    Q0 = 1.0e4    # Pa  (uniform downward load)
+
+    def _qs(self):
+        dx = L_DOMAIN / (NX - 1)
+        return self.Q0 * np.ones((NY, NX))
+
+    def test_west_moment_with_load(self):
+        qs = self._qs()
+        _, w_both = _run({"moment": self.M0, "shear": 0.0}, "zero_moment_zero_shear",
+                         qs_override=qs)
+        _, w_load = _run("zero_moment_zero_shear", "zero_moment_zero_shear",
+                         qs_override=qs)
+        _, w_bc   = _run({"moment": self.M0, "shear": 0.0}, "zero_moment_zero_shear")
+        np.testing.assert_allclose(w_both, w_load + w_bc, rtol=1e-10, atol=0)
+
+    def test_east_moment_with_load(self):
+        qs = self._qs()
+        _, w_both = _run("zero_moment_zero_shear", {"moment": self.M0, "shear": 0.0},
+                         qs_override=qs)
+        _, w_load = _run("zero_moment_zero_shear", "zero_moment_zero_shear",
+                         qs_override=qs)
+        _, w_bc   = _run("zero_moment_zero_shear", {"moment": self.M0, "shear": 0.0})
+        np.testing.assert_allclose(w_both, w_load + w_bc, rtol=1e-10, atol=0)
+
+
