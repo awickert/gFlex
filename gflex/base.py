@@ -1409,15 +1409,6 @@ class Flexure(Utility, Plotting):
                             "For a flexural solution, grid must be 1D or 2D. Exiting."
                         )
                     if norm == "zero_slope_zero_shear":
-                        import warnings
-                        warnings.warn(
-                            "'zero_slope_zero_shear' is deprecated; use 'mirror' instead. "
-                            "The two boundary conditions are mathematically identical: both "
-                            "enforce even reflection (dw/dn = 0 and d³w/dn³ = 0 "
-                            "at the boundary).",
-                            DeprecationWarning,
-                            stacklevel=4,
-                        )
                         norm = "mirror"
                     setattr(self, f"_bc_{edge}_norm", norm)
         else:
