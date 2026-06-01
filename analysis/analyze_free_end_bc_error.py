@@ -444,8 +444,8 @@ fig1.suptitle(
     fontsize=10,
 )
 fig1.tight_layout()
-fig1.savefig("benchmarks/results/free_end_bc_error_1d.png", dpi=150, bbox_inches="tight")
-print("  Figure saved to benchmarks/results/free_end_bc_error_1d.png")
+fig1.savefig("analysis/results/free_end_bc_error_1d.png", dpi=150, bbox_inches="tight")
+print("  Figure saved to analysis/results/free_end_bc_error_1d.png")
 
 
 # 2-D figure
@@ -489,5 +489,5 @@ fig2.suptitle(
     fontsize=10,
 )
 fig2.tight_layout()
-fig2.savefig("benchmarks/results/free_end_bc_error_2d.png", dpi=150, bbox_inches="tight")
-print("  Figure saved to benchmarks/results/free_end_bc_error_2d.png")
+fig2.savefig("analysis/results/free_end_bc_error_2d.png", dpi=150, bbox_inches="tight")
+print("  Figure saved to analysis/results/free_end_bc_error_2d.png")

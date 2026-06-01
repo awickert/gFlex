@@ -267,8 +267,8 @@ fig.suptitle(
     fontsize=10,
 )
 fig.tight_layout()
-fig.savefig("benchmarks/results/clamped_bc_error.png", dpi=150, bbox_inches="tight")
-print("  Figure saved to benchmarks/results/clamped_bc_error.png")
+fig.savefig("analysis/results/clamped_bc_error.png", dpi=150, bbox_inches="tight")
+print("  Figure saved to analysis/results/clamped_bc_error.png")
 
 
 # ===========================================================================
@@ -483,5 +483,5 @@ fig2.suptitle(
     fontsize=10,
 )
 fig2.tight_layout()
-fig2.savefig("benchmarks/results/clamped_bc_error_2d.png", dpi=150, bbox_inches="tight")
-print("  Figure saved to benchmarks/results/clamped_bc_error_2d.png")
+fig2.savefig("analysis/results/clamped_bc_error_2d.png", dpi=150, bbox_inches="tight")
+print("  Figure saved to analysis/results/clamped_bc_error_2d.png")
