@@ -508,3 +508,136 @@ The correction (issues #62 and #63) is in commits ``b7eecc8`` (1-D) and
 
 The standalone error-analysis script is at
 ``benchmarks/analyze_free_end_bc_error.py``.
+
+----
+
+2-D ``zero_displacement_zero_slope`` boundary condition: ghost-node correction (2026)
+---------------------------------------------------------------------------------------
+
+.. figure:: _static/clamped_bc_error_2d.png
+   :width: 100%
+   :align: center
+   :alt: MMS error analysis — zero_displacement_zero_slope 2-D old vs corrected
+
+   **Left:** Deflection profiles along the centre row at :math:`\Delta x = 6`
+   km; exact (MMS), corrected, and original implementations are nearly
+   indistinguishable at this scale. **Centre:** Residuals (numerical − exact)
+   along the centre row. The original implementation has a systematic error
+   that grows toward the boundaries; the corrected implementation is well within
+   the second-order truncation error envelope. **Right:** Convergence with grid
+   refinement. The original implementation converges at
+   :math:`\mathcal{O}(\Delta x^{0.92})`; the corrected implementation achieves
+   :math:`\mathcal{O}(\Delta x^{1.99})`, consistent with the interior stencil.
+
+Background
+~~~~~~~~~~
+
+The 2-D ``zero_displacement_zero_slope`` (clamped) boundary condition carries
+the same two ghost-node bugs that were present in the 1-D code:
+
+1. **Boundary column/row not decoupled.** Off-diagonal stencil entries at the
+   boundary column (or row) were left at their interior stencil values — that
+   is, the boundary nodes retained coupling to interior nodes rather than being
+   set as strict Dirichlet constraints with :math:`w = 0`.
+
+2. **Even-reflection ghost missing.** The first interior column (or row)
+   requires the even-reflection ghost :math:`w[-1, i] = w[1, i]` (for a west
+   boundary) to enforce zero slope at the grid level.  The original code left
+   this ghost out, so the zero-slope condition was only approached
+   asymptotically rather than being imposed algebraically.
+
+These are the 2-D counterparts of the 1-D issues described in the preceding
+section.  The north and south blocks additionally contained ``[!= inf] = nan``
+patterns that, while harmless in practice (those entries land outside the
+assembled matrix range), obscured the logic and have been replaced with
+consistent ``+= np.inf`` assignments.
+
+MMS verification
+~~~~~~~~~~~~~~~~
+
+The error is quantified with a Method of Manufactured Solutions (MMS) test.
+The exact solution
+
+.. math::
+
+   w_\mathrm{exact}(\xi, \eta)
+     = -W_0\, g(\xi)\, g(\eta),
+   \quad g(t) = t^2(1-t)^2,
+   \quad \xi = x/L,\ \eta = y/L,
+
+satisfies all four clamped boundary conditions (:math:`w = 0`,
+:math:`\partial w/\partial n = 0`) exactly.  Because :math:`g''''(t) = 24`
+(constant), the manufactured load
+
+.. math::
+
+   q_s(\xi,\eta) =
+     \frac{D\,W_0}{L^4}
+     \bigl[24\,g(\eta) + 2\,g''(\xi)\,g''(\eta) + 24\,g(\xi)\bigr]
+     + \Delta\rho\,g\,W_0\,g(\xi)\,g(\eta)
+
+includes a spatially varying elastic-foundation term, making this a
+nontrivial test of the full governing equation.
+
+The error metric is the :math:`L^\infty` relative error:
+
+.. math::
+
+   e = \frac{\max|w_\mathrm{num} - w_\mathrm{exact}|}
+            {\max|w_\mathrm{exact}|}
+
+Physical parameters: :math:`T_e = 30` km, :math:`E = 65` GPa,
+:math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\mathrm{fill}
+= 0`, :math:`g = 9.81` m s⁻², :math:`L = 600` km, :math:`W_0 = 1600` m
+(max :math:`|w_\mathrm{exact}| = 6.25` m).
+
+Results
+~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 12 16 16 12
+
+   * - :math:`n_x = n_y`
+     - :math:`\Delta x` [km]
+     - original error
+     - corrected error
+     - factor
+   * - 26
+     - 24.0
+     - 3.98 × 10⁻²
+     - 1.61 × 10⁻³
+     - 25×
+   * - 51
+     - 12.0
+     - 2.60 × 10⁻²
+     - 4.31 × 10⁻⁴
+     - 60×
+   * - 101
+     - 6.0
+     - 1.47 × 10⁻²
+     - 1.10 × 10⁻⁴
+     - 134×
+   * - 201
+     - 3.0
+     - 7.78 × 10⁻³
+     - 2.75 × 10⁻⁵
+     - 283×
+
+Convergence slopes (finest two points): original :math:`\mathcal{O}(\Delta
+x^{0.92})`; corrected :math:`\mathcal{O}(\Delta x^{1.99})`.
+
+Practical impact
+~~~~~~~~~~~~~~~~
+
+As with the 1-D case, the original 2-D ``zero_displacement_zero_slope``
+implementation gave acceptably small errors when the clamped boundary was far
+from any load — the intended use case.  The error grew near the boundary and
+converged at only first order, meaning grid refinement was less efficient than
+expected.  The correction enforces the Dirichlet constraint algebraically and
+recovers full second-order convergence on all four sides.
+
+The correction is in commit ``984f7a4``.
+
+The standalone error-analysis script (covering both 1-D and 2-D) is at
+``benchmarks/analyze_clamped_bc_error.py``.
