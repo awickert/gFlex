@@ -471,28 +471,33 @@ Results (2-D)
 
 .. list-table::
    :header-rows: 1
-   :widths: 10 12 16 16
+   :widths: 10 12 16 16 10
 
    * - :math:`n_x = n_y`
      - :math:`\Delta x` [km]
      - original error
      - corrected error
+     - factor
    * - 26
      - 24.0
      - 8.73 × 10⁻²
      - 1.76 × 10⁻²
+     - 5×
    * - 51
      - 12.0
      - 6.88 × 10⁻²
      - 4.53 × 10⁻³
+     - 15×
    * - 101
      - 6.0
      - 3.95 × 10⁻²
      - 1.15 × 10⁻³
+     - 34×
    * - 201
      - 3.0
      - 2.06 × 10⁻²
      - 2.85 × 10⁻⁴
+     - 72×
 
 Convergence slopes (finest two points): original :math:`\mathcal{O}(\Delta
 x^{0.94})`; corrected :math:`\mathcal{O}(\Delta x^{2.01})`.
