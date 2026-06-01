@@ -820,50 +820,50 @@ class F2D(Flexure):
         # FLEXURAL RIGIDITY BOUNDARY CONDITIONS #
         #########################################
         # West
-        if self.bc_west == "periodic":
+        if self._bc_west_norm == "periodic":
             self.bc_rigidity_west = _RigidityBC.PERIODIC
         elif (
-            self.bc_west
+            self._bc_west_norm
             == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear", "zero_slope_zero_shear"])
         ).any():
             self.bc_rigidity_west = _RigidityBC.ZERO_CURVATURE
-        elif self.bc_west in ("mirror", "zero_displacement_zero_moment"):
+        elif self._bc_west_norm in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_west = _RigidityBC.MIRROR
         else:
             sys.exit("Invalid Te B.C. case")
         # East
-        if self.bc_east == "periodic":
+        if self._bc_east_norm == "periodic":
             self.bc_rigidity_east = _RigidityBC.PERIODIC
         elif (
-            self.bc_east
+            self._bc_east_norm
             == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear", "zero_slope_zero_shear"])
         ).any():
             self.bc_rigidity_east = _RigidityBC.ZERO_CURVATURE
-        elif self.bc_east in ("mirror", "zero_displacement_zero_moment"):
+        elif self._bc_east_norm in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_east = _RigidityBC.MIRROR
         else:
             sys.exit("Invalid Te B.C. case")
         # North
-        if self.bc_north == "periodic":
+        if self._bc_north_norm == "periodic":
             self.bc_rigidity_north = _RigidityBC.PERIODIC
         elif (
-            self.bc_north
+            self._bc_north_norm
             == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear", "zero_slope_zero_shear"])
         ).any():
             self.bc_rigidity_north = _RigidityBC.ZERO_CURVATURE
-        elif self.bc_north in ("mirror", "zero_displacement_zero_moment"):
+        elif self._bc_north_norm in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_north = _RigidityBC.MIRROR
         else:
             sys.exit("Invalid Te B.C. case")
         # South
-        if self.bc_south == "periodic":
+        if self._bc_south_norm == "periodic":
             self.bc_rigidity_south = _RigidityBC.PERIODIC
         elif (
-            self.bc_south
+            self._bc_south_norm
             == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear", "zero_slope_zero_shear"])
         ).any():
             self.bc_rigidity_south = _RigidityBC.ZERO_CURVATURE
-        elif self.bc_south in ("mirror", "zero_displacement_zero_moment"):
+        elif self._bc_south_norm in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_south = _RigidityBC.MIRROR
         else:
             sys.exit("Invalid Te B.C. case")
@@ -1154,7 +1154,7 @@ class F2D(Flexure):
         # and would otherwise cause boundary condition nan's to appear in the
         # cross-derivatives: infinity is changed into 0 later.
 
-        if self.bc_west == "periodic":
+        if self._bc_west_norm == "periodic":
             if self.bc_east == "periodic":
                 # For each side, there will be two new diagonals (mostly zeros), and
                 # two sets of diagonals that will replace values in current diagonals.
@@ -1202,7 +1202,7 @@ class F2D(Flexure):
                 sys.exit(
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
-        elif self.bc_west == "zero_displacement_zero_slope":
+        elif self._bc_west_norm == "zero_displacement_zero_slope":
             # Boundary column (j=0): decouple so c0·w[j=0,i] = 0 → w = 0 exactly.
             j = 0
             self.cj_2i0[:, j] += np.inf
@@ -1222,7 +1222,7 @@ class F2D(Flexure):
             j = 1
             self.cj_2i0[:, j] += np.inf
             self.cj0i0[:, j] += self.cj_2i0_coeff_ij[:, j]
-        elif self.bc_west == "zero_moment_zero_shear":
+        elif self._bc_west_norm == "zero_moment_zero_shear":
             j = 0
             self.cj_2i0[:, j] += np.inf
             self.cj_1i_1[:, j] += np.inf
@@ -1246,7 +1246,7 @@ class F2D(Flexure):
             self.cj_2i0[:, j] += np.inf
             self.cj_1i0[:, j] += 2 * self.cj_2i0_coeff_ij[:, j]
             self.cj0i0[:, j] -= self.cj_2i0_coeff_ij[:, j]
-        elif self.bc_west == "zero_slope_zero_shear":
+        elif self._bc_west_norm == "zero_slope_zero_shear":
             j = 0
             self.cj_2i0[:, j] += np.inf
             self.cj_1i_1[:, j] += np.inf
@@ -1275,7 +1275,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += 0
-        elif self.bc_west == "mirror":
+        elif self._bc_west_norm == "mirror":
             j = 0
             self.cj_2i0[:, j] += np.inf
             self.cj_1i_1[:, j] += np.inf
@@ -1304,7 +1304,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += 0
-        elif self.bc_west == "zero_displacement_zero_moment":
+        elif self._bc_west_norm == "zero_displacement_zero_moment":
             # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
             # column (j=0) by zeroing all off-diagonal stencil terms there, leaving
             # only c0*w[i,0]=q[i,0].  The moment condition M_x=0 is encoded at
@@ -1342,7 +1342,7 @@ class F2D(Flexure):
             # Possibly redundant safeguard
             sys.exit("Invalid boundary condition")
 
-        if self.bc_east == "periodic":
+        if self._bc_east_norm == "periodic":
             # See more extensive comments above (BC_W)
 
             if self.bc_west == "periodic":
@@ -1375,7 +1375,7 @@ class F2D(Flexure):
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
 
-        elif self.bc_east == "zero_displacement_zero_slope":
+        elif self._bc_east_norm == "zero_displacement_zero_slope":
             # First interior column (j=-2): even reflection w[N,i]=w[N-2,i] encodes zero slope.
             j = -2
             self.cj0i0[:, j] += self.cj2i0_coeff_ij[:, j]
@@ -1395,7 +1395,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += np.inf
             self.cj1i1[:, j] += np.inf
             self.cj2i0[:, j] += np.inf
-        elif self.bc_east == "zero_moment_zero_shear":
+        elif self._bc_east_norm == "zero_moment_zero_shear":
             j = -1
             self.cj_2i0[:, j] += self.cj2i0_coeff_ij[:, j]
             self.cj_1i_1[:, j] += -self.cj1i_1_coeff_ij[:, j]
@@ -1419,7 +1419,7 @@ class F2D(Flexure):
             self.cj0i0[:, j] -= self.cj2i0_coeff_ij[:, j]
             self.cj1i0[:, j] += 2 * self.cj2i0_coeff_ij[:, j]
             self.cj2i0[:, j] += np.inf
-        elif self.bc_east == "zero_slope_zero_shear":
+        elif self._bc_east_norm == "zero_slope_zero_shear":
             j = -1
             self.cj_2i0[:, j] += self.cj2i0_coeff_ij[:, j]
             self.cj_1i_1[:, j] += self.cj1i_1_coeff_ij[:, j]
@@ -1448,7 +1448,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += np.inf
-        elif self.bc_east == "mirror":
+        elif self._bc_east_norm == "mirror":
             j = -1
             self.cj_2i0[:, j] += self.cj2i0_coeff_ij[:, j]
             self.cj_1i_1[:, j] += self.cj1i_1_coeff_ij[:, j]
@@ -1477,7 +1477,7 @@ class F2D(Flexure):
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += np.inf
-        elif self.bc_east == "zero_displacement_zero_moment":
+        elif self._bc_east_norm == "zero_displacement_zero_moment":
             # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
             # column (j=-1) by zeroing all off-diagonal stencil terms there.
             # Moment condition M_x=0 is encoded at j=-2 via the odd-reflection
@@ -1518,7 +1518,7 @@ class F2D(Flexure):
         # DEFINE COEFFICIENTS TO W_i-2 -- W_i+2 WITH B.C.'S APPLIED (y: N, S) #
         #######################################################################
 
-        if self.bc_north == "periodic":
+        if self._bc_north_norm == "periodic":
             if self.bc_south == "periodic":
                 pass  # Will address the N-S (whole-matrix-involving) boundary condition
                 # inclusion below, when constructing sparse matrix diagonals
@@ -1526,7 +1526,7 @@ class F2D(Flexure):
                 sys.exit(
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
-        elif self.bc_north == "zero_displacement_zero_slope":
+        elif self._bc_north_norm == "zero_displacement_zero_slope":
             # Boundary row (i=0): decouple so c0·w[j,i=0] = 0 → w = 0 exactly.
             i = 0
             self.cj_2i0[i, :] += np.inf
@@ -1545,7 +1545,7 @@ class F2D(Flexure):
             # First interior row (i=1): even reflection w[j,-1]=w[j,1] encodes zero slope.
             i = 1
             self.cj0i0[i, :] += self.cj0i_2_coeff_ij[i, :]
-        elif self.bc_north == "zero_moment_zero_shear":
+        elif self._bc_north_norm == "zero_moment_zero_shear":
             i = 0
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :][self.cj_1i_1[i, :] != np.inf] = np.nan
@@ -1568,7 +1568,7 @@ class F2D(Flexure):
             i = 1
             self.cj0i_1[i, :] += 2 * self.cj0i_2_coeff_ij[i, :]
             self.cj0i0[i, :] -= self.cj0i_2_coeff_ij[i, :]
-        elif self.bc_north == "zero_slope_zero_shear":
+        elif self._bc_north_norm == "zero_slope_zero_shear":
             i = 0
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :] += np.inf
@@ -1597,7 +1597,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :] += 0
             self.cj2i0[i, :] += 0
-        elif self.bc_north == "mirror":
+        elif self._bc_north_norm == "mirror":
             i = 0
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :][self.cj_1i_1[i, :] != np.inf] = np.nan
@@ -1626,7 +1626,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :] += 0
             self.cj2i0[i, :] += 0
-        elif self.bc_north == "zero_displacement_zero_moment":
+        elif self._bc_north_norm == "zero_displacement_zero_moment":
             # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
             # row (i=0) by zeroing all off-diagonal stencil terms there.
             # Moment condition M_y=0 is encoded at i=1 via the odd-reflection
@@ -1663,7 +1663,7 @@ class F2D(Flexure):
             # Possibly redundant safeguard
             sys.exit("Invalid boundary condition")
 
-        if self.bc_south == "periodic":
+        if self._bc_south_norm == "periodic":
             if self.bc_north == "periodic":
                 pass  # Will address the N-S (whole-matrix-involving) boundary condition
                 # inclusion below, when constructing sparse matrix diagonals
@@ -1671,7 +1671,7 @@ class F2D(Flexure):
                 sys.exit(
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
-        elif self.bc_south == "zero_displacement_zero_slope":
+        elif self._bc_south_norm == "zero_displacement_zero_slope":
             # First interior row (i=-2): even reflection w[j,N]=w[j,N-2] encodes zero slope.
             i = -2
             self.cj0i0[i, :] += self.cj0i2_coeff_ij[i, :]
@@ -1691,7 +1691,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += np.inf
             self.cj1i1[i, :] += np.inf
             self.cj2i0[i, :] += np.inf
-        elif self.bc_south == "zero_moment_zero_shear":
+        elif self._bc_south_norm == "zero_moment_zero_shear":
             # First interior row (i=N-2): moment ghost w[j,N]=2w[j,N-1]-w[j,N-2]
             i = -2
             self.cj0i0[i, :] -= self.cj0i2_coeff_ij[i, :]
@@ -1714,7 +1714,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 2 * self.cj_1i1_coeff_ij[i, :]
             self.cj1i1[i, :][self.cj1i1[i, :] != np.inf] += 0  # np.nan
             self.cj2i0[i, :] += 0
-        elif self.bc_south == "zero_slope_zero_shear":
+        elif self._bc_south_norm == "zero_slope_zero_shear":
             i = -2
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :] += 0
@@ -1743,7 +1743,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :] += np.inf
             self.cj2i0[i, :] += 0
-        elif self.bc_south == "mirror":
+        elif self._bc_south_norm == "mirror":
             i = -2
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :] += 0
@@ -1772,7 +1772,7 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :][self.cj1i1[i, :] != np.inf] += 0  # np.nan
             self.cj2i0[i, :] += 0
-        elif self.bc_south == "zero_displacement_zero_moment":
+        elif self._bc_south_norm == "zero_displacement_zero_moment":
             # Pinned/simply-supported BC: enforce Dirichlet w=0 at the boundary
             # row (i=-1) by zeroing all off-diagonal stencil terms there.
             # Moment condition M_y=0 is encoded at i=-2 via the odd-reflection
@@ -1832,16 +1832,16 @@ class F2D(Flexure):
         #################
         # 0MOMENT0SHEAR #
         #################
-        if self.bc_north == "zero_moment_zero_shear" and self.bc_west == "zero_moment_zero_shear":
+        if self._bc_north_norm == "zero_moment_zero_shear" and self._bc_west_norm == "zero_moment_zero_shear":
             self.cj0i0[0, 0] += 2 * self.cj_1i_1_coeff_ij[0, 0]
             self.cj1i1[0, 0] -= self.cj_1i_1_coeff_ij[0, 0]
-        if self.bc_north == "zero_moment_zero_shear" and self.bc_east == "zero_moment_zero_shear":
+        if self._bc_north_norm == "zero_moment_zero_shear" and self._bc_east_norm == "zero_moment_zero_shear":
             self.cj0i0[0, -1] += 2 * self.cj_1i_1_coeff_ij[0, -1]
             self.cj_1i1[0, -1] -= self.cj1i_1_coeff_ij[0, -1]
-        if self.bc_south == "zero_moment_zero_shear" and self.bc_west == "zero_moment_zero_shear":
+        if self._bc_south_norm == "zero_moment_zero_shear" and self._bc_west_norm == "zero_moment_zero_shear":
             self.cj0i0[-1, 0] += 2 * self.cj_1i_1_coeff_ij[-1, 0]
             self.cj1i_1[-1, 0] -= self.cj_1i1_coeff_ij[-1, 0]
-        if self.bc_south == "zero_moment_zero_shear" and self.bc_east == "zero_moment_zero_shear":
+        if self._bc_south_norm == "zero_moment_zero_shear" and self._bc_east_norm == "zero_moment_zero_shear":
             self.cj0i0[-1, -1] += 2 * self.cj_1i_1_coeff_ij[-1, -1]
             self.cj_1i_1[-1, -1] -= self.cj1i1_coeff_ij[-1, -1]
 
@@ -1862,20 +1862,20 @@ class F2D(Flexure):
         # 0SLOPE0SHEAR AND/OR MIRROR #
         ##############################
         # (both end up being the same)
-        if (self.bc_north == "zero_slope_zero_shear" or self.bc_north == "mirror") and (
-            self.bc_west == "zero_slope_zero_shear" or self.bc_west == "mirror"
+        if (self._bc_north_norm == "zero_slope_zero_shear" or self._bc_north_norm == "mirror") and (
+            self._bc_west_norm == "zero_slope_zero_shear" or self._bc_west_norm == "mirror"
         ):
             self.cj1i1[0, 0] += self.cj_1i_1_coeff_ij[0, 0]
-        if (self.bc_north == "zero_slope_zero_shear" or self.bc_north == "mirror") and (
-            self.bc_east == "zero_slope_zero_shear" or self.bc_east == "mirror"
+        if (self._bc_north_norm == "zero_slope_zero_shear" or self._bc_north_norm == "mirror") and (
+            self._bc_east_norm == "zero_slope_zero_shear" or self._bc_east_norm == "mirror"
         ):
             self.cj_1i1[0, -1] += self.cj1i_1_coeff_ij[0, -1]
-        if (self.bc_south == "zero_slope_zero_shear" or self.bc_south == "mirror") and (
-            self.bc_west == "zero_slope_zero_shear" or self.bc_west == "mirror"
+        if (self._bc_south_norm == "zero_slope_zero_shear" or self._bc_south_norm == "mirror") and (
+            self._bc_west_norm == "zero_slope_zero_shear" or self._bc_west_norm == "mirror"
         ):
             self.cj1i_1[-1, 0] += self.cj_1i1_coeff_ij[-1, 0]
-        if (self.bc_south == "zero_slope_zero_shear" or self.bc_south == "mirror") and (
-            self.bc_east == "zero_slope_zero_shear" or self.bc_east == "mirror"
+        if (self._bc_south_norm == "zero_slope_zero_shear" or self._bc_south_norm == "mirror") and (
+            self._bc_east_norm == "zero_slope_zero_shear" or self._bc_east_norm == "mirror"
         ):
             self.cj_1i_1[-1, -1] += self.cj1i1_coeff_ij[-1, -1]
 
@@ -1885,23 +1885,23 @@ class F2D(Flexure):
         # How do multiple types of b.c.'s interfere
         # zero_moment_zero_shear must determine corner conditions in order to be mirrored
         # by the "mirror" b.c.
-        if (self.bc_north == "mirror" and self.bc_west == "zero_moment_zero_shear") or (
-            self.bc_west == "mirror" and self.bc_north == "zero_moment_zero_shear"
+        if (self._bc_north_norm == "mirror" and self._bc_west_norm == "zero_moment_zero_shear") or (
+            self._bc_west_norm == "mirror" and self._bc_north_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[0, 0] += 2 * self.cj_1i_1_coeff_ij[0, 0]
             self.cj1i1[0, 0] -= self.cj_1i_1_coeff_ij[0, 0]
-        if (self.bc_north == "mirror" and self.bc_east == "zero_moment_zero_shear") or (
-            self.bc_east == "mirror" and self.bc_north == "zero_moment_zero_shear"
+        if (self._bc_north_norm == "mirror" and self._bc_east_norm == "zero_moment_zero_shear") or (
+            self._bc_east_norm == "mirror" and self._bc_north_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[0, -1] += 2 * self.cj_1i_1_coeff_ij[0, -1]
             self.cj1i1[0, -1] -= self.cj_1i_1_coeff_ij[0, -1]
-        if (self.bc_south == "mirror" and self.bc_west == "zero_moment_zero_shear") or (
-            self.bc_west == "mirror" and self.bc_south == "zero_moment_zero_shear"
+        if (self._bc_south_norm == "mirror" and self._bc_west_norm == "zero_moment_zero_shear") or (
+            self._bc_west_norm == "mirror" and self._bc_south_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[-1, 0] += 2 * self.cj_1i_1_coeff_ij[-1, 0]
             self.cj1i_1[-1, 0] -= self.cj_1i1_coeff_ij[-1, 0]
-        if (self.bc_south == "mirror" and self.bc_east == "zero_moment_zero_shear") or (
-            self.bc_east == "mirror" and self.bc_south == "zero_moment_zero_shear"
+        if (self._bc_south_norm == "mirror" and self._bc_east_norm == "zero_moment_zero_shear") or (
+            self._bc_east_norm == "mirror" and self._bc_south_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[-1, -1] += 2 * self.cj_1i_1_coeff_ij[-1, -1]
             self.cj_1i_1[-1, -1] -= self.cj1i1_coeff_ij[-1, -1]
@@ -1911,23 +1911,23 @@ class F2D(Flexure):
         ######################################
         # Just use zero_moment_zero_shear-style b.c.'s at corners: letting this dominate
         # because it seems to be the more geologically likely b.c.
-        if (self.bc_north == "zero_slope_zero_shear" and self.bc_west == "zero_moment_zero_shear") or (
-            self.bc_west == "zero_slope_zero_shear" and self.bc_north == "zero_moment_zero_shear"
+        if (self._bc_north_norm == "zero_slope_zero_shear" and self._bc_west_norm == "zero_moment_zero_shear") or (
+            self._bc_west_norm == "zero_slope_zero_shear" and self._bc_north_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[0, 0] += 2 * self.cj_1i_1_coeff_ij[0, 0]
             self.cj1i1[0, 0] -= self.cj_1i_1_coeff_ij[0, 0]
-        if (self.bc_north == "zero_slope_zero_shear" and self.bc_east == "zero_moment_zero_shear") or (
-            self.bc_east == "zero_slope_zero_shear" and self.bc_north == "zero_moment_zero_shear"
+        if (self._bc_north_norm == "zero_slope_zero_shear" and self._bc_east_norm == "zero_moment_zero_shear") or (
+            self._bc_east_norm == "zero_slope_zero_shear" and self._bc_north_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[0, -1] += 2 * self.cj_1i_1_coeff_ij[0, -1]
             self.cj1i1[0, -1] -= self.cj_1i_1_coeff_ij[0, -1]
-        if (self.bc_south == "zero_slope_zero_shear" and self.bc_west == "zero_moment_zero_shear") or (
-            self.bc_west == "zero_slope_zero_shear" and self.bc_south == "zero_moment_zero_shear"
+        if (self._bc_south_norm == "zero_slope_zero_shear" and self._bc_west_norm == "zero_moment_zero_shear") or (
+            self._bc_west_norm == "zero_slope_zero_shear" and self._bc_south_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[-1, 0] += 2 * self.cj_1i_1_coeff_ij[-1, 0]
             self.cj1i_1[-1, 0] -= self.cj_1i1_coeff_ij[-1, 0]
-        if (self.bc_south == "zero_slope_zero_shear" and self.bc_east == "zero_moment_zero_shear") or (
-            self.bc_east == "zero_slope_zero_shear" and self.bc_south == "zero_moment_zero_shear"
+        if (self._bc_south_norm == "zero_slope_zero_shear" and self._bc_east_norm == "zero_moment_zero_shear") or (
+            self._bc_east_norm == "zero_slope_zero_shear" and self._bc_south_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[-1, -1] += 2 * self.cj_1i_1_coeff_ij[-1, -1]
             self.cj_1i_1[-1, -1] -= self.cj1i1_coeff_ij[-1, -1]
@@ -1943,53 +1943,53 @@ class F2D(Flexure):
         _even = ("zero_slope_zero_shear", "mirror")
 
         # NW corner
-        if self.bc_north == _D0M and self.bc_west == _D0M:
+        if self._bc_north_norm == _D0M and self._bc_west_norm == _D0M:
             self.cj1i1[0, 0] += self.cj_1i_1_coeff_ij[0, 0]
-        elif (self.bc_north == _D0M and self.bc_west in _even) or (
-            self.bc_west == _D0M and self.bc_north in _even
+        elif (self._bc_north_norm == _D0M and self._bc_west_norm in _even) or (
+            self._bc_west_norm == _D0M and self._bc_north_norm in _even
         ):
             self.cj1i1[0, 0] -= self.cj_1i_1_coeff_ij[0, 0]
-        elif (self.bc_north == _D0M and self.bc_west == "zero_moment_zero_shear") or (
-            self.bc_west == _D0M and self.bc_north == "zero_moment_zero_shear"
+        elif (self._bc_north_norm == _D0M and self._bc_west_norm == "zero_moment_zero_shear") or (
+            self._bc_west_norm == _D0M and self._bc_north_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[0, 0] -= 2 * self.cj_1i_1_coeff_ij[0, 0]
             self.cj1i1[0, 0] += self.cj_1i_1_coeff_ij[0, 0]
 
         # NE corner
-        if self.bc_north == _D0M and self.bc_east == _D0M:
+        if self._bc_north_norm == _D0M and self._bc_east_norm == _D0M:
             self.cj_1i1[0, -1] += self.cj1i_1_coeff_ij[0, -1]
-        elif (self.bc_north == _D0M and self.bc_east in _even) or (
-            self.bc_east == _D0M and self.bc_north in _even
+        elif (self._bc_north_norm == _D0M and self._bc_east_norm in _even) or (
+            self._bc_east_norm == _D0M and self._bc_north_norm in _even
         ):
             self.cj_1i1[0, -1] -= self.cj1i_1_coeff_ij[0, -1]
-        elif (self.bc_north == _D0M and self.bc_east == "zero_moment_zero_shear") or (
-            self.bc_east == _D0M and self.bc_north == "zero_moment_zero_shear"
+        elif (self._bc_north_norm == _D0M and self._bc_east_norm == "zero_moment_zero_shear") or (
+            self._bc_east_norm == _D0M and self._bc_north_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[0, -1] -= 2 * self.cj_1i_1_coeff_ij[0, -1]
             self.cj_1i1[0, -1] += self.cj1i_1_coeff_ij[0, -1]
 
         # SW corner
-        if self.bc_south == _D0M and self.bc_west == _D0M:
+        if self._bc_south_norm == _D0M and self._bc_west_norm == _D0M:
             self.cj1i_1[-1, 0] += self.cj_1i1_coeff_ij[-1, 0]
-        elif (self.bc_south == _D0M and self.bc_west in _even) or (
-            self.bc_west == _D0M and self.bc_south in _even
+        elif (self._bc_south_norm == _D0M and self._bc_west_norm in _even) or (
+            self._bc_west_norm == _D0M and self._bc_south_norm in _even
         ):
             self.cj1i_1[-1, 0] -= self.cj_1i1_coeff_ij[-1, 0]
-        elif (self.bc_south == _D0M and self.bc_west == "zero_moment_zero_shear") or (
-            self.bc_west == _D0M and self.bc_south == "zero_moment_zero_shear"
+        elif (self._bc_south_norm == _D0M and self._bc_west_norm == "zero_moment_zero_shear") or (
+            self._bc_west_norm == _D0M and self._bc_south_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[-1, 0] -= 2 * self.cj_1i_1_coeff_ij[-1, 0]
             self.cj1i_1[-1, 0] += self.cj_1i1_coeff_ij[-1, 0]
 
         # SE corner
-        if self.bc_south == _D0M and self.bc_east == _D0M:
+        if self._bc_south_norm == _D0M and self._bc_east_norm == _D0M:
             self.cj_1i_1[-1, -1] += self.cj1i1_coeff_ij[-1, -1]
-        elif (self.bc_south == _D0M and self.bc_east in _even) or (
-            self.bc_east == _D0M and self.bc_south in _even
+        elif (self._bc_south_norm == _D0M and self._bc_east_norm in _even) or (
+            self._bc_east_norm == _D0M and self._bc_south_norm in _even
         ):
             self.cj_1i_1[-1, -1] -= self.cj1i1_coeff_ij[-1, -1]
-        elif (self.bc_south == _D0M and self.bc_east == "zero_moment_zero_shear") or (
-            self.bc_east == _D0M and self.bc_south == "zero_moment_zero_shear"
+        elif (self._bc_south_norm == _D0M and self._bc_east_norm == "zero_moment_zero_shear") or (
+            self._bc_east_norm == _D0M and self._bc_south_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[-1, -1] -= 2 * self.cj_1i_1_coeff_ij[-1, -1]
             self.cj_1i_1[-1, -1] += self.cj1i1_coeff_ij[-1, -1]
@@ -2224,7 +2224,7 @@ class F2D(Flexure):
             A_lil[N - 1, 0] = self.cj1i1_coeff_ij[-1, -1]
             self.coeff_matrix = A_lil.tocsr()
 
-        elif self.bc_west == "periodic" and self.bc_east == "periodic":
+        elif self._bc_west_norm == "periodic" and self._bc_east_norm == "periodic":
             # Additional vector creation
             # West
             # Roll
@@ -2302,7 +2302,7 @@ class F2D(Flexure):
                 format="csr",
             )
 
-        elif self.bc_north == "periodic" and self.bc_south == "periodic":
+        elif self._bc_north_norm == "periodic" and self._bc_south_norm == "periodic":
             # periodic.
             # If these are periodic, we need to wrap around the ends of the
             # large-scale diagonal structure
