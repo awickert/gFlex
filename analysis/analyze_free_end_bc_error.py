@@ -366,8 +366,8 @@ errs_new_2d = []
 errs_old_2d = []
 dx_vals_2d  = []
 
-print(f"  {'n':>4}  {'dx [km]':>8}  {'old error':>12}  {'new error':>12}")
-print(f"  {'-'*4}  {'-'*8}  {'-'*12}  {'-'*12}")
+print(f"  {'n':>4}  {'dx [km]':>8}  {'old error':>12}  {'new error':>12}  {'factor':>8}")
+print(f"  {'-'*4}  {'-'*8}  {'-'*12}  {'-'*12}  {'-'*8}")
 
 for n in n_vals_2d:
     _, _, e_new, dx = run_mms_2d(F2D,               n, n, te, E, nu, rho_m, rho_fill, g, W0, L)
@@ -375,7 +375,7 @@ for n in n_vals_2d:
     errs_new_2d.append(e_new)
     errs_old_2d.append(e_old)
     dx_vals_2d.append(dx)
-    print(f"  {n:>4}  {dx/1e3:>8.2f}  {e_old:>12.3e}  {e_new:>12.3e}")
+    print(f"  {n:>4}  {dx/1e3:>8.2f}  {e_old:>12.3e}  {e_new:>12.3e}  {e_old/e_new:>7.0f}x")
 
 dx_arr_2d       = np.array(dx_vals_2d)
 errs_new_arr_2d = np.array(errs_new_2d)
@@ -391,7 +391,7 @@ print(f"    Old: O(dx^{slope_old_2d:.2f})")
 print(f"    New: O(dx^{slope_new_2d:.2f})")
 print()
 
-# 2-D reference run for figure
+# 2-D reference run for figure and single-resolution comparison
 n_ref = 101
 w_new_2d, w_ex_2d, err_new_2d_ref, dx_ref_2d = run_mms_2d(
     F2D,              n_ref, n_ref, te, E, nu, rho_m, rho_fill, g, W0, L
@@ -399,6 +399,15 @@ w_new_2d, w_ex_2d, err_new_2d_ref, dx_ref_2d = run_mms_2d(
 w_old_2d, _,       err_old_2d_ref, _         = run_mms_2d(
     F2D_OldFreeEndBC, n_ref, n_ref, te, E, nu, rho_m, rho_fill, g, W0, L
 )
+
+print(f"  n = {n_ref},  dx = {dx_ref_2d/1e3:.2f} km")
+print(f"  {'Implementation':<20}  {'L-inf rel. error':>18}")
+print(f"  {'-'*20}  {'-'*18}")
+print(f"  {'Old (pre-fix)':<20}  {err_old_2d_ref:>18.4e}")
+print(f"  {'New (corrected)':<20}  {err_new_2d_ref:>18.4e}")
+if err_new_2d_ref > 0:
+    print(f"  {'Improvement':<20}  {err_old_2d_ref/err_new_2d_ref:>17.1f}x")
+print()
 
 xi_ref_2d = np.arange(n_ref) / (n_ref - 1)
 x_km_2d   = xi_ref_2d * L / 1e3
