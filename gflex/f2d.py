@@ -1975,17 +1975,17 @@ class F2D(Flexure):
         d_n = self._bc_north_values is not None and "displacement" in self._bc_north_values
         d_s = self._bc_south_values is not None and "displacement" in self._bc_south_values
         if d_n:
-            w_n_disp = self._bc_north_values["displacement"]
+            _wn = np.asarray(self._bc_north_values["displacement"])
             if d_w:
-                correction[0, 0]   -= self.cj0i0[0, 0]   * w_n_disp
+                correction[0, 0]   -= self.cj0i0[0, 0]   * float(_wn.flat[0])
             if d_e:
-                correction[0, -1]  -= self.cj0i0[0, -1]  * w_n_disp
+                correction[0, -1]  -= self.cj0i0[0, -1]  * float(_wn.flat[-1])
         if d_s:
-            w_s_disp = self._bc_south_values["displacement"]
+            _ws = np.asarray(self._bc_south_values["displacement"])
             if d_w:
-                correction[-1, 0]  -= self.cj0i0[-1, 0]  * w_s_disp
+                correction[-1, 0]  -= self.cj0i0[-1, 0]  * float(_ws.flat[0])
             if d_e:
-                correction[-1, -1] -= self.cj0i0[-1, -1] * w_s_disp
+                correction[-1, -1] -= self.cj0i0[-1, -1] * float(_ws.flat[-1])
 
         self._bc_rhs_correction = correction
 
