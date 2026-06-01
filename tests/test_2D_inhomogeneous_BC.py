@@ -643,6 +643,26 @@ class TestSouthPrescribedShear:
         )
         _check_col(w_num, -w_prescribed_shear(L_DOMAIN - y, self.V0), "South Case B profile")
 
+class TestSouthPrescribedDisplacement:
+    """w(y=L) = W₀, dw/dy(y=L) = 0; clamped at north end."""
+
+    W0 = 100.0
+
+    def test_deflection_profile(self):
+        y, w_num = _run_ns(
+            bc_north="zero_displacement_zero_slope",
+            bc_south={"displacement": self.W0, "slope": 0.0},
+        )
+        _check_col(w_num, w_prescribed_displacement(L_DOMAIN - y, self.W0), "South Case C profile")
+
+    def test_south_boundary_displacement(self):
+        y, w_num = _run_ns(
+            bc_north="zero_displacement_zero_slope",
+            bc_south={"displacement": self.W0, "slope": 0.0},
+        )
+        assert abs(w_num[-1, _NS_NX // 2] - self.W0) / self.W0 < REL_TOL
+
+
 # ---------------------------------------------------------------------------
 # Neumann superposition — linearity across all edge combinations
 # ---------------------------------------------------------------------------
