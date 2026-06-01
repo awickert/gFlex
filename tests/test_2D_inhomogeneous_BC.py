@@ -422,3 +422,99 @@ def _run_sq(bc_west, bc_east, bc_north, bc_south, n=_SQ_N):
         flex.run()
         flex.finalize()
     return flex.w
+
+
+# ---------------------------------------------------------------------------
+# East edge analytical tests  (Cases A – D)
+# ---------------------------------------------------------------------------
+# Exact solutions use ξ = L_DOMAIN − x (distance from east boundary).
+#
+# Sign note — shear and slope are ODD under x → L − x because
+# d³/dx³ and d/dx each pick up a sign flip:
+#   east V₀ → w(ξ) = −V₀/(2Dλ³) e^{−λξ} cos(λξ) = −w_prescribed_shear(ξ, V₀)
+#   east θ₀ → w(ξ) = −(θ₀/λ) e^{−λξ} sin(λξ)    = −w_prescribed_slope(ξ, θ₀)
+# Moment and displacement are EVEN and carry no sign change.
+# ---------------------------------------------------------------------------
+
+class TestEastPrescribedMoment:
+    """M(L) = M₀, V(L) = 0; zero-moment/zero-shear (free) at west end."""
+
+    M0 = 1.0e12   # N·m / m
+
+    def test_deflection_profile(self):
+        x, w_num = _run(
+            bc_west="zero_moment_zero_shear",
+            bc_east={"moment": self.M0, "shear": 0.0},
+        )
+        _check(w_num, w_prescribed_moment(L_DOMAIN - x, self.M0), "East Case A profile")
+
+    def test_east_boundary_displacement(self):
+        x, w_num = _run(
+            bc_west="zero_moment_zero_shear",
+            bc_east={"moment": self.M0, "shear": 0.0},
+        )
+        w0_exact = self.M0 / (2.0 * D * LAM**2)
+        assert abs(w_num[NY // 2, -1] - w0_exact) / abs(w0_exact) < REL_TOL
+
+
+class TestEastPrescribedShear:
+    """M(L) = 0, V(L) = V₀; free at west end.
+
+    d³w/dx³ at east reverses sign under ξ = L − x, so V₀ > 0 at east
+    produces negative deflection: w(ξ) = −w_prescribed_shear(ξ, V₀).
+    """
+
+    V0 = 1.0e8   # N / m
+
+    def test_deflection_profile(self):
+        x, w_num = _run(
+            bc_west="zero_moment_zero_shear",
+            bc_east={"moment": 0.0, "shear": self.V0},
+        )
+        _check(w_num, -w_prescribed_shear(L_DOMAIN - x, self.V0), "East Case B profile")
+
+    def test_east_boundary_displacement(self):
+        x, w_num = _run(
+            bc_west="zero_moment_zero_shear",
+            bc_east={"moment": 0.0, "shear": self.V0},
+        )
+        w0_exact = -self.V0 / (2.0 * D * LAM**3)   # negative: see class docstring
+        assert abs(w_num[NY // 2, -1] - w0_exact) / abs(w0_exact) < REL_TOL
+
+
+class TestEastPrescribedDisplacement:
+    """w(L) = W₀, dw/dx(L) = 0; clamped (zero displacement/slope) at west end."""
+
+    W0 = 100.0   # m
+
+    def test_deflection_profile(self):
+        x, w_num = _run(
+            bc_west="zero_displacement_zero_slope",
+            bc_east={"displacement": self.W0, "slope": 0.0},
+        )
+        _check(w_num, w_prescribed_displacement(L_DOMAIN - x, self.W0), "East Case C profile")
+
+    def test_east_boundary_displacement(self):
+        _, w_num = _run(
+            bc_west="zero_displacement_zero_slope",
+            bc_east={"displacement": self.W0, "slope": 0.0},
+        )
+        assert abs(w_num[NY // 2, -1] - self.W0) / self.W0 < REL_TOL
+
+
+class TestEastPrescribedSlope:
+    """w(L) = 0, dw/dx(L) = +θ₀; free at west end.
+
+    dw/dx = −dw/dξ at east, so θ₀ > 0 gives negative deflection:
+    w(ξ) = −w_prescribed_slope(ξ, θ₀).
+    """
+
+    THETA0 = 1.0e-3   # rad
+
+    def test_deflection_profile(self):
+        x, w_num = _run(
+            bc_west="zero_moment_zero_shear",
+            bc_east={"displacement": 0.0, "slope": self.THETA0},
+        )
+        _check(w_num, -w_prescribed_slope(L_DOMAIN - x, self.THETA0), "East Case D profile")
+
