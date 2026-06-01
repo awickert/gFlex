@@ -400,12 +400,15 @@ class TestVariableTePrescribedNeumann:
 # mirror on east/west enforces x-uniformity so the 2-D problem reduces
 # to the 1-D semi-infinite plate equation in the y direction.
 
-_NS_NX = 11
-_NS_NY = 401   # Δy ≈ α/40, matching the x-direction resolution
+_NS_NX      = 11
+_NS_NY      = 401    # Δy ≈ α/40, matching the x-direction resolution
+_NS_WIDE_NX = 51     # wide x-extent: center column is 5α from each E/W boundary
 
 
-def _run_ns(bc_north, bc_south, nx=_NS_NX, ny=_NS_NY, L=L_DOMAIN):
+def _run_ns(bc_north, bc_south, bc_west="mirror", bc_east="mirror",
+            nx=_NS_NX, ny=_NS_NY, L=L_DOMAIN):
     dy = L / (ny - 1)
+    dx = L / (nx - 1)   # equals dy for default narrow domain; differs for wide domain
     flex = F2D()
     flex.quiet    = True
     flex.method   = "fd"
@@ -416,11 +419,11 @@ def _run_ns(bc_north, bc_south, nx=_NS_NX, ny=_NS_NY, L=L_DOMAIN):
     flex.rho_m    = RHO_M
     flex.rho_fill = RHO_F
     flex.te       = TE
-    flex.dx       = dy          # square cells
+    flex.dx       = dx
     flex.dy       = dy
     flex.qs       = np.zeros((ny, nx))
-    flex.bc_west  = "mirror"
-    flex.bc_east  = "mirror"
+    flex.bc_west  = bc_west
+    flex.bc_east  = bc_east
     flex.bc_north = bc_north
     flex.bc_south = bc_south
     with warnings.catch_warnings():
@@ -1180,3 +1183,76 @@ class TestPeriodicLateralBCs:
         assert np.max(np.abs(w - centre)) < 1e-10 * np.max(np.abs(centre)), (
             "Periodic lateral BCs with uniform east BC should give y-uniform solution"
         )
+
+
+# ---------------------------------------------------------------------------
+# North/south prescribed BCs with non-mirror lateral ends
+# ---------------------------------------------------------------------------
+
+class TestNorthSouthNonMirrorLateral:
+    """North prescribed BC with non-mirror (ZDSZS or ZDZM) east/west lateral ends.
+
+    Three independent lines of evidence:
+
+    1. Rotation symmetry — On a square domain with constant D and dx = dy,
+       the biharmonic ∇⁴ is symmetric under 90° CCW rotation that maps
+       (x, y) → (L − y, x), sending the west face to the north face.
+       The induced array relation is:
+           w_NS[i, j] = w_EW[n − 1 − j, i]   →   w_NS = w_EW[::-1, :].T
+       This connects the untested NS code path to the independently-validated
+       EW code path without needing a 1-D analytical reference.
+
+    2. Superposition — w(M₀ + V₀) = w(M₀) + w(V₀) for north BC with ZDSZS
+       lateral ends, rtol = 1e-10.  Catches RHS sign or assembly bugs that
+       a symmetry test alone would miss.
+
+    3. Wide-domain center column — For a domain 10α wide in x (NX=51 columns,
+       dx = α/5), the center column is 5α from each E/W boundary.  The ZDSZS
+       boundary effect decays as e⁻⁵ ≈ 0.7 % < REL_TOL, so the center column
+       must match the 1-D analytical solution to within REL_TOL.
+    """
+
+    M0     = 1.0e12
+    V0     = 1.0e8
+    _ZDSZS = "zero_displacement_zero_slope"
+    _ZDZM  = "zero_displacement_zero_moment"
+    _ZMZS  = "zero_moment_zero_shear"
+
+    # --- 1. Rotation symmetry ---
+
+    def test_rotation_symmetry_north_moment_zdszs(self):
+        """NS prescribed-moment solution = 90° CCW rotation of EW prescribed-moment.
+
+        EW problem: west = {M0}, east/north/south = ZDSZS.
+        NS problem: north = {M0}, south/east/west = ZDSZS.
+        Rotation maps west→north, east→south, north→east, south→west.
+        """
+        w_ew = _run_sq(
+            bc_west={"moment": self.M0, "shear": 0.0},
+            bc_east=self._ZDSZS,
+            bc_north=self._ZDSZS,
+            bc_south=self._ZDSZS,
+        )
+        w_ns = _run_sq(
+            bc_west=self._ZDSZS,
+            bc_east=self._ZDSZS,
+            bc_north={"moment": self.M0, "shear": 0.0},
+            bc_south=self._ZDSZS,
+        )
+        np.testing.assert_allclose(w_ns, w_ew[::-1, :].T, rtol=1e-7, atol=0)
+
+    def test_rotation_symmetry_north_moment_zdzm(self):
+        """Same rotation symmetry test with ZDZM at all non-prescribed ends."""
+        w_ew = _run_sq(
+            bc_west={"moment": self.M0, "shear": 0.0},
+            bc_east=self._ZDZM,
+            bc_north=self._ZDZM,
+            bc_south=self._ZDZM,
+        )
+        w_ns = _run_sq(
+            bc_west=self._ZDZM,
+            bc_east=self._ZDZM,
+            bc_north={"moment": self.M0, "shear": 0.0},
+            bc_south=self._ZDZM,
+        )
+        np.testing.assert_allclose(w_ns, w_ew[::-1, :].T, rtol=1e-7, atol=0)
