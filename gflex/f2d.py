@@ -316,12 +316,12 @@ class F2D(Flexure):
 
     Attributes
     ----------
-    Method : str
-        Solution method.  ``'FD'`` (finite difference, supports variable
-        *Te*), ``'FFT'`` (spectral, requires scalar *Te*; 2-D only),
-        ``'SAS'`` (superposition of analytical solutions, constant *Te*
-        only), or ``'SAS_NG'`` (SAS on an ungridded point cloud).
-    Solver : str
+    method : str
+        Solution method.  ``'fd'`` (finite difference, supports variable
+        *Te*), ``'fft'`` (spectral, requires scalar *Te*; 2-D only),
+        ``'sas'`` (superposition of analytical solutions, constant *Te*
+        only), or ``'sas_ng'`` (SAS on an ungridded point cloud).
+    solver : str
         Linear solver: ``'direct'`` (sparse LU, default).
     g : float
         Gravitational acceleration [m s⁻²].
@@ -334,7 +334,7 @@ class F2D(Flexure):
     rho_fill : float
         Infill material density [kg m⁻³] (0 for air, ~1000 for water,
         ~2700 for rock).
-    Te : float or ndarray of shape (M, N)
+    te : float or ndarray of shape (M, N)
         Elastic thickness [m].  A scalar is broadcast to the full grid.
     qs : ndarray of shape (M, N)
         Surface load stress [Pa].
@@ -342,23 +342,23 @@ class F2D(Flexure):
         Grid spacing in the x (column) direction [m].
     dy : float
         Grid spacing in the y (row) direction [m].
-    BC_W, BC_E, BC_N, BC_S : str
+    bc_west, bc_east, bc_north, bc_south : str
         Boundary conditions on the west, east, north, and south edges.
         FD options: ``'zero_displacement_zero_slope'``, ``'zero_displacement_zero_moment'``,
         ``'zero_slope_zero_shear'``, ``'zero_moment_zero_shear'``, ``'mirror'``, ``'periodic'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).
     sigma_xx : float, optional
         Normal in-plane stress in the x-direction :math:`\\sigma_{xx}` [Pa].
-        Supported by ``FD`` and ``FFT``.  Default ``0``.
+        Supported by ``fd`` and ``fft``.  Default ``0``.
     sigma_yy : float, optional
         Normal in-plane stress in the y-direction :math:`\\sigma_{yy}` [Pa].
-        Supported by ``FD`` and ``FFT``.  Default ``0``.
+        Supported by ``fd`` and ``fft``.  Default ``0``.
     sigma_xy : float, optional
         In-plane shear stress :math:`\\sigma_{xy}` [Pa].
-        Supported by ``FD`` and ``FFT``.  Default ``0``.
-    Quiet : bool
+        Supported by ``fd`` and ``fft``.  Default ``0``.
+    quiet : bool
         Suppress timing output.  Default ``False``.
-    Verbose : bool
+    verbose : bool
         Print progress messages.  Default ``True``.
 
     Examples
@@ -370,7 +370,7 @@ class F2D(Flexure):
 
         flex = F2D()
         flex.quiet = True
-        flex.method = 'FD'
+        flex.method = 'fd'
         flex.solver = 'direct'
         flex.g = 9.8
         flex.E = 65e9
