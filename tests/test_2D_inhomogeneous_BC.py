@@ -338,3 +338,87 @@ class TestVariableTeDirichletExact:
         assert np.all(w[:, -1] == _VTE_W0), "east edge not exactly W0"
         assert np.all(w[0, :]  == _VTE_W0), "north edge not exactly W0"
         assert np.all(w[-1, :] == _VTE_W0), "south edge not exactly W0"
+
+
+# ---------------------------------------------------------------------------
+# North / South domain helpers
+# ---------------------------------------------------------------------------
+# Domain long in y (NY_NS cells) and narrow in x (NX_NS cells);
+# mirror on east/west enforces x-uniformity so the 2-D problem reduces
+# to the 1-D semi-infinite plate equation in the y direction.
+
+_NS_NX = 11
+_NS_NY = 401   # Δy ≈ α/40, matching the x-direction resolution
+
+
+def _run_ns(bc_north, bc_south, nx=_NS_NX, ny=_NS_NY, L=L_DOMAIN):
+    dy = L / (ny - 1)
+    flex = F2D()
+    flex.quiet    = True
+    flex.method   = "fd"
+    flex.solver   = "direct"
+    flex.g        = G
+    flex.E        = E
+    flex.nu       = NU
+    flex.rho_m    = RHO_M
+    flex.rho_fill = RHO_F
+    flex.te       = TE
+    flex.dx       = dy          # square cells
+    flex.dy       = dy
+    flex.qs       = np.zeros((ny, nx))
+    flex.bc_west  = "mirror"
+    flex.bc_east  = "mirror"
+    flex.bc_north = bc_north
+    flex.bc_south = bc_south
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        flex.initialize()
+        flex.run()
+        flex.finalize()
+    y = np.arange(ny) * dy
+    return y, flex.w
+
+
+def _check_col(w_num, w_ex, label):
+    """Compare centre column of 2-D solution to 1-D exact; L-inf relative error."""
+    centre = w_num[:, _NS_NX // 2]
+    scale  = np.max(np.abs(w_ex))
+    err    = np.max(np.abs(centre - w_ex)) / scale
+    assert err < REL_TOL, (
+        f"{label}: L-inf relative error {err:.3e} exceeds {REL_TOL:.0%}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Square-domain runner for Neumann superposition tests
+# ---------------------------------------------------------------------------
+
+_SQ_N = 31   # small square domain — solution need not decay to machine zero
+
+
+def _run_sq(bc_west, bc_east, bc_north, bc_south, n=_SQ_N):
+    L  = 3.0 * ALPHA          # domain just large enough for meaningful deflection
+    dx = L / (n - 1)
+    flex = F2D()
+    flex.quiet    = True
+    flex.method   = "fd"
+    flex.solver   = "direct"
+    flex.g        = G
+    flex.E        = E
+    flex.nu       = NU
+    flex.rho_m    = RHO_M
+    flex.rho_fill = RHO_F
+    flex.te       = TE
+    flex.dx       = dx
+    flex.dy       = dx
+    flex.qs       = np.zeros((n, n))
+    flex.bc_west  = bc_west
+    flex.bc_east  = bc_east
+    flex.bc_north = bc_north
+    flex.bc_south = bc_south
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        flex.initialize()
+        flex.run()
+        flex.finalize()
+    return flex.w
