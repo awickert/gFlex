@@ -1888,7 +1888,7 @@ class F2D(Flexure):
                 w0     = bv["displacement"]
                 theta0 = bv["slope"]
                 # Decoupled boundary column: enforce w[:, 0] = w0.
-                correction[:, 0] += self.cj0i0_coeff_ij[:, 0] * w0
+                correction[:, 0] += self.cj0i0[:, 0] * w0
                 # First interior column (j=1): slope ghost w[-1,k]=w[1,k]-2dx*theta0.
                 correction[:, 1] += self.cj_2i0_coeff_ij[:, 1] * 2.0 * dx * theta0
             else:  # moment / shear
@@ -1911,7 +1911,7 @@ class F2D(Flexure):
             if "displacement" in bv:
                 w_e     = bv["displacement"]
                 theta_e = bv["slope"]
-                correction[:, -1] += self.cj0i0_coeff_ij[:, -1] * w_e
+                correction[:, -1] += self.cj0i0[:, -1] * w_e
                 correction[:, -2] += self.cj2i0_coeff_ij[:, -2] * 2.0 * dx * theta_e
             else:  # moment / shear
                 M_e = bv["moment"]
@@ -1931,7 +1931,7 @@ class F2D(Flexure):
             if "displacement" in bv:
                 w_n     = bv["displacement"]
                 theta_n = bv["slope"]
-                correction[0, :] += self.cj0i0_coeff_ij[0, :] * w_n
+                correction[0, :] += self.cj0i0[0, :] * w_n
                 correction[1, :] += self.cj0i_2_coeff_ij[1, :] * 2.0 * dy * theta_n
             else:  # moment / shear
                 M_n = bv["moment"]
@@ -1951,7 +1951,7 @@ class F2D(Flexure):
             if "displacement" in bv:
                 w_s     = bv["displacement"]
                 theta_s = bv["slope"]
-                correction[-1, :] += self.cj0i0_coeff_ij[-1, :] * w_s
+                correction[-1, :] += self.cj0i0[-1, :] * w_s
                 correction[-2, :] += self.cj0i2_coeff_ij[-2, :] * 2.0 * dy * theta_s
             else:  # moment / shear
                 M_s = bv["moment"]
@@ -1964,6 +1964,28 @@ class F2D(Flexure):
                     - self.cj1i1_coeff_ij[-1, :] * np.roll(Delta1_s, -1)
                 )
                 correction[-2, :] -= self.cj0i2_coeff_ij[-2, :] * Delta1_s
+
+        # --- Corner deduplication ---
+        # A corner node (e.g. [0,0]) lies on two boundary edges.  When both
+        # are displacement Dirichlet, the west loop and north loop both add
+        # cj0i0[0,0]*W0 to correction[0,0], yielding 2*W0 instead of W0.
+        # Subtract the north/south contribution at each shared corner.
+        d_w = self._bc_west_values  is not None and "displacement" in self._bc_west_values
+        d_e = self._bc_east_values  is not None and "displacement" in self._bc_east_values
+        d_n = self._bc_north_values is not None and "displacement" in self._bc_north_values
+        d_s = self._bc_south_values is not None and "displacement" in self._bc_south_values
+        if d_n:
+            w_n_disp = self._bc_north_values["displacement"]
+            if d_w:
+                correction[0, 0]   -= self.cj0i0[0, 0]   * w_n_disp
+            if d_e:
+                correction[0, -1]  -= self.cj0i0[0, -1]  * w_n_disp
+        if d_s:
+            w_s_disp = self._bc_south_values["displacement"]
+            if d_w:
+                correction[-1, 0]  -= self.cj0i0[-1, 0]  * w_s_disp
+            if d_e:
+                correction[-1, -1] -= self.cj0i0[-1, -1] * w_s_disp
 
         self._bc_rhs_correction = correction
 
