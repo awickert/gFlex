@@ -1250,20 +1250,11 @@ class F2D(Flexure):
             )
             self.cj1i1[:, j] += -self.cj_1i1_coeff_ij[:, j]
             self.cj2i0[:, j] += self.cj_2i0_coeff_ij[:, j]
+            # First interior column (j=1): moment ghost w[-1,i]=2w[0,i]-w[1,i]
             j = 1
             self.cj_2i0[:, j] += np.inf
-            self.cj_1i_1[:, j] += 0
             self.cj_1i0[:, j] += 2 * self.cj_2i0_coeff_ij[:, j]
-            self.cj_1i1[:, j] += 0
-            self.cj0i_2[:, j] += 0
-            self.cj0i_1[:, j] += 0
-            self.cj0i0[:, j] += 0
-            self.cj0i1[:, j] += 0
-            self.cj0i2[:, j] += 0
-            self.cj1i_1[:, j] += 0
-            self.cj1i0[:, j] += -2 * self.cj_2i0_coeff_ij[:, j]
-            self.cj1i1[:, j] += 0
-            self.cj2i0[:, j] += self.cj_2i0_coeff_ij[:, j]
+            self.cj0i0[:, j] -= self.cj_2i0_coeff_ij[:, j]
         elif self.bc_west == "zero_slope_zero_shear":
             j = 0
             self.cj_2i0[:, j] += np.inf
@@ -1441,19 +1432,10 @@ class F2D(Flexure):
             self.cj1i0[:, j] += np.inf
             self.cj1i1[:, j] += np.inf
             self.cj2i0[:, j] += np.inf
+            # First interior column (j=N-2): moment ghost w[N,i]=2w[N-1,i]-w[N-2,i]
             j = -2
-            self.cj_2i0[:, j] += self.cj2i0_coeff_ij[:, j]
-            self.cj_1i_1[:, j] += 0
-            self.cj_1i0[:, j] += -2 * self.cj2i0_coeff_ij[:, j]
-            self.cj_1i1[:, j] += 0
-            self.cj0i_2[:, j] += 0
-            self.cj0i_1[:, j] += 0
-            self.cj0i0[:, j] += 0
-            self.cj0i1[:, j] += 0
-            self.cj0i2[:, j] += 0
-            self.cj1i_1[:, j] += 0
+            self.cj0i0[:, j] -= self.cj2i0_coeff_ij[:, j]
             self.cj1i0[:, j] += 2 * self.cj2i0_coeff_ij[:, j]
-            self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += np.inf
         elif self.bc_east == "zero_slope_zero_shear":
             j = -1
@@ -1610,20 +1592,10 @@ class F2D(Flexure):
             self.cj1i0[i, :] += 2 * self.cj1i_1_coeff_ij[i, :]
             self.cj1i1[i, :] += -self.cj1i_1_coeff_ij[i, :]
             self.cj2i0[i, :] += 0
+            # First interior row (i=1): moment ghost w[j,-1]=2w[j,0]-w[j,1]
             i = 1
-            self.cj_2i0[i, :] += 0
-            self.cj_1i_1[i, :] += 0
-            self.cj_1i0[i, :] += 0
-            self.cj_1i1[i, :] += 0
-            self.cj0i_2[i, :] += 0  # np.nan
             self.cj0i_1[i, :] += 2 * self.cj0i_2_coeff_ij[i, :]
-            self.cj0i0[i, :] += 0
-            self.cj0i1[i, :] += -2 * self.cj0i_2_coeff_ij[i, :]
-            self.cj0i2[i, :] += self.cj0i_2_coeff_ij[i, :]
-            self.cj1i_1[i, :] += 0
-            self.cj1i0[i, :] += 0
-            self.cj1i1[i, :] += 0
-            self.cj2i0[i, :] += 0
+            self.cj0i0[i, :] -= self.cj0i_2_coeff_ij[i, :]
         elif self.bc_north == "zero_slope_zero_shear":
             i = 0
             self.cj_2i0[i, :] += 0
@@ -1757,20 +1729,10 @@ class F2D(Flexure):
             self.cj1i1[i, :][self.cj1i1[i, :] != np.inf] += 0  # np.nan
             self.cj2i0[i, :] += 0
         elif self.bc_south == "zero_moment_zero_shear":
+            # First interior row (i=N-2): moment ghost w[j,N]=2w[j,N-1]-w[j,N-2]
             i = -2
-            self.cj_2i0[i, :] += 0
-            self.cj_1i_1[i, :] += 0
-            self.cj_1i0[i, :] += 0
-            self.cj_1i1[i, :] += 0
-            self.cj0i_2[i, :] += self.cj0i2_coeff_ij[i, :]
-            self.cj0i_1[i, :] += -2 * self.cj0i2_coeff_ij[i, :]
-            self.cj0i0[i, :] += 0
+            self.cj0i0[i, :] -= self.cj0i2_coeff_ij[i, :]
             self.cj0i1[i, :] += 2 * self.cj0i2_coeff_ij[i, :]
-            self.cj0i2[i, :] += 0  # np.nan
-            self.cj1i1[i, :] += 0
-            self.cj1i0[i, :] += 0
-            self.cj1i_1[i, :] += 0
-            self.cj2i0[i, :] += 0
             i = -1
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :] += -self.cj1i1_coeff_ij[i, :]
