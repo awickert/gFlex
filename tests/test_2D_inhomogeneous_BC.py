@@ -241,7 +241,7 @@ def _make_variable_te(ny, nx):
 
 
 def _run_vte(bc_west, bc_east, bc_north, bc_south,
-             nx=_VTE_NX, ny=_VTE_NY):
+             nx=_VTE_NX, ny=_VTE_NY, te=None):
     dx = L_DOMAIN / (nx - 1)
     flex = F2D()
     flex.quiet    = True
@@ -252,7 +252,7 @@ def _run_vte(bc_west, bc_east, bc_north, bc_south,
     flex.nu       = NU
     flex.rho_m    = RHO_M
     flex.rho_fill = RHO_F
-    flex.te       = _make_variable_te(ny, nx)
+    flex.te       = _make_variable_te(ny, nx) if te is None else te
     flex.dx       = dx
     flex.dy       = dx
     flex.qs       = np.zeros((ny, nx))
@@ -338,6 +338,58 @@ class TestVariableTeDirichletExact:
         assert np.all(w[:, -1] == _VTE_W0), "east edge not exactly W0"
         assert np.all(w[0, :]  == _VTE_W0), "north edge not exactly W0"
         assert np.all(w[-1, :] == _VTE_W0), "south edge not exactly W0"
+
+
+# ---------------------------------------------------------------------------
+# Variable-Te Neumann tests
+# ---------------------------------------------------------------------------
+
+class TestVariableTePrescribedNeumann:
+    """Prescribed Neumann (moment / shear) BCs under spatially varying Te.
+
+    Three orthogonal checks:
+    1. Uniform 2-D Te array produces the same solution as scalar Te (tests
+       the array-Te code path in _apply_bc_rhs_inhomogeneous_2d).
+    2. Superposition w(M₀, V₀) = w(M₀, 0) + w(0, V₀) holds to machine
+       precision under the variable-Te field (linearity check).
+    3. The variable-Te solution is quantifiably different from the uniform-Te
+       solution (sanity check that D variation is actually used).
+    """
+
+    M0 = 1.0e12   # N·m / m
+    V0 = 1.0e8    # N / m
+    _ZMZS = "zero_moment_zero_shear"
+
+    def test_uniform_array_te_matches_scalar(self):
+        """Uniform 2-D Te array must give the same answer as scalar Te."""
+        Te_uni = TE * np.ones((_VTE_NY, _VTE_NX))
+        w_scalar = _run_vte(
+            {"moment": self.M0, "shear": 0.0}, self._ZMZS, _MIRROR, _MIRROR,
+            te=TE,
+        )
+        w_array = _run_vte(
+            {"moment": self.M0, "shear": 0.0}, self._ZMZS, _MIRROR, _MIRROR,
+            te=Te_uni,
+        )
+        np.testing.assert_allclose(w_array, w_scalar, rtol=1e-10, atol=0)
+
+    def test_superposition_holds_under_variable_te(self):
+        """w(M₀,V₀) = w(M₀,0) + w(0,V₀) to machine precision under variable Te."""
+        Te_var = _make_variable_te(_VTE_NY, _VTE_NX)
+        w_M  = _run_vte({"moment": self.M0, "shear": 0.0}, self._ZMZS, _MIRROR, _MIRROR, te=Te_var)
+        w_V  = _run_vte({"moment": 0.0, "shear": self.V0},  self._ZMZS, _MIRROR, _MIRROR, te=Te_var)
+        w_MV = _run_vte({"moment": self.M0, "shear": self.V0}, self._ZMZS, _MIRROR, _MIRROR, te=Te_var)
+        np.testing.assert_allclose(w_MV, w_M + w_V, rtol=1e-10, atol=0)
+
+    def test_variable_te_differs_from_uniform(self):
+        """Variable Te must produce a quantifiably different solution than uniform Te."""
+        Te_var = _make_variable_te(_VTE_NY, _VTE_NX)
+        w_uni = _run_vte({"moment": self.M0, "shear": 0.0}, self._ZMZS, _MIRROR, _MIRROR, te=TE)
+        w_var = _run_vte({"moment": self.M0, "shear": 0.0}, self._ZMZS, _MIRROR, _MIRROR, te=Te_var)
+        diff = np.max(np.abs(w_var - w_uni))
+        assert diff > 0.05 * np.max(np.abs(w_uni)), (
+            f"Variable Te (±30%) should produce >5% change; got {diff / np.max(np.abs(w_uni)):.1%}"
+        )
 
 
 # ---------------------------------------------------------------------------
