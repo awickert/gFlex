@@ -1302,6 +1302,27 @@ class Flexure(Utility, Plotting):
         For ``SAS`` / ``SAS_NG``: sets missing BC attributes to an empty
         string, which the analytical solvers treat as ``'no_outside_loads'``.
         """
+        # Reject dict-style BCs on non-FD solvers before any method-specific work.
+        if self.method != "fd":
+            dict_edges = [
+                name
+                for name, attr in (
+                    ("bc_west",  getattr(self, "bc_west",  None)),
+                    ("bc_east",  getattr(self, "bc_east",  None)),
+                    ("bc_north", getattr(self, "bc_north", None)),
+                    ("bc_south", getattr(self, "bc_south", None)),
+                )
+                if isinstance(attr, dict)
+            ]
+            if dict_edges:
+                raise ValueError(
+                    f"Inhomogeneous (dict-style) boundary conditions require "
+                    f"method='fd'. The {self.method!r} solver assumes periodic or "
+                    f"zero-padded boundaries and cannot apply prescribed moments, "
+                    f"shears, displacements, or slopes. "
+                    f"Affected edges: {dict_edges}."
+                )
+
         # Check that boundary conditions are acceptable with code implementation
         # Acceptable b.c.'s
         if self.method == "fft":
