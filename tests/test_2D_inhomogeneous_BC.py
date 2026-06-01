@@ -682,6 +682,76 @@ class TestSouthPrescribedSlope:
 
 
 # ---------------------------------------------------------------------------
+# Mixed Neumann + Dirichlet: one end prescribed moment (ZMZS type),
+# the other prescribed displacement (ZDSZS type).
+# ---------------------------------------------------------------------------
+# For L = 10α each solution decays to < e^{-10} ≈ 4.5 e-5 of its peak
+# before reaching the opposite end, so the superposition approximation
+# w ≈ w_near + w_far holds to < 0.01 % — well within the 1 % tolerance.
+#
+# Corner interactions exercised:
+#   west-moment + north/south mirror  → ZMZS+mirror correction (NW/SW)
+#   east-disp   + north/south mirror  → ZDSZS+mirror: all inf-flagged, no-op
+#   west-disp   + north/south mirror  → ZDSZS+mirror: all inf-flagged, no-op
+#   east-moment + north/south mirror  → ZMZS+mirror correction (NE/SE)
+# ---------------------------------------------------------------------------
+
+class TestMixedNeumannDirichlet:
+    """Neumann (moment/shear) at one end, Dirichlet (displacement/slope) at the other.
+
+    W0 is chosen so both ends produce equal peak deflection, ensuring neither
+    contribution dominates the L-inf error comparison.
+    """
+
+    M0 = 1.0e12                        # prescribed moment (Neumann end)
+    W0 = M0 / (2.0 * D * LAM**2)      # prescribed displacement (Dirichlet end)
+
+    # --- east / west ---
+
+    def test_west_moment_east_displacement(self):
+        """West: moment (ZMZS); East: displacement (ZDSZS)."""
+        x, w_num = _run(
+            bc_west={"moment": self.M0, "shear": 0.0},
+            bc_east={"displacement": self.W0, "slope": 0.0},
+        )
+        w_ex = (w_prescribed_moment(x, self.M0)
+                + w_prescribed_displacement(L_DOMAIN - x, self.W0))
+        _check(w_num, w_ex, "Mixed west-moment east-disp")
+
+    def test_west_displacement_east_moment(self):
+        """West: displacement (ZDSZS); East: moment (ZMZS)."""
+        x, w_num = _run(
+            bc_west={"displacement": self.W0, "slope": 0.0},
+            bc_east={"moment": self.M0, "shear": 0.0},
+        )
+        w_ex = (w_prescribed_displacement(x, self.W0)
+                + w_prescribed_moment(L_DOMAIN - x, self.M0))
+        _check(w_num, w_ex, "Mixed west-disp east-moment")
+
+    # --- north / south ---
+
+    def test_north_moment_south_displacement(self):
+        """North: moment (ZMZS); South: displacement (ZDSZS)."""
+        y, w_num = _run_ns(
+            bc_north={"moment": self.M0, "shear": 0.0},
+            bc_south={"displacement": self.W0, "slope": 0.0},
+        )
+        w_ex = (w_prescribed_moment(y, self.M0)
+                + w_prescribed_displacement(L_DOMAIN - y, self.W0))
+        _check_col(w_num, w_ex, "Mixed north-moment south-disp")
+
+    def test_north_displacement_south_moment(self):
+        """North: displacement (ZDSZS); South: moment (ZMZS)."""
+        y, w_num = _run_ns(
+            bc_north={"displacement": self.W0, "slope": 0.0},
+            bc_south={"moment": self.M0, "shear": 0.0},
+        )
+        w_ex = (w_prescribed_displacement(y, self.W0)
+                + w_prescribed_moment(L_DOMAIN - y, self.M0))
+        _check_col(w_num, w_ex, "Mixed north-disp south-moment")
+
+
+# ---------------------------------------------------------------------------
 # Neumann superposition — linearity across all edge combinations
 # ---------------------------------------------------------------------------
 # With qs = 0 and identical coefficient matrices (all edges normalise to
