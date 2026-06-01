@@ -518,3 +518,64 @@ class TestEastPrescribedSlope:
         )
         _check(w_num, -w_prescribed_slope(L_DOMAIN - x, self.THETA0), "East Case D profile")
 
+
+# ---------------------------------------------------------------------------
+# North edge analytical tests  (Cases A – C)
+# ---------------------------------------------------------------------------
+# North outward normal is −y, the same sense as west (−x), so ALL four
+# sign conventions carry over unchanged (y replaces x, ny replaces nx).
+# ---------------------------------------------------------------------------
+
+class TestNorthPrescribedMoment:
+    """M(y=0) = M₀, V(y=0) = 0; free at south end."""
+
+    M0 = 1.0e12
+
+    def test_deflection_profile(self):
+        y, w_num = _run_ns(
+            bc_north={"moment": self.M0, "shear": 0.0},
+            bc_south="zero_moment_zero_shear",
+        )
+        _check_col(w_num, w_prescribed_moment(y, self.M0), "North Case A profile")
+
+    def test_north_boundary_displacement(self):
+        y, w_num = _run_ns(
+            bc_north={"moment": self.M0, "shear": 0.0},
+            bc_south="zero_moment_zero_shear",
+        )
+        w0_exact = self.M0 / (2.0 * D * LAM**2)
+        assert abs(w_num[0, _NS_NX // 2] - w0_exact) / abs(w0_exact) < REL_TOL
+
+
+class TestNorthPrescribedShear:
+    """M(y=0) = 0, V(y=0) = V₀; free at south end."""
+
+    V0 = 1.0e8
+
+    def test_deflection_profile(self):
+        y, w_num = _run_ns(
+            bc_north={"moment": 0.0, "shear": self.V0},
+            bc_south="zero_moment_zero_shear",
+        )
+        _check_col(w_num, w_prescribed_shear(y, self.V0), "North Case B profile")
+
+
+class TestNorthPrescribedDisplacement:
+    """w(y=0) = W₀, dw/dy(y=0) = 0; clamped at south end."""
+
+    W0 = 100.0
+
+    def test_deflection_profile(self):
+        y, w_num = _run_ns(
+            bc_north={"displacement": self.W0, "slope": 0.0},
+            bc_south="zero_displacement_zero_slope",
+        )
+        _check_col(w_num, w_prescribed_displacement(y, self.W0), "North Case C profile")
+
+    def test_north_boundary_displacement(self):
+        y, w_num = _run_ns(
+            bc_north={"displacement": self.W0, "slope": 0.0},
+            bc_south="zero_displacement_zero_slope",
+        )
+        assert abs(w_num[0, _NS_NX // 2] - self.W0) / self.W0 < REL_TOL
+
