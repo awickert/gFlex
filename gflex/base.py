@@ -128,13 +128,20 @@ def _resolve_bc(bc, edge_label, dimension):
             f"{[sorted(p) for p in _BC_DICT_TO_STRING]}.\nExiting."
         )
     for k, v in bc.items():
-        try:
-            float(v)
-        except (TypeError, ValueError):
-            sys.exit(
-                f"Boundary condition at {edge_label!r}: value for {k!r} must be "
-                f"numeric, got {type(v).__name__!r}.\nExiting."
-            )
+        if isinstance(v, np.ndarray):
+            if v.ndim != 1:
+                sys.exit(
+                    f"Boundary condition at {edge_label!r}: value for {k!r} must be "
+                    f"a scalar or 1-D array, got ndim={v.ndim}.\nExiting."
+                )
+        else:
+            try:
+                float(v)
+            except (TypeError, ValueError):
+                sys.exit(
+                    f"Boundary condition at {edge_label!r}: value for {k!r} must be "
+                    f"a scalar or 1-D array, got {type(v).__name__!r}.\nExiting."
+                )
     return _BC_DICT_TO_STRING[keys]
 
 
@@ -1446,6 +1453,28 @@ class Flexure(Utility, Plotting):
                     if norm == "zero_slope_zero_shear":
                         norm = "mirror"
                     setattr(self, f"_bc_{edge}_norm", norm)
+                # Validate array BC value lengths against edge dimensions.
+                # Only when dict BCs are present (config-file paths use string BCs
+                # and qs may not be set yet at this point).
+                if self.dimension == 2:
+                    _any_dict = any(
+                        getattr(self, f"_bc_{e}_values", None) is not None
+                        for e in ("west", "east", "north", "south")
+                    )
+                    if _any_dict:
+                        ny, nx = self.qs.shape
+                        _edge_lengths = {"west": ny, "east": ny, "north": nx, "south": nx}
+                        for _edge, _length in _edge_lengths.items():
+                            _bv = getattr(self, f"_bc_{_edge}_values", None)
+                            if _bv is not None:
+                                for _k, _v in _bv.items():
+                                    if isinstance(_v, np.ndarray) and len(_v) != _length:
+                                        sys.exit(
+                                            f"Boundary condition at {_edge!r}: value for "
+                                            f"{_k!r} has length {len(_v)}, expected "
+                                            f"{_length} ({_length} nodes on that edge)."
+                                            f"\nExiting."
+                                        )
         else:
             # Analytical solution boundary conditions
             # If they aren't set, it is because no input file has been used
