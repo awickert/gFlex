@@ -790,7 +790,10 @@ class F2D(Flexure):
         # flexural solution
         self._apply_bc_flexure()
 
-        # Fourth, construct the sparse diagonal array
+        # Fourth, compute RHS correction for prescribed (nonzero) BC values
+        self._apply_bc_rhs_inhomogeneous_2d()
+
+        # Fifth, construct the sparse diagonal array
         self.build_diagonals()
 
         # Finally, compute the total time this process took
@@ -1839,6 +1842,131 @@ class F2D(Flexure):
         # The periodic boundary natively continues the other boundary conditions
         # Nothing to be done here.
 
+    def _apply_bc_rhs_inhomogeneous_2d(self):
+        """Compute the RHS correction for prescribed (nonzero) 2D BC values.
+
+        Called after _apply_bc_flexure() and before build_diagonals().  For
+        dict-style BCs the ghost nodes carry prescribed moment, shear,
+        displacement, or slope values.  The constant parts of those ghost
+        expressions move to the RHS as a correction array added to -qs
+        before the sparse solve — the same approach used in 1D.
+
+        Cross-derivative stencil terms (cj_1i_1, cj_1i1 and analogues) mean
+        that a ghost node at (j−1, k) affects the equations at rows k−1, k,
+        and k+1.  The k±1 contributions use np.roll to shift the per-row Δ₁
+        vector; for uniform D the roll value equals the interior value so the
+        approximation is exact.
+        """
+        if (self._bc_west_values is None and self._bc_east_values is None
+                and self._bc_north_values is None and self._bc_south_values is None):
+            self._bc_rhs_correction = None
+            return
+
+        ny, nx = self.qs.shape
+        correction = np.zeros((ny, nx))
+        dx = self.dx
+        dy = self.dy
+
+        # D at each boundary edge.
+        # Scalar te: self.D is (ny, nx), unpadded.
+        # Array te: self.D is (ny+2, nx+2), padded with one nan-row/col each side.
+        if np.isscalar(self.te):
+            D_west  = self.D[:, 0]
+            D_east  = self.D[:, -1]
+            D_north = self.D[0, :]
+            D_south = self.D[-1, :]
+        else:
+            D_west  = self.D[1:-1, 1]
+            D_east  = self.D[1:-1, -2]
+            D_north = self.D[1, 1:-1]
+            D_south = self.D[-2, 1:-1]
+
+        # --- WEST (j=0) ---
+        if self._bc_west_values is not None:
+            bv = self._bc_west_values
+            if "displacement" in bv:
+                w0     = bv["displacement"]
+                theta0 = bv["slope"]
+                # Decoupled boundary column: enforce w[:, 0] = w0.
+                correction[:, 0] += self.cj0i0_coeff_ij[:, 0] * w0
+                # First interior column (j=1): slope ghost w[-1,k]=w[1,k]-2dx*theta0.
+                correction[:, 1] += self.cj_2i0_coeff_ij[:, 1] * 2.0 * dx * theta0
+            else:  # moment / shear
+                M0 = bv["moment"]
+                V0 = bv["shear"]
+                Delta1 = M0 * dx**2 / D_west  # constant part of w[-1, k], shape (ny,)
+                # Boundary column (j=0): from w[-2,k] and w[-1,k] ghosts.
+                correction[:, 0] += (
+                    self.cj_2i0_coeff_ij[:, 0] * (2.0 * V0 * dx**3 - 2.0 * M0 * dx**2) / D_west
+                    - self.cj_1i0_coeff_ij[:, 0] * Delta1
+                    - self.cj_1i_1_coeff_ij[:, 0] * np.roll(Delta1, 1)   # w[-1, k-1] cross term
+                    - self.cj_1i1_coeff_ij[:, 0] * np.roll(Delta1, -1)   # w[-1, k+1] cross term
+                )
+                # First interior column (j=1): cj_2i0 there sees w[-1, k].
+                correction[:, 1] -= self.cj_2i0_coeff_ij[:, 1] * Delta1
+
+        # --- EAST (j=nx-1) ---
+        if self._bc_east_values is not None:
+            bv = self._bc_east_values
+            if "displacement" in bv:
+                w_e     = bv["displacement"]
+                theta_e = bv["slope"]
+                correction[:, -1] += self.cj0i0_coeff_ij[:, -1] * w_e
+                correction[:, -2] += self.cj2i0_coeff_ij[:, -2] * 2.0 * dx * theta_e
+            else:  # moment / shear
+                M_e = bv["moment"]
+                V_e = bv["shear"]
+                Delta1_e = M_e * dx**2 / D_east
+                correction[:, -1] += (
+                    self.cj2i0_coeff_ij[:, -1] * (-(2.0 * V_e * dx**3 + 2.0 * M_e * dx**2)) / D_east
+                    - self.cj1i0_coeff_ij[:, -1] * Delta1_e
+                    - self.cj1i_1_coeff_ij[:, -1] * np.roll(Delta1_e, 1)
+                    - self.cj1i1_coeff_ij[:, -1] * np.roll(Delta1_e, -1)
+                )
+                correction[:, -2] -= self.cj2i0_coeff_ij[:, -2] * Delta1_e
+
+        # --- NORTH (i=0) ---
+        if self._bc_north_values is not None:
+            bv = self._bc_north_values
+            if "displacement" in bv:
+                w_n     = bv["displacement"]
+                theta_n = bv["slope"]
+                correction[0, :] += self.cj0i0_coeff_ij[0, :] * w_n
+                correction[1, :] += self.cj0i_2_coeff_ij[1, :] * 2.0 * dy * theta_n
+            else:  # moment / shear
+                M_n = bv["moment"]
+                V_n = bv["shear"]
+                Delta1_n = M_n * dy**2 / D_north
+                correction[0, :] += (
+                    self.cj0i_2_coeff_ij[0, :] * (2.0 * V_n * dy**3 - 2.0 * M_n * dy**2) / D_north
+                    - self.cj0i_1_coeff_ij[0, :] * Delta1_n
+                    - self.cj_1i_1_coeff_ij[0, :] * np.roll(Delta1_n, 1)   # w[j-1, -1] cross term
+                    - self.cj1i_1_coeff_ij[0, :] * np.roll(Delta1_n, -1)   # w[j+1, -1] cross term
+                )
+                correction[1, :] -= self.cj0i_2_coeff_ij[1, :] * Delta1_n
+
+        # --- SOUTH (i=ny-1) ---
+        if self._bc_south_values is not None:
+            bv = self._bc_south_values
+            if "displacement" in bv:
+                w_s     = bv["displacement"]
+                theta_s = bv["slope"]
+                correction[-1, :] += self.cj0i0_coeff_ij[-1, :] * w_s
+                correction[-2, :] += self.cj0i2_coeff_ij[-2, :] * 2.0 * dy * theta_s
+            else:  # moment / shear
+                M_s = bv["moment"]
+                V_s = bv["shear"]
+                Delta1_s = M_s * dy**2 / D_south
+                correction[-1, :] += (
+                    self.cj0i2_coeff_ij[-1, :] * (-(2.0 * V_s * dy**3 + 2.0 * M_s * dy**2)) / D_south
+                    - self.cj0i1_coeff_ij[-1, :] * Delta1_s
+                    - self.cj_1i1_coeff_ij[-1, :] * np.roll(Delta1_s, 1)
+                    - self.cj1i1_coeff_ij[-1, :] * np.roll(Delta1_s, -1)
+                )
+                correction[-2, :] -= self.cj0i2_coeff_ij[-2, :] * Delta1_s
+
+        self._bc_rhs_correction = correction
+
     def build_diagonals(self):
         """
         Assemble the sparse coefficient matrix from the 2-D stencil arrays.
@@ -2264,6 +2392,9 @@ class F2D(Flexure):
         # A·w = −q therefore gives w < 0 for q > 0, matching the
         # positive-upward sign convention used throughout gFlex.
         q0vector = -self.qs.reshape(-1, order="C")
+        rhs_corr = getattr(self, "_bc_rhs_correction", None)
+        if rhs_corr is not None:
+            q0vector = q0vector + rhs_corr.reshape(-1, order="C")
         wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
 
         # Reshape into grid
