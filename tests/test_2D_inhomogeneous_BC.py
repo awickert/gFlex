@@ -218,3 +218,123 @@ class TestPrescribedSlope:
             bc_east="zero_moment_zero_shear",
         )
         _check(w_num, w_prescribed_slope(x, self.THETA0), "Case D profile")
+
+
+# ---------------------------------------------------------------------------
+# Variable-Te Dirichlet exactness tests
+# ---------------------------------------------------------------------------
+
+_VTE_NX = 51
+_VTE_NY = 11
+_VTE_W0 = 75.0    # prescribed displacement, m
+
+_DISP_BC = {"displacement": _VTE_W0, "slope": 0.0}
+_CLAMP   = "zero_displacement_zero_slope"
+_MIRROR  = "mirror"
+
+
+def _make_variable_te(ny, nx):
+    """Smooth 2-D Te array: ±30 % variation in both directions."""
+    eta = np.linspace(0, 1, ny)[:, np.newaxis]
+    xi  = np.linspace(0, 1, nx)[np.newaxis, :]
+    return TE * (1.0 + 0.3 * np.sin(np.pi * eta) * np.cos(np.pi * xi))
+
+
+def _run_vte(bc_west, bc_east, bc_north, bc_south,
+             nx=_VTE_NX, ny=_VTE_NY):
+    dx = L_DOMAIN / (nx - 1)
+    flex = F2D()
+    flex.quiet    = True
+    flex.method   = "fd"
+    flex.solver   = "direct"
+    flex.g        = G
+    flex.E        = E
+    flex.nu       = NU
+    flex.rho_m    = RHO_M
+    flex.rho_fill = RHO_F
+    flex.te       = _make_variable_te(ny, nx)
+    flex.dx       = dx
+    flex.dy       = dx
+    flex.qs       = np.zeros((ny, nx))
+    flex.bc_west  = bc_west
+    flex.bc_east  = bc_east
+    flex.bc_north = bc_north
+    flex.bc_south = bc_south
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        flex.initialize()
+        flex.run()
+        flex.finalize()
+    return flex.w
+
+
+class TestVariableTeDirichletExact:
+    """Prescribed displacement is enforced exactly under spatially varying Te.
+
+    The RHS correction for displacement/slope BCs is a pure Dirichlet
+    decoupling: correction[edge] = cj0i0_coeff[edge] * w0.  The coefficient
+    depends on D, but w = w0 holds to floating-point precision regardless of
+    how D varies.  Tests cover each single edge, both pairs of opposite edges,
+    all four adjacent-edge (corner) pairs, and all four edges simultaneously.
+    """
+
+    # --- single edges ---
+
+    def test_west_exact(self):
+        w = _run_vte(_DISP_BC, _CLAMP, _MIRROR, _MIRROR)
+        assert np.all(w[:, 0] == _VTE_W0), "west edge not exactly W0"
+
+    def test_east_exact(self):
+        w = _run_vte(_CLAMP, _DISP_BC, _MIRROR, _MIRROR)
+        assert np.all(w[:, -1] == _VTE_W0), "east edge not exactly W0"
+
+    def test_north_exact(self):
+        w = _run_vte(_CLAMP, _CLAMP, _DISP_BC, _MIRROR)
+        assert np.all(w[0, :] == _VTE_W0), "north edge not exactly W0"
+
+    def test_south_exact(self):
+        w = _run_vte(_CLAMP, _CLAMP, _MIRROR, _DISP_BC)
+        assert np.all(w[-1, :] == _VTE_W0), "south edge not exactly W0"
+
+    # --- opposite-edge pairs ---
+
+    def test_west_east_exact(self):
+        w = _run_vte(_DISP_BC, _DISP_BC, _MIRROR, _MIRROR)
+        assert np.all(w[:, 0]  == _VTE_W0), "west edge not exactly W0"
+        assert np.all(w[:, -1] == _VTE_W0), "east edge not exactly W0"
+
+    def test_north_south_exact(self):
+        w = _run_vte(_CLAMP, _CLAMP, _DISP_BC, _DISP_BC)
+        assert np.all(w[0, :]  == _VTE_W0), "north edge not exactly W0"
+        assert np.all(w[-1, :] == _VTE_W0), "south edge not exactly W0"
+
+    # --- adjacent-edge (corner) pairs ---
+
+    def test_northwest_exact(self):
+        w = _run_vte(_DISP_BC, _CLAMP, _DISP_BC, _MIRROR)
+        assert np.all(w[:, 0] == _VTE_W0), "west edge not exactly W0"
+        assert np.all(w[0, :] == _VTE_W0), "north edge not exactly W0"
+
+    def test_northeast_exact(self):
+        w = _run_vte(_CLAMP, _DISP_BC, _DISP_BC, _MIRROR)
+        assert np.all(w[:, -1] == _VTE_W0), "east edge not exactly W0"
+        assert np.all(w[0, :]  == _VTE_W0), "north edge not exactly W0"
+
+    def test_southwest_exact(self):
+        w = _run_vte(_DISP_BC, _CLAMP, _MIRROR, _DISP_BC)
+        assert np.all(w[:, 0]  == _VTE_W0), "west edge not exactly W0"
+        assert np.all(w[-1, :] == _VTE_W0), "south edge not exactly W0"
+
+    def test_southeast_exact(self):
+        w = _run_vte(_CLAMP, _DISP_BC, _MIRROR, _DISP_BC)
+        assert np.all(w[:, -1] == _VTE_W0), "east edge not exactly W0"
+        assert np.all(w[-1, :] == _VTE_W0), "south edge not exactly W0"
+
+    # --- all four edges ---
+
+    def test_all_four_exact(self):
+        w = _run_vte(_DISP_BC, _DISP_BC, _DISP_BC, _DISP_BC)
+        assert np.all(w[:, 0]  == _VTE_W0), "west edge not exactly W0"
+        assert np.all(w[:, -1] == _VTE_W0), "east edge not exactly W0"
+        assert np.all(w[0, :]  == _VTE_W0), "north edge not exactly W0"
+        assert np.all(w[-1, :] == _VTE_W0), "south edge not exactly W0"
