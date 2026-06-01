@@ -1256,3 +1256,18 @@ class TestNorthSouthNonMirrorLateral:
             bc_south=self._ZDZM,
         )
         np.testing.assert_allclose(w_ns, w_ew[::-1, :].T, rtol=1e-7, atol=0)
+
+    # --- 2. Superposition ---
+
+    def test_superposition_north_zdszs_lateral(self):
+        """w(M₀+V₀) = w(M₀)+w(V₀) for north BC with ZDSZS at east and west.
+
+        Uses _run_sq (small square domain) so the solution need not decay to
+        machine zero — superposition holds for any linear system regardless.
+        """
+        kw = dict(bc_west=self._ZDSZS, bc_east=self._ZDSZS,
+                  bc_south=self._ZMZS)
+        w_m  = _run_sq(bc_north={"moment": self.M0, "shear": 0.0}, **kw)
+        w_v  = _run_sq(bc_north={"moment": 0.0,     "shear": self.V0}, **kw)
+        w_mv = _run_sq(bc_north={"moment": self.M0, "shear": self.V0}, **kw)
+        np.testing.assert_allclose(w_mv, w_m + w_v, rtol=1e-9, atol=0)
