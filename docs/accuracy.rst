@@ -290,6 +290,13 @@ value :math:`w[0]` (exactly zero in the MMS solution) was :math:`-4.9 \times
 10^{-3}` m in the original and :math:`-1.6 \times 10^{-8}` m in the
 corrected implementation at :math:`\Delta x = 0.75` km.
 
+Under an interior-only point load (:math:`q_s[0] = q_s[N-1] = 0`), the
+corrected Dirichlet decoupling enforces :math:`w[0] = 0` exactly: with all
+off-diagonal stencil entries at the boundary node removed and zero load on the
+boundary, the boundary equation reduces to :math:`c_0 w[0] = 0`.  The
+original implementation gives :math:`w[0] \approx +1.1 \times 10^{-4}` m at
+:math:`\Delta x = 3` km.
+
 Practical impact
 ~~~~~~~~~~~~~~~~
 
@@ -490,6 +497,24 @@ Results (2-D)
 Convergence slopes (finest two points): original :math:`\mathcal{O}(\Delta
 x^{0.94})`; corrected :math:`\mathcal{O}(\Delta x^{2.01})`.
 
+Boundary exactness
+~~~~~~~~~~~~~~~~~~
+
+Because the boundary-node equation (``i=0``) is identical in the original and
+corrected implementations — both apply the moment and shear ghost conditions
+the same way at the plate edge — both satisfy :math:`d^2w/dx^2 = 0` and
+:math:`d^3w/dx^3 = 0` to machine precision at the boundary node.  The finite-
+difference estimates of moment and shear at the edge are
+:math:`\lesssim 10^{-12}` m m⁻² and :math:`\lesssim 10^{-17}` m m⁻³ for
+both implementations under an interior-only point load.
+
+The original code's error is at ``i=1``, where the staggered shear ghost
+introduces a non-standard truncation error.  Under an interior point load at
+:math:`\Delta x = 3` km, the first-interior-node displacement differs by
+:math:`|w_\mathrm{old}[1] - w_\mathrm{new}[1]| \approx 5.5 \times 10^{-4}`
+m between old and new — it is this node-level discrepancy that accumulates to
+produce the :math:`\mathcal{O}(\Delta x)` convergence shown above.
+
 Practical impact
 ~~~~~~~~~~~~~~~~
 
@@ -626,6 +651,11 @@ Results
 
 Convergence slopes (finest two points): original :math:`\mathcal{O}(\Delta
 x^{0.92})`; corrected :math:`\mathcal{O}(\Delta x^{1.99})`.
+
+Under an interior-only point load (zero load on all boundary rows and
+columns), the corrected implementation gives :math:`\max|w| = 0` exactly on
+all four boundary edges; the original gives :math:`\max|w| \approx 2.2 \times
+10^{-4}` m at :math:`n = 51` (:math:`\Delta x = 12` km).
 
 Practical impact
 ~~~~~~~~~~~~~~~~
