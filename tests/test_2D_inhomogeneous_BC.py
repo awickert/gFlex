@@ -663,6 +663,24 @@ class TestSouthPrescribedDisplacement:
         assert abs(w_num[-1, _NS_NX // 2] - self.W0) / self.W0 < REL_TOL
 
 
+class TestSouthPrescribedSlope:
+    """w(y=L) = 0, dw/dy(y=L) = +θ₀; free at north end.
+
+    dw/dy at south reverses sign under ξ = L − y, so θ₀ > 0 gives
+    negative deflection: w(ξ) = −w_prescribed_slope(ξ, θ₀).
+    """
+
+    THETA0 = 1.0e-3   # rad
+
+    def test_deflection_profile(self):
+        y, w_num = _run_ns(
+            bc_north="zero_moment_zero_shear",
+            bc_south={"displacement": 0.0, "slope": self.THETA0},
+        )
+        _check_col(w_num, -w_prescribed_slope(L_DOMAIN - y, self.THETA0), "South Case D profile")
+
+
+
 # ---------------------------------------------------------------------------
 # Neumann superposition — linearity across all edge combinations
 # ---------------------------------------------------------------------------
