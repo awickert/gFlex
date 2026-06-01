@@ -1118,14 +1118,14 @@ class F1D(Flexure):
             i = 1
             self.l2[i] = np.nan
             self.l1[i] += 0
-            self.c0[i] += 0
+            self.c0[i] += self.l2_coeff_i[i]
             self.r1[i] += 0
-            self.r2[i] += self.l2_coeff_i[i]
+            self.r2[i] += 0
         if self._bc_east_norm == "zero_slope_zero_shear":
             i = -2
-            self.l2[i] += self.r2_coeff_i[i]
+            self.l2[i] += 0
             self.l1[i] += 0
-            self.c0[i] += 0
+            self.c0[i] += self.r2_coeff_i[i]
             self.r1[i] += 0
             self.r2[i] = np.nan
             i = -1

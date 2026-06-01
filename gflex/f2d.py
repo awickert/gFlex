@@ -1268,13 +1268,13 @@ class F2D(Flexure):
             self.cj_1i1[:, j] += 0
             self.cj0i_2[:, j] += 0
             self.cj0i_1[:, j] += 0
-            self.cj0i0[:, j] += 0
+            self.cj0i0[:, j] += self.cj_2i0_coeff_ij[:, j]
             self.cj0i1[:, j] += 0
             self.cj0i2[:, j] += 0
             self.cj1i_1[:, j] += 0
             self.cj1i0[:, j] += 0
             self.cj1i1[:, j] += 0
-            self.cj2i0[:, j] += self.cj_2i0_coeff_ij[:, j]
+            self.cj2i0[:, j] += 0
         elif self.bc_west == "mirror":
             j = 0
             self.cj_2i0[:, j] += np.inf
@@ -1435,13 +1435,13 @@ class F2D(Flexure):
             self.cj1i1[:, j] += np.inf
             self.cj2i0[:, j] += np.inf
             j = -2
-            self.cj_2i0[:, j] += self.cj2i0_coeff_ij[:, j]
+            self.cj_2i0[:, j] += 0
             self.cj_1i_1[:, j] += 0
             self.cj_1i0[:, j] += 0
             self.cj_1i1[:, j] += 0
             self.cj0i_2[:, j] += 0
             self.cj0i_1[:, j] += 0
-            self.cj0i0[:, j] += 0
+            self.cj0i0[:, j] += self.cj2i0_coeff_ij[:, j]
             self.cj0i1[:, j] += 0
             self.cj0i2[:, j] += 0
             self.cj1i_1[:, j] += 0
@@ -1571,7 +1571,7 @@ class F2D(Flexure):
         elif self.bc_north == "zero_slope_zero_shear":
             i = 0
             self.cj_2i0[i, :] += 0
-            self.cj_1i_1[i, :][self.cj_1i_1[i, :] != np.inf] = np.nan
+            self.cj_1i_1[i, :] += np.inf
             self.cj_1i0[i, :] += 0
             self.cj_1i1[i, :] += self.cj_1i_1_coeff_ij[i, :]
             self.cj0i_2[i, :] += 0  # np.nan
@@ -1579,7 +1579,7 @@ class F2D(Flexure):
             self.cj0i0[i, :] += 0
             self.cj0i1[i, :] += self.cj0i_1_coeff_ij[i, :]
             self.cj0i2[i, :] += self.cj0i_2_coeff_ij[i, :]
-            self.cj1i_1[i, :][self.cj1i_1[i, :] != np.inf] += 0  # np.nan
+            self.cj1i_1[i, :] += np.inf
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :] += self.cj1i_1_coeff_ij[i, :]
             self.cj2i0[i, :] += 0
@@ -1590,9 +1590,9 @@ class F2D(Flexure):
             self.cj_1i1[i, :] += 0
             self.cj0i_2[i, :] += 0  # np.nan
             self.cj0i_1[i, :] += 0
-            self.cj0i0[i, :] += 0
+            self.cj0i0[i, :] += self.cj0i_2_coeff_ij[i, :]
             self.cj0i1[i, :] += 0
-            self.cj0i2[i, :] += self.cj0i_2_coeff_ij[i, :]
+            self.cj0i2[i, :] += 0
             self.cj1i_1[i, :] += 0
             self.cj1i0[i, :] += 0
             self.cj1i1[i, :] += 0
@@ -1720,9 +1720,9 @@ class F2D(Flexure):
             self.cj_1i_1[i, :] += 0
             self.cj_1i0[i, :] += 0
             self.cj_1i1[i, :] += 0
-            self.cj0i_2[i, :] += self.cj0i2_coeff_ij[i, :]
+            self.cj0i_2[i, :] += 0
             self.cj0i_1[i, :] += 0
-            self.cj0i0[i, :] += 0
+            self.cj0i0[i, :] += self.cj0i2_coeff_ij[i, :]
             self.cj0i1[i, :] += 0
             self.cj0i2[i, :] += 0  # np.nan
             self.cj1i_1[i, :] += 0
@@ -1733,7 +1733,7 @@ class F2D(Flexure):
             self.cj_2i0[i, :] += 0
             self.cj_1i_1[i, :] += self.cj_1i1_coeff_ij[i, :]
             self.cj_1i0[i, :] += 0
-            self.cj_1i1[i, :][self.cj_1i1[i, :] != np.inf] += 0  # np.nan
+            self.cj_1i1[i, :] += np.inf
             self.cj0i_2[i, :] += self.cj0i2_coeff_ij[i, :]
             self.cj0i_1[i, :] += self.cj0i1_coeff_ij[i, :]
             self.cj0i0[i, :] += 0
@@ -1741,7 +1741,7 @@ class F2D(Flexure):
             self.cj0i2[i, :] += 0  # np.nan
             self.cj1i_1[i, :] += self.cj1i1_coeff_ij[i, :]
             self.cj1i0[i, :] += 0
-            self.cj1i1[i, :][self.cj1i1[i, :] != np.inf] += 0  # np.nan
+            self.cj1i1[i, :] += np.inf
             self.cj2i0[i, :] += 0
         elif self.bc_south == "mirror":
             i = -2
