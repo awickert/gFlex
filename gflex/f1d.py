@@ -388,8 +388,9 @@ class F1D(Flexure):
     bc_west, bc_east : str
         Boundary conditions on the west (left) and east (right) ends.
         FD options: ``'zero_displacement_zero_slope'``, ``'zero_displacement_zero_moment'``,
-        ``'zero_slope_zero_shear'``, ``'zero_moment_zero_shear'``, ``'mirror'``, ``'periodic'``,
+        ``'zero_moment_zero_shear'``, ``'mirror'``, ``'periodic'``,
         ``'sandbox'``.
+        ``'zero_slope_zero_shear'`` is a deprecated alias for ``'mirror'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).
     sigma_xx : float, optional
         Normal stress applied at the plate ends [Pa].  FD only.
@@ -531,15 +532,6 @@ class F1D(Flexure):
                     f"BC_{side} = 'zero_moment_zero_shear': assumes a free broken plate end "
                     "(zero moment and shear force). Verify this represents a rifted "
                     "margin, spreading ridge, or similar physically broken-plate setting.",
-                    UserWarning,
-                    stacklevel=4,
-                )
-            elif bc == "zero_slope_zero_shear":
-                warnings.warn(
-                    f"BC_{side} = 'zero_slope_zero_shear': requires the plate to be horizontal "
-                    "and experience no shear force at the boundary. No clear geological "
-                    "analog is known where both conditions hold simultaneously in a "
-                    "nontrivial (nonzero deflection) setting.",
                     UserWarning,
                     stacklevel=4,
                 )
@@ -822,7 +814,7 @@ class F1D(Flexure):
             self.bc_rigidity_west = _RigidityBC.PERIODIC
         elif (
             self._bc_west_norm
-            == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear", "zero_slope_zero_shear"])
+            == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear"])
         ).any():
             self.bc_rigidity_west = _RigidityBC.ZERO_CURVATURE
         elif self._bc_west_norm in ("mirror", "zero_displacement_zero_moment"):
@@ -834,7 +826,7 @@ class F1D(Flexure):
             self.bc_rigidity_east = _RigidityBC.PERIODIC
         elif (
             self._bc_east_norm
-            == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear", "zero_slope_zero_shear"])
+            == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear"])
         ).any():
             self.bc_rigidity_east = _RigidityBC.ZERO_CURVATURE
         elif self._bc_east_norm in ("mirror", "zero_displacement_zero_moment"):
@@ -948,8 +940,6 @@ class F1D(Flexure):
         # mistakes
         if self._bc_east_norm == "zero_displacement_zero_slope" or self._bc_west_norm == "zero_displacement_zero_slope":
             self._bc_zero_displacement_zero_slope()
-        if self._bc_east_norm == "zero_slope_zero_shear" or self._bc_west_norm == "zero_slope_zero_shear":
-            self._bc_zero_slope_zero_shear()
         if self._bc_east_norm == "zero_moment_zero_shear" or self._bc_west_norm == "zero_moment_zero_shear":
             self._bc_zero_moment_zero_shear()
         if self._bc_east_norm == "mirror" or self._bc_west_norm == "mirror":
@@ -1092,48 +1082,6 @@ class F1D(Flexure):
             self.c0[i] += 0
             self.r1[i] = np.nan   # ghost w[N]: out-of-bounds, excluded
             self.r2[i] = np.nan   # ghost w[N+1]: out-of-bounds, excluded
-
-    def _bc_zero_slope_zero_shear(self):
-        """
-    This boundary condition is essentially a Neumann 0-gradient boundary
-    condition with that 0-gradient state extended over a longer part of
-    the grid such that the third derivative also equals 0.
-
-    This boundary condition has more of a geometric meaning than a physical
-    meaning. It produces a state in which the boundaries have to have all
-    gradients in deflection go to 0 (i.e. approach constant values) while
-    not specifying what those values must be.
-
-    This uses a 0-curvature boundary condition for elastic thickness
-    that extends outside of the computational domain.
-    """
-
-        if self._bc_west_norm == "zero_slope_zero_shear":
-            i = 0
-            self.l2[i] = np.nan
-            self.l1[i] = np.nan
-            self.c0[i] += 0
-            self.r1[i] += self.l1_coeff_i[i]
-            self.r2[i] += self.l2_coeff_i[i]
-            i = 1
-            self.l2[i] = np.nan
-            self.l1[i] += 0
-            self.c0[i] += self.l2_coeff_i[i]
-            self.r1[i] += 0
-            self.r2[i] += 0
-        if self._bc_east_norm == "zero_slope_zero_shear":
-            i = -2
-            self.l2[i] += 0
-            self.l1[i] += 0
-            self.c0[i] += self.r2_coeff_i[i]
-            self.r1[i] += 0
-            self.r2[i] = np.nan
-            i = -1
-            self.l2[i] += self.r2_coeff_i[i]
-            self.l1[i] += self.r1_coeff_i[i]
-            self.c0[i] += 0
-            self.r1[i] = np.nan
-            self.r2[i] = np.nan
 
     def _bc_zero_moment_zero_shear(self):
         """
