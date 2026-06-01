@@ -1203,34 +1203,25 @@ class F2D(Flexure):
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
         elif self.bc_west == "zero_displacement_zero_slope":
+            # Boundary column (j=0): decouple so c0·w[j=0,i] = 0 → w = 0 exactly.
             j = 0
             self.cj_2i0[:, j] += np.inf
             self.cj_1i_1[:, j] += np.inf
             self.cj_1i0[:, j] += np.inf
             self.cj_1i1[:, j] += np.inf
-            self.cj0i_2[:, j] += 0
-            self.cj0i_1[:, j] += 0
+            self.cj0i_2[:, j] += np.inf
+            self.cj0i_1[:, j] += np.inf
             self.cj0i0[:, j] += 0
-            self.cj0i1[:, j] += 0
-            self.cj0i2[:, j] += 0
-            self.cj1i_1[:, j] += 0
-            self.cj1i0[:, j] += 0
-            self.cj1i1[:, j] += 0
-            self.cj2i0[:, j] += 0
+            self.cj0i1[:, j] += np.inf
+            self.cj0i2[:, j] += np.inf
+            self.cj1i_1[:, j] += np.inf
+            self.cj1i0[:, j] += np.inf
+            self.cj1i1[:, j] += np.inf
+            self.cj2i0[:, j] += np.inf
+            # First interior column (j=1): even reflection w[-1,i]=w[1,i] encodes zero slope.
             j = 1
             self.cj_2i0[:, j] += np.inf
-            self.cj_1i_1[:, j] += 0
-            self.cj_1i0[:, j] += 0
-            self.cj_1i1[:, j] += 0
-            self.cj0i_2[:, j] += 0
-            self.cj0i_1[:, j] += 0
-            self.cj0i0[:, j] += 0
-            self.cj0i1[:, j] += 0
-            self.cj0i2[:, j] += 0
-            self.cj1i_1[:, j] += 0
-            self.cj1i0[:, j] += 0
-            self.cj1i1[:, j] += 0
-            self.cj2i0[:, j] += 0
+            self.cj0i0[:, j] += self.cj_2i0_coeff_ij[:, j]
         elif self.bc_west == "zero_moment_zero_shear":
             j = 0
             self.cj_2i0[:, j] += np.inf
@@ -1385,33 +1376,24 @@ class F2D(Flexure):
                 )
 
         elif self.bc_east == "zero_displacement_zero_slope":
+            # First interior column (j=-2): even reflection w[N,i]=w[N-2,i] encodes zero slope.
+            j = -2
+            self.cj0i0[:, j] += self.cj2i0_coeff_ij[:, j]
+            self.cj2i0[:, j] += np.inf
+            # Boundary column (j=-1): decouple so c0·w[j=-1,i] = 0 → w = 0 exactly.
             j = -1
-            self.cj_2i0[:, j] += 0
-            self.cj_1i_1[:, j] += 0
-            self.cj_1i0[:, j] += 0
-            self.cj_1i1[:, j] += 0
-            self.cj0i_2[:, j] += 0
-            self.cj0i_1[:, j] += 0
+            self.cj_2i0[:, j] += np.inf
+            self.cj_1i_1[:, j] += np.inf
+            self.cj_1i0[:, j] += np.inf
+            self.cj_1i1[:, j] += np.inf
+            self.cj0i_2[:, j] += np.inf
+            self.cj0i_1[:, j] += np.inf
             self.cj0i0[:, j] += 0
-            self.cj0i1[:, j] += 0
-            self.cj0i2[:, j] += 0
+            self.cj0i1[:, j] += np.inf
+            self.cj0i2[:, j] += np.inf
             self.cj1i_1[:, j] += np.inf
             self.cj1i0[:, j] += np.inf
             self.cj1i1[:, j] += np.inf
-            self.cj2i0[:, j] += np.inf
-            j = -2
-            self.cj_2i0[:, j] += 0
-            self.cj_1i_1[:, j] += 0
-            self.cj_1i0[:, j] += 0
-            self.cj_1i1[:, j] += 0
-            self.cj0i_2[:, j] += 0
-            self.cj0i_1[:, j] += 0
-            self.cj0i0[:, j] += 0
-            self.cj0i1[:, j] += 0
-            self.cj0i2[:, j] += 0
-            self.cj1i_1[:, j] += 0
-            self.cj1i0[:, j] += 0
-            self.cj1i1[:, j] += 0
             self.cj2i0[:, j] += np.inf
         elif self.bc_east == "zero_moment_zero_shear":
             j = -1
@@ -1545,34 +1527,24 @@ class F2D(Flexure):
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
         elif self.bc_north == "zero_displacement_zero_slope":
+            # Boundary row (i=0): decouple so c0·w[j,i=0] = 0 → w = 0 exactly.
             i = 0
-            self.cj_2i0[i, :] += 0
-            self.cj_1i_1[i, :][self.cj_1i_1[i, :] != np.inf] = np.nan
-            self.cj_1i0[i, :] += 0
-            self.cj_1i1[i, :] += 0
-            self.cj0i_2[i, :] += 0  # np.nan
-            self.cj0i_1[i, :] += 0  # np.nan
+            self.cj_2i0[i, :] += np.inf
+            self.cj_1i_1[i, :] += np.inf
+            self.cj_1i0[i, :] += np.inf
+            self.cj_1i1[i, :] += np.inf
+            self.cj0i_2[i, :] += np.inf
+            self.cj0i_1[i, :] += np.inf
             self.cj0i0[i, :] += 0
-            self.cj0i1[i, :] += 0
-            self.cj0i2[i, :] += 0
-            self.cj1i_1[i, :][self.cj1i_1[i, :] != np.inf] += 0  # np.nan
-            self.cj1i0[i, :] += 0
-            self.cj1i1[i, :] += 0
-            self.cj2i0[i, :] += 0
+            self.cj0i1[i, :] += np.inf
+            self.cj0i2[i, :] += np.inf
+            self.cj1i_1[i, :] += np.inf
+            self.cj1i0[i, :] += np.inf
+            self.cj1i1[i, :] += np.inf
+            self.cj2i0[i, :] += np.inf
+            # First interior row (i=1): even reflection w[j,-1]=w[j,1] encodes zero slope.
             i = 1
-            self.cj_2i0[i, :] += 0
-            self.cj_1i_1[i, :] += 0
-            self.cj_1i0[i, :] += 0
-            self.cj_1i1[i, :] += 0
-            self.cj0i_2[i, :] += 0  # np.nan
-            self.cj0i_1[i, :] += 0
-            self.cj0i0[i, :] += 0
-            self.cj0i1[i, :] += 0
-            self.cj0i2[i, :] += 0
-            self.cj1i_1[i, :] += 0
-            self.cj1i0[i, :] += 0
-            self.cj1i1[i, :] += 0
-            self.cj2i0[i, :] += 0
+            self.cj0i0[i, :] += self.cj0i_2_coeff_ij[i, :]
         elif self.bc_north == "zero_moment_zero_shear":
             i = 0
             self.cj_2i0[i, :] += 0
@@ -1700,34 +1672,25 @@ class F2D(Flexure):
                     "Not physical to have one wrap-around boundary but not its pair."
                 )
         elif self.bc_south == "zero_displacement_zero_slope":
+            # First interior row (i=-2): even reflection w[j,N]=w[j,N-2] encodes zero slope.
             i = -2
-            self.cj_2i0[i, :] += 0
-            self.cj_1i_1[i, :] += 0
-            self.cj_1i0[i, :] += 0
-            self.cj_1i1[i, :] += 0
-            self.cj0i_2[i, :] += 0
-            self.cj0i_1[i, :] += 0
-            self.cj0i0[i, :] += 0
-            self.cj0i1[i, :] += 0
-            self.cj0i2[i, :] += 0  # np.nan
-            self.cj1i1[i, :] += 0
-            self.cj1i0[i, :] += 0
-            self.cj1i_1[i, :] += 0
-            self.cj2i0[i, :] += 0
+            self.cj0i0[i, :] += self.cj0i2_coeff_ij[i, :]
+            self.cj0i2[i, :] += np.inf
+            # Boundary row (i=-1): decouple so c0·w[j,i=-1] = 0 → w = 0 exactly.
             i = -1
-            self.cj_2i0[i, :] += 0
-            self.cj_1i_1[i, :] += 0
-            self.cj_1i0[i, :] += 0
-            self.cj_1i1[i, :][self.cj_1i1[i, :] != np.inf] += 0  # np.nan
-            self.cj0i_2[i, :] += 0
-            self.cj0i_1[i, :] += 0
+            self.cj_2i0[i, :] += np.inf
+            self.cj_1i_1[i, :] += np.inf
+            self.cj_1i0[i, :] += np.inf
+            self.cj_1i1[i, :] += np.inf
+            self.cj0i_2[i, :] += np.inf
+            self.cj0i_1[i, :] += np.inf
             self.cj0i0[i, :] += 0
-            self.cj0i1[i, :] += 0  # np.nan
-            self.cj0i2[i, :] += 0  # np.nan
-            self.cj1i_1[i, :] += 0
-            self.cj1i0[i, :] += 0
-            self.cj1i1[i, :][self.cj1i1[i, :] != np.inf] += 0  # np.nan
-            self.cj2i0[i, :] += 0
+            self.cj0i1[i, :] += np.inf
+            self.cj0i2[i, :] += np.inf
+            self.cj1i_1[i, :] += np.inf
+            self.cj1i0[i, :] += np.inf
+            self.cj1i1[i, :] += np.inf
+            self.cj2i0[i, :] += np.inf
         elif self.bc_south == "zero_moment_zero_shear":
             # First interior row (i=N-2): moment ghost w[j,N]=2w[j,N-1]-w[j,N-2]
             i = -2
