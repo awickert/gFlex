@@ -308,3 +308,203 @@ gFlex 1.4.0 onward.  See the :doc:`changelog` for the full bug-fix note.
 The standalone error-analysis script is at
 ``benchmarks/analyze_clamped_bc_error.py``, and a git-worktree–based
 cross-version comparator is at ``analysis/compare_bc_versions.py``.
+
+----
+
+1-D and 2-D ``zero_moment_zero_shear`` boundary condition: ghost-node correction (2026)
+-----------------------------------------------------------------------------------------
+
+.. figure:: _static/free_end_bc_error_1d.png
+   :width: 100%
+   :align: center
+   :alt: MMS error analysis — zero_moment_zero_shear 1-D old vs corrected
+
+   **Left:** Deflection profiles at :math:`\Delta x = 3` km; exact (MMS),
+   corrected, and original implementations are nearly indistinguishable at this
+   scale. **Centre:** Residuals (numerical − exact). The original implementation
+   has a systematic error that decays slowly toward the boundaries; the corrected
+   implementation is well within the second-order truncation error envelope.
+   **Right:** Convergence with grid refinement. The original implementation
+   converges at :math:`\mathcal{O}(\Delta x^{0.99})` — first order — while the
+   corrected implementation achieves :math:`\mathcal{O}(\Delta x^{2.00})`,
+   consistent with the interior stencil.
+
+.. figure:: _static/free_end_bc_error_2d.png
+   :width: 100%
+   :align: center
+   :alt: MMS error analysis — zero_moment_zero_shear 2-D old vs corrected
+
+   2-D analogue of the 1-D figure above (centre row shown).  The convergence
+   rates are the same: :math:`\mathcal{O}(\Delta x^{0.94})` for the original
+   and :math:`\mathcal{O}(\Delta x^{2.01})` for the corrected implementation
+   over the tested resolution range.
+
+Background
+~~~~~~~~~~
+
+The ``zero_moment_zero_shear`` (free broken-end) boundary condition requires
+eliminating one ghost node at each end of the plate.  The boundary node
+(``i=0``) uses both the moment condition
+(:math:`d^2w/dx^2 = 0 \Rightarrow w_{-1} = 2w_0 - w_1`) and the shear
+condition (:math:`d^3w/dx^3 = 0 \Rightarrow w_{-2} = 4w_0 - 4w_1 + w_2`).
+The first interior node (``i=1``) also has a ghost :math:`w_{-1}` in its
+five-point stencil that must be eliminated.
+
+The original implementation eliminated this ghost using the shear condition
+evaluated at the *staggered* location :math:`x = \Delta x` (one cell inward
+from the boundary):
+
+.. math::
+
+   \frac{d^3w}{dx^3}\bigg|_{x=\Delta x} = 0
+   \quad\Longrightarrow\quad
+   w_{-1} = 2w_0 - 2w_2 + w_3
+
+This is internally inconsistent: both the boundary row and the first interior
+row eliminate the same ghost :math:`w_{-1}`, but using different physical
+conditions evaluated at different points.  For homogeneous BCs
+(M = V = 0) the inconsistency is invisible, but it introduces a non-standard
+truncation error at ``i=1``.
+
+The corrected implementation uses the same moment condition at both rows:
+
+.. math::
+
+   \frac{d^2w}{dx^2}\bigg|_{x=0} = 0
+   \quad\Longrightarrow\quad
+   w_{-1} = 2w_0 - w_1
+
+which is the physically correct constraint for the node immediately inside
+the boundary.  All four edges (west ``j=1``, east ``j=N-2``, north ``i=1``,
+south ``i=N-2``) required the same three-line correction in the 2-D solver.
+
+MMS verification
+~~~~~~~~~~~~~~~~
+
+The manufactured solution
+
+.. math::
+
+   w_\mathrm{exact}(\xi) = -W_0\,\xi^4\,(1-\xi)^4, \quad \xi = x/L,
+
+satisfies all four free-end boundary conditions
+(:math:`w''=w'''=0`) at both ends exactly.  Its fourth derivative is
+
+.. math::
+
+   \frac{d^4 w}{dx^4} = -\frac{W_0}{L^4}
+   \bigl(24 - 480\xi + 2160\xi^2 - 3360\xi^3 + 1680\xi^4\bigr),
+
+giving the manufactured load
+
+.. math::
+
+   q_s(\xi) = \frac{D\,W_0}{L^4}
+              \bigl(24 - 480\xi + 2160\xi^2 - 3360\xi^3 + 1680\xi^4\bigr)
+              + \Delta\rho\,g\,W_0\,\xi^4(1-\xi)^4.
+
+The 2-D extension uses the separable solution
+:math:`w = -W_0\,f(\xi)\,f(\eta)` with :math:`f(t) = t^4(1-t)^4`,
+which satisfies the free-end condition on all four sides.
+
+Physical parameters used: :math:`T_e = 30` km, :math:`E = 65` GPa,
+:math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\mathrm{fill}
+= 0`, :math:`g = 9.81` m s⁻², :math:`L = 600` km,
+:math:`W_0 = 25600` m (giving :math:`|w_\mathrm{exact}|_\mathrm{max} = 100`
+m).
+
+Results (1-D)
+~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 12 16 16 12
+
+   * - :math:`n_x`
+     - :math:`\Delta x` [km]
+     - original error
+     - corrected error
+     - factor
+   * - 26
+     - 24.0
+     - 9.00 × 10⁻²
+     - 1.72 × 10⁻²
+     - 5×
+   * - 51
+     - 12.0
+     - 6.97 × 10⁻²
+     - 4.40 × 10⁻³
+     - 16×
+   * - 101
+     - 6.0
+     - 3.90 × 10⁻²
+     - 1.11 × 10⁻³
+     - 35×
+   * - 201
+     - 3.0
+     - 2.02 × 10⁻²
+     - 2.77 × 10⁻⁴
+     - 73×
+   * - 401
+     - 1.5
+     - 1.02 × 10⁻²
+     - 6.93 × 10⁻⁵
+     - 148×
+   * - 801
+     - 0.75
+     - 5.14 × 10⁻³
+     - 1.73 × 10⁻⁵
+     - 297×
+
+Convergence slopes (finest three points): original :math:`\mathcal{O}(\Delta
+x^{0.99})`; corrected :math:`\mathcal{O}(\Delta x^{2.00})`.
+
+Results (2-D)
+~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 12 16 16
+
+   * - :math:`n_x = n_y`
+     - :math:`\Delta x` [km]
+     - original error
+     - corrected error
+   * - 26
+     - 24.0
+     - 8.73 × 10⁻²
+     - 1.76 × 10⁻²
+   * - 51
+     - 12.0
+     - 6.88 × 10⁻²
+     - 4.53 × 10⁻³
+   * - 101
+     - 6.0
+     - 3.95 × 10⁻²
+     - 1.15 × 10⁻³
+   * - 201
+     - 3.0
+     - 2.06 × 10⁻²
+     - 2.85 × 10⁻⁴
+
+Convergence slopes (finest two points): original :math:`\mathcal{O}(\Delta
+x^{0.94})`; corrected :math:`\mathcal{O}(\Delta x^{2.01})`.
+
+Practical impact
+~~~~~~~~~~~~~~~~
+
+The original implementation degraded the convergence rate of the
+``zero_moment_zero_shear`` boundary from second order to first order.  In
+practice, the error is largest when the domain is short relative to the
+flexural parameter :math:`\alpha` — which is unlikely in typical geoscience
+use, where free-end BCs are most appropriate for long rifted margins or
+spreading ridges that extend well beyond the loaded region.  The degradation
+is also self-consistent for homogeneous BCs (M = V = 0), so the absolute
+error is often acceptable.  However, the first-order convergence meant that
+refining the grid to improve accuracy was less efficient than expected.
+
+The correction (issues #62 and #63) is in commits ``b7eecc8`` (1-D) and
+``c117ccd`` (2-D).
+
+The standalone error-analysis script is at
+``benchmarks/analyze_free_end_bc_error.py``.
