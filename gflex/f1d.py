@@ -1154,30 +1154,35 @@ class F1D(Flexure):
 
         # Also using 0-curvature boundary condition for D (i.e. Te)
         if self._bc_west_norm == "zero_moment_zero_shear":
+            # Boundary node (i=0): eliminate ghosts w[-2] and w[-1] using the
+            # moment condition (d²w/dx²=0 → w[-1]=2w[0]-w[1]) and the shear
+            # condition (d³w/dx³=0 → w[-2]=4w[0]-4w[1]+w[2]).
             i = 0
             self.l2[i] += np.nan
             self.l1[i] += np.nan
             self.c0[i] += 4 * self.l2_coeff_i[i] + 2 * self.l1_coeff_i[i]
             self.r1[i] += -4 * self.l2_coeff_i[i] - self.l1_coeff_i[i]
             self.r2[i] += self.l2_coeff_i[i]
+            # First interior node (i=1): eliminate ghost w[-1] using the same
+            # moment condition: w[-1]=2w[0]-w[1] → folds l2*w[-1] into l1 and c0.
             i = 1
             self.l2[i] += np.nan
             self.l1[i] += 2 * self.l2_coeff_i[i]
-            self.c0[i] += 0
-            self.r1[i] += -2 * self.l2_coeff_i[i]
-            self.r2[i] += self.l2_coeff_i[i]
+            self.c0[i] -= self.l2_coeff_i[i]
 
         if self._bc_east_norm == "zero_moment_zero_shear":
+            # First interior node (i=N-2): eliminate ghost w[N] using the moment
+            # condition: w[N]=2w[N-1]-w[N-2] → folds r2*w[N] into r1 and c0.
             i = -2
-            self.l2[i] += self.r2_coeff_i[i]
-            self.l1[i] += -2 * self.r2_coeff_i[i]
-            self.c0[i] += 0
+            self.c0[i] -= self.r2_coeff_i[i]
             self.r1[i] += 2 * self.r2_coeff_i[i]
             self.r2[i] += np.nan
+            # Boundary node (i=N-1): eliminate ghosts w[N] and w[N+1] using
+            # the moment and shear conditions.
             i = -1
             self.l2[i] += self.r2_coeff_i[i]
             self.l1[i] += -4 * self.r2_coeff_i[i] - self.r1_coeff_i[i]
-            self.c0[i] += 4 * self.r2_coeff_i[i] + +2 * self.r1_coeff_i[i]
+            self.c0[i] += 4 * self.r2_coeff_i[i] + 2 * self.r1_coeff_i[i]
             self.r1[i] += np.nan
             self.r2[i] += np.nan
 
@@ -1277,12 +1282,6 @@ class F1D(Flexure):
         values.  The constant parts of those ghost expressions move to the
         right-hand side of the linear system as a correction vector added to
         -qs before the sparse solve.
-
-        For {moment, shear} BCs the staggered shear ghost that
-        _bc_zero_moment_zero_shear() applies at the first interior node
-        (row 1 or N-2) is replaced by the moment-condition ghost so that
-        both ghost nodes are determined self-consistently from the boundary
-        moment and shear.  The stencil diagonals are updated in-place here.
         """
         self._bc_rhs_correction = np.zeros(self.nx)
         dx = self.dx
@@ -1305,14 +1304,6 @@ class F1D(Flexure):
             else:  # "moment" / "shear"
                 M0 = bv["moment"]
                 V0 = bv["shear"]
-                # _bc_zero_moment_zero_shear applied shear ghost at i=1:
-                #   l1[1]+=2l2, c0[1]+=0, r1[1]+=-2l2, r2[1]+=l2
-                # Moment ghost (w[-1]=M0*dx²/D+2w[0]-w[1]) gives:
-                #   l1[1]+=2l2, c0[1]-=l2, r1[1]+=0, r2[1]+=0
-                # Apply the difference (moment ghost − shear ghost):
-                self.c0[1] -= self.l2_coeff_i[1]
-                self.r1[1] += 2.0 * self.l2_coeff_i[1]
-                self.r2[1] -= self.l2_coeff_i[1]
                 # RHS corrections from non-zero ghost constants.
                 # West ghost: w[-2] = 2w[-1] - 2w[1] + w[2] - 2V₀dx³/D + 2M₀dx²/D
                 # The V₀ term is subtracted in the ghost → adds to RHS.
@@ -1339,14 +1330,6 @@ class F1D(Flexure):
             else:  # "moment" / "shear"
                 M_east = bv["moment"]
                 V_east = bv["shear"]
-                # _bc_zero_moment_zero_shear applied shear ghost at i=N-2:
-                #   l2[-2]+=r2, l1[-2]+=-2r2, c0[-2]+=0, r1[-2]+=2r2
-                # Moment ghost (w[N]=M*dx²/D+2w[N-1]-w[N-2]) gives:
-                #   l2[-2]+=0, l1[-2]+=0, c0[-2]-=r2, r1[-2]+=2r2
-                # Apply the difference:
-                self.l2[-2] -= self.r2_coeff_i[-2]
-                self.l1[-2] += 2.0 * self.r2_coeff_i[-2]
-                self.c0[-2] -= self.r2_coeff_i[-2]
                 # RHS corrections
                 self._bc_rhs_correction[-1] = (
                     -self.r1_coeff_i[-1] * M_east * dx**2 / D_east
