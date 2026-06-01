@@ -1043,3 +1043,45 @@ class TestNeumannSuperposition:
             {"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0},
         )
         np.testing.assert_allclose(w, w_w + w_e + w_n + w_s, rtol=1e-10, atol=0)
+
+
+# ---------------------------------------------------------------------------
+# Zero-value dict degeneracy
+# ---------------------------------------------------------------------------
+
+class TestZeroValueDictDegeneracy:
+    """A dict BC with all zero values must produce the same solution as the
+    equivalent string preset.
+
+    {"moment": 0, "shear": 0}         ≡  "zero_moment_zero_shear"
+    {"displacement": 0, "slope": 0}   ≡  "zero_displacement_zero_slope"
+
+    The RHS correction is identically zero for zero prescribed values, so the
+    two code paths produce the same linear system and the solutions must be
+    exactly equal.
+    """
+
+    _ZMZS  = "zero_moment_zero_shear"
+    _ZDSZS = "zero_displacement_zero_slope"
+
+    def test_west_zero_moment_shear_equals_string(self):
+        _, w_dict = _run(bc_west={"moment": 0.0, "shear": 0.0}, bc_east=self._ZMZS)
+        _, w_str  = _run(bc_west=self._ZMZS,                     bc_east=self._ZMZS)
+        np.testing.assert_array_equal(w_dict, w_str)
+
+    def test_west_zero_displacement_slope_equals_string(self):
+        _, w_dict = _run(bc_west={"displacement": 0.0, "slope": 0.0}, bc_east=self._ZMZS)
+        _, w_str  = _run(bc_west=self._ZDSZS,                          bc_east=self._ZMZS)
+        np.testing.assert_array_equal(w_dict, w_str)
+
+    def test_east_zero_moment_shear_equals_string(self):
+        _, w_dict = _run(bc_west=self._ZMZS, bc_east={"moment": 0.0, "shear": 0.0})
+        _, w_str  = _run(bc_west=self._ZMZS, bc_east=self._ZMZS)
+        np.testing.assert_array_equal(w_dict, w_str)
+
+    def test_east_zero_displacement_slope_equals_string(self):
+        _, w_dict = _run(bc_west=self._ZMZS, bc_east={"displacement": 0.0, "slope": 0.0})
+        _, w_str  = _run(bc_west=self._ZMZS, bc_east=self._ZDSZS)
+        np.testing.assert_array_equal(w_dict, w_str)
+
+
