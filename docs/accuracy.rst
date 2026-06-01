@@ -309,8 +309,8 @@ maximum deflection.  For a 1 km deflection this corresponds to roughly 1 mm
 of spurious boundary motion — negligible in most geoscience applications, but
 detectable in high-resolution model comparisons.
 
-The correction is in commit ``6f68270`` and is included in all releases from
-gFlex 1.4.0 onward.  See the :doc:`changelog` for the full bug-fix note.
+The correction is in commit ``6f68270`` (not present in gFlex 1.4.0).
+See the :doc:`changelog` for the full bug-fix note.
 
 The standalone error-analysis script is at
 ``analysis/analyze_clamped_bc_error.py``, and a git-worktree–based
