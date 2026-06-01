@@ -234,3 +234,49 @@ def test_2d_proximity_warning_message_content():
     msg = prox[0]
     assert "flexural wavelengths" in msg
     assert "pad_domain()" in msg
+
+
+# ---------------------------------------------------------------------------
+# Dict-style BC rejection on non-FD solvers (#66)
+# ---------------------------------------------------------------------------
+
+def _make_2d_base():
+    """Return a minimally configured F2D with shared physical parameters."""
+    flex = F2D()
+    flex.E        = E
+    flex.nu       = nu
+    flex.rho_m    = rho_m
+    flex.rho_fill = rho_fill
+    flex.g        = g
+    flex.te       = 35e3
+    flex.dx = flex.dy = 10e3
+    flex.qs = np.zeros((20, 20))
+    return flex
+
+
+@pytest.mark.parametrize("method", ["sas", "sas_ng", "fft"])
+def test_dict_bc_rejected_on_non_fd_solver(method):
+    """Dict-style BCs on non-FD solvers raise ValueError before any solve."""
+    flex = _make_2d_base()
+    flex.method   = method
+    flex.bc_west  = {"moment": 1e12, "shear": 0.0}
+    flex.bc_east  = flex.bc_north = flex.bc_south = ""
+    flex.dimension = 2
+    with pytest.raises(ValueError, match="method='fd'"):
+        flex.bc_check()
+
+
+@pytest.mark.parametrize("method", ["sas", "sas_ng", "fft"])
+def test_string_bc_not_rejected_on_non_fd_solver(method):
+    """String BCs on non-FD solvers do not trigger the dict guard."""
+    flex = _make_2d_base()
+    flex.method   = method
+    flex.bc_west  = flex.bc_east = flex.bc_north = flex.bc_south = ""
+    flex.dimension = 2
+    # Should not raise — the guard must be silent for string BCs.
+    # (bc_check may still exit for other reasons; we only care that
+    #  ValueError is not raised by the dict guard.)
+    try:
+        flex.bc_check()
+    except ValueError:
+        pytest.fail("ValueError raised for string BCs on non-FD solver")
