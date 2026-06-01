@@ -143,7 +143,7 @@ def main():
                      "old vs corrected ghost-node treatment")
         ax.legend(fontsize=8)
         fig.tight_layout()
-        out = "benchmarks/results/compare_clamped_bc.png"
+        out = "analysis/results/compare_clamped_bc.png"
         fig.savefig(out, dpi=150, bbox_inches="tight")
         print(f"  Figure saved to {out}")
     except ImportError:

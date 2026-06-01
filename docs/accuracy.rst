@@ -306,7 +306,7 @@ The correction is in commit ``6f68270`` and is included in all releases from
 gFlex 1.4.0 onward.  See the :doc:`changelog` for the full bug-fix note.
 
 The standalone error-analysis script is at
-``benchmarks/analyze_clamped_bc_error.py``, and a git-worktree–based
+``analysis/analyze_clamped_bc_error.py``, and a git-worktree–based
 cross-version comparator is at ``analysis/compare_bc_versions.py``.
 
 ----
@@ -507,7 +507,7 @@ The correction (issues #62 and #63) is in commits ``b7eecc8`` (1-D) and
 ``c117ccd`` (2-D).
 
 The standalone error-analysis script is at
-``benchmarks/analyze_free_end_bc_error.py``.
+``analysis/analyze_free_end_bc_error.py``.
 
 ----
 
@@ -640,4 +640,4 @@ recovers full second-order convergence on all four sides.
 The correction is in commit ``984f7a4``.
 
 The standalone error-analysis script (covering both 1-D and 2-D) is at
-``benchmarks/analyze_clamped_bc_error.py``.
+``analysis/analyze_clamped_bc_error.py``.
