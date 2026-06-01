@@ -1912,7 +1912,7 @@ class F2D(Flexure):
                 w_e     = bv["displacement"]
                 theta_e = bv["slope"]
                 correction[:, -1] += self.cj0i0[:, -1] * w_e
-                correction[:, -2] += self.cj2i0_coeff_ij[:, -2] * 2.0 * dx * theta_e
+                correction[:, -2] -= self.cj2i0_coeff_ij[:, -2] * 2.0 * dx * theta_e
             else:  # moment / shear
                 M_e = bv["moment"]
                 V_e = bv["shear"]
@@ -1952,7 +1952,7 @@ class F2D(Flexure):
                 w_s     = bv["displacement"]
                 theta_s = bv["slope"]
                 correction[-1, :] += self.cj0i0[-1, :] * w_s
-                correction[-2, :] += self.cj0i2_coeff_ij[-2, :] * 2.0 * dy * theta_s
+                correction[-2, :] -= self.cj0i2_coeff_ij[-2, :] * 2.0 * dy * theta_s
             else:  # moment / shear
                 M_s = bv["moment"]
                 V_s = bv["shear"]
