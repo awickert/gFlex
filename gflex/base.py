@@ -90,11 +90,6 @@ def _resolve_bc(bc, edge_label, dimension):
             f"Boundary condition at {edge_label!r} must be a string or dict, "
             f"got {type(bc).__name__!r}.\nExiting."
         )
-    if dimension == 2:
-        sys.exit(
-            "Dict-style boundary conditions are not yet supported for 2-D FD. "
-            f"Received {bc!r} at {edge_label!r}.\nExiting."
-        )
     keys = frozenset(bc)
     unknown = keys - _VALID_BC_KEYS
     if unknown:
