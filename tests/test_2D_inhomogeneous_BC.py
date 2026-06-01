@@ -1,0 +1,220 @@
+#!/usr/bin/env python
+"""Analytical tests for inhomogeneous (prescribed-value) 2-D boundary conditions.
+
+STATUS: These tests FAIL until 2-D inhomogeneous BC machinery is implemented.
+        They define the target behaviour; they will pass once the
+        prescribed-BC machinery is in place.
+
+Mirror-structure counterpart to test_1D_inhomogeneous_BC.py
+-----------------------------------------------------------
+The domain is long in x (10α) and narrow in y (NY=11 cells).  The north and
+south edges carry ``bc_north="mirror"`` / ``bc_south="mirror"``, which forces
+dw/dy = 0 there.  With a uniform load (qs = 0) and y-independent BCs the 2-D
+plate equation reduces to its 1-D form, so the numerical solution should be
+y-uniform and the centre row should match the 1-D semi-infinite exact solution.
+
+Semi-infinite plate derivation  (same as 1-D file)
+---------------------------------------------------
+D·d⁴w/dx⁴ + Δρg·w = 0, solution decaying as x → ∞:
+
+    w(x) = e^{-λx} [C₁ cos(λx) + C₂ sin(λx)],   λ = (Δρg / 4D)^{1/4}
+
+Four canonical cases (A–D) are identical to the 1-D tests.
+"""
+
+import warnings
+
+import numpy as np
+
+from gflex.f2d import F2D
+
+# ---------------------------------------------------------------------------
+# Physical parameters  (consistent with the rest of the test suite)
+# ---------------------------------------------------------------------------
+
+E        = 65.0e9     # Young's modulus, Pa
+NU       = 0.25
+TE       = 30.0e3     # elastic thickness, m
+RHO_M    = 3300.0     # mantle density, kg m⁻³
+RHO_F    = 0.0        # infill density (air)
+G        = 9.8        # m s⁻²
+
+D      = E * TE**3 / (12.0 * (1.0 - NU**2))
+DRHOG  = (RHO_M - RHO_F) * G
+LAM    = (DRHOG / (4.0 * D)) ** 0.25   # λ = 1/α
+ALPHA  = 1.0 / LAM                      # flexural parameter, m
+
+# Domain long enough that far-end BC contributes < 0.1 % truncation error.
+L_DOMAIN = 10.0 * ALPHA   # x-extent, m
+NX       = 401             # Δx ≈ α/40
+NY       = 11              # narrow y-extent; solution is y-uniform
+
+REL_TOL = 0.01   # 1 % L-inf relative error tolerance
+
+
+# ---------------------------------------------------------------------------
+# Exact semi-infinite solutions  (same as 1-D)
+# ---------------------------------------------------------------------------
+
+def _w_exact(x, C1, C2):
+    lx = LAM * x
+    return np.exp(-lx) * (C1 * np.cos(lx) + C2 * np.sin(lx))
+
+
+def w_prescribed_moment(x, M0):
+    """Case A: M(0) = M₀, V(0) = 0."""
+    c = M0 / (2.0 * D * LAM**2)
+    return _w_exact(x, c, -c)
+
+
+def w_prescribed_shear(x, V0):
+    """Case B: M(0) = 0, V(0) = V₀."""
+    c = V0 / (2.0 * D * LAM**3)
+    return _w_exact(x, c, 0.0)
+
+
+def w_prescribed_displacement(x, w0):
+    """Case C: w(0) = w₀, w'(0) = 0."""
+    return _w_exact(x, w0, w0)
+
+
+def w_prescribed_slope(x, theta0):
+    """Case D: w(0) = 0, w'(0) = θ₀."""
+    return _w_exact(x, 0.0, theta0 / LAM)
+
+
+# ---------------------------------------------------------------------------
+# gFlex 2-D runner
+# ---------------------------------------------------------------------------
+
+def _run(bc_west, bc_east, nx=NX, ny=NY, L=L_DOMAIN):
+    dx = L / (nx - 1)
+    x  = np.arange(nx) * dx
+
+    flex = F2D()
+    flex.quiet    = True
+    flex.method   = "fd"
+    flex.solver   = "direct"
+    flex.g        = G
+    flex.E        = E
+    flex.nu       = NU
+    flex.rho_m    = RHO_M
+    flex.rho_fill = RHO_F
+    flex.te       = TE
+    flex.dx       = dx
+    flex.dy       = dx                       # square cells
+    flex.qs       = np.zeros((ny, nx))       # deflection driven by BCs only
+    flex.bc_west  = bc_west
+    flex.bc_east  = bc_east
+    flex.bc_north = "mirror"                 # enforce y-uniformity
+    flex.bc_south = "mirror"
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        flex.initialize()
+        flex.run()
+        flex.finalize()
+
+    return x, flex.w
+
+
+def _check(w_num, w_ex, label):
+    """Compare centre row of 2-D solution to 1-D exact; L-inf relative error."""
+    centre = w_num[NY // 2, :]
+    scale  = np.max(np.abs(w_ex))
+    err    = np.max(np.abs(centre - w_ex)) / scale
+    assert err < REL_TOL, (
+        f"{label}: L-inf relative error {err:.3e} exceeds {REL_TOL:.0%}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Case A — prescribed moment, zero shear
+# ---------------------------------------------------------------------------
+
+class TestPrescribedMoment:
+    """M(0) = M₀, V(0) = 0; zero-moment/zero-shear (free) at far end."""
+
+    M0 = 1.0e12   # N·m / m
+
+    def test_deflection_profile(self):
+        x, w_num = _run(
+            bc_west={"moment": self.M0, "shear": 0.0},
+            bc_east="zero_moment_zero_shear",
+        )
+        _check(w_num, w_prescribed_moment(x, self.M0), "Case A profile")
+
+    def test_west_boundary_displacement(self):
+        """Centre-row boundary node should match the analytical displacement."""
+        x, w_num = _run(
+            bc_west={"moment": self.M0, "shear": 0.0},
+            bc_east="zero_moment_zero_shear",
+        )
+        w0_exact = self.M0 / (2.0 * D * LAM**2)   # C₁
+        assert abs(w_num[NY // 2, 0] - w0_exact) / abs(w0_exact) < REL_TOL
+
+
+# ---------------------------------------------------------------------------
+# Case B — zero moment, prescribed shear
+# ---------------------------------------------------------------------------
+
+class TestPrescribedShear:
+    """M(0) = 0, V(0) = V₀; free at far end."""
+
+    V0 = 1.0e8   # N / m
+
+    def test_deflection_profile(self):
+        x, w_num = _run(
+            bc_west={"moment": 0.0, "shear": self.V0},
+            bc_east="zero_moment_zero_shear",
+        )
+        _check(w_num, w_prescribed_shear(x, self.V0), "Case B profile")
+
+    def test_west_boundary_displacement(self):
+        x, w_num = _run(
+            bc_west={"moment": 0.0, "shear": self.V0},
+            bc_east="zero_moment_zero_shear",
+        )
+        w0_exact = self.V0 / (2.0 * D * LAM**3)   # C₁
+        assert abs(w_num[NY // 2, 0] - w0_exact) / abs(w0_exact) < REL_TOL
+
+
+# ---------------------------------------------------------------------------
+# Case C — prescribed displacement, zero slope  (clamped, offset)
+# ---------------------------------------------------------------------------
+
+class TestPrescribedDisplacement:
+    """w(0) = w₀, w'(0) = 0; clamped at far end."""
+
+    W0 = 100.0   # m
+
+    def test_deflection_profile(self):
+        x, w_num = _run(
+            bc_west={"displacement": self.W0, "slope": 0.0},
+            bc_east="zero_displacement_zero_slope",
+        )
+        _check(w_num, w_prescribed_displacement(x, self.W0), "Case C profile")
+
+    def test_west_boundary_displacement(self):
+        _, w_num = _run(
+            bc_west={"displacement": self.W0, "slope": 0.0},
+            bc_east="zero_displacement_zero_slope",
+        )
+        assert abs(w_num[NY // 2, 0] - self.W0) / self.W0 < REL_TOL
+
+
+# ---------------------------------------------------------------------------
+# Case D — zero displacement, prescribed slope
+# ---------------------------------------------------------------------------
+
+class TestPrescribedSlope:
+    """w(0) = 0, w'(0) = θ₀; free at far end."""
+
+    THETA0 = 1.0e-3   # rad
+
+    def test_deflection_profile(self):
+        x, w_num = _run(
+            bc_west={"displacement": 0.0, "slope": self.THETA0},
+            bc_east="zero_moment_zero_shear",
+        )
+        _check(w_num, w_prescribed_slope(x, self.THETA0), "Case D profile")
