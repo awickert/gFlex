@@ -51,11 +51,15 @@ shows how the relative error and its convergence rate differ from the corrected
 version.
 """
 
+import warnings
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 from gflex.f1d import F1D
 from gflex.f2d import F2D
+
+warnings.filterwarnings("ignore")
 
 
 # ---------------------------------------------------------------------------
@@ -181,9 +185,40 @@ print(f"  {'Old (pre-fix)':<20}  {err_old:>18.4e}")
 print(f"  {'New (corrected)':<20}  {err_new:>18.4e}")
 print(f"  {'Improvement':<20}  {err_old/err_new:>17.1f}x")
 print()
-print(f"  Boundary values (should be 0):")
+print(f"  Boundary values under MMS load (manufactured load non-zero at boundary):")
 print(f"    Old:  w[0]={w_old[0]:+.4e} m,  w[-1]={w_old[-1]:+.4e} m")
 print(f"    New:  w[0]={w_new[0]:+.4e} m,  w[-1]={w_new[-1]:+.4e} m")
+print()
+
+# Exactness check with q=0 at boundary (point load in interior only).
+# The new Dirichlet implementation gives w[0]=w[-1]=0 exactly here.
+def _run_check(solver_class):
+    s = solver_class()
+    s.dx       = L / (nx_ref - 1)
+    s.te       = te
+    s.E        = E
+    s.nu       = nu
+    s.rho_m    = rho_m
+    s.rho_fill = rho_fill
+    s.g        = g
+    s.qs       = np.zeros(nx_ref)
+    s.qs[nx_ref // 2] = 1e6          # interior point load; q[0]=q[-1]=0
+    s.bc_west  = "zero_displacement_zero_slope"
+    s.bc_east  = "zero_displacement_zero_slope"
+    s.method   = "fd"
+    s.quiet    = True
+    s.verbose  = False
+    s.debug    = False
+    s.initialize()
+    s.run()
+    s.finalize()
+    return s.w
+
+w_chk_old = _run_check(F1D_OldClampedBC)
+w_chk_new = _run_check(F1D)
+print(f"  Boundary exactness (interior point load only, q[0]=q[-1]=0):")
+print(f"    Old:  w[0]={w_chk_old[0]:+.3e} m,  w[-1]={w_chk_old[-1]:+.3e} m")
+print(f"    New:  w[0]={w_chk_new[0]:+.3e} m,  w[-1]={w_chk_new[-1]:+.3e} m")
 print()
 
 # ---------------------------------------------------------------------------
@@ -428,6 +463,55 @@ print(f"  Convergence order (finest {n_fit_2d} points):")
 print(f"    Old: O(dx^{slope_old_2d:.2f})")
 print(f"    New: O(dx^{slope_new_2d:.2f})")
 print()
+
+# ===========================================================================
+# Boundary exactness check — 2-D
+# ===========================================================================
+
+print("=" * 62)
+print("  Boundary exactness — zero_displacement_zero_slope (2-D)")
+print("=" * 62)
+print("  Interior point load only (boundary qs = 0)")
+print()
+
+def _run_2d_check(solver_class, n=51):
+    dx = L / (n - 1)
+    dy = L / (n - 1)
+    qs = np.zeros((n, n))
+    qs[n // 2, n // 2] = 1e6    # centre cell; boundary qs = 0
+    s = solver_class()
+    s.quiet    = True
+    s.method   = "fd"
+    s.solver   = "direct"
+    s.g        = g
+    s.E        = E
+    s.nu       = nu
+    s.rho_m    = rho_m
+    s.rho_fill = rho_fill
+    s.te       = te
+    s.qs       = qs
+    s.dx       = dx
+    s.dy       = dy
+    s.bc_west  = "zero_displacement_zero_slope"
+    s.bc_east  = "zero_displacement_zero_slope"
+    s.bc_north = "zero_displacement_zero_slope"
+    s.bc_south = "zero_displacement_zero_slope"
+    s.initialize()
+    s.run()
+    s.finalize()
+    return s.w
+
+w2d_chk_old = _run_2d_check(F2D_OldClampedBC)
+w2d_chk_new = _run_2d_check(F2D)
+
+for label, w in [("Old (pre-fix)", w2d_chk_old), ("New (corrected)", w2d_chk_new)]:
+    print(f"  {label}:")
+    print(f"    max|w[west  boundary]| = {np.max(np.abs(w[:, 0])):+.3e} m")
+    print(f"    max|w[east  boundary]| = {np.max(np.abs(w[:,-1])):+.3e} m")
+    print(f"    max|w[north boundary]| = {np.max(np.abs(w[0, :])):+.3e} m")
+    print(f"    max|w[south boundary]| = {np.max(np.abs(w[-1,:])):+.3e} m")
+    print()
+
 
 # Reference run for figure
 n_ref_2d = 101
