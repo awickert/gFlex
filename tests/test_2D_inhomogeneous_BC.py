@@ -1297,3 +1297,73 @@ class TestNorthSouthNonMirrorLateral:
             bc_south=self._ZMZS,
         )
         np.testing.assert_allclose(w, w[:, ::-1], rtol=1e-10, atol=0)
+
+
+# ---------------------------------------------------------------------------
+# Array-valued BC values (#64)
+# ---------------------------------------------------------------------------
+
+class TestArrayValuedBCs:
+    """Array-valued BC values — same BC type along the whole edge, values vary.
+
+    Three checks:
+
+    1. Scalar-array equivalence — np.full(ny, scalar) produces the same
+       solution as the scalar itself, to machine precision.  This validates
+       the broadcast path without needing an independent analytical reference.
+
+    2. Linearity — w(α·M0_array) = α·w(M0_array).  Catches sign or scaling
+       errors in the per-row RHS correction.
+
+    3. Superposition — w(A + B) = w(A) + w(B) for two array BC values.
+       Catches cross-row coupling bugs that linearity alone misses.
+    """
+
+    M0 = 1.0e12   # N·m / m  (representative prescribed moment)
+
+    # --- 1. scalar-array equivalence ---
+
+    def test_west_moment_array_equals_scalar(self):
+        """np.full(NY, M0) must give exactly the same solution as scalar M0."""
+        _, w_scalar = _run({"moment": self.M0, "shear": 0.0}, "zero_moment_zero_shear")
+        _, w_array  = _run({"moment": np.full(NY, self.M0), "shear": 0.0},
+                           "zero_moment_zero_shear")
+        np.testing.assert_array_equal(w_scalar, w_array)
+
+    def test_east_moment_array_equals_scalar(self):
+        _, w_scalar = _run("zero_moment_zero_shear", {"moment": self.M0, "shear": 0.0})
+        _, w_array  = _run("zero_moment_zero_shear",
+                           {"moment": np.full(NY, self.M0), "shear": 0.0})
+        np.testing.assert_array_equal(w_scalar, w_array)
+
+    def test_north_moment_array_equals_scalar(self):
+        _, w_scalar = _run_ns({"moment": self.M0, "shear": 0.0}, "zero_moment_zero_shear")
+        _, w_array  = _run_ns({"moment": np.full(_NS_NX, self.M0), "shear": 0.0},
+                              "zero_moment_zero_shear")
+        np.testing.assert_array_equal(w_scalar, w_array)
+
+    def test_south_moment_array_equals_scalar(self):
+        _, w_scalar = _run_ns("zero_moment_zero_shear", {"moment": self.M0, "shear": 0.0})
+        _, w_array  = _run_ns("zero_moment_zero_shear",
+                              {"moment": np.full(_NS_NX, self.M0), "shear": 0.0})
+        np.testing.assert_array_equal(w_scalar, w_array)
+
+    # --- 2. linearity ---
+
+    def test_west_moment_array_linearity(self):
+        """w(2·M0_array) = 2·w(M0_array) to rtol=1e-10."""
+        M0_arr = self.M0 * (1.0 + 0.5 * np.sin(np.linspace(0, np.pi, NY)))
+        _, w1 = _run({"moment": M0_arr,     "shear": 0.0}, "zero_moment_zero_shear")
+        _, w2 = _run({"moment": 2.0*M0_arr, "shear": 0.0}, "zero_moment_zero_shear")
+        np.testing.assert_allclose(w2, 2.0 * w1, rtol=1e-10, atol=0)
+
+    # --- 3. superposition ---
+
+    def test_west_moment_array_superposition(self):
+        """w(A + B) = w(A) + w(B) for two array BC values, rtol=1e-10."""
+        M0_a = self.M0 * np.ones(NY)
+        M0_b = self.M0 * 0.5 * np.sin(np.linspace(0, np.pi, NY))
+        _, w_a  = _run({"moment": M0_a,       "shear": 0.0}, "zero_moment_zero_shear")
+        _, w_b  = _run({"moment": M0_b,       "shear": 0.0}, "zero_moment_zero_shear")
+        _, w_ab = _run({"moment": M0_a + M0_b,"shear": 0.0}, "zero_moment_zero_shear")
+        np.testing.assert_allclose(w_ab, w_a + w_b, rtol=1e-10, atol=0)
