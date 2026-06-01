@@ -572,6 +572,93 @@ class TestEastPrescribedSlope:
 
 
 # ---------------------------------------------------------------------------
+# Non-ZMZS far-end tests
+# ---------------------------------------------------------------------------
+# All existing single-edge prescribed BC tests use ZMZS at the far end.
+# Here the far end carries a different string preset (ZDSZS or ZDZM) to
+# confirm the RHS correction is unaffected by the far-end stiffness structure.
+#
+# For L = 10α the solution decays to e^{-10} ≈ 4.5e-5 of peak before reaching
+# the far boundary, so the near-end profile matches the semi-infinite reference
+# to well within 1%.
+#
+# Sign convention for east (odd BCs): shear d³w/dx³ reverses under ξ = L − x,
+# so east V₀ > 0 gives w(ξ) = −w_prescribed_shear(ξ, V₀). This matches the
+# convention in TestEastPrescribedShear.
+# ---------------------------------------------------------------------------
+
+class TestNonZMZSFarEnd:
+    """Prescribed Neumann BC at one end with a non-ZMZS preset at the far end."""
+
+    M0 = 1.0e12   # N·m / m
+    V0 = 1.0e8    # N / m
+    _ZDSZS = "zero_displacement_zero_slope"
+    _ZDZM  = "zero_displacement_zero_moment"
+
+    # --- west prescribed, east far end ---
+
+    def test_west_moment_east_zdszs(self):
+        x, w_num = _run(
+            bc_west={"moment": self.M0, "shear": 0.0},
+            bc_east=self._ZDSZS,
+        )
+        _check(w_num, w_prescribed_moment(x, self.M0), "West moment + east ZDSZS")
+
+    def test_west_moment_east_zdzm(self):
+        x, w_num = _run(
+            bc_west={"moment": self.M0, "shear": 0.0},
+            bc_east=self._ZDZM,
+        )
+        _check(w_num, w_prescribed_moment(x, self.M0), "West moment + east ZDZM")
+
+    def test_west_shear_east_zdszs(self):
+        x, w_num = _run(
+            bc_west={"moment": 0.0, "shear": self.V0},
+            bc_east=self._ZDSZS,
+        )
+        _check(w_num, w_prescribed_shear(x, self.V0), "West shear + east ZDSZS")
+
+    def test_west_shear_east_zdzm(self):
+        x, w_num = _run(
+            bc_west={"moment": 0.0, "shear": self.V0},
+            bc_east=self._ZDZM,
+        )
+        _check(w_num, w_prescribed_shear(x, self.V0), "West shear + east ZDZM")
+
+    # --- east prescribed, west far end ---
+
+    def test_east_moment_west_zdszs(self):
+        x, w_num = _run(
+            bc_west=self._ZDSZS,
+            bc_east={"moment": self.M0, "shear": 0.0},
+        )
+        _check(w_num, w_prescribed_moment(L_DOMAIN - x, self.M0), "East moment + west ZDSZS")
+
+    def test_east_moment_west_zdzm(self):
+        x, w_num = _run(
+            bc_west=self._ZDZM,
+            bc_east={"moment": self.M0, "shear": 0.0},
+        )
+        _check(w_num, w_prescribed_moment(L_DOMAIN - x, self.M0), "East moment + west ZDZM")
+
+    def test_east_shear_west_zdszs(self):
+        """East shear: sign flips under ξ = L − x (d³/dx³ is odd)."""
+        x, w_num = _run(
+            bc_west=self._ZDSZS,
+            bc_east={"moment": 0.0, "shear": self.V0},
+        )
+        _check(w_num, -w_prescribed_shear(L_DOMAIN - x, self.V0), "East shear + west ZDSZS")
+
+    def test_east_shear_west_zdzm(self):
+        """East shear: sign flips under ξ = L − x (d³/dx³ is odd)."""
+        x, w_num = _run(
+            bc_west=self._ZDZM,
+            bc_east={"moment": 0.0, "shear": self.V0},
+        )
+        _check(w_num, -w_prescribed_shear(L_DOMAIN - x, self.V0), "East shear + west ZDZM")
+
+
+# ---------------------------------------------------------------------------
 # North edge analytical tests  (Cases A – C)
 # ---------------------------------------------------------------------------
 # North outward normal is −y, the same sense as west (−x), so ALL four
