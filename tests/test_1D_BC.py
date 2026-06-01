@@ -117,18 +117,16 @@ def test_fd_mirror_equals_periodic_2x():
 # zero_slope_zero_shear: distinct from mirror despite same physical intent
 # ---------------------------------------------------------------------------
 
-def test_fd_0slope0shear_and_mirror_are_distinct():
-    """mirror and zero_slope_zero_shear are genuinely different stencils.
+def test_fd_0slope0shear_equals_mirror():
+    """zero_slope_zero_shear and mirror are numerically identical stencils.
 
-    Both BCs are intended to represent the symmetry condition (zero slope and
-    zero shear at the boundary).  mirror implements exact even reflection in the
-    ghost cells; zero_slope_zero_shear uses a different finite-difference approximation
-    that assigns the ghost cell at i = -1 the value of w[3] (not w[1]) for the
-    i = 1 stencil row.  This difference propagates throughout the domain.
+    Both BCs enforce even reflection of the ghost nodes:
+      dw/dx = 0 at x=0  →  w[-1] = w[1]
+      d³w/dx³ = 0 at x=0  →  w[-2] = w[2]
+    The ghost equations are identical to mirror (even reflection), so the two
+    stencils are numerically indistinguishable.
 
-    For a cosine load — the eigenfunction of the mirror BC operator — the two
-    BCs give solutions that differ by > 10 % of the peak amplitude.
-    mirror agrees with the exact cosine formula; zero_slope_zero_shear does not.
+    Both reproduce the cosine eigenfunction for a cosine load.
     """
     N = 200
     L = (N - 1) * dx
@@ -142,16 +140,12 @@ def test_fd_0slope0shear_and_mirror_are_distinct():
     w_0ss    = _run(qs, bc_w="zero_slope_zero_shear", bc_e="zero_slope_zero_shear").w
     w_exact  = -q0 / (D * k**4 + drho * g) * np.cos(k * x)
 
-    # mirror reproduces the cosine eigenfunction
+    # Both reproduce the cosine eigenfunction
     np.testing.assert_allclose(w_mirror, w_exact, rtol=2e-3)
+    np.testing.assert_allclose(w_0ss, w_exact, rtol=2e-3)
 
-    # zero_slope_zero_shear gives a substantially different result
-    amp = q0 / (D * k**4 + drho * g)       # peak deflection amplitude [m]
-    max_diff = np.abs(w_mirror - w_0ss).max() / amp
-    assert max_diff > 0.10, (
-        f"mirror and zero_slope_zero_shear should differ by > 10 % of the amplitude "
-        f"for this cosine load; got {max_diff:.1%}"
-    )
+    # The two BCs give identical results
+    np.testing.assert_array_equal(w_mirror, w_0ss)
 
 
 # ---------------------------------------------------------------------------

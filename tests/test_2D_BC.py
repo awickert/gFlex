@@ -149,12 +149,16 @@ def test_fd_2d_mirror_equals_periodic_2x2():
 # zero_slope_zero_shear: distinct from mirror despite the same physical intent
 # ---------------------------------------------------------------------------
 
-def test_fd_2d_0slope0shear_and_mirror_are_distinct():
-    """mirror and zero_slope_zero_shear are genuinely different stencils in 2-D.
+def test_fd_2d_0slope0shear_equals_mirror():
+    """zero_slope_zero_shear and mirror are numerically identical stencils in 2-D.
 
-    For a 2-D cosine load — the eigenfunction of the mirror BC operator — the
-    two BCs give solutions that differ by > 10 % of the peak amplitude.  mirror
-    agrees with the exact cosine formula; zero_slope_zero_shear does not.
+    Both BCs enforce even reflection of the ghost nodes along each axis:
+      dw/dn = 0 at boundary  →  first ghost = adjacent interior node
+      d³w/dn³ = 0 at boundary  →  second ghost = second interior node
+    The ghost equations are identical to mirror (even reflection), so the two
+    stencils are numerically indistinguishable.
+
+    Both reproduce the cosine eigenfunction for a cosine load.
     """
     Ny, Nx = 128, 128
     Lx = (Nx - 1) * dx
@@ -174,16 +178,12 @@ def test_fd_2d_0slope0shear_and_mirror_are_distinct():
                         bc_n="zero_slope_zero_shear", bc_s="zero_slope_zero_shear").w
     w_exact  = -q0 / (D * (kx**2 + ky**2)**2 + drho * g) * np.cos(kx * X) * np.cos(ky * Y)
 
-    # mirror reproduces the cosine eigenfunction
+    # Both reproduce the cosine eigenfunction
     np.testing.assert_allclose(w_mirror, w_exact, rtol=2e-3)
+    np.testing.assert_allclose(w_0ss, w_exact, rtol=2e-3)
 
-    # zero_slope_zero_shear gives a substantially different result
-    amp = q0 / (D * (kx**2 + ky**2)**2 + drho * g)
-    max_diff = np.abs(w_mirror - w_0ss).max() / amp
-    assert max_diff > 0.10, (
-        f"mirror and zero_slope_zero_shear should differ by > 10 % of the amplitude "
-        f"for this cosine load; got {max_diff:.1%}"
-    )
+    # The two BCs give identical results
+    np.testing.assert_array_equal(w_mirror, w_0ss)
 
 
 # ---------------------------------------------------------------------------
