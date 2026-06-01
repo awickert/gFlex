@@ -579,3 +579,79 @@ class TestNorthPrescribedDisplacement:
         )
         assert abs(w_num[0, _NS_NX // 2] - self.W0) / self.W0 < REL_TOL
 
+
+# ---------------------------------------------------------------------------
+# Neumann superposition — linearity across all edge combinations
+# ---------------------------------------------------------------------------
+# With qs = 0 and identical coefficient matrices (all edges normalise to
+# zero_moment_zero_shear), the RHS correction is additive and the solution
+# satisfies w(A + B) = w(A) + w(B) to floating-point precision.
+# A failure here indicates a bug in the multi-edge Neumann corner treatment
+# (cross-derivative stencil terms at adjacent prescribed edges).
+# ---------------------------------------------------------------------------
+
+_FREE_NS = "zero_moment_zero_shear"
+_M0_SQ   = 1.0e12
+
+
+class TestNeumannSuperposition:
+    """w(A+B) == w(A) + w(B) to floating-point precision for moment BCs."""
+
+    # --- corner pairs ---
+
+    def test_west_north(self):
+        w_w = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS, _FREE_NS)
+        w_n = _run_sq(_FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
+        w   = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS,
+                       {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
+        np.testing.assert_allclose(w, w_w + w_n, rtol=1e-10, atol=0)
+
+    def test_west_south(self):
+        w_w = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS, _FREE_NS)
+        w_s = _run_sq(_FREE_NS, _FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
+        w   = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS,
+                       _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
+        np.testing.assert_allclose(w, w_w + w_s, rtol=1e-10, atol=0)
+
+    def test_east_north(self):
+        w_e = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS)
+        w_n = _run_sq(_FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
+        w   = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0},
+                       {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
+        np.testing.assert_allclose(w, w_e + w_n, rtol=1e-10, atol=0)
+
+    def test_east_south(self):
+        w_e = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS)
+        w_s = _run_sq(_FREE_NS, _FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
+        w   = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0},
+                       _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
+        np.testing.assert_allclose(w, w_e + w_s, rtol=1e-10, atol=0)
+
+    # --- opposite-edge pairs ---
+
+    def test_west_east(self):
+        w_w = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS, _FREE_NS)
+        w_e = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS)
+        w   = _run_sq({"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0},
+                       _FREE_NS, _FREE_NS)
+        np.testing.assert_allclose(w, w_w + w_e, rtol=1e-10, atol=0)
+
+    def test_north_south(self):
+        w_n = _run_sq(_FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
+        w_s = _run_sq(_FREE_NS, _FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
+        w   = _run_sq(_FREE_NS, _FREE_NS,
+                       {"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0})
+        np.testing.assert_allclose(w, w_n + w_s, rtol=1e-10, atol=0)
+
+    # --- all four ---
+
+    def test_all_four(self):
+        w_w = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS, _FREE_NS)
+        w_e = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS)
+        w_n = _run_sq(_FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
+        w_s = _run_sq(_FREE_NS, _FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
+        w   = _run_sq(
+            {"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0},
+            {"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0},
+        )
+        np.testing.assert_allclose(w, w_w + w_e + w_n + w_s, rtol=1e-10, atol=0)
