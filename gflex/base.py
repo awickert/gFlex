@@ -102,7 +102,26 @@ def _resolve_bc(bc, edge_label, dimension):
             f"Boundary condition at {edge_label!r}: dict must have exactly 2 keys, "
             f"got {len(keys)} ({sorted(keys)}).\nExiting."
         )
+    _ILL_POSED = {
+        frozenset({"displacement", "shear"}): (
+            "'displacement' and 'shear' are work-conjugate (both relate to "
+            "transverse displacement): prescribing both on the same edge is "
+            "ill-posed.  Pair 'displacement' with 'slope' or 'moment', or "
+            "pair 'shear' with 'slope' or 'moment'."
+        ),
+        frozenset({"slope", "moment"}): (
+            "'slope' and 'moment' are work-conjugate (both relate to "
+            "rotation): prescribing both on the same edge is ill-posed.  "
+            "Pair 'slope' with 'displacement' or 'shear', or pair 'moment' "
+            "with 'displacement' or 'shear'."
+        ),
+    }
     if keys not in _BC_DICT_TO_STRING:
+        if keys in _ILL_POSED:
+            sys.exit(
+                f"Boundary condition at {edge_label!r}: {sorted(keys)!r} is "
+                f"ill-posed.  {_ILL_POSED[keys]}\nExiting."
+            )
         sys.exit(
             f"Boundary condition at {edge_label!r}: {sorted(keys)!r} is not a valid "
             f"pair.  Valid pairs: "
