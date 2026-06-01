@@ -1763,7 +1763,7 @@ class F2D(Flexure):
             self._bc_east_norm == "mirror" and self._bc_north_norm == "zero_moment_zero_shear"
         ):
             self.cj0i0[0, -1] += 2 * self.cj_1i_1_coeff_ij[0, -1]
-            self.cj1i1[0, -1] -= self.cj_1i_1_coeff_ij[0, -1]
+            self.cj_1i1[0, -1] -= self.cj_1i_1_coeff_ij[0, -1]
         if (self._bc_south_norm == "mirror" and self._bc_west_norm == "zero_moment_zero_shear") or (
             self._bc_west_norm == "mirror" and self._bc_south_norm == "zero_moment_zero_shear"
         ):
