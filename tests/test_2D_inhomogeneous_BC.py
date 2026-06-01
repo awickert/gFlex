@@ -580,6 +580,23 @@ class TestNorthPrescribedDisplacement:
         assert abs(w_num[0, _NS_NX // 2] - self.W0) / self.W0 < REL_TOL
 
 
+class TestNorthPrescribedSlope:
+    """w(y=0) = 0, dw/dy(y=0) = +θ₀; free at south end.
+
+    Outward normal at north is −y (same sense as west −x), so the slope
+    sign convention carries over unchanged: θ₀ > 0 gives positive deflection.
+    w(y) = w_prescribed_slope(y, θ₀).
+    """
+
+    THETA0 = 1.0e-3   # rad
+
+    def test_deflection_profile(self):
+        y, w_num = _run_ns(
+            bc_north={"displacement": 0.0, "slope": self.THETA0},
+            bc_south="zero_moment_zero_shear",
+        )
+        _check_col(w_num, w_prescribed_slope(y, self.THETA0), "North Case D profile")
+
 # ---------------------------------------------------------------------------
 # Neumann superposition — linearity across all edge combinations
 # ---------------------------------------------------------------------------
