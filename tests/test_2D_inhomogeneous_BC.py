@@ -1127,3 +1127,56 @@ class TestLoadSuperposition:
         np.testing.assert_allclose(w_both, w_load + w_bc, rtol=1e-10, atol=0)
 
 
+# ---------------------------------------------------------------------------
+# Periodic lateral BCs with prescribed east / west BCs
+# ---------------------------------------------------------------------------
+
+class TestPeriodicLateralBCs:
+    """Prescribed BC at west or east with periodic north/south boundary conditions.
+
+    For y-independent BCs (uniform M₀ along the boundary, uniform Te),
+    the periodic and mirror lateral conditions both enforce y-uniformity:
+
+    * Mirror:   dw/dy = 0 at y = 0 and y = L_y.
+    * Periodic: w(y=0) ≡ w(y=L_y) and all y-derivatives match.
+
+    Any y-independent solution satisfies both, so the two solves produce
+    numerically identical results (differences are at the 1e-10 level due to
+    different sparse-matrix structures).
+
+    The y-uniformity assertion is the numerical analogue of a visual corner
+    check: if the periodic corner handling were wrong, a spurious y-gradient
+    would appear near the prescribed BC edge.
+    """
+
+    M0 = 1.0e12
+
+    def test_west_moment_periodic_matches_mirror(self):
+        _, w_mirror   = _run({"moment": self.M0, "shear": 0.0}, "zero_moment_zero_shear",
+                             "mirror", "mirror")
+        _, w_periodic = _run({"moment": self.M0, "shear": 0.0}, "zero_moment_zero_shear",
+                             "periodic", "periodic")
+        np.testing.assert_allclose(w_periodic, w_mirror, rtol=1e-6, atol=0)
+
+    def test_west_moment_periodic_is_y_uniform(self):
+        _, w = _run({"moment": self.M0, "shear": 0.0}, "zero_moment_zero_shear",
+                    "periodic", "periodic")
+        centre = w[NY // 2, :]
+        assert np.max(np.abs(w - centre)) < 1e-10 * np.max(np.abs(centre)), (
+            "Periodic lateral BCs with uniform west BC should give y-uniform solution"
+        )
+
+    def test_east_moment_periodic_matches_mirror(self):
+        _, w_mirror   = _run("zero_moment_zero_shear", {"moment": self.M0, "shear": 0.0},
+                             "mirror", "mirror")
+        _, w_periodic = _run("zero_moment_zero_shear", {"moment": self.M0, "shear": 0.0},
+                             "periodic", "periodic")
+        np.testing.assert_allclose(w_periodic, w_mirror, rtol=1e-6, atol=0)
+
+    def test_east_moment_periodic_is_y_uniform(self):
+        _, w = _run("zero_moment_zero_shear", {"moment": self.M0, "shear": 0.0},
+                    "periodic", "periodic")
+        centre = w[NY // 2, :]
+        assert np.max(np.abs(w - centre)) < 1e-10 * np.max(np.abs(centre)), (
+            "Periodic lateral BCs with uniform east BC should give y-uniform solution"
+        )
