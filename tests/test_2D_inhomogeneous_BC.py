@@ -597,6 +597,52 @@ class TestNorthPrescribedSlope:
         )
         _check_col(w_num, w_prescribed_slope(y, self.THETA0), "North Case D profile")
 
+
+# ---------------------------------------------------------------------------
+# South edge analytical tests  (Cases A – D)
+# ---------------------------------------------------------------------------
+# South outward normal is +y, the same sense as east (+x), so shear and
+# slope are ODD under ξ = L_DOMAIN − y and pick up a sign flip.
+# Moment and displacement are EVEN and carry no sign change.
+# ---------------------------------------------------------------------------
+
+class TestSouthPrescribedMoment:
+    """M(y=L) = M₀, V(y=L) = 0; free at north end."""
+
+    M0 = 1.0e12
+
+    def test_deflection_profile(self):
+        y, w_num = _run_ns(
+            bc_north="zero_moment_zero_shear",
+            bc_south={"moment": self.M0, "shear": 0.0},
+        )
+        _check_col(w_num, w_prescribed_moment(L_DOMAIN - y, self.M0), "South Case A profile")
+
+    def test_south_boundary_displacement(self):
+        y, w_num = _run_ns(
+            bc_north="zero_moment_zero_shear",
+            bc_south={"moment": self.M0, "shear": 0.0},
+        )
+        w0_exact = self.M0 / (2.0 * D * LAM**2)
+        assert abs(w_num[-1, _NS_NX // 2] - w0_exact) / abs(w0_exact) < REL_TOL
+
+
+class TestSouthPrescribedShear:
+    """M(y=L) = 0, V(y=L) = V₀; free at north end.
+
+    d³w/dy³ at south reverses sign under ξ = L − y, so V₀ > 0 gives
+    negative deflection: w(ξ) = −w_prescribed_shear(ξ, V₀).
+    """
+
+    V0 = 1.0e8
+
+    def test_deflection_profile(self):
+        y, w_num = _run_ns(
+            bc_north="zero_moment_zero_shear",
+            bc_south={"moment": 0.0, "shear": self.V0},
+        )
+        _check_col(w_num, -w_prescribed_shear(L_DOMAIN - y, self.V0), "South Case B profile")
+
 # ---------------------------------------------------------------------------
 # Neumann superposition — linearity across all edge combinations
 # ---------------------------------------------------------------------------
