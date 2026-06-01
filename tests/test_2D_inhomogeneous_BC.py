@@ -87,7 +87,8 @@ def w_prescribed_slope(x, theta0):
 # gFlex 2-D runner
 # ---------------------------------------------------------------------------
 
-def _run(bc_west, bc_east, nx=NX, ny=NY, L=L_DOMAIN):
+def _run(bc_west, bc_east, bc_north="mirror", bc_south="mirror",
+         nx=NX, ny=NY, L=L_DOMAIN, qs_override=None):
     dx = L / (nx - 1)
     x  = np.arange(nx) * dx
 
@@ -102,12 +103,12 @@ def _run(bc_west, bc_east, nx=NX, ny=NY, L=L_DOMAIN):
     flex.rho_fill = RHO_F
     flex.te       = TE
     flex.dx       = dx
-    flex.dy       = dx                       # square cells
-    flex.qs       = np.zeros((ny, nx))       # deflection driven by BCs only
+    flex.dy       = dx
+    flex.qs       = np.zeros((ny, nx)) if qs_override is None else qs_override
     flex.bc_west  = bc_west
     flex.bc_east  = bc_east
-    flex.bc_north = "mirror"                 # enforce y-uniformity
-    flex.bc_south = "mirror"
+    flex.bc_north = bc_north
+    flex.bc_south = bc_south
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -656,6 +657,83 @@ class TestNonZMZSFarEnd:
             bc_east={"moment": 0.0, "shear": self.V0},
         )
         _check(w_num, -w_prescribed_shear(L_DOMAIN - x, self.V0), "East shear + west ZDZM")
+
+
+class TestNonZMZSFarEndDirichlet:
+    """Prescribed Dirichlet BC at one end with a non-ZMZS preset at the far end.
+
+    Extends TestNonZMZSFarEnd to displacement and slope BCs.  The existing
+    single-edge tests use ZMZS as the far end; here we test ZDSZS and ZDZM.
+
+    Sign convention: east slope uses −w_prescribed_slope(ξ, θ₀) because
+    dw/dx reverses sign under ξ = L − x (same as east shear).  East
+    displacement is even and carries no sign change.
+    """
+
+    W0     = 100.0    # m
+    THETA0 = 1.0e-3   # rad
+    _ZDSZS = "zero_displacement_zero_slope"
+    _ZDZM  = "zero_displacement_zero_moment"
+
+    # --- west displacement, non-ZMZS east far end ---
+
+    def test_west_displacement_east_zdszs(self):
+        x, w_num = _run(
+            bc_west={"displacement": self.W0, "slope": 0.0},
+            bc_east=self._ZDSZS,
+        )
+        _check(w_num, w_prescribed_displacement(x, self.W0), "West disp + east ZDSZS")
+
+    def test_west_displacement_east_zdzm(self):
+        x, w_num = _run(
+            bc_west={"displacement": self.W0, "slope": 0.0},
+            bc_east=self._ZDZM,
+        )
+        _check(w_num, w_prescribed_displacement(x, self.W0), "West disp + east ZDZM")
+
+    # --- east displacement, non-ZDSZS west far end ---
+
+    def test_east_displacement_west_zdzm(self):
+        """East disp, ZDZM at west (ZDSZS at west is covered by TestEastPrescribedDisplacement)."""
+        x, w_num = _run(
+            bc_west=self._ZDZM,
+            bc_east={"displacement": self.W0, "slope": 0.0},
+        )
+        _check(w_num, w_prescribed_displacement(L_DOMAIN - x, self.W0), "East disp + west ZDZM")
+
+    # --- west slope, non-ZMZS east far end ---
+
+    def test_west_slope_east_zdszs(self):
+        x, w_num = _run(
+            bc_west={"displacement": 0.0, "slope": self.THETA0},
+            bc_east=self._ZDSZS,
+        )
+        _check(w_num, w_prescribed_slope(x, self.THETA0), "West slope + east ZDSZS")
+
+    def test_west_slope_east_zdzm(self):
+        x, w_num = _run(
+            bc_west={"displacement": 0.0, "slope": self.THETA0},
+            bc_east=self._ZDZM,
+        )
+        _check(w_num, w_prescribed_slope(x, self.THETA0), "West slope + east ZDZM")
+
+    # --- east slope, non-ZMZS west far end ---
+
+    def test_east_slope_west_zdszs(self):
+        """East slope: sign flips under ξ = L − x (d/dx is odd)."""
+        x, w_num = _run(
+            bc_west=self._ZDSZS,
+            bc_east={"displacement": 0.0, "slope": self.THETA0},
+        )
+        _check(w_num, -w_prescribed_slope(L_DOMAIN - x, self.THETA0), "East slope + west ZDSZS")
+
+    def test_east_slope_west_zdzm(self):
+        """East slope: sign flips under ξ = L − x (d/dx is odd)."""
+        x, w_num = _run(
+            bc_west=self._ZDZM,
+            bc_east={"displacement": 0.0, "slope": self.THETA0},
+        )
+        _check(w_num, -w_prescribed_slope(L_DOMAIN - x, self.THETA0), "East slope + west ZDZM")
 
 
 # ---------------------------------------------------------------------------
