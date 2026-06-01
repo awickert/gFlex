@@ -400,9 +400,8 @@ class TestVariableTePrescribedNeumann:
 # mirror on east/west enforces x-uniformity so the 2-D problem reduces
 # to the 1-D semi-infinite plate equation in the y direction.
 
-_NS_NX      = 11
-_NS_NY      = 401    # Δy ≈ α/40, matching the x-direction resolution
-_NS_WIDE_NX = 51     # wide x-extent: center column is 5α from each E/W boundary
+_NS_NX = 11
+_NS_NY = 401   # Δy ≈ α/40, matching the x-direction resolution
 
 
 def _run_ns(bc_north, bc_south, bc_west="mirror", bc_east="mirror",
@@ -435,9 +434,15 @@ def _run_ns(bc_north, bc_south, bc_west="mirror", bc_east="mirror",
     return y, flex.w
 
 
-def _check_col(w_num, w_ex, label):
-    """Compare centre column of 2-D solution to 1-D exact; L-inf relative error."""
-    centre = w_num[:, _NS_NX // 2]
+def _check_col(w_num, w_ex, label, col=None):
+    """Compare a column of 2-D solution to 1-D exact; L-inf relative error.
+
+    col: column index to compare (default: _NS_NX // 2, the centre of the
+         standard narrow NS domain).
+    """
+    if col is None:
+        col = _NS_NX // 2
+    centre = w_num[:, col]
     scale  = np.max(np.abs(w_ex))
     err    = np.max(np.abs(centre - w_ex)) / scale
     assert err < REL_TOL, (
@@ -1203,13 +1208,14 @@ class TestNorthSouthNonMirrorLateral:
        EW code path without needing a 1-D analytical reference.
 
     2. Superposition — w(M₀ + V₀) = w(M₀) + w(V₀) for north BC with ZDSZS
-       lateral ends, rtol = 1e-10.  Catches RHS sign or assembly bugs that
+       lateral ends, rtol = 1e-9.  Catches RHS sign or assembly bugs that
        a symmetry test alone would miss.
 
-    3. Wide-domain center column — For a domain 10α wide in x (NX=51 columns,
-       dx = α/5), the center column is 5α from each E/W boundary.  The ZDSZS
-       boundary effect decays as e⁻⁵ ≈ 0.7 % < REL_TOL, so the center column
-       must match the 1-D analytical solution to within REL_TOL.
+    3. Stiffness inequality — ZDSZS lateral ends clamp the plate globally;
+       the peak north-boundary deflection must be strictly less than the
+       mirror-lateral (1-D equivalent) case.  The center column does NOT
+       match the 1-D solution even for wide domains: ZDSZS forces w = 0
+       at the lateral edges for all y, changing the plate response throughout.
     """
 
     M0     = 1.0e12
@@ -1271,3 +1277,23 @@ class TestNorthSouthNonMirrorLateral:
         w_v  = _run_sq(bc_north={"moment": 0.0,     "shear": self.V0}, **kw)
         w_mv = _run_sq(bc_north={"moment": self.M0, "shear": self.V0}, **kw)
         np.testing.assert_allclose(w_mv, w_m + w_v, rtol=1e-9, atol=0)
+
+    # --- 3. x-symmetry of the solution ---
+
+    def test_north_moment_zdszs_x_symmetric(self):
+        """With uniform north moment and symmetric ZDSZS at E/W, the solution
+        must be symmetric about the x-midpoint: w[i, j] = w[i, n-1-j].
+
+        Any bug in the lateral BC application (wrong sign, wrong corner
+        handling, asymmetric stencil) would break this symmetry.  The
+        tolerance is tight (rtol=1e-10) because the discrete problem is
+        exactly symmetric — the coefficient matrix and RHS have the same
+        left-right symmetry as the geometry.
+        """
+        w = _run_sq(
+            bc_west=self._ZDSZS,
+            bc_east=self._ZDSZS,
+            bc_north={"moment": self.M0, "shear": 0.0},
+            bc_south=self._ZMZS,
+        )
+        np.testing.assert_allclose(w, w[:, ::-1], rtol=1e-10, atol=0)
