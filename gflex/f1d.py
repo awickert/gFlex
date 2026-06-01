@@ -476,7 +476,7 @@ class F1D(Flexure):
             super()._solve_sas_ng()
             self.method_func = self._solve_sas_ng
         else:
-            sys.exit('Error: method must be "fd", "fft", "sas", or "sas_ng"')
+            raise ValueError('method must be "fd", "fft", "sas", or "sas_ng"')
 
         if self.verbose:
             print("F1D run")
@@ -632,11 +632,9 @@ class F1D(Flexure):
         elif np.all(self.te == np.mean(self.te)):
             self.te = float(np.mean(self.te))
         else:
-            sys.exit(
-                "\nINPUT VARIABLE TYPE INCONSISTENT WITH SOLUTION TYPE.\n"
-                "The FFT solution requires a scalar (uniform) Te.\n"
-                "For spatially variable Te, use the finite difference method.\n"
-                "EXITING."
+            raise ValueError(
+                "The FFT solution requires a scalar (uniform) Te. "
+                "For spatially variable Te, use the finite difference method."
             )
 
         D = self.E * self.te**3 / (12.0 * (1.0 - self.nu**2))
@@ -702,13 +700,9 @@ class F1D(Flexure):
         elif np.all(self.te == np.mean(self.te)):
             self.te = np.mean(self.te)
         else:
-            sys.exit(
-                "\nINPUT VARIABLE TYPE INCONSISTENT WITH SOLUTION TYPE.\n"
-                "The analytical solution requires a scalar Te.\n"
-                "(gFlex is smart enough to make this out of a uniform\n"
-                "array, but won't know what value you want with a spatially\n"
-                "varying array! Try finite difference instead in this case?\n"
-                "EXITING."
+            raise ValueError(
+                "The analytical solution requires a scalar (uniform) Te. "
+                "For spatially variable Te, use the finite difference method."
             )
 
         self.D = self.E * self.te**3 / (12 * (1 - self.nu**2))  # Flexural rigidity
@@ -820,7 +814,7 @@ class F1D(Flexure):
         elif self._bc_west_norm in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_west = _RigidityBC.MIRROR
         else:
-            sys.exit("Invalid Te B.C. case")
+            raise RuntimeError("Invalid Te B.C. case")
         # East
         if self._bc_east_norm == "periodic":
             self.bc_rigidity_east = _RigidityBC.PERIODIC
@@ -832,7 +826,7 @@ class F1D(Flexure):
         elif self._bc_east_norm in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_east = _RigidityBC.MIRROR
         else:
-            sys.exit("Invalid Te B.C. case")
+            raise RuntimeError("Invalid Te B.C. case")
 
         #############
         # PAD ARRAY #
@@ -1000,11 +994,10 @@ class F1D(Flexure):
             # which I don't want to do to allow something that doesn't make
             # physical sense... so if anyone wants to do this for some unforeseen
             # reason, they can just split my function into two pieces themselves.i
-            sys.exit(
-                "Having the boundary opposite a periodic boundary condition\n"
-                + "be fixed and not include an implicit periodic boundary\n"
-                + "condition makes no physical sense.\n"
-                + "Please fix the input boundary conditions. Aborting."
+            raise ValueError(
+                "The boundary opposite a periodic boundary condition must also be "
+                "periodic. Having one periodic and one non-periodic boundary on the "
+                "same axis is not physically meaningful."
             )
         self.diags = np.vstack(
             (
