@@ -19,7 +19,7 @@ along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
 import os
-import sys
+
 import warnings
 from enum import Enum
 
@@ -79,28 +79,28 @@ def _resolve_bc(bc, edge_label, dimension):
 
     String presets are returned unchanged.  Dict BCs are validated and
     mapped to their equivalent canonical string so that downstream stencil
-    and rigidity code never sees a raw dict.  Calls ``sys.exit`` with a
-    descriptive message on any error.
+    and rigidity code never sees a raw dict.  Raises ``ValueError`` or
+    ``TypeError`` with a descriptive message on any error.
     """
     if isinstance(bc, str):
         return bc
 
     if not isinstance(bc, dict):
-        sys.exit(
+        raise TypeError(
             f"Boundary condition at {edge_label!r} must be a string or dict, "
-            f"got {type(bc).__name__!r}.\nExiting."
+            f"got {type(bc).__name__!r}."
         )
     keys = frozenset(bc)
     unknown = keys - _VALID_BC_KEYS
     if unknown:
-        sys.exit(
+        raise ValueError(
             f"Boundary condition at {edge_label!r}: unknown key(s) "
-            f"{sorted(unknown)}.  Valid keys: {sorted(_VALID_BC_KEYS)}.\nExiting."
+            f"{sorted(unknown)}.  Valid keys: {sorted(_VALID_BC_KEYS)}."
         )
     if len(keys) != 2:
-        sys.exit(
+        raise ValueError(
             f"Boundary condition at {edge_label!r}: dict must have exactly 2 keys, "
-            f"got {len(keys)} ({sorted(keys)}).\nExiting."
+            f"got {len(keys)} ({sorted(keys)})."
         )
     _ILL_POSED = {
         frozenset({"displacement", "shear"}): (
@@ -118,29 +118,29 @@ def _resolve_bc(bc, edge_label, dimension):
     }
     if keys not in _BC_DICT_TO_STRING:
         if keys in _ILL_POSED:
-            sys.exit(
+            raise ValueError(
                 f"Boundary condition at {edge_label!r}: {sorted(keys)!r} is "
-                f"ill-posed.  {_ILL_POSED[keys]}\nExiting."
+                f"ill-posed.  {_ILL_POSED[keys]}"
             )
-        sys.exit(
+        raise ValueError(
             f"Boundary condition at {edge_label!r}: {sorted(keys)!r} is not a valid "
             f"pair.  Valid pairs: "
-            f"{[sorted(p) for p in _BC_DICT_TO_STRING]}.\nExiting."
+            f"{[sorted(p) for p in _BC_DICT_TO_STRING]}."
         )
     for k, v in bc.items():
         if isinstance(v, np.ndarray):
             if v.ndim != 1:
-                sys.exit(
+                raise ValueError(
                     f"Boundary condition at {edge_label!r}: value for {k!r} must be "
-                    f"a scalar or 1-D array, got ndim={v.ndim}.\nExiting."
+                    f"a scalar or 1-D array, got ndim={v.ndim}."
                 )
         else:
             try:
                 float(v)
             except (TypeError, ValueError):
-                sys.exit(
+                raise TypeError(
                     f"Boundary condition at {edge_label!r}: value for {k!r} must be "
-                    f"a scalar or 1-D array, got {type(v).__name__!r}.\nExiting."
+                    f"a scalar or 1-D array, got {type(v).__name__!r}."
                 )
     return _BC_DICT_TO_STRING[keys]
 
@@ -192,11 +192,10 @@ class Utility:
             elif vartype == "boolean" or vartype == "bool":
                 var = self.config.getboolean(category, name)
             else:
-                print(
+                raise ValueError(
                     "Please enter 'float', 'string' (or 'str'), 'integer' (or 'int'),"
-                    " or 'boolean (or 'bool') for vartype"
+                    " or 'boolean' (or 'bool') for vartype"
                 )
-                sys.exit()  # Won't exit, but will lead to exception
             return var
         except Exception:
             if optional:
@@ -232,7 +231,7 @@ class Utility:
         config = configparser.ConfigParser()
         ext = os.path.splitext(filename)[1].lower()
         if ext not in (".yaml", ".yml"):
-            sys.exit(
+            raise ValueError(
                 f"Configuration file '{filename}' does not have a .yaml or .yml "
                 "extension. INI-format configuration files are no longer supported. "
                 "Convert to YAML format."
@@ -240,8 +239,8 @@ class Utility:
         try:
             import yaml
         except ImportError:
-            sys.exit(
-                "PyYAML is required to read YAML configuration files.\n"
+            raise ImportError(
+                "PyYAML is required to read YAML configuration files. "
                 "Install it with: pip install pyyaml"
             )
         with open(filename) as fh:
@@ -263,7 +262,7 @@ class Utility:
             try:
                 self.coeff_matrix = sparse.dia_matrix(self.coeff_matrix)
             except Exception:
-                sys.exit(
+                raise ValueError(
                     "Failed to make a sparse array or load a sparse matrix from the input."
                 )
 
@@ -350,10 +349,11 @@ class Utility:
             self.xw = np.linspace(w, e, nx)
             self.yw = np.linspace(s, n, ny)
         else:
-            print("Lat/lon xw and yw must be pre-set: grid will not be square")
-            print("and may run into issues with poles, so to ensure the proper")
-            print("output points are chosen, the end user should do this.")
-            sys.exit()
+            raise ValueError(
+                "Lat/lon xw and yw must be pre-set: grid will not be square "
+                "and may run into issues with poles, so to ensure the proper "
+                "output points are chosen, the end user should do this."
+            )
 
     def loadFile(self, var, close_on_fail=True):
         """
@@ -390,13 +390,11 @@ class Utility:
             format_name = "numpy binary"
 
         if out is None and close_on_fail:
-            print(f"Cannot find {var} file")
-            print(f"{var} path = {var}")
-            print("Looked relative to model python files.")
-            print("Also looked relative to configuration file path,")
-            print(f"  {self.inpath}")
-            print("Exiting.")
-            sys.exit()
+            raise FileNotFoundError(
+                f"Cannot find {var} file. "
+                f"Looked relative to model Python files and relative to "
+                f"configuration file path {self.inpath!r}."
+            )
         elif out is not None and self.verbose:
             print(f"Loading {var} from {format_name}")
 
@@ -917,8 +915,8 @@ class WhichModel(Utility):
                     self.dimension = self.configGet("integer", "mode", "dimension")
                     self.whichModel_AlreadyRun = True
                 except Exception:
-                    sys.exit(
-                        ">>>> Error: cannot locate specified configuration file. <<<<"
+                    raise FileNotFoundError(
+                        "Cannot locate specified configuration file."
                     )
 
 
@@ -1042,7 +1040,7 @@ class Flexure(Utility, Plotting):
                 self.dimension = self.configGet("integer", "mode", "dimension")
                 self.whichModel_AlreadyRun = True
             except Exception:
-                sys.exit(
+                raise FileNotFoundError(
                     "No configuration file at specified path, or configuration file"
                     " configured incorrectly"
                 )
@@ -1146,18 +1144,18 @@ class Flexure(Utility, Plotting):
                 try:
                     self.qs
                 except AttributeError:
-                    sys.exit(
+                    raise RuntimeError(
                         "Must define q0, q, or qs by this stage in the initialization"
                         " step from either configuration file (string) or direct array"
-                        " import"
+                        " import."
                     )
         else:
             # Stop program if q0 is None-type
             if self.q0 is None:  # if is None type, just be patient
-                sys.exit(
+                raise RuntimeError(
                     "Must define non-None-type q0 by this stage in the initialization"
                     " step from either configuration file (string) or direct array"
-                    " import"
+                    " import."
                 )
 
         # Ignore this if no q0 set
@@ -1174,13 +1172,10 @@ class Flexure(Utility, Plotting):
         if self.q0 is not None:
             if self.method != "sas_ng":
                 if self.q0.ndim != self.dimension:
-                    print("Number of dimensions in loads file is inconsistent with")
-                    print("number of dimensions in solution technique.")
-                    print("loads", self.q0.ndim)
-                    print("Dimensions", self.dimension)
-                    print(self.q0)
-                    print("Exiting.")
-                    sys.exit()
+                    raise ValueError(
+                        f"Number of dimensions in loads array ({self.q0.ndim}D) is "
+                        f"inconsistent with the solution dimension ({self.dimension}D)."
+                    )
 
         # Plotting selection
         self.plot_choice = self.configGet("string", "output", "plot", optional=True)
@@ -1428,27 +1423,23 @@ class Flexure(Utility, Plotting):
                         norm = _resolve_bc(bc, edge, self.dimension)
                     elif self.dimension == 1:
                         if bc not in self.bc1D:
-                            sys.exit(
-                                f"{bc!r} is not an acceptable 1D finite difference"
-                                " boundary condition and/or is not yet implement in"
-                                " the code. Acceptable boundary conditions are:"
-                                f" {', '.join(repr(b) for b in self.bc1D)}\n"
-                                "Exiting."
+                            raise ValueError(
+                                f"{bc!r} is not an acceptable 1D finite difference "
+                                "boundary condition. Acceptable boundary conditions are: "
+                                f"{', '.join(repr(b) for b in self.bc1D)}."
                             )
                         norm = bc
                     elif self.dimension == 2:
                         if bc not in self.bc2D:
-                            sys.exit(
-                                f"{bc!r} is not an acceptable 2D finite difference"
-                                " boundary condition and/or is not yet implement in"
-                                " the code. Acceptable boundary conditions are:"
-                                f" {', '.join(repr(b) for b in self.bc2D)}\n"
-                                "Exiting."
+                            raise ValueError(
+                                f"{bc!r} is not an acceptable 2D finite difference "
+                                "boundary condition. Acceptable boundary conditions are: "
+                                f"{', '.join(repr(b) for b in self.bc2D)}."
                             )
                         norm = bc
                     else:
-                        sys.exit(
-                            "For a flexural solution, grid must be 1D or 2D. Exiting."
+                        raise ValueError(
+                            "For a flexural solution, grid must be 1D or 2D."
                         )
                     if norm == "zero_slope_zero_shear":
                         norm = "mirror"
@@ -1469,11 +1460,10 @@ class Flexure(Utility, Plotting):
                             if _bv is not None:
                                 for _k, _v in _bv.items():
                                     if isinstance(_v, np.ndarray) and len(_v) != _length:
-                                        sys.exit(
+                                        raise ValueError(
                                             f"Boundary condition at {_edge!r}: value for "
                                             f"{_k!r} has length {len(_v)}, expected "
                                             f"{_length} ({_length} nodes on that edge)."
-                                            f"\nExiting."
                                         )
         else:
             # Analytical solution boundary conditions
@@ -1527,26 +1517,13 @@ class Flexure(Utility, Plotting):
                         )
             else:
                 if not self.quiet:
-                    print("")
-                    print(">>> BOUNDARY CONDITIONS IMPROPERLY DEFINED <<<")
-                    print("")
-                    print("For analytical solutions the boundaries must be either:")
-                    print("")
-                    print("* no_outside_loads (explicitly)")
-                    print("* <left blank>")
-                    print("")
-                    print(
-                        "The latter is to implictly indicate a desire to use the only"
+                    raise ValueError(
+                        "Boundary conditions improperly defined for an analytical "
+                        "solution. Analytical solvers require 'no_outside_loads' (or "
+                        "blank) on all boundaries. FD boundary conditions such as "
+                        "'zero_moment_zero_shear' cannot be applied to analytical "
+                        "solutions."
                     )
-                    print("boundary condition available for the superposition-based")
-                    print("analytical solutions.")
-                    print(
-                        "This check is in place to ensure that the user does not apply"
-                    )
-                    print("boundary conditions for finite difference solutions to the")
-                    print("analytical solutions and expect them to work.")
-                    print("")
-                    sys.exit()
 
     def coeffArraySizeCheck(self):
         """
@@ -1557,9 +1534,9 @@ class Flexure(Utility, Plotting):
         if np.prod(self.coeff_matrix.shape) != np.long(
             np.prod(np.array(self.qs.shape, dtype=np.int64) + 2) ** 2
         ):
-            print("Inconsistent size of q0 array and coefficient mattrix")
-            print("Exiting.")
-            sys.exit()
+            raise ValueError(
+                "Inconsistent size of q0 array and coefficient matrix."
+            )
 
     def te_array_size_check(self):
         """
@@ -1573,7 +1550,10 @@ class Flexure(Utility, Plotting):
             # Doesn't touch non-arrays or 1D arrays
             if type(self.te) is np.ndarray:
                 if (np.array(self.te.shape) != np.array(self.qs.shape)).any():
-                    sys.exit("q0 and Te arrays have incompatible shapes. Exiting.")
+                    raise ValueError(
+                        f"q0 and Te arrays have incompatible shapes: "
+                        f"qs={self.qs.shape}, te={self.te.shape}."
+                    )
             else:
                 if self.debug:
                     print("Te and qs array sizes pass consistency check")
@@ -1631,7 +1611,7 @@ class Flexure(Utility, Plotting):
                 else:
                     # Have to bring this out here in case it was discovered in the
                     # try statement that there is no value given
-                    sys.exit(
+                    raise ValueError(
                         "No input elastic thickness or coefficient matrix supplied."
                     )
         # or if getter/setter
@@ -1653,8 +1633,10 @@ class Flexure(Utility, Plotting):
                     print("But a coefficient matrix has been found.")
                     print("Calculations will be carried forward using it.")
                 else:
-                    print("Exiting.")
-                    sys.exit()
+                    raise FileNotFoundError(
+                        "Requested Te file cannot be located and no scalar elastic "
+                        "thickness or coefficient matrix is available."
+                    )
 
             # Check that Te is the proper size if it was loaded
             # Will be array if it was loaded
@@ -1759,9 +1741,9 @@ class Flexure(Utility, Plotting):
                     self.x = self.q0[:, 0]
                     self.q = self.q0[:, 1]
                 else:
-                    sys.exit(
-                        "For 1D (ungridded) SAS_NG configuration file, need [x,w]"
-                        f" array. Your dimensions are: {self.q0.shape}"
+                    raise ValueError(
+                        "For 1D (ungridded) SAS_NG, need an [x, w] array. "
+                        f"Got shape: {self.q0.shape}."
                     )
         else:
             try:
@@ -1776,9 +1758,9 @@ class Flexure(Utility, Plotting):
                     self.y = self.q0[:, 1]
                     self.q = self.q0[:, 2]
                 else:
-                    sys.exit(
-                        "For 2D (ungridded) SAS_NG configuration file, need [x,y,w]"
-                        f" array. Your dimensions are: {self.q0.shape}"
+                    raise ValueError(
+                        "For 2D (ungridded) SAS_NG, need an [x, y, w] array. "
+                        f"Got shape: {self.q0.shape}."
                     )
         # x, y are in absolute coordinates. Create a local grid reference to
         # these. This local grid, which starts at (0,0), is defined just so that
