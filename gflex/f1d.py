@@ -794,7 +794,10 @@ class F1D(Flexure):
         # flexural solution
         self._apply_bc_flexure()
 
-        # Fourth, construct the sparse diagonal array
+        # Fourth, compute RHS correction for prescribed (nonzero) BC values
+        self._apply_bc_rhs_inhomogeneous()
+
+        # Fifth, construct the sparse diagonal array
         self.build_diagonals()
 
         # Finally, compute the total time this process took
@@ -1265,6 +1268,94 @@ class F1D(Flexure):
             self.r1[i] = np.nan    # ghost at j=N: out-of-bounds after roll → excluded
             self.r2[i] = np.nan    # ghost at j=N+1: out-of-bounds after roll → excluded
 
+    def _apply_bc_rhs_inhomogeneous(self):
+        """Compute the RHS correction vector for prescribed (nonzero) BC values.
+
+        Called after _apply_bc_flexure() and before build_diagonals().  For
+        dict-style BCs the ghost nodes used to eliminate out-of-bounds
+        unknowns carry prescribed moment, shear, displacement, or slope
+        values.  The constant parts of those ghost expressions move to the
+        right-hand side of the linear system as a correction vector added to
+        -qs before the sparse solve.
+
+        For {moment, shear} BCs the staggered shear ghost that
+        _bc_zero_moment_zero_shear() applies at the first interior node
+        (row 1 or N-2) is replaced by the moment-condition ghost so that
+        both ghost nodes are determined self-consistently from the boundary
+        moment and shear.  The stencil diagonals are updated in-place here.
+        """
+        self._bc_rhs_correction = np.zeros(self.nx)
+        dx = self.dx
+        D_west = self.D[1]    # padded D array: index 1 = west boundary node
+        D_east = self.D[-2]   # padded D array: index -2 = east boundary node
+
+        # --- WEST ---
+        if self._bc_west_values is not None:
+            bv = self._bc_west_values
+            if "displacement" in bv:
+                w0     = bv["displacement"]
+                theta0 = bv["slope"]
+                # Boundary row is decoupled: c0[0]*w[0] = rhs[0] → enforce w[0]=w0
+                self._bc_rhs_correction[0] = self.c0[0] * w0
+                # First interior: ghost w[-1] = w[1] - 2*dx*theta0 (central diff)
+                # The even-reflection term l2*w[-1] leaves a constant l2*(-2dx*theta0)
+                self._bc_rhs_correction[1] = (
+                    self.l2_coeff_i[1] * 2.0 * dx * theta0
+                )
+            else:  # "moment" / "shear"
+                M0 = bv["moment"]
+                V0 = bv["shear"]
+                # _bc_zero_moment_zero_shear applied shear ghost at i=1:
+                #   l1[1]+=2l2, c0[1]+=0, r1[1]+=-2l2, r2[1]+=l2
+                # Moment ghost (w[-1]=M0*dx²/D+2w[0]-w[1]) gives:
+                #   l1[1]+=2l2, c0[1]-=l2, r1[1]+=0, r2[1]+=0
+                # Apply the difference (moment ghost − shear ghost):
+                self.c0[1] -= self.l2_coeff_i[1]
+                self.r1[1] += 2.0 * self.l2_coeff_i[1]
+                self.r2[1] -= self.l2_coeff_i[1]
+                # RHS corrections from non-zero ghost constants.
+                # West ghost: w[-2] = 2w[-1] - 2w[1] + w[2] - 2V₀dx³/D + 2M₀dx²/D
+                # The V₀ term is subtracted in the ghost → adds to RHS.
+                self._bc_rhs_correction[0] = (
+                    self.l2_coeff_i[0] * (2.0*V0*dx**3 - 2.0*M0*dx**2) / D_west
+                    - self.l1_coeff_i[0] * M0 * dx**2 / D_west
+                )
+                self._bc_rhs_correction[1] = (
+                    -self.l2_coeff_i[1] * M0 * dx**2 / D_west
+                )
+
+        # --- EAST ---
+        if self._bc_east_values is not None:
+            bv = self._bc_east_values
+            if "displacement" in bv:
+                w_east     = bv["displacement"]
+                theta_east = bv["slope"]
+                # Boundary row is decoupled: c0[-1]*w[N-1] = rhs[-1] → enforce w[N-1]=w_east
+                self._bc_rhs_correction[-1] = self.c0[-1] * w_east
+                # First interior: ghost w[N] = w[N-2] + 2*dx*theta_east
+                self._bc_rhs_correction[-2] = (
+                    self.r2_coeff_i[-2] * 2.0 * dx * theta_east
+                )
+            else:  # "moment" / "shear"
+                M_east = bv["moment"]
+                V_east = bv["shear"]
+                # _bc_zero_moment_zero_shear applied shear ghost at i=N-2:
+                #   l2[-2]+=r2, l1[-2]+=-2r2, c0[-2]+=0, r1[-2]+=2r2
+                # Moment ghost (w[N]=M*dx²/D+2w[N-1]-w[N-2]) gives:
+                #   l2[-2]+=0, l1[-2]+=0, c0[-2]-=r2, r1[-2]+=2r2
+                # Apply the difference:
+                self.l2[-2] -= self.r2_coeff_i[-2]
+                self.l1[-2] += 2.0 * self.r2_coeff_i[-2]
+                self.c0[-2] -= self.r2_coeff_i[-2]
+                # RHS corrections
+                self._bc_rhs_correction[-1] = (
+                    -self.r1_coeff_i[-1] * M_east * dx**2 / D_east
+                    - self.r2_coeff_i[-1] * (2.0*V_east*dx**3 + 2.0*M_east*dx**2) / D_east
+                )
+                self._bc_rhs_correction[-2] += (
+                    -self.r2_coeff_i[-2] * M_east * dx**2 / D_east
+                )
+
     def calc_max_flexural_wavelength(self):
         """
         Returns the approximate maximum flexural wavelength
@@ -1309,7 +1400,11 @@ class F1D(Flexure):
                 print("Defaulting to direct solution with UMFpack")
         # qs negative so bends down with positive load, bends up with negative load
         # (i.e. material removed)
-        self.w = spsolve(self.coeff_matrix, -self.qs, use_umfpack=True)
+        self.w = spsolve(
+            self.coeff_matrix,
+            -self.qs + self._bc_rhs_correction,
+            use_umfpack=True,
+        )
 
         if self.debug:
             print("w.shape:")
