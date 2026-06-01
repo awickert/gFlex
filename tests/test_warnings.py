@@ -2,8 +2,8 @@
 """Tests for FD boundary-condition warnings in F1D and F2D.
 
 Warning types covered:
-  zero_moment_zero_shear   — fires for any side carrying that BC
-  zero_slope_zero_shear    — fires for any side carrying that BC
+  zero_moment_zero_shear   — UserWarning fires for any side carrying that BC
+  zero_slope_zero_shear    — DeprecationWarning fires (alias for mirror)
   proximity       — fires when nearest loaded cell is within one flexural
                     wavelength of a zero_displacement_zero_slope boundary; absent for
                     mirror / periodic, and when the load is far enough away
@@ -101,13 +101,32 @@ def test_1d_moment_shear_warning_fires(side):
 
 @pytest.mark.parametrize("side", ["W", "E"])
 def test_1d_slope_shear_warning_fires(side):
-    """zero_slope_zero_shear triggers a warning on the named side."""
+    """zero_slope_zero_shear triggers a DeprecationWarning pointing to mirror."""
     qs = np.zeros(80)
     qs[40] = 1e6
     bcs = {"W": "mirror", "E": "mirror"}
     bcs[side] = "zero_slope_zero_shear"
-    msgs = _run_1d(qs, bcs["W"], bcs["E"])
-    assert any(f"BC_{side} = 'zero_slope_zero_shear'" in m for m in msgs)
+    flex = F1D()
+    flex.quiet = True
+    flex.method = "fd"
+    flex.solver = "direct"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill
+    flex.te = Te
+    flex.qs = qs.copy()
+    flex.dx = dx
+    flex.bc_west = bcs["W"]
+    flex.bc_east = bcs["E"]
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        flex.initialize()
+        flex.run()
+        flex.finalize()
+    dep_msgs = [str(x.message) for x in w if issubclass(x.category, DeprecationWarning)]
+    assert any("zero_slope_zero_shear" in m and "mirror" in m for m in dep_msgs)
 
 
 @pytest.mark.parametrize("bc", ["mirror", "periodic", "zero_displacement_zero_slope"])
@@ -186,13 +205,35 @@ def test_2d_moment_shear_warning_fires(side):
 
 @pytest.mark.parametrize("side", ["W", "E", "N", "S"])
 def test_2d_slope_shear_warning_fires(side):
-    """zero_slope_zero_shear triggers a warning on the named side."""
+    """zero_slope_zero_shear triggers a DeprecationWarning pointing to mirror."""
     qs = np.zeros((80, 80))
     qs[40, 40] = 1e6
     bcs = {"W": "mirror", "E": "mirror", "N": "mirror", "S": "mirror"}
     bcs[side] = "zero_slope_zero_shear"
-    msgs = _run_2d(qs, bcs["W"], bcs["E"], bcs["N"], bcs["S"])
-    assert any(f"BC_{side} = 'zero_slope_zero_shear'" in m for m in msgs)
+    flex = F2D()
+    flex.quiet = True
+    flex.method = "fd"
+    flex.solver = "direct"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill
+    flex.te = Te
+    flex.qs = qs.copy()
+    flex.dx = dx
+    flex.dy = dx
+    flex.bc_west = bcs["W"]
+    flex.bc_east = bcs["E"]
+    flex.bc_north = bcs["N"]
+    flex.bc_south = bcs["S"]
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        flex.initialize()
+        flex.run()
+        flex.finalize()
+    dep_msgs = [str(x.message) for x in w if issubclass(x.category, DeprecationWarning)]
+    assert any("zero_slope_zero_shear" in m and "mirror" in m for m in dep_msgs)
 
 
 @pytest.mark.parametrize("bc", ["mirror", "periodic", "zero_displacement_zero_slope"])
