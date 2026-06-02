@@ -946,6 +946,10 @@ class Flexure(Utility, Plotting):
         self.x = None
         self.y = None
 
+        # Output defaults — overridden by config file or explicit setter
+        self.plot_choice = None
+        self.w_out_file = None
+
         # Set GRASS GIS usage flag: if GRASS is used, don't display error
         # messages related to unset options. This sets it to False if it
         # hasn't already been set (and it can be set after this too)
