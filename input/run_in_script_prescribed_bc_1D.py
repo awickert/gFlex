@@ -31,9 +31,9 @@ force V0 applied at x = 0:
 
     λ = (Δρ g / 4D)^{1/4},  α = 1/λ  (flexural parameter)
 
-Key outputs (V0 = -1e8 N/m, Te = 30 km):
-    w(0)           ≈ -93 mm   (downward — the "trench")
-    forebulge peak ≈ +6 mm    at x ≈ 156 km  (~2.4 α from the trench)
+Key outputs (V0 = -1e12 N/m, Te = 30 km):
+    w(0)           ≈ -933 m   (downward — the "trench")
+    forebulge peak ≈ +63 m    at x ≈ 156 km  (~2.4 α from the trench)
     λ error        < 0.02 %   (L-inf vs. analytical)
 """
 
@@ -72,7 +72,7 @@ print(f"Grid: {nx} cells, Δx = {dx/1e3:.2f} km, domain = {x[-1]/1e3:.0f} km")
 # ---------------------------------------------------------------------------
 # Prescribed boundary load
 # ---------------------------------------------------------------------------
-V0 = -1e8   # N/m  — slab-pull shear force (negative = downward at west end)
+V0 = -1e12  # N/m  — slab-pull shear force (negative = downward at west end)
 
 # ---------------------------------------------------------------------------
 # Run gFlex
@@ -103,8 +103,8 @@ flex.finalize()
 # Report results
 # ---------------------------------------------------------------------------
 i_bulge = np.argmax(w)
-print(f"\nDeflection at loaded end (x=0): {w[0]*1e3:.1f} mm  (downward = trench)")
-print(f"Forebulge peak:                  {w[i_bulge]*1e3:.1f} mm  at x = {x[i_bulge]/1e3:.0f} km")
+print(f"\nDeflection at loaded end (x=0): {w[0]:.1f} m  (downward = trench)")
+print(f"Forebulge peak:                  {w[i_bulge]:.1f} m  at x = {x[i_bulge]/1e3:.0f} km")
 
 # Compare with analytical solution
 w_analytical = (V0 / (2.0 * D * lam**3)) * np.exp(-lam * x) * np.cos(lam * x)
@@ -118,11 +118,11 @@ try:
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(8, 4))
-    ax.plot(x / 1e3, w * 1e3, "C0",     lw=2,   label="gFlex (FD)")
-    ax.plot(x / 1e3, w_analytical * 1e3, "C1--", lw=1.5, label="Analytical")
+    ax.plot(x / 1e3, w,            "C0",     lw=2,   label="gFlex (FD)")
+    ax.plot(x / 1e3, w_analytical, "C1--",   lw=1.5, label="Analytical")
     ax.axhline(0, color="k", lw=0.5)
     ax.set_xlabel("Distance from trench [km]")
-    ax.set_ylabel("Deflection [mm]")
+    ax.set_ylabel("Deflection [m]")
     ax.set_title(
         f"Broken-plate flexure: V₀ = {V0:.0e} N/m, Tₑ = {Te/1e3:.0f} km"
     )

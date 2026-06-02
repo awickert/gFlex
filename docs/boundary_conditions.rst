@@ -474,7 +474,7 @@ west end, with a free ``zero_moment_zero_shear`` condition at the far east end:
    dx = 10.0 * alpha / (nx - 1)
 
    # Slab-pull shear force at the trench (negative = downward), N/m
-   V0 = -1e8
+   V0 = -1e12
 
    flex = F1D()
    flex.quiet    = True
@@ -489,7 +489,7 @@ west end, with a free ``zero_moment_zero_shear`` condition at the far east end:
 
    flex.initialize()
    flex.run()
-   w = flex.w   # deflection [m]; w[0] ≈ −93 mm (trench), forebulge ≈ +6 mm at x ≈ 156 km
+   w = flex.w   # deflection [m]; w[0] ≈ −933 m (trench), forebulge ≈ +63 m at x ≈ 156 km
    flex.finalize()
 
 The result matches the analytical solution
