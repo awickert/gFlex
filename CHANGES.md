@@ -4,6 +4,11 @@
 
 ### Breaking changes
 
+- **`finalize()` now clears all model state** — ``w``, ``qs``, and the
+  coefficient matrix are deleted.  Read ``w`` and call ``output()``
+  **before** ``finalize()``.  The CLI (``gflex.py``) has been fixed to
+  follow this order.
+
 - **INI configuration file format removed** — only YAML (`.yaml` / `.yml`)
   configuration files are supported.  Passing a `.ini` file now raises
   `ValueError`.  Convert any remaining INI configs to YAML format.
