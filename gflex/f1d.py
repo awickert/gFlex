@@ -25,9 +25,9 @@ import numpy as np
 import scipy.fft
 from scipy.signal import fftconvolve
 from scipy.sparse import spdiags
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import factorized, spsolve
 
-from gflex.base import Flexure, _RigidityBC
+from gflex.base import Flexure, _RigidityBC, _matrix_hash
 
 
 def recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
@@ -1320,13 +1320,28 @@ class F1D(Flexure):
             if not self.quiet:
                 print("Solution type not understood:")
                 print("Defaulting to direct solution with UMFpack")
+
+        if self.cache_factorization not in (False, True, "no_check"):
+            raise ValueError(
+                f"cache_factorization must be False, True, or 'no_check'; "
+                f"got {self.cache_factorization!r}"
+            )
+
         # qs negative so bends down with positive load, bends up with negative load
         # (i.e. material removed)
-        self.w = spsolve(
-            self.coeff_matrix,
-            -self.qs + self._bc_rhs_correction,
-            use_umfpack=True,
-        )
+        rhs = -self.qs + self._bc_rhs_correction
+        if self.cache_factorization is False:
+            self.w = spsolve(self.coeff_matrix, rhs, use_umfpack=True)
+        elif self.cache_factorization == "no_check":
+            if self._lu is None:
+                self._lu = factorized(self.coeff_matrix)
+            self.w = self._lu(rhs)
+        else:  # True: hash-validated cache
+            h = _matrix_hash(self.coeff_matrix)
+            if self._lu is None or h != self._lu_matrix_hash:
+                self._lu = factorized(self.coeff_matrix)
+                self._lu_matrix_hash = h
+            self.w = self._lu(rhs)
 
         if self.debug:
             print("w.shape:")

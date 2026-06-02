@@ -26,9 +26,9 @@ import scipy
 import scipy.fft
 from scipy.signal import fftconvolve
 from scipy.special import kei
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import factorized, spsolve
 
-from gflex.base import Flexure, _RigidityBC
+from gflex.base import Flexure, _RigidityBC, _matrix_hash
 
 
 def flexural_wavelengths(Te, E, nu, rho_m, rho_fill, g):
@@ -2408,6 +2408,12 @@ class F2D(Flexure):
                 print("Solution type not understood:")
                 print("Defaulting to direct solution with UMFpack")
 
+        if self.cache_factorization not in (False, True, "no_check"):
+            raise ValueError(
+                f"cache_factorization must be False, True, or 'no_check'; "
+                f"got {self.cache_factorization!r}"
+            )
+
         # qs negative so the plate bends down under a positive (downward) load
         # and up under a negative load (material removed).  The coefficient
         # matrix A encodes D∇⁴ + Δρg, which is positive definite; solving
@@ -2417,7 +2423,19 @@ class F2D(Flexure):
         rhs_corr = getattr(self, "_bc_rhs_correction", None)
         if rhs_corr is not None:
             q0vector = q0vector + rhs_corr.reshape(-1, order="C")
-        wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
+
+        if self.cache_factorization is False:
+            wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
+        elif self.cache_factorization == "no_check":
+            if self._lu is None:
+                self._lu = factorized(self.coeff_matrix)
+            wvector = self._lu(q0vector)
+        else:  # True: hash-validated cache
+            h = _matrix_hash(self.coeff_matrix)
+            if self._lu is None or h != self._lu_matrix_hash:
+                self._lu = factorized(self.coeff_matrix)
+                self._lu_matrix_hash = h
+            wvector = self._lu(q0vector)
 
         # Reshape into grid
         self.w = wvector.reshape(self.qs.shape)
