@@ -155,18 +155,18 @@ flex.bc_north = 'zero_displacement_zero_slope' # north boundary condition
 
 flex.initialize()
 flex.run()
-flex.finalize()
 
-# If you want to plot the output
+# Read deflection BEFORE calling finalize (finalize clears w and qs)
+deflection = flex.w  # assign to a variable for later use
+
+# If you want to plot or save output, do it before finalize:
 flex.plot_choice='both'
 # An output file for deflections could also be defined here
 # flex.w_out_file =
 flex.output() # Plots and/or saves output, or does nothing, depending on
               # whether flex.plot_choice and/or flex.w_out_file have been set
-# TO OBTAIN OUTPUT DIRECTLY IN PYTHON, you can assign the internal variable,
-# flex.w, to another variable -- or as an element in a list if you are looping
-# over many runs of gFlex:
-deflection = flex.w
+
+flex.finalize()
 ```
 
 ##### With a configuration file
@@ -176,25 +176,21 @@ If you would like to use a Python script with a configuration file, this is also
 ```python
 import gflex
 
-# To use a configuration file (YAML):
+# Pass the YAML file to the constructor; F1D for 1-D, F2D for 2-D problems.
 filename = 'input/input_f1d.yaml'
-obj = gflex.WhichModel(filename)
+flex = gflex.F1D(filename)
 
-## SET MODEL TYPE AND DIMENSIONS HERE ##
-########################################
-if obj.dimension == 1:
-  obj = gflex.F1D(filename)
-elif obj.dimension == 2:
-  obj = gflex.F2D(filename)
+flex.initialize()
+flex.run()
 
-# Then run the code!
-obj.initialize(filename)
-obj.run()
-obj.finalize()
+# Read deflection before finalize (finalize clears w and qs)
+deflection = flex.w
 
 # Standalone plotting output if you so desire
-obj.plot_choice='w'
-obj.output()
+flex.plot_choice = 'w'
+flex.output()
+
+flex.finalize()
 ```
 
 
