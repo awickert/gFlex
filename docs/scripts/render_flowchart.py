@@ -35,14 +35,15 @@ def parse():
         shp   = sn.find(f'{{{YNS}}}Shape')
         style = lbl.get('fontStyle', 'plain') if lbl is not None else 'plain'
         nodes[nid] = dict(
-            x          = float(geom.get('x')),
-            y          = float(geom.get('y')),
-            w          = float(geom.get('width')),
-            h          = float(geom.get('height')),
-            fill       = fill.get('color', '#E8E8E8') if fill is not None else '#E8E8E8',
-            lw         = float(bdr.get('width', 1.5))  if bdr  is not None else 1.5,
-            ec         = bdr.get('color', '#000000')    if bdr  is not None else '#000000',
-            label      = lbl.text or ''                 if lbl  is not None else '',
+            x             = float(geom.get('x')),
+            y             = float(geom.get('y')),
+            w             = float(geom.get('width')),
+            h             = float(geom.get('height')),
+            fill          = fill.get('color', '#E8E8E8')      if fill is not None else '#E8E8E8',
+            lw            = float(bdr.get('width', 1.5))      if bdr  is not None else 1.5,
+            ec            = bdr.get('color', '#000000')        if bdr  is not None else '#000000',
+            border_dashed = (bdr.get('type') == 'dashed')     if bdr  is not None else False,
+            label         = lbl.text or ''                     if lbl  is not None else '',
             fs         = int(lbl.get('fontSize', 12))   if lbl  is not None else 12,
             bold       = ('bold'   in style),
             italic     = ('italic' in style),
@@ -72,23 +73,24 @@ def svg_node(nd, background=False):
     x, y, w, h = nd['x'], nd['y'], nd['w'], nd['h']
     cx, cy = x + w/2, y + h/2
     fill = nd['fill'];  ec = nd['ec'];  sw = nd['lw']
+    bda = ' stroke-dasharray="8,5"' if nd.get('border_dashed') else ''
     lines = []
 
     if nd['shape'] == 'ellipse':
         lines.append(f'  <ellipse cx="{q(cx)}" cy="{q(cy)}" rx="{q(w/2)}" ry="{q(h/2)}"'
-                     f' fill="{fill}" stroke="{ec}" stroke-width="{sw}"/>')
+                     f' fill="{fill}" stroke="{ec}" stroke-width="{sw}"{bda}/>')
     elif nd['shape'] == 'roundrectangle':
         r = min(10, h * 0.14)
         lines.append(f'  <rect x="{q(x)}" y="{q(y)}" width="{w}" height="{h}"'
-                     f' rx="{q(r)}" ry="{q(r)}" fill="{fill}" stroke="{ec}" stroke-width="{sw}"/>')
+                     f' rx="{q(r)}" ry="{q(r)}" fill="{fill}" stroke="{ec}" stroke-width="{sw}"{bda}/>')
     elif nd['shape'] == 'diamond':
         pts = f'{q(cx)},{q(y)} {q(x+w)},{q(cy)} {q(cx)},{q(y+h)} {q(x)},{q(cy)}'
-        lines.append(f'  <polygon points="{pts}" fill="{fill}" stroke="{ec}" stroke-width="{sw}"/>')
+        lines.append(f'  <polygon points="{pts}" fill="{fill}" stroke="{ec}" stroke-width="{sw}"{bda}/>')
     elif nd['shape'] == 'hexagon':
         d = h * 0.3
         pts = (f'{q(x+d)},{q(y)} {q(x+w-d)},{q(y)} {q(x+w)},{q(cy)} '
                f'{q(x+w-d)},{q(y+h)} {q(x+d)},{q(y+h)} {q(x)},{q(cy)}')
-        lines.append(f'  <polygon points="{pts}" fill="{fill}" stroke="{ec}" stroke-width="{sw}"/>')
+        lines.append(f'  <polygon points="{pts}" fill="{fill}" stroke="{ec}" stroke-width="{sw}"{bda}/>')
 
     label_lines = nd['label'].split('\n')
     nl = len(label_lines)
