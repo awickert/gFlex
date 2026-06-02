@@ -2,9 +2,11 @@ Boundary Conditions
 ===================
 
 Boundary conditions specify what happens at the edges of the modelled domain.
-gFlex supports six named conditions for the finite-difference (FD) solver;
+gFlex supports five named conditions for the finite-difference (FD) solver;
 each imposes constraints on which plate mechanical quantities — deflection,
 slope, bending moment, and shear force — vanish at that edge.
+(``zero_slope_zero_shear`` is accepted as a deprecated alias for ``mirror``
+and is not a distinct condition.)
 
 The spectral (FFT) and analytical-superposition (SAS / SAS_NG) methods do
 not use these named conditions.  FFT zero-pads the domain by
@@ -12,7 +14,7 @@ not use these named conditions.  FFT zero-pads the domain by
 all edges are set to ``periodic``), and SAS / SAS_NG always assume
 ``no_outside_loads``.
 
-The following figure from Wickert (2016) illustrates five of the six
+The following figure from Wickert (2016) illustrates four of the five
 conditions (``zero_displacement_zero_moment`` was added after publication):
 
 .. figure:: _static/fig4_bc_schematics.png
@@ -71,7 +73,7 @@ meaning and derivative order.
 Conditions
 ----------
 
-The table below summarises the six conditions.  Detailed descriptions,
+The table below summarises the five conditions.  Detailed descriptions,
 geological context, and ball-and-stick diagrams appear in the sections below.
 
 .. list-table::
@@ -98,12 +100,7 @@ geological context, and ball-and-stick diagrams appear in the sections below.
      - free end
      - broken plate
      - Free, unsupported plate end
-   * - ``zero_slope_zero_shear``
-     - :math:`S`,\ :math:`V`
-     - guided end
-     - —
-     - Plate is level at edge, free to deflect; no shear
-   * - ``mirror``
+   * - ``mirror`` (alias: ``zero_slope_zero_shear``)
      - :math:`S`,\ :math:`V`
      - —
      - —
@@ -252,31 +249,6 @@ of the six conditions for Earth science applications:
 
    *Free end* — no bending moment and no shear force; the plate ends freely ("broken plate").
 
-zero_slope_zero_shear
----------------------
-
-Zero slope and zero shear force: the plate is level at the boundary but
-free to deflect there, with no shear transmitted.  Wickert (2016) calls
-this "free displacement of a horizontally clamped boundary."
-
-*Standard names:* **guided end** (structural mechanics).  No established
-geophysical name.
-
-*Geological context:* No clear geophysical use case has been identified for
-this condition.  Internally, gFlex treats ``zero_slope_zero_shear`` as a
-deprecated alias for ``mirror``: both names produce exactly the same
-finite-difference stencil and identical solutions.  For any problem involving
-a plane of symmetry, ``mirror`` is the preferred name.
-
-``zero_slope_zero_shear`` is retained for backwards compatibility.
-
-.. figure:: _static/bc_diagram_0Slope0Shear.svg
-   :width: 80%
-   :align: center
-   :alt: Diagram of the zero_slope_zero_shear (guided end) boundary condition
-
-   *Guided end* — zero slope, no shear force; plate is level and free to deflect.
-
 mirror
 ------
 
@@ -291,6 +263,34 @@ solutions.  For the distinction between even and odd reflections, see
 
 *Standard names:* No standard structural-mechanics or geophysical name.
 The condition is universally understood as a symmetry or mirror boundary.
+
+*Why* ``zero_slope_zero_shear`` *is an alias:* the even-reflection ghost
+node (:math:`w_\text{ghost} = +w_\text{interior}`) makes both the slope
+and the shear force vanish at the boundary automatically.  In the
+central-difference stencil, the slope at the boundary node is
+
+.. math::
+
+   \frac{\mathrm{d}w}{\mathrm{d}x} \approx
+   \frac{w_\text{interior} - w_\text{ghost}}{2\,\Delta x}
+   = \frac{w_\text{interior} - w_\text{interior}}{2\,\Delta x} = 0,
+
+and the third derivative (shear force) similarly cancels by the same
+even symmetry:
+
+.. math::
+
+   \frac{\mathrm{d}^3 w}{\mathrm{d}x^3} \approx
+   \frac{w_{i+2} - 2w_{i+1} + 2w_{i-1} - w_{i-2}}{2\,\Delta x^3}
+   \xrightarrow{w_{i-k}=w_{i+k}} 0.
+
+The ``mirror`` ghost-node rule therefore simultaneously enforces
+:math:`\mathrm{d}w/\mathrm{d}x = 0` and
+:math:`\mathrm{d}^3w/\mathrm{d}x^3 = 0` — precisely the
+``zero_slope_zero_shear`` prescription.  The two names reach the same
+stencil by different routes and are mathematically identical.
+The string ``'zero_slope_zero_shear'`` is accepted for backwards
+compatibility and is normalised to ``'mirror'`` internally.
 
 *Geological context:* ``mirror`` applies wherever the load and plate
 geometry are symmetric about the boundary plane:
