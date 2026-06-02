@@ -41,7 +41,9 @@ flex.bc_north = "zero_displacement_zero_slope"  # north boundary condition
 
 flex.initialize()
 flex.run()
-flex.finalize()
+
+# Read deflection BEFORE calling finalize (finalize clears w and qs)
+deflection = flex.w
 
 # If you want to plot the output
 flex.plot_choice = "both"
@@ -49,7 +51,5 @@ flex.plot_choice = "both"
 # flex.w_out_file =
 flex.output()  # Plots and/or saves output, or does nothing, depending on
 # whether flex.plot_choice and/or flex.w_out_file have been set
-# TO OBTAIN OUTPUT DIRECTLY IN PYTHON, you can assign the internal variable,
-# flex.w, to another variable -- or as an element in a list if you are looping
-# over many runs of gFlex:
-deflection = flex.w
+
+flex.finalize()
