@@ -18,6 +18,7 @@ along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import contextlib
+import hashlib
 import os
 
 import warnings
@@ -27,6 +28,21 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from ._version import __version__
+
+
+def _matrix_hash(A):
+    """Return a fingerprint of sparse matrix A for LU cache invalidation.
+
+    Converts to CSR for a canonical nonzero representation, then hashes
+    the value, column-index, and row-pointer arrays with MD5.  Fast enough
+    for any grid size gFlex is likely to encounter (<1 ms at 400×400).
+    """
+    csr = A.tocsr()
+    h = hashlib.md5()
+    h.update(csr.data.tobytes())
+    h.update(csr.indices.tobytes())
+    h.update(csr.indptr.tobytes())
+    return h.digest()
 
 # Scientific colour maps (optional but strongly recommended).
 # Install with:  pip install cmcrameri
@@ -950,6 +966,16 @@ class Flexure(Utility, Plotting):
         self.plot_choice = None
         self.w_out_file = None
 
+        # LU factorization cache.
+        # False  → no cache; spsolve on every run() (default).
+        # True   → cache the factorized callable; reuse when the coefficient
+        #           matrix hash is unchanged.
+        # "no_check" → reuse the cached callable unconditionally; user
+        #           guarantees the matrix is stable across run() calls.
+        self.cache_factorization = False
+        self._lu = None
+        self._lu_matrix_hash = None
+
         # Set GRASS GIS usage flag: if GRASS is used, don't display error
         # messages related to unset options. This sets it to False if it
         # hasn't already been set (and it can be set after this too)
@@ -1237,7 +1263,7 @@ class Flexure(Utility, Plotting):
         ``AttributeError``.  Called automatically by :meth:`F1D.finalize` and
         :meth:`F2D.finalize`.
         """
-        for _attr in ("w", "qs", "coeff_matrix"):
+        for _attr in ("w", "qs", "coeff_matrix", "_lu", "_lu_matrix_hash"):
             with contextlib.suppress(AttributeError):
                 delattr(self, _attr)
         if not self.quiet:
