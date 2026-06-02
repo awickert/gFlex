@@ -24,6 +24,21 @@
   no longer documented or read by any solver.  Existing scripts that set it
   will not raise an error, but the value has no effect.
 
+### Performance
+
+- **LU factorization cache** — set ``flex.cache_factorization = True`` to
+  cache the sparse-LU factorization of the FD coefficient matrix across
+  ``run()`` calls.  The cache is reused automatically when the matrix is
+  unchanged (Te, grid, BCs, and physical parameters all fixed) and
+  invalidated by a hash comparison when any of those inputs change.  Set
+  ``flex.cache_factorization = "no_check"`` to skip the hash and reuse the
+  factorization unconditionally — maximum performance for coupling workflows
+  where the user guarantees matrix stability.  Default ``False`` preserves
+  existing behaviour.
+- **Multithreaded FFT** — ``scipy.fft`` transforms now use all available CPU
+  threads (``workers=-1``).  Benefit is marginal at typical grid sizes;
+  meaningful at very large grids (≳ 2000 × 2000 cells).
+
 ### Improvements
 
 - `twoSurfplots()` now shows three panels (load, elastic thickness, deflection)
