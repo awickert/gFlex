@@ -140,7 +140,7 @@ in the discipline's vocabulary rather than a gap in documentation.
 ----
 
 zero_displacement_zero_slope
--------------------
+----------------------------
 
 Zero displacement and zero slope: the plate is fully clamped at the
 boundary — no deflection and no rotation.
@@ -167,7 +167,7 @@ physical plate edge.
    *Clamped end* — zero deflection and zero slope at the boundary.
 
 zero_displacement_zero_moment
---------------------
+-----------------------------
 
 Zero displacement and zero bending moment: the classical simply-supported
 (pinned) plate end.  The plate is held at zero deflection but is free to
@@ -220,7 +220,7 @@ satisfy ``zero_displacement_zero_moment``; cosine modes satisfy ``mirror``.
    *Simply supported* — zero deflection, free to rotate; no bending moment transmitted.
 
 zero_moment_zero_shear
--------------
+----------------------
 
 The natural condition at a free edge: no bending moment and no shear
 force are transmitted across the boundary (Wickert, 2016, Table 1).  It
@@ -256,7 +256,7 @@ of the six conditions for Earth science applications:
    *Free end* — no bending moment and no shear force; the plate ends freely ("broken plate").
 
 zero_slope_zero_shear
-------------
+---------------------
 
 Zero slope and zero shear force: the plate is level at the boundary but
 free to deflect there, with no shear transmitted.  Wickert (2016) calls
@@ -342,3 +342,105 @@ the region of interest:
    :alt: Diagram of the periodic boundary condition
 
    *periodic* — the domain wraps around; opposite edges are connected.
+
+----
+
+Prescribed (non-zero) boundary values
+--------------------------------------
+
+By default every boundary condition above enforces **homogeneous** constraints
+— the two named quantities are zero at the edge.  The finite-difference solver
+also supports **prescribed (non-zero)** values by passing a ``dict`` in place
+of a BC string.
+
+This is available in :class:`~gflex.F1D` and :class:`~gflex.F2D` with
+``method = 'fd'``.  Passing a dict BC to any other solver raises
+:exc:`ValueError`.
+
+Syntax
+~~~~~~
+
+Set the BC attribute for a given edge to a dict with exactly two keys, where
+each key names a plate mechanical quantity and each value is either a scalar
+or a 1-D NumPy array:
+
+.. code-block:: python
+
+   flex.bc_west = {"moment": 0.0, "shear": V0}          # broken-plate edge load
+   flex.bc_west = {"displacement": 0.0, "slope": theta}  # prescribed rotation
+   flex.bc_east = {"displacement": w_array, "moment": 0.0}
+
+The four valid keys are:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 15 70
+
+   * - Key
+     - Symbol
+     - Prescribed quantity
+   * - ``"displacement"``
+     - :math:`w`
+     - Vertical deflection [m]
+   * - ``"slope"``
+     - :math:`dw/dx`
+     - Plate slope (rotation) [rad, dimensionless]
+   * - ``"moment"``
+     - :math:`M`
+     - Bending moment [N m / m in 1-D; N in 2-D]
+   * - ``"shear"``
+     - :math:`V`
+     - Shear force [N / m in 1-D; N/m in 2-D]
+
+Valid pairs
+~~~~~~~~~~~
+
+Each dict must contain exactly **two** keys whose combination corresponds to
+one of the four supported BC types:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Dict keys
+     - Equivalent homogeneous BC
+   * - ``{"displacement", "slope"}``
+     - ``zero_displacement_zero_slope``
+   * - ``{"displacement", "moment"}``
+     - ``zero_displacement_zero_moment``
+   * - ``{"moment", "shear"}``
+     - ``zero_moment_zero_shear``
+   * - ``{"slope", "shear"}``
+     - ``zero_slope_zero_shear``
+
+The two work-conjugate pairs — ``{"displacement", "shear"}`` and
+``{"slope", "moment"}`` — are ill-posed and raise :exc:`ValueError`.
+
+Array values (2-D only)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+In 2-D, values may be 1-D arrays that vary along the edge.  An array
+assigned to a north or south edge must have length equal to the number of
+columns; one assigned to a west or east edge must have length equal to the
+number of rows.  Scalar values are broadcast to the full edge.
+
+Example: broken-plate edge load (1-D)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The classical broken-plate (Turcotte & Schubert) scenario applies a vertical
+point force :math:`V_0` at the plate end:
+
+.. code-block:: python
+
+   from gflex import F1D
+
+   flex = F1D()
+   flex.method = 'fd'
+   # ... set grid and physical parameters ...
+   flex.bc_west = "zero_moment_zero_shear"
+   flex.bc_east = {"moment": 0.0, "shear": V0}   # edge load at east end
+
+   flex.initialize()
+   flex.run()
+   w = flex.w
+   flex.finalize()
