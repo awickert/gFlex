@@ -4,6 +4,10 @@
 
 ### Breaking changes
 
+- **INI configuration file format removed** — only YAML (`.yaml` / `.yml`)
+  configuration files are supported.  Passing a `.ini` file now raises
+  `ValueError`.  Convert any remaining INI configs to YAML format.
+
 - **Iterative FD solver removed** — `F1D` now always uses a direct sparse LU
   factorization.  Setting `Solver = 'iterative'` has no effect (a message is
   printed and the direct solver is used instead).  The `ConvergenceTolerance`
