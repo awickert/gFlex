@@ -79,9 +79,9 @@ Quick start
    flex.bc_east = 'zero_moment_zero_shear'
    flex.initialize()
    flex.run()
-   flex.finalize()
 
    deflection = flex.w   # (50, 50) array; negative values = downward
+   flex.finalize()        # releases w, qs, and the coefficient matrix
 
 Configuration files
 -------------------
