@@ -315,40 +315,21 @@ def run():
     # ------------------------------------------------------------------
     # mirror — even reflection; correct discrete symmetry BC.
     # Ghost values: w₀ = +w₂, w₋₁ = +w₃ (even reflection about boundary
-    # node w₁).  Exactly equivalent to periodic on the 2× even-extended
-    # domain.
+    # node w₁).  An extra solid node (w₋₂) at x = −3 shows the implied
+    # other half of the symmetric plate, analogous to the far-end nodes in
+    # the periodic diagram.  The deflection curve is symmetric about w₁.
     # ------------------------------------------------------------------
     ry = [0.58, 0.72, 0.68, 0.52]
     real = list(zip([0, 1, 2, 3], ry))
     draw_bc(
         name        = "mirror",
         title       = "mirror",
-        subtitle    = "symmetry (even reflection):\n  dw/dx = 0 at boundary",
+        subtitle    = "symmetry (even reflection):\n  dw/dx = 0,  V = 0",
         bdy_x       = -0.5,
         real_xy     = real,
-        ghost_xy    = [(-2, ry[2]), (-1, ry[1])],
-        ghost_kinds = ["ghost", "ghost"],
-        ghost_equations = [r"$= +w_3$", r"$= +w_2$"],
-        pins        = [],
-    )
-
-    # ------------------------------------------------------------------
-    # zero_slope_zero_shear — level, shear-free boundary
-    # Same ghost equations as mirror (w₀ = +w₂, w₋₁ = +w₃), but uses a
-    # different stencil at the second boundary row.  An approximation to
-    # the symmetry condition; mirror is the exact discrete implementation.
-    # ------------------------------------------------------------------
-    ry = [0.58, 0.72, 0.68, 0.52]
-    real = list(zip([0, 1, 2, 3], ry))
-    draw_bc(
-        name        = "zero_slope_zero_shear",
-        title       = "zero_slope_zero_shear",
-        subtitle    = "level, shear-free:\n  dw/dx = 0,  V = 0",
-        bdy_x       = -0.5,
-        real_xy     = real,
-        ghost_xy    = [(-2, ry[2]), (-1, ry[1])],
-        ghost_kinds = ["ghost", "ghost"],
-        ghost_equations = [r"$= +w_3$", r"$= +w_2$"],
+        ghost_xy    = [(-3, ry[3]), (-2, ry[2]), (-1, ry[1])],
+        ghost_kinds = ["real", "ghost", "ghost"],
+        ghost_equations = [None, r"$= +w_3$", r"$= +w_2$"],
         pins        = [],
     )
 
