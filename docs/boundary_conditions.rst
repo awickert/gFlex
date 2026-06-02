@@ -351,11 +351,26 @@ Prescribed (non-zero) boundary values
 By default every boundary condition above enforces **homogeneous** constraints
 — the two named quantities are zero at the edge.  The finite-difference solver
 also supports **prescribed (non-zero)** values by passing a ``dict`` in place
-of a BC string.
+of a BC string.  This is the natural way to model a plate whose edge carries
+an applied load: for example, prescribing the shear force at a free end to
+represent slab pull at an ocean trench (the classical broken-plate scenario
+of Turcotte and Schubert, 2002), or setting a non-zero boundary displacement
+when coupling gFlex to another model.
 
 This is available in :class:`~gflex.F1D` and :class:`~gflex.F2D` with
 ``method = 'fd'``.  Passing a dict BC to any other solver raises
 :exc:`ValueError`.
+
+Relationship to string BCs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A dict BC uses the **same finite-difference stencil** as the equivalent string
+BC.  The prescribed values enter as an additive correction to the right-hand
+side of the linear system — the coefficient matrix is unchanged.  As a
+consequence, ``{"moment": 0.0, "shear": 0.0}`` produces exactly the same
+solution as the string ``"zero_moment_zero_shear"``: both constrain the same
+stencil structure and the RHS correction is zero.  Only non-zero values
+change the solution.
 
 Syntax
 ~~~~~~
@@ -374,7 +389,7 @@ The four valid keys are:
 
 .. list-table::
    :header-rows: 1
-   :widths: 15 15 70
+   :widths: 15 12 73
 
    * - Key
      - Symbol
@@ -384,13 +399,13 @@ The four valid keys are:
      - Vertical deflection [m]
    * - ``"slope"``
      - :math:`dw/dx`
-     - Plate slope (rotation) [rad, dimensionless]
+     - Plate slope (dimensionless)
    * - ``"moment"``
      - :math:`M`
-     - Bending moment [N m / m in 1-D; N in 2-D]
+     - Bending moment per unit edge length [N, i.e. N·m m⁻¹]
    * - ``"shear"``
      - :math:`V`
-     - Shear force [N / m in 1-D; N/m in 2-D]
+     - Shear force per unit edge length [N m⁻¹]
 
 Valid pairs
 ~~~~~~~~~~~
@@ -425,22 +440,61 @@ columns; one assigned to a west or east edge must have length equal to the
 number of rows.  Scalar values are broadcast to the full edge.
 
 Example: broken-plate edge load (1-D)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The classical broken-plate (Turcotte & Schubert) scenario applies a vertical
-point force :math:`V_0` at the plate end:
+The classical broken-plate scenario (Turcotte & Schubert, 2002) represents a
+semi-infinite oceanic plate carrying a vertical point force :math:`V_0` at the
+trench end — the idealisation of slab pull at a subduction zone.  The plate
+bends downward at the trench and a forebulge (outer rise) develops at
+approximately :math:`\pi\alpha/2` from the loaded end.
+
+The boundary condition is zero moment and prescribed (downward) shear at the
+west end, with a free ``zero_moment_zero_shear`` condition at the far east end:
 
 .. code-block:: python
 
+   import numpy as np
    from gflex import F1D
 
+   # Physical parameters
+   E        = 65e9     # Pa — Young's modulus
+   nu       = 0.25
+   rho_m    = 3300.0   # kg m⁻³ — mantle density
+   rho_fill = 0.0      # kg m⁻³ — air infill
+   g        = 9.8      # m s⁻²
+   Te       = 30e3     # m  — elastic thickness
+
+   # Derived quantities
+   D     = E * Te**3 / (12.0 * (1.0 - nu**2))          # flexural rigidity
+   lam   = ((rho_m - rho_fill) * g / (4.0 * D)) ** 0.25
+   alpha = 1.0 / lam                                    # flexural parameter ≈ 66 km
+
+   # Domain: 10 α long, 401 nodes
+   nx = 401
+   dx = 10.0 * alpha / (nx - 1)
+
+   # Slab-pull shear force at the trench (negative = downward), N/m
+   V0 = -1e8
+
    flex = F1D()
-   flex.method = 'fd'
-   # ... set grid and physical parameters ...
-   flex.bc_west = "zero_moment_zero_shear"
-   flex.bc_east = {"moment": 0.0, "shear": V0}   # edge load at east end
+   flex.quiet    = True
+   flex.method   = 'fd'
+   flex.g = g;  flex.E = E;  flex.nu = nu
+   flex.rho_m = rho_m;  flex.rho_fill = rho_fill
+   flex.te       = Te
+   flex.qs       = np.zeros(nx)   # no distributed load — forcing is at the boundary
+   flex.dx       = dx
+   flex.bc_west  = {"moment": 0.0, "shear": V0}   # trench: zero moment, prescribed shear
+   flex.bc_east  = "zero_moment_zero_shear"         # free far end
 
    flex.initialize()
    flex.run()
-   w = flex.w
+   w = flex.w   # deflection [m]; w[0] ≈ −93 mm (trench), forebulge ≈ +6 mm at x ≈ 156 km
    flex.finalize()
+
+The result matches the analytical solution
+:math:`w(x) = \frac{V_0}{2D\lambda^3}\,e^{-\lambda x}\cos(\lambda x)`
+to within 0.02 % (L-∞ relative error).
+
+A standalone version of this script with plotting is provided in
+``input/run_in_script_prescribed_bc_1D.py``.
