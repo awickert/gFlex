@@ -1225,18 +1225,17 @@ class Flexure(Utility, Plotting):
     # Finalize
     def finalize(self):
         """
-        Release cached solver state.
+        Release all model state.
 
-        Deletes the coefficient matrix so it is rebuilt fresh on the next
-        call, which matters when running iteratively with changing inputs.
-        Called automatically by :meth:`F1D.finalize` and
+        Deletes the deflection result (``w``), the load array (``qs``), and
+        the cached coefficient matrix.  Read ``w`` and save any output
+        **before** calling ``finalize``; accessing ``w`` afterwards will raise
+        ``AttributeError``.  Called automatically by :meth:`F1D.finalize` and
         :meth:`F2D.finalize`.
         """
-        # Can include an option for this later, but for the moment, this will
-        # clear the coefficient array so it doens't cause problems for model runs
-        # searching for the proper rigidity
-        with contextlib.suppress(AttributeError):
-            del self.coeff_matrix
+        for _attr in ("w", "qs", "coeff_matrix"):
+            with contextlib.suppress(AttributeError):
+                delattr(self, _attr)
         if not self.quiet:
             print("")
 
