@@ -114,9 +114,10 @@ Running gFlex
 
    flex.initialize()
    flex.run()
-   flex.finalize()
 
    w = flex.w   # deflection array [m]; negative = downward
+   # flex.output() here to save/plot via the built-in helpers.
+   # flex.finalize() when you are done with w and qs (frees all state).
 
 The result: ~54 m of central subsidence and ~1 m of forebulge uplift.
 The asymmetry between the west (soft) and east (stiff) sides is clear in
@@ -127,14 +128,15 @@ Matplotlib visualisation
 ------------------------
 
 The built-in ``Plotting()`` method produces a figure for whatever outputs
-are available.  For a 2-D run with both load and deflection, call
-``twoSurfplots()`` directly if you want side-by-side panels:
+are available.  For a 2-D run, call ``twoSurfplots()`` directly; when
+``Te`` is a 2-D array it shows three panels (load, elastic thickness,
+deflection):
 
 .. code-block:: python
 
    import matplotlib.pyplot as plt
 
-   flex.twoSurfplots()   # load and deflection, stacked vertically
+   flex.twoSurfplots()   # load, Te, and deflection (three panels for 2-D Te)
    plt.show()
 
 Or, for the three-panel view used in this example (load, :math:`T_e`,
