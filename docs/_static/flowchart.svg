@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1090" height="882" viewBox="0 0 1090 882">
+<svg xmlns="http://www.w3.org/2000/svg" width="1090" height="909" viewBox="0 0 1090 909">
   <defs>
     <marker id="arr" markerWidth="11" markerHeight="8" refX="0" refY="4"
             orient="auto" markerUnits="userSpaceOnUse">
       <polygon points="0,0 11,4 0,8" fill="#000000"/>
     </marker>
   </defs>
-  <rect width="1090" height="882" fill="white"/>
+  <rect width="1090" height="909" fill="white"/>
   <rect x="60.00" y="311.66" width="860.0" height="100.0" rx="10.00" ry="10.00" fill="#F2F2F2" stroke="#BBBBBB" stroke-width="1.0"/>
   <text text-anchor="middle" dominant-baseline="central" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="normal" font-style="italic" fill="#888888" transform="rotate(-90,70.00,361.66)">
     <tspan x="70.00" y="361.66" dominant-baseline="central">Solution Method</tspan>
@@ -37,7 +37,8 @@
   <polyline points="771.00,519.45 771.00,653.45 516.00,653.45 516.00,666.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
   <polyline points="871.00,519.45 871.00,653.45 516.00,653.45 516.00,666.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
   <polyline points="976.00,519.45 976.00,653.45 516.00,653.45 516.00,666.45" fill="none" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="516.00" y1="721.45" x2="516.00" y2="767.56" stroke="#000000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="516.00" y1="721.45" x2="516.00" y2="730.45" stroke="#000000" stroke-width="1.5" stroke-dasharray="13,8" marker-end="url(#arr)"/>
+  <line x1="516.00" y1="785.45" x2="516.00" y2="794.45" stroke="#000000" stroke-width="1.5" stroke-dasharray="13,8" marker-end="url(#arr)"/>
   <polygon points="516.00,59.66 621.00,101.66 516.00,143.66 411.00,101.66" fill="#E8E8E8" stroke="#000000" stroke-width="1.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="normal">
     <tspan x="516.00" y="91.53" dominant-baseline="central">Loads,</tspan>
@@ -106,8 +107,12 @@
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="bold">
     <tspan x="516.00" y="699.45" dominant-baseline="central">Run</tspan>
   </text>
-  <ellipse cx="516.00" cy="800.56" rx="55.00" ry="22.00" fill="#E8E8E8" stroke="#000000" stroke-width="2.5"/>
+  <ellipse cx="516.00" cy="763.45" rx="55.00" ry="22.00" fill="#E8E8E8" stroke="#000000" stroke-width="1.5" stroke-dasharray="8,5"/>
+  <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="normal">
+    <tspan x="516.00" y="763.45" dominant-baseline="central">Output</tspan>
+  </text>
+  <ellipse cx="516.00" cy="827.45" rx="55.00" ry="22.00" fill="#E8E8E8" stroke="#000000" stroke-width="2.5"/>
   <text text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="bold">
-    <tspan x="516.00" y="800.56" dominant-baseline="central">Finalize</tspan>
+    <tspan x="516.00" y="827.45" dominant-baseline="central">Finalize</tspan>
   </text>
 </svg>

@@ -260,11 +260,25 @@ Analytical Solutions
       </data>
     </node>
 
+    <!-- BMI: output (optional) cx=516 -->
+    <node id="n_output">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry x="461.00" y="741.45" width="110" height="44"/>
+          <y:Fill color="#E8E8E8" transparent="false"/>
+          <y:BorderStyle type="dashed" width="1.5" color="#000000"/>
+          <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="plain"
+                       alignment="center">Output</y:NodeLabel>
+          <y:Shape type="ellipse"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+
     <!-- BMI: finalize  cx=516 -->
     <node id="n14">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry x="461.00" y="778.56" width="110" height="44"/>
+          <y:Geometry x="461.00" y="805.45" width="110" height="44"/>
           <y:Fill color="#E8E8E8" transparent="false"/>
           <y:BorderStyle type="line" width="2.5" color="#000000"/>
           <y:NodeLabel fontFamily="Arial" fontSize="15" fontStyle="bold"
@@ -489,10 +503,18 @@ Analytical Solutions
       </y:PolyLineEdge></data>
     </edge>
 
-    <!-- Run → Finalize (straight vertical, both cx=516) -->
-    <edge id="e19" source="n0" target="n14">
+    <!-- Run → output() (dashed: optional step) -->
+    <edge id="e19" source="n0" target="n_output">
       <data key="d10"><y:PolyLineEdge>
-        <y:LineStyle type="line" width="1.5" color="#000000"/>
+        <y:LineStyle type="dashed" width="1.5" color="#000000"/>
+        <y:Arrows source="none" target="standard"/>
+      </y:PolyLineEdge></data>
+    </edge>
+
+    <!-- output() → Finalize (dashed: optional step) -->
+    <edge id="e23" source="n_output" target="n14">
+      <data key="d10"><y:PolyLineEdge>
+        <y:LineStyle type="dashed" width="1.5" color="#000000"/>
         <y:Arrows source="none" target="standard"/>
       </y:PolyLineEdge></data>
     </edge>
