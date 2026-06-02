@@ -334,32 +334,33 @@ def _te_2d(ny, nx, profile, dx=5000.0, dy=5000.0):
 
 # ── object builders ───────────────────────────────────────────────────────────
 
-def _make_f1d(n, method, te=_TE_REF, solver="direct", bc="0Displacement0Slope"):
+def _make_f1d(n, method, te=_TE_REF, solver="direct",
+              bc="zero_displacement_zero_slope"):
     flex = F1D()
-    flex.Quiet = True
-    flex.Method = method
-    flex.Solver = solver
+    flex.quiet = True
+    flex.method = method
+    flex.solver = solver
     flex.dx = 5000.0
-    flex.Te = te
+    flex.te = te
     flex.qs = np.zeros(n)
     flex.qs[n // 4 : 3 * n // 4] = 1e6
-    flex.BC_W = bc
-    flex.BC_E = bc
+    flex.bc_west = bc
+    flex.bc_east = bc
     for k, v in _COMMON.items():
         setattr(flex, k, v)
     flex.initialize()
     return flex
 
 
-def _make_f2d(nx, ny, method, te=_TE_REF, solver="direct", bc="0Displacement0Slope",
-              qs=None):
+def _make_f2d(nx, ny, method, te=_TE_REF, solver="direct",
+              bc="zero_displacement_zero_slope", qs=None):
     flex = F2D()
-    flex.Quiet = True
-    flex.Method = method
-    flex.Solver = solver
+    flex.quiet = True
+    flex.method = method
+    flex.solver = solver
     flex.dx = 5000.0
     flex.dy = 5000.0
-    flex.Te = te
+    flex.te = te
     if qs is None:
         flex.qs = np.zeros((ny, nx))
         # Central quarter-area load (central 50 % of each axis = 25 % of domain
@@ -367,10 +368,10 @@ def _make_f2d(nx, ny, method, te=_TE_REF, solver="direct", bc="0Displacement0Slo
         flex.qs[ny // 4 : 3 * ny // 4, nx // 4 : 3 * nx // 4] = 1e6
     else:
         flex.qs = qs.copy()
-    flex.BC_W = bc
-    flex.BC_E = bc
-    flex.BC_N = bc
-    flex.BC_S = bc
+    flex.bc_west = bc
+    flex.bc_east = bc
+    flex.bc_north = bc
+    flex.bc_south = bc
     for k, v in _COMMON.items():
         setattr(flex, k, v)
     flex.initialize()
@@ -453,7 +454,7 @@ def bench_1d_fd(sizes, profiles=_TE_PROFILES_1D):
 
             t0 = _tick()
             flex.elasprepFD()
-            flex.BC_selector_and_coeff_matrix_creator()
+            flex._build_coefficient_matrix()
             t_asm = _tick() - t0
 
             t0 = _tick()
@@ -482,7 +483,7 @@ def bench_2d_fd(sizes, profiles=_TE_PROFILES_2D):
 
             t0 = _tick()
             flex.elasprep()
-            flex.BC_selector_and_coeff_matrix_creator()
+            flex._build_coefficient_matrix()
             t_asm = _tick() - t0
 
             t0 = _tick()
@@ -518,7 +519,7 @@ def bench_2d_fd_nonsquare(shapes, profiles=_TE_PROFILES_2D_NONSQ):
 
             t0 = _tick()
             flex.elasprep()
-            flex.BC_selector_and_coeff_matrix_creator()
+            flex._build_coefficient_matrix()
             t_asm = _tick() - t0
 
             t0 = _tick()
