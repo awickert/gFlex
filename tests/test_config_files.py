@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 """Tests for YAML configuration file loading."""
 
-import configparser
 import pathlib
 
 import numpy as np
@@ -49,8 +48,7 @@ def test_yaml_2d_runs():
 def test_missing_required_key_raises():
     """A required config key missing from the config raises ValueError, not SystemExit."""
     flex = F1D()
-    flex.config = configparser.ConfigParser()
-    flex.config.add_section("input")
+    flex.config = {"input": {}}
     # ElasticThickness is absent — configGet with optional=False must raise ValueError
     with pytest.raises(ValueError, match="ElasticThickness"):
         flex.configGet("float", "input", "ElasticThickness", optional=False)
