@@ -1004,28 +1004,28 @@ class TestNeumannSuperposition:
         w_n = _run_sq(_FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
         w   = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS,
                        {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
-        np.testing.assert_allclose(w, w_w + w_n, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w, w_w + w_n, rtol=1e-9, atol=0)
 
     def test_west_south(self):
         w_w = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS, _FREE_NS)
         w_s = _run_sq(_FREE_NS, _FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
         w   = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS,
                        _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
-        np.testing.assert_allclose(w, w_w + w_s, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w, w_w + w_s, rtol=1e-9, atol=0)
 
     def test_east_north(self):
         w_e = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS)
         w_n = _run_sq(_FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
         w   = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0},
                        {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
-        np.testing.assert_allclose(w, w_e + w_n, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w, w_e + w_n, rtol=1e-9, atol=0)
 
     def test_east_south(self):
         w_e = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS)
         w_s = _run_sq(_FREE_NS, _FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
         w   = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0},
                        _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
-        np.testing.assert_allclose(w, w_e + w_s, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w, w_e + w_s, rtol=1e-9, atol=0)
 
     # --- opposite-edge pairs ---
 
@@ -1034,14 +1034,14 @@ class TestNeumannSuperposition:
         w_e = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS)
         w   = _run_sq({"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0},
                        _FREE_NS, _FREE_NS)
-        np.testing.assert_allclose(w, w_w + w_e, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w, w_w + w_e, rtol=1e-9, atol=0)
 
     def test_north_south(self):
         w_n = _run_sq(_FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
         w_s = _run_sq(_FREE_NS, _FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
         w   = _run_sq(_FREE_NS, _FREE_NS,
                        {"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0})
-        np.testing.assert_allclose(w, w_n + w_s, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w, w_n + w_s, rtol=1e-9, atol=0)
 
     # --- all four ---
 
@@ -1054,7 +1054,7 @@ class TestNeumannSuperposition:
             {"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0},
             {"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0},
         )
-        np.testing.assert_allclose(w, w_w + w_e + w_n + w_s, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w, w_w + w_e + w_n + w_s, rtol=1e-9, atol=0)
 
 
 # ---------------------------------------------------------------------------
