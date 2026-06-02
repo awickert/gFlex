@@ -109,6 +109,7 @@ def _stencil_arc(ax, x0, y0, x1, y1, label="", color=C_ARC, rad=0.38):
 # ── main drawing function ──────────────────────────────────────────────────
 
 def draw_bc(*, name, title, subtitle,
+            alias=None,           # optional second name shown below title in bold italic
             bdy_x,
             real_xy,          # [(x, y), ...] — physical domain nodes, left→right
             ghost_xy,         # [(x, y), ...] — ghost nodes, outer→inner
@@ -245,13 +246,18 @@ def draw_bc(*, name, title, subtitle,
         ax.text(x, label_y, lbl, ha="center", va="top", fontsize=9,
                 color=C_EDGE)
 
-    # title and subtitle — left-anchored; "\n" for line breaks
+    # title, optional alias, and subtitle — left-anchored; "\n" for line breaks
     title_x = xlo + 0.05
     ty = yhi - 0.02
     for line in title.split("\n"):
         ax.text(title_x, ty, line,
                 ha="left", va="top", fontsize=10, fontweight="bold")
         ty -= 0.20
+    if alias:
+        ax.text(title_x, ty, alias,
+                ha="left", va="top", fontsize=9,
+                fontweight="bold", style="italic", color="#444444")
+        ty -= 0.19
     for line in subtitle.split("\n"):
         ax.text(title_x, ty, line,
                 ha="left", va="top", fontsize=8.5, color="#444444", style="italic")
@@ -315,21 +321,20 @@ def run():
     # ------------------------------------------------------------------
     # mirror — even reflection; correct discrete symmetry BC.
     # Ghost values: w₀ = +w₂, w₋₁ = +w₃ (even reflection about boundary
-    # node w₁).  An extra solid node (w₋₂) at x = −3 shows the implied
-    # other half of the symmetric plate, analogous to the far-end nodes in
-    # the periodic diagram.  The deflection curve is symmetric about w₁.
+    # node w₁).  zero_slope_zero_shear is a deprecated alias.
     # ------------------------------------------------------------------
     ry = [0.58, 0.72, 0.68, 0.52]
     real = list(zip([0, 1, 2, 3], ry))
     draw_bc(
         name        = "mirror",
         title       = "mirror",
-        subtitle    = "symmetry (even reflection):\n  dw/dx = 0,  V = 0",
+        alias       = "zero_slope_zero_shear",
+        subtitle    = "  dw/dx = 0,  V = 0",
         bdy_x       = -0.5,
         real_xy     = real,
-        ghost_xy    = [(-3, ry[3]), (-2, ry[2]), (-1, ry[1])],
-        ghost_kinds = ["real", "ghost", "ghost"],
-        ghost_equations = [None, r"$= +w_3$", r"$= +w_2$"],
+        ghost_xy    = [(-2, ry[2]), (-1, ry[1])],
+        ghost_kinds = ["ghost", "ghost"],
+        ghost_equations = [r"$= +w_3$", r"$= +w_2$"],
         pins        = [],
     )
 
