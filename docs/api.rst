@@ -99,9 +99,6 @@ interpretation deserves verification:
   force).  This is physically appropriate for a rifted margin or spreading ridge
   where the plate really is broken, but is often applied uncritically elsewhere
   in the literature.
-* ``'zero_slope_zero_shear'`` — requires the plate to be simultaneously horizontal and
-  shear-free at the boundary.  No clear geological analog is known for this
-  combination in a non-trivial deflection setting.
 
 **Proximity warnings** fire for ``'zero_displacement_zero_slope'`` boundaries when the
 nearest loaded cell is within one flexural wavelength
