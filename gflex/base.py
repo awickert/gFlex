@@ -155,30 +155,24 @@ class Utility:
         self, vartype, category, name, optional=False, specialReturnMessage=None
     ):
         """
-        Wraps a try / except and a check for self.filename around ConfigParser
-        as it talks to the configuration file.
-        Also, checks for existence of configuration file so this won't execute (and fail)
-        when no configuration file is provided (e.g., running in coupled mode with CSDMS
-        entirely with getters and setters)
+        Reads a configuration value from self.config (a nested dict loaded from YAML).
 
         vartype can be 'float', 'str' or 'string' (str and string are the same),
-        or 'int' or 'integer' (also the same).
+        'int' or 'integer' (also the same), or 'bool' or 'boolean'.
 
-        "Optional" determines whether or not the program will exit if the variable
-        fails to load. Set it to "True" if you don't want it to exit. In this case,
-        the variable will be set to "None". Otherwise, it defaults to "False".
+        optional=True: if the key is absent, return None instead of raising ValueError.
 
-        "specialReturnMessage" is something that you would like to add at the end
-        of a failure to execute message. By default it does not print.
+        specialReturnMessage: extra text appended to the error message on failure.
         """
 
         try:
+            raw = self.config[category][name]
             if vartype == "float":
-                var = self.config.getfloat(category, name)
+                var = float(raw)
             elif vartype == "string" or vartype == "str":
-                var = self.config.get(category, name)
+                var = "" if raw is None else str(raw)
                 if var == "" and not optional:
-                    # but "" is acceptable for boundary conditions
+                    # "" is acceptable for boundary conditions
                     if name[:18] != "boundary_condition":
                         if not self.quiet:
                             print(
@@ -188,9 +182,14 @@ class Utility:
                             print(name, "is not optional.")
                             print("Program crash likely to occur.")
             elif vartype == "integer" or vartype == "int":
-                var = self.config.getint(category, name)
+                var = int(raw)
             elif vartype == "boolean" or vartype == "bool":
-                var = self.config.getboolean(category, name)
+                if isinstance(raw, bool):
+                    var = raw
+                elif isinstance(raw, int):
+                    var = bool(raw)
+                else:
+                    var = str(raw).lower() in ("true", "yes", "1", "on")
             else:
                 raise ValueError(
                     "Please enter 'float', 'string' (or 'str'), 'integer' (or 'int'),"
@@ -220,21 +219,17 @@ class Utility:
                 raise ValueError(msg)
 
     def _load_config(self, filename):
-        """Read a YAML configuration file and return a ConfigParser for internal use.
+        """Read a YAML configuration file and return a nested dict.
 
         Only YAML (``.yaml`` / ``.yml``) configuration files are supported.
         The file must use the standard section names (``mode``, ``parameter``,
         ``input``, ``output``, ``numerical``, ``numerical2D``, ``verbosity``).
         """
-        import configparser
-
-        config = configparser.ConfigParser()
         ext = os.path.splitext(filename)[1].lower()
         if ext not in (".yaml", ".yml"):
             raise ValueError(
                 f"Configuration file '{filename}' does not have a .yaml or .yml "
-                "extension. INI-format configuration files are no longer supported. "
-                "Convert to YAML format."
+                "extension. Only YAML configuration files are supported."
             )
         try:
             import yaml
@@ -245,13 +240,7 @@ class Utility:
             )
         with open(filename) as fh:
             data = yaml.safe_load(fh)
-        for section, values in data.items():
-            if not isinstance(values, dict):
-                continue
-            config.add_section(section)
-            for key, val in values.items():
-                config.set(section, key, "" if val is None else str(val))
-        return config
+        return {k: v for k, v in data.items() if isinstance(v, dict)}
 
     def readyCoeff(self):
         from scipy import sparse
