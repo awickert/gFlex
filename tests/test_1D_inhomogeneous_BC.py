@@ -126,9 +126,10 @@ def _run(bc_west, bc_east, nx=NX, L=L_DOMAIN):
         warnings.simplefilter("ignore")
         flex.initialize()
         flex.run()
+        w = flex.w
         flex.finalize()
 
-    return x, flex.w
+    return x, w
 
 
 def _check(w_num, w_ex, label):

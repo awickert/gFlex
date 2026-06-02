@@ -28,7 +28,6 @@ def _run_flex_1d(Te, qs, dx, method="fd", bc_w="zero_moment_zero_shear",
         flex.sigma_xx = sigma_xx
     flex.initialize()
     flex.run()
-    flex.finalize()
     return flex
 
 

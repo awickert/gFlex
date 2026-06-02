@@ -65,7 +65,6 @@ def _run(qs, method="sas", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero
     flex.bc_east    = bc_e
     flex.initialize()
     flex.run()
-    flex.finalize()
     return flex
 
 
@@ -155,7 +154,6 @@ def _run_sas_ng(x, q, xw):
     flex.xw       = xw.copy()
     flex.initialize()
     flex.run()
-    flex.finalize()
     return flex
 
 

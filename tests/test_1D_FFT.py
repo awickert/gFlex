@@ -43,7 +43,6 @@ def _run_flex_1d(qs, method="fft", bc_w="", bc_e="", sigma_xx=None):
         flex.sigma_xx = sigma_xx
     flex.initialize()
     flex.run()
-    flex.finalize()
     return flex
 
 

@@ -79,7 +79,6 @@ def _run(qs, method="fd", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_
         flex.sigma_xy = sigma_xy
     flex.initialize()
     flex.run()
-    flex.finalize()
     return flex
 
 

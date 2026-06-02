@@ -145,8 +145,9 @@ def _run_1d(dx, qs, bc):
         warnings.simplefilter("ignore")
         s.initialize()
         s.run()
+        w = s.w
         s.finalize()
-    return s.w
+    return w
 
 
 def _run_2d(dx, qs, bc):
@@ -171,8 +172,9 @@ def _run_2d(dx, qs, bc):
         warnings.simplefilter("ignore")
         s.initialize()
         s.run()
+        w = s.w
         s.finalize()
-    return s.w
+    return w
 
 
 # ---------------------------------------------------------------------------

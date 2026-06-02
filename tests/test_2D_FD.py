@@ -27,8 +27,9 @@ def _run_flex_2d(Te, qs, dx, dy, bc="zero_displacement_zero_slope"):
     flex.bc_north = bc
     flex.initialize()
     flex.run()
+    w = flex.w
     flex.finalize()
-    return flex.w
+    return w
 
 
 def test_main():
@@ -69,14 +70,13 @@ def test_main():
 
     flex.initialize()
     flex.run()
-    flex.finalize()
-
     # If you want to plot the output
     # flex.plot_choice='both'
     # An output file for deflections could also be defined here
     # flex.w_out_file =
     flex.output()  # Plots and/or saves output, or does nothing, depending on
     # whether flex.plot_choice and/or flex.w_out_file have been set
+    flex.finalize()
 
 
 def test_variable_Te_abrupt_padding_artefact():

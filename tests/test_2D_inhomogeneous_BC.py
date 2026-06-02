@@ -114,9 +114,10 @@ def _run(bc_west, bc_east, bc_north="mirror", bc_south="mirror",
         warnings.simplefilter("ignore")
         flex.initialize()
         flex.run()
+        w = flex.w
         flex.finalize()
 
-    return x, flex.w
+    return x, w
 
 
 def _check(w_num, w_ex, label):
@@ -265,8 +266,9 @@ def _run_vte(bc_west, bc_east, bc_north, bc_south,
         warnings.simplefilter("ignore")
         flex.initialize()
         flex.run()
+        w = flex.w
         flex.finalize()
-    return flex.w
+    return w
 
 
 class TestVariableTeDirichletExact:
@@ -429,9 +431,10 @@ def _run_ns(bc_north, bc_south, bc_west="mirror", bc_east="mirror",
         warnings.simplefilter("ignore")
         flex.initialize()
         flex.run()
+        w = flex.w
         flex.finalize()
     y = np.arange(ny) * dy
-    return y, flex.w
+    return y, w
 
 
 def _check_col(w_num, w_ex, label, col=None):
@@ -481,8 +484,9 @@ def _run_sq(bc_west, bc_east, bc_north, bc_south, n=_SQ_N):
         warnings.simplefilter("ignore")
         flex.initialize()
         flex.run()
+        w = flex.w
         flex.finalize()
-    return flex.w
+    return w
 
 
 # ---------------------------------------------------------------------------

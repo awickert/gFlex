@@ -14,7 +14,7 @@ INPUT_DIR = pathlib.Path(__file__).parent.parent / "input"
 
 
 def _run_from_config(path):
-    """Run gFlex from a config file; return the flex object after finalize()."""
+    """Run gFlex from a config file; return the flex object before finalize()."""
     path = str(path)
     obj = WhichModel(path)
     if obj.dimension == 1:
@@ -25,7 +25,6 @@ def _run_from_config(path):
         raise ValueError(f"Unexpected dimension: {obj.dimension}")
     flex.initialize(path)
     flex.run()
-    flex.finalize()
     return flex
 
 
@@ -43,6 +42,15 @@ def test_yaml_2d_runs():
     assert flex.w.size > 0
     assert not np.any(np.isnan(flex.w))
     assert np.any(flex.w != 0)
+
+
+def test_finalize_clears_w():
+    """finalize() deletes w and qs; accessing them afterwards raises AttributeError."""
+    flex = _run_from_config(INPUT_DIR / "input_f1d.yaml")
+    assert hasattr(flex, "w"), "w must be set before finalize"
+    flex.finalize()
+    assert not hasattr(flex, "w"),  "finalize must delete w"
+    assert not hasattr(flex, "qs"), "finalize must delete qs"
 
 
 def test_missing_required_key_raises():

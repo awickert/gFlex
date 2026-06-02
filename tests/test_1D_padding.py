@@ -58,8 +58,9 @@ def _run_1d(Te_in, qs, bc="zero_displacement_zero_slope", method="fd"):
         warnings.simplefilter("ignore")
         flex.initialize()
         flex.run()
+        w = flex.w
         flex.finalize()
-    return flex.w
+    return w
 
 
 # ---------------------------------------------------------------------------

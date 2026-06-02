@@ -50,7 +50,6 @@ def _run(qs, method="fft", bc_w="", bc_e="", bc_n="", bc_s="",
         flex.sigma_xy = sigma_xy
     flex.initialize()
     flex.run()
-    flex.finalize()
     return flex
 
 
@@ -122,15 +121,16 @@ def test_fft_2d_periodic_rho_fill_exact():
     flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "periodic"
     flex.initialize()
     flex.run()
+    w = flex.w
     flex.finalize()
 
     K2 = kx**2 + ky**2
     w_exact = -q0 / (D * K2**2 + drho_water * g) * np.cos(kx * X) * np.cos(ky * Y)
-    np.testing.assert_allclose(flex.w, w_exact, rtol=1e-10)
+    np.testing.assert_allclose(w, w_exact, rtol=1e-10)
 
     # Deflection must be deeper (more negative) than with air fill (rho_fill=0)
-    flex_air = _run(qs, bc_w="periodic", bc_e="periodic", bc_n="periodic", bc_s="periodic")
-    assert flex.w.min() < flex_air.w.min(), (
+    w_air = _run(qs, bc_w="periodic", bc_e="periodic", bc_n="periodic", bc_s="periodic").w
+    assert w.min() < w_air.min(), (
         "water fill (weaker Winkler restoring) should produce deeper deflection than air fill"
     )
 
