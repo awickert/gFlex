@@ -147,6 +147,49 @@ Or use a context manager for a single run::
        warnings.simplefilter("ignore")
        flex.run()
 
+LU factorization cache
+----------------------
+
+For coupling workflows that call :meth:`~gflex.F1D.run` (or
+:meth:`~gflex.F2D.run`) repeatedly with the same grid, elastic thickness,
+and boundary conditions, the sparse-LU factorization of the coefficient
+matrix can be cached to avoid re-factorizing on every call.  Set the
+attribute **before** calling :meth:`~gflex.base.Flexure.initialize`:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Value
+     - Behaviour
+   * - ``False`` *(default)*
+     - No caching.  The matrix is factorized on every :meth:`run` call.
+   * - ``True``
+     - Cache with hash check.  The factorization is reused when a
+       hash of the coefficient matrix matches the stored hash; it is
+       recomputed when any of Te, dx/dy, BCs, or physical parameters change.
+   * - ``"no_check"``
+     - Cache without hash check.  The stored factorization is always
+       reused, regardless of whether inputs have changed.  Use only
+       when you can guarantee the coefficient matrix is stable across
+       calls; it gives the maximum performance benefit but will silently
+       produce wrong results if the matrix actually changes.
+
+Example (coupling loop)::
+
+   flex.cache_factorization = True
+   flex.initialize()
+
+   for load in load_sequence:
+       flex.qs = load
+       flex.run()
+       w = flex.w
+       # ... process w ...
+
+   flex.finalize()
+
+The cache is cleared by :meth:`~gflex.base.Flexure.finalize`.
+
 Flexural wavelength
 -------------------
 
