@@ -311,8 +311,8 @@ class F2D(Flexure):
     spatially variable elastic thickness *Te*.
 
     Set instance attributes, then call :meth:`initialize`, :meth:`run`, and
-    :meth:`finalize` in sequence.  The deflection is available as ``flex.w``
-    after :meth:`finalize`.
+    :meth:`finalize` in sequence.  Read ``flex.w`` **before** calling
+    :meth:`finalize`; finalize clears all model state including ``w``.
 
     Attributes
     ----------
@@ -451,15 +451,13 @@ class F2D(Flexure):
 
     def finalize(self):
         """
-        Clean up after the solver.
+        Release all model state.
 
         Restores ``self.te`` to its pre-run value if gFlex padded it
-        internally, so the object can be reused cleanly in a
-        model-coupling loop.  Clears the cached coefficient matrix.
+        internally.  Then calls the base ``finalize``, which deletes
+        ``w``, ``qs``, and the cached coefficient matrix.  Read ``w``
+        before calling this method.
         """
-        # If elastic thickness has been padded, return it to its original
-        # value, so this is not messed up for repeat operations in a
-        # model-coupling exercise
         with contextlib.suppress(AttributeError):
             self.te = self.te_unpadded
         if self.verbose:
