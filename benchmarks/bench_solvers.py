@@ -650,6 +650,101 @@ def bench_2d_load_geometry(sizes_fd):
             print()
 
 
+# ── LU cache benchmark ───────────────────────────────────────────────────────
+
+def bench_lu_cache(sizes_1d, sizes_2d, n_solves=10):
+    """Benchmark the LU factorization cache for repeated solves on a fixed domain.
+
+    Compares three cache modes across n_solves back-to-back ``run()`` calls
+    with only the load (``qs``) changing between solves:
+
+    ``False``       — ``spsolve()`` on every call (full re-factorization)
+    ``True``        — hash-validated ``factorized()`` reuse
+    ``"no_check"``  — unconditional ``factorized()`` reuse (user guarantees
+                      matrix stability)
+
+    The reported speedup is ``t_false / t_no_check``.
+    """
+    import gflex.f1d as _f1d_mod
+    import gflex.f2d as _f2d_mod
+
+    rng = np.random.default_rng(42)
+
+    print("\nLU cache  (repeated solves, load-only changes)")
+    print(f"  n_solves = {n_solves}")
+    cols = [
+        ("grid", 9), ("t_False(s)", 11), ("t_True(s)", 10),
+        ("t_no_check(s)", 14), ("speedup", 8),
+    ]
+    _hdr(cols)
+
+    # ── 1D ────────────────────────────────────────────────────────────────────
+    for n in sizes_1d:
+        # Generate n_solves random sparse point loads
+        loads = []
+        for _ in range(n_solves):
+            qs = np.zeros(n)
+            idx = rng.integers(0, n, size=3)
+            qs[idx] = rng.uniform(1e5, 1e7, size=3)
+            loads.append(qs)
+
+        times = {}
+        for mode in (False, True, "no_check"):
+            def _setup1d(n=n):
+                f = _make_f1d(n, "fd")
+                f.bc_check()
+                f.gridded_x()
+                f.elasprepFD()
+                f._build_coefficient_matrix()
+                f.cache_factorization = mode
+                f._lu = None
+                return f
+
+            flex = _setup1d()
+            t0 = _tick()
+            for qs in loads:
+                flex.qs = qs
+                flex.fd_solve()
+            times[str(mode)] = _tick() - t0
+
+        speedup = times["False"] / times["no_check"]
+        print(f"  {'1D-' + str(n):>9}  {times['False']:>11.4f}  {times['True']:>10.4f}"
+              f"  {times['no_check']:>14.4f}  {speedup:>8.2f}x")
+
+    # ── 2D ────────────────────────────────────────────────────────────────────
+    for n in sizes_2d:
+        loads = []
+        for _ in range(n_solves):
+            qs = np.zeros((n, n))
+            rows = rng.integers(0, n, size=3)
+            cols_ = rng.integers(0, n, size=3)
+            qs[rows, cols_] = rng.uniform(1e5, 1e7, size=3)
+            loads.append(qs)
+
+        times = {}
+        for mode in (False, True, "no_check"):
+            def _setup2d(n=n):
+                f = _make_f2d(n, n, "fd")
+                f.bc_check()
+                f.elasprep()
+                f._build_coefficient_matrix()
+                f.cache_factorization = mode
+                f._lu = None
+                return f
+
+            flex = _setup2d()
+            t0 = _tick()
+            for qs in loads:
+                flex.qs = qs
+                flex.fd_solve()
+            times[str(mode)] = _tick() - t0
+
+        speedup = times["False"] / times["no_check"]
+        label = f"{n}×{n}"
+        print(f"  {label:>9}  {times['False']:>11.4f}  {times['True']:>10.4f}"
+              f"  {times['no_check']:>14.4f}  {speedup:>8.2f}x")
+
+
 # ── entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -685,6 +780,10 @@ if __name__ == "__main__":
         bench_2d_fft(sizes=[50, 100, 500, 1000])
         bench_2d_sas(sizes=[10, 25, 50, 100])
         bench_2d_load_geometry(sizes_fd=[25, 50, 100, 200])
+
+        print("\n--- LU cache ---")
+        bench_lu_cache(sizes_1d=[500, 2000, 5000], sizes_2d=[50, 100, 200],
+                       n_solves=10)
     finally:
         tee.close()
 
