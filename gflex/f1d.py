@@ -511,9 +511,9 @@ class F1D(Flexure):
         Two categories of warning are raised:
 
         **BC-type warnings** — fired for boundary types whose physical meaning
-        deserves verification: ``'zero_moment_zero_shear'`` (free broken end; check that
-        a rifted margin is intended) and ``'zero_slope_zero_shear'`` (no clear geological
-        analog).
+        deserves verification: ``'zero_moment_zero_shear'`` (free broken end; valid for
+        rifted/passive margins, subduction trenches with an edge load, and
+        broken-plate flexure).
 
         **Proximity warnings** — fired for ``'zero_displacement_zero_slope'`` boundaries
         when the nearest loaded cell is within one flexural wavelength
