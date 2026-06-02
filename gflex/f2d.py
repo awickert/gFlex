@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 import contextlib
-import sys
+
 import time
 import warnings
 
@@ -439,7 +439,7 @@ class F2D(Flexure):
             super()._solve_sas_ng()
             self.method_func = self._solve_sas_ng
         else:
-            sys.exit('Error: method must be "fd", "fft", "sas", or "sas_ng"')
+            raise ValueError('method must be "fd", "fft", "sas", or "sas_ng"')
 
         if self.verbose:
             print("F2D run")
@@ -586,11 +586,9 @@ class F2D(Flexure):
         elif np.all(self.te == np.mean(self.te)):
             self.te = float(np.mean(self.te))
         else:
-            sys.exit(
-                "\nINPUT VARIABLE TYPE INCONSISTENT WITH SOLUTION TYPE.\n"
-                "The FFT solution requires a scalar (uniform) Te.\n"
-                "For spatially variable Te, use the finite difference method.\n"
-                "EXITING."
+            raise ValueError(
+                "The FFT solution requires a scalar (uniform) Te. "
+                "For spatially variable Te, use the finite difference method."
             )
 
         D = self.E * self.te**3 / (12.0 * (1.0 - self.nu**2))
@@ -664,13 +662,9 @@ class F2D(Flexure):
         elif np.all(self.te == np.mean(self.te)):
             self.te = np.mean(self.te)
         else:
-            sys.exit(
-                "\nINPUT VARIABLE TYPE INCONSISTENT WITH SOLUTION TYPE.\n"
-                "The analytical solution requires a scalar Te.\n"
-                "(gFlex is smart enough to make this out of a uniform\n"
-                "array, but won't know what value you want with a spatially\n"
-                "varying array! Try finite difference instead in this case?\n"
-                "EXITING."
+            raise ValueError(
+                "The analytical solution requires a scalar (uniform) Te. "
+                "For spatially variable Te, use the finite difference method."
             )
 
         self.D = self.E * self.te**3 / (12 * (1 - self.nu**2))  # Flexural rigidity
@@ -824,7 +818,7 @@ class F2D(Flexure):
         elif self._bc_west_norm in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_west = _RigidityBC.MIRROR
         else:
-            sys.exit("Invalid Te B.C. case")
+            raise RuntimeError("Invalid Te B.C. case")
         # East
         if self._bc_east_norm == "periodic":
             self.bc_rigidity_east = _RigidityBC.PERIODIC
@@ -836,7 +830,7 @@ class F2D(Flexure):
         elif self._bc_east_norm in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_east = _RigidityBC.MIRROR
         else:
-            sys.exit("Invalid Te B.C. case")
+            raise RuntimeError("Invalid Te B.C. case")
         # North
         if self._bc_north_norm == "periodic":
             self.bc_rigidity_north = _RigidityBC.PERIODIC
@@ -848,7 +842,7 @@ class F2D(Flexure):
         elif self._bc_north_norm in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_north = _RigidityBC.MIRROR
         else:
-            sys.exit("Invalid Te B.C. case")
+            raise RuntimeError("Invalid Te B.C. case")
         # South
         if self._bc_south_norm == "periodic":
             self.bc_rigidity_south = _RigidityBC.PERIODIC
@@ -860,7 +854,7 @@ class F2D(Flexure):
         elif self._bc_south_norm in ("mirror", "zero_displacement_zero_moment"):
             self.bc_rigidity_south = _RigidityBC.MIRROR
         else:
-            sys.exit("Invalid Te B.C. case")
+            raise RuntimeError("Invalid Te B.C. case")
 
         #############
         # PAD ARRAY #
@@ -1193,8 +1187,10 @@ class F2D(Flexure):
                 self.cj_2i0[:, j] += np.inf
 
             else:
-                sys.exit(
-                    "Not physical to have one wrap-around boundary but not its pair."
+                raise ValueError(
+                    "The boundary opposite a periodic boundary condition must also be "
+                    "periodic. Having one periodic and one non-periodic boundary on the "
+                    "same axis is not physically meaningful."
                 )
         elif self._bc_west_norm == "zero_displacement_zero_slope":
             # Boundary column (j=0): decouple so c0·w[j=0,i] = 0 → w = 0 exactly.
@@ -1305,7 +1301,7 @@ class F2D(Flexure):
             self.cj2i0[:, j] += 0
         else:
             # Possibly redundant safeguard
-            sys.exit("Invalid boundary condition")
+            raise RuntimeError("Invalid boundary condition")
 
         if self.bc_east == "periodic":
             # See more extensive comments above (BC_W)
@@ -1336,8 +1332,10 @@ class F2D(Flexure):
                 self.cj2i0[:, j] += np.inf
 
             else:
-                sys.exit(
-                    "Not physical to have one wrap-around boundary but not its pair."
+                raise ValueError(
+                    "The boundary opposite a periodic boundary condition must also be "
+                    "periodic. Having one periodic and one non-periodic boundary on the "
+                    "same axis is not physically meaningful."
                 )
 
         elif self._bc_east_norm == "zero_displacement_zero_slope":
@@ -1448,7 +1446,7 @@ class F2D(Flexure):
             self.cj2i0[:, j] += np.inf
         else:
             # Possibly redundant safeguard
-            sys.exit("Invalid boundary condition")
+            raise RuntimeError("Invalid boundary condition")
 
         #######################################################################
         # DEFINE COEFFICIENTS TO W_i-2 -- W_i+2 WITH B.C.'S APPLIED (y: N, S) #
@@ -1459,8 +1457,10 @@ class F2D(Flexure):
                 pass  # Will address the N-S (whole-matrix-involving) boundary condition
                 # inclusion below, when constructing sparse matrix diagonals
             else:
-                sys.exit(
-                    "Not physical to have one wrap-around boundary but not its pair."
+                raise ValueError(
+                    "The boundary opposite a periodic boundary condition must also be "
+                    "periodic. Having one periodic and one non-periodic boundary on the "
+                    "same axis is not physically meaningful."
                 )
         elif self._bc_north_norm == "zero_displacement_zero_slope":
             # Boundary row (i=0): decouple so c0·w[j,i=0] = 0 → w = 0 exactly.
@@ -1568,15 +1568,17 @@ class F2D(Flexure):
             self.cj2i0[i, :] += 0
         else:
             # Possibly redundant safeguard
-            sys.exit("Invalid boundary condition")
+            raise RuntimeError("Invalid boundary condition")
 
         if self.bc_south == "periodic":
             if self.bc_north == "periodic":
                 pass  # Will address the N-S (whole-matrix-involving) boundary condition
                 # inclusion below, when constructing sparse matrix diagonals
             else:
-                sys.exit(
-                    "Not physical to have one wrap-around boundary but not its pair."
+                raise ValueError(
+                    "The boundary opposite a periodic boundary condition must also be "
+                    "periodic. Having one periodic and one non-periodic boundary on the "
+                    "same axis is not physically meaningful."
                 )
         elif self._bc_south_norm == "zero_displacement_zero_slope":
             # First interior row (i=-2): even reflection w[j,N]=w[j,N-2] encodes zero slope.
@@ -1685,7 +1687,7 @@ class F2D(Flexure):
             self.cj2i0[i, :] += np.inf
         else:
             # Possibly redundant safeguard
-            sys.exit("Invalid boundary condition")
+            raise RuntimeError("Invalid boundary condition")
 
         #####################################################
         # CORNERS: INTERFERENCE BETWEEN BOUNDARY CONDITIONS #
