@@ -265,16 +265,13 @@ this "free displacement of a horizontally clamped boundary."
 *Standard names:* **guided end** (structural mechanics).  No established
 geophysical name.
 
-*Geological context:* No geophysical use case has been identified for this
-condition, and gFlex issues a warning when it is selected.  Although it
-superficially resembles ``mirror`` — both enforce zero slope at the
-boundary — the two use different finite-difference stencils and produce
-noticeably different solutions, including well away from the boundary.
-``mirror`` agrees with analytical solutions for symmetric problems;
-``zero_slope_zero_shear`` does not.  For any problem involving a plane of symmetry,
-``mirror`` is the correct choice.
+*Geological context:* No clear geophysical use case has been identified for
+this condition.  Internally, gFlex treats ``zero_slope_zero_shear`` as a
+deprecated alias for ``mirror``: both names produce exactly the same
+finite-difference stencil and identical solutions.  For any problem involving
+a plane of symmetry, ``mirror`` is the preferred name.
 
-``zero_slope_zero_shear`` is retained for mathematical completeness.
+``zero_slope_zero_shear`` is retained for backwards compatibility.
 
 .. figure:: _static/bc_diagram_0Slope0Shear.svg
    :width: 80%
