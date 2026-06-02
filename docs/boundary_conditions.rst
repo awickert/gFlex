@@ -223,9 +223,8 @@ zero_moment_zero_shear
 ----------------------
 
 The natural condition at a free edge: no bending moment and no shear
-force are transmitted across the boundary (Wickert, 2016, Table 1).  It
-is the far-field condition into which a flexed plate decays.  Combined
-with an edge-applied load — a vertical point force supplies
+force are transmitted across the boundary (Wickert, 2016, Table 1).
+Combined with an edge-applied load — a vertical point force supplies
 :math:`V_0`, a closely-spaced couple supplies :math:`M_0` — it produces
 the classical broken-plate response of Turcotte and Schubert: the load
 carries the inhomogeneity through the loading vector while the BC matrix
@@ -239,8 +238,6 @@ fractured and therefore transmits neither bending moment nor shear.
 *Geological context:* ``zero_moment_zero_shear`` is the most physically motivated
 of the six conditions for Earth science applications:
 
-- Far-field boundary of an interior-loaded domain, where the plate
-  decays smoothly to its reference level away from the load
 - Passive or rifted continental margin, where the plate edge is
   effectively free
 - Broken-plate flexure (Turcotte & Schubert) with an edge load applied

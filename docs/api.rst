@@ -96,9 +96,10 @@ problematic boundary conditions.
 interpretation deserves verification:
 
 * ``'zero_moment_zero_shear'`` — assumes a free broken plate end (zero moment and shear
-  force).  This is physically appropriate for a rifted margin or spreading ridge
-  where the plate really is broken, but is often applied uncritically elsewhere
-  in the literature.
+  force).  Physically appropriate for rifted or passive continental margins,
+  subduction trenches with an applied edge load (slab pull), and broken-plate
+  flexure (Turcotte & Schubert).  Often applied uncritically elsewhere in the
+  literature — verify that one of these settings applies.
 
 **Proximity warnings** fire for ``'zero_displacement_zero_slope'`` boundaries when the
 nearest loaded cell is within one flexural wavelength

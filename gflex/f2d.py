@@ -474,8 +474,9 @@ class F2D(Flexure):
         Two categories of warning are raised:
 
         **BC-type warnings** — fired for boundary types whose physical meaning
-        deserves verification: ``'zero_moment_zero_shear'`` (free broken end; check that
-        a rifted margin is intended).
+        deserves verification: ``'zero_moment_zero_shear'`` (free broken end; valid for
+        rifted/passive margins, subduction trenches with an edge load, and
+        broken-plate flexure).
 
         **Proximity warnings** — fired for ``'zero_displacement_zero_slope'`` boundaries
         when the nearest loaded cell is within one flexural wavelength
@@ -490,8 +491,10 @@ class F2D(Flexure):
             if bc == "zero_moment_zero_shear":
                 warnings.warn(
                     f"BC_{side} = 'zero_moment_zero_shear': assumes a free broken plate end "
-                    "(zero moment and shear force). Verify this represents a rifted "
-                    "margin, spreading ridge, or similar physically broken-plate setting.",
+                    "(zero moment and shear force). Valid for rifted/passive margins, "
+                    "subduction trenches with an applied edge load, and broken-plate "
+                    "flexure (Turcotte & Schubert). Verify this is physically "
+                    "appropriate for your setup.",
                     UserWarning,
                     stacklevel=4,
                 )

@@ -528,8 +528,10 @@ class F1D(Flexure):
             if bc == "zero_moment_zero_shear":
                 warnings.warn(
                     f"BC_{side} = 'zero_moment_zero_shear': assumes a free broken plate end "
-                    "(zero moment and shear force). Verify this represents a rifted "
-                    "margin, spreading ridge, or similar physically broken-plate setting.",
+                    "(zero moment and shear force). Valid for rifted/passive margins, "
+                    "subduction trenches with an applied edge load, and broken-plate "
+                    "flexure (Turcotte & Schubert). Verify this is physically "
+                    "appropriate for your setup.",
                     UserWarning,
                     stacklevel=4,
                 )
