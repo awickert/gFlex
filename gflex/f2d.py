@@ -614,7 +614,7 @@ class F2D(Flexure):
         ky = scipy.fft.fftfreq(ny_work, d=self.dy) * 2.0 * np.pi
         Kx, Ky = np.meshgrid(kx, ky)
 
-        Q = scipy.fft.rfft2(qs_work)
+        Q = scipy.fft.rfft2(qs_work, workers=-1)
         K2 = Kx**2 + Ky**2
         denom = (
             D * K2**2
@@ -623,7 +623,7 @@ class F2D(Flexure):
             + 2.0 * self.sigma_xy * self.te * Kx * Ky
             + self.drho * self.g
         )
-        w_work = scipy.fft.irfft2(-Q / denom, s=qs_work.shape)
+        w_work = scipy.fft.irfft2(-Q / denom, s=qs_work.shape, workers=-1)
 
         if periodic:
             self.w = w_work

@@ -650,9 +650,9 @@ class F1D(Flexure):
 
         N_work = len(qs_work)
         k = scipy.fft.rfftfreq(N_work, d=self.dx) * 2.0 * np.pi
-        Q = scipy.fft.rfft(qs_work)
+        Q = scipy.fft.rfft(qs_work, workers=-1)
         denom = D * k**4 + self.sigma_xx * self.te * k**2 + self.drho * self.g
-        w_work = scipy.fft.irfft(-Q / denom, n=N_work)
+        w_work = scipy.fft.irfft(-Q / denom, n=N_work, workers=-1)
 
         if periodic:
             self.w = w_work
