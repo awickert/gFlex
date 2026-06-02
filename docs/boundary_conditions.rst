@@ -103,7 +103,7 @@ geological context, and ball-and-stick diagrams appear in the sections below.
    * - ``mirror`` (alias: ``zero_slope_zero_shear``)
      - :math:`S`,\ :math:`V`
      - —
-     - —
+     - mirror
      - Even reflection; model half of a symmetric system
    * - ``periodic``
      - —
@@ -112,10 +112,10 @@ geological context, and ball-and-stick diagrams appear in the sections below.
      - Domain tiles infinitely in both directions
 
 The "Geophysical" column reflects established usage in the lithospheric
-flexure literature.  Only ``zero_moment_zero_shear`` carries a geophysical-specific
-name ("broken plate"); the remaining conditions are referred to by their
-structural-mechanics names, or have no name at all.  This is a genuine gap
-in the discipline's vocabulary rather than a gap in documentation.
+flexure literature.  ``zero_moment_zero_shear`` is known as the "broken plate"
+condition; ``mirror`` is used under that name in geophysical modeling.
+The remaining conditions are referred to by their structural-mechanics names,
+or have no name at all.
 
 .. deprecated:: 2.0
 
