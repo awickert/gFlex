@@ -88,9 +88,8 @@ def main():
         # obj.set_value('method','FD') # for example
 
         obj.run()
-        obj.finalize()
-
         obj.output()  # Not part of IRF or BMI: Does standalone plotting and file output
+        obj.finalize()
 
         #####################
         ## GET VALUES HERE ##
