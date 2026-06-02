@@ -4,14 +4,20 @@ API Reference
 Primary solvers
 ---------------
 
-Both solvers follow the same three-step workflow::
+Both solvers follow the same lifecycle::
 
    flex.initialize()
    flex.run()
-   flex.finalize()
+   w = flex.w          # read deflection before finalize clears it
+   flex.output()       # optional: save to file or display plots
+   flex.finalize()     # releases w, qs, and the coefficient matrix
 
-After :meth:`finalize`, the deflection is available as ``flex.w``.  Call
-:meth:`~gflex.base.Flexure.output` to save results to file or display plots.
+.. warning::
+
+   :meth:`finalize` deletes ``w``, ``qs``, and the cached coefficient
+   matrix.  Read ``w`` (and call :meth:`~gflex.base.Flexure.output` if
+   needed) **before** calling ``finalize``.  Accessing ``w`` afterwards
+   raises :exc:`AttributeError`.
 
 .. autoclass:: gflex.F2D
    :members: initialize, run, finalize
