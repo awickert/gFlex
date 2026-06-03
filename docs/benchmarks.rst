@@ -27,7 +27,7 @@ Solver scaling
 The **FD direct solver** uses a sparse LU factorisation and scales roughly as
 :math:`O(N^{1.5})` in two dimensions, where :math:`N` is the total number of
 grid cells.  At 400×400 cells (:math:`N^2 = 160\,000`) a single FD solve takes
-about 5.5 s; at 200×200 it takes about 0.7 s.
+about 5 s; at 200×200 it takes about 0.6 s.
 
 The **FFT** method solves the problem in the spectral domain and scales as
 :math:`O(N \log N)`.  In two dimensions it is roughly two orders of magnitude
@@ -64,8 +64,8 @@ thickness, and boundary conditions remain fixed, the coefficient matrix does
 not change.  Caching the LU factorisation eliminates the cost of re-factorising
 on every call, reducing the per-solve work to a single triangular solve.
 
-In two dimensions the **``"no_check"``** mode reaches **6–10× speedup** over
-uncached at grid sizes of 50×50 to 200×200 cells.  The speedup grows with
+In two dimensions the **``"no_check"``** mode reaches **7–12× speedup** over
+uncached at grid sizes of 50×50 to 400×400 cells.  The speedup grows with
 grid size because the factorisation cost (eliminated by caching) scales as
 :math:`O(N^{1.5})` while the cached solve (triangular back-substitution) scales
 as :math:`O(N)`.
@@ -103,8 +103,10 @@ All three cache modes (``False``, ``True``, ``"no_check"``) pay essentially the
 same cost when :math:`T_e` changes, because the rebuild dominates the per-call
 budget.
 
-At 200×200 cells the load-only cost is roughly **70 ms** per solve while a
-:math:`T_e` change costs roughly **550 ms** per solve — about an **8× penalty**.
+At 200×200 cells the load-only cost is roughly **53 ms** per solve while a
+:math:`T_e` change costs roughly **590 ms** per solve — about an **11× penalty**.
+At 400×400 cells the load-only cost is roughly **400 ms** per solve while a
+:math:`T_e` change costs roughly **5.3 s** — about a **13× penalty**.
 The gap widens with grid size because factorisation scales as :math:`O(N^{1.5})`
 and the incremental triangular solve scales as :math:`O(N)`.
 
