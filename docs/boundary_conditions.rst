@@ -156,7 +156,7 @@ the free-end condition at the same location.  It is most appropriate as a
 boundary for a synthetic or test model, not as a representation of a
 physical plate edge.
 
-.. figure:: _static/bc_diagram_0Displacement0Slope.svg
+.. figure:: _static/bc_diagram_zero_displacement_zero_slope.svg
    :width: 80%
    :align: center
    :alt: Diagram of the zero_displacement_zero_slope (clamped end) boundary condition
@@ -209,7 +209,7 @@ satisfy ``zero_displacement_zero_moment``; cosine modes satisfy ``mirror``.
    Even reflection (``mirror``, left) vs. odd reflection (``zero_displacement_zero_moment``, right):
    the same four real nodes produce ghost values of opposite sign.
 
-.. figure:: _static/bc_diagram_0Displacement0Moment.svg
+.. figure:: _static/bc_diagram_zero_displacement_zero_moment.svg
    :width: 80%
    :align: center
    :alt: Diagram of the zero_displacement_zero_moment (simply supported) boundary condition
@@ -242,7 +242,7 @@ of the six conditions for Earth science applications:
 - Subduction trench and outer rise, where slab pull acts as an
   edge-applied vertical force
 
-.. figure:: _static/bc_diagram_0Moment0Shear.svg
+.. figure:: _static/bc_diagram_zero_moment_zero_shear.svg
    :width: 80%
    :align: center
    :alt: Diagram of the zero_moment_zero_shear (free end) boundary condition
@@ -301,7 +301,7 @@ geometry are symmetric about the boundary plane:
 - One quarter of a bilaterally symmetric ice dome or volcanic edifice
   (``mirror`` on two perpendicular axes)
 
-.. figure:: _static/bc_diagram_Mirror.svg
+.. figure:: _static/bc_diagram_mirror.svg
    :width: 80%
    :align: center
    :alt: Diagram of the mirror (symmetry plane) boundary condition
@@ -330,7 +330,7 @@ the region of interest:
 - Continental-scale glacial load
 - Broad-scale FFT calculations
 
-.. figure:: _static/bc_diagram_Periodic.svg
+.. figure:: _static/bc_diagram_periodic.svg
    :width: 80%
    :align: center
    :alt: Diagram of the periodic boundary condition
