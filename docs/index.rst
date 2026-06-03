@@ -146,6 +146,7 @@ point (``gflex <config_file>``).
    api
    configuration
    accuracy
+   benchmarks
    references
    changelog
 
