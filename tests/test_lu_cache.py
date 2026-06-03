@@ -158,3 +158,48 @@ def test_finalize_clears_lu_cache():
     flex.finalize()
     assert not hasattr(flex, "_lu")
     assert not hasattr(flex, "_lu_matrix_hash")
+
+
+# ── no_check free-solo: coeff_matrix freed after factorization ────────────────
+
+def test_1d_no_check_coeff_matrix_freed_after_factorization():
+    """coeff_matrix is released to None immediately after the LU is built."""
+    flex = _make_f1d(cache="no_check")
+    flex.run()
+    assert flex.coeff_matrix is None, "coeff_matrix should be freed after factorization"
+    assert flex._lu is not None, "_lu must be retained"
+
+
+def test_2d_no_check_coeff_matrix_freed_after_factorization():
+    flex = _make_f2d(cache="no_check")
+    flex.run()
+    assert flex.coeff_matrix is None
+    assert flex._lu is not None
+
+
+def test_no_check_second_run_reuses_lu_and_keeps_coeff_matrix_none():
+    """Second run reuses _lu without rebuilding the matrix."""
+    flex = _make_f1d(cache="no_check")
+    flex.run()
+    lu_first = flex._lu
+
+    flex.qs[len(flex.qs) // 4] += 5e5
+    flex.run()
+
+    assert flex._lu is lu_first, "_lu must be reused on second run"
+    assert flex.coeff_matrix is None, "coeff_matrix must remain None after second run"
+
+
+def test_no_check_te_change_triggers_full_rebuild():
+    """Changing te invalidates the freed coeff_matrix and forces a full rebuild."""
+    flex = _make_f1d(cache="no_check")
+    flex.run()
+    w_first = flex.w.copy()
+
+    flex.te = 20e3  # different Te → smart invalidation fires
+    assert flex._lu is None, "_lu must be cleared when te changes"
+    flex.run()
+
+    assert flex.coeff_matrix is None, "coeff_matrix freed again after rebuild"
+    assert flex._lu is not None, "_lu must be repopulated after rebuild"
+    assert not np.allclose(flex.w, w_first), "deflection must differ for different Te"
