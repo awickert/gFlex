@@ -12,6 +12,9 @@ and key hardware/software details so runs are reproducible and comparable.
 FD benchmarks cover:
   - direct sparse LU across a range of Te profiles and grid sizes
   - square and non-square (aspect-ratio) domains
+  - LU factorization cache: fd_solve() path (pure solve cost)
+  - LU factorization cache: run() path (full per-call overhead)
+  - Te-sweep: repeated solves with Te changing each call (rebuild path)
 
 Grid-size notes:
   - SAS:  O(N²) in 1D; O(N² log N) in 2D (fftconvolve, load-pattern-independent).
@@ -767,6 +770,165 @@ def bench_lu_cache(sizes_1d, sizes_2d, n_solves=10,
             print()
 
 
+# ── LU cache benchmark (run() path) ──────────────────────────────────────────
+
+def bench_lu_cache_run(sizes_1d, sizes_2d, n_solves=10,
+                       profiles_1d=_TE_PROFILES_LU_CACHE_1D,
+                       profiles_2d=_TE_PROFILES_LU_CACHE_2D):
+    """Benchmark the LU cache via the full run() path.
+
+    Same scenario as bench_lu_cache (load-only changes, fixed matrix) but
+    calls run() instead of fd_solve() directly.  This measures real-world
+    per-call overhead: bc_check(), Flexure._solve_fd() setup,
+    _check_warnings_FD(), gridded_x(), and the _solve_fd() cache-bypass
+    logic, in addition to the solve itself.  Compare with bench_lu_cache
+    to isolate that overhead from the pure solve cost.
+    """
+    rng = np.random.default_rng(42)
+
+    print("\nLU cache  (run() path, repeated solves, load-only changes)")
+    print(f"  n_solves = {n_solves}")
+    cols = [
+        ("grid", 9), ("Te profile", 14), ("t_False(s)", 11), ("t_True(s)", 10),
+        ("t_no_check(s)", 14), ("speedup", 8),
+    ]
+    _hdr(cols)
+
+    # ── 1D ────────────────────────────────────────────────────────────────────
+    for n in sizes_1d:
+        loads = []
+        for _ in range(n_solves):
+            qs = np.zeros(n)
+            idx = rng.integers(0, n, size=3)
+            qs[idx] = rng.uniform(1e5, 1e7, size=3)
+            loads.append(qs)
+
+        for prof in profiles_1d:
+            te = _te_1d(n, prof)
+            times = {}
+            for mode in (False, True, "no_check"):
+                flex = _make_f1d(n, "fd", te=te)
+                flex.cache_factorization = mode
+                t0 = _tick()
+                for qs in loads:
+                    flex.qs = qs
+                    flex.run()
+                times[str(mode)] = _tick() - t0
+
+            speedup = times["False"] / times["no_check"]
+            print(f"  {'1D-' + str(n):>9}  {prof:>14}  {times['False']:>11.4f}"
+                  f"  {times['True']:>10.4f}  {times['no_check']:>14.4f}  {speedup:>8.2f}x")
+        if n != sizes_1d[-1]:
+            print()
+
+    # ── 2D ────────────────────────────────────────────────────────────────────
+    print()
+    for n in sizes_2d:
+        loads = []
+        for _ in range(n_solves):
+            qs = np.zeros((n, n))
+            rows = rng.integers(0, n, size=3)
+            cols_ = rng.integers(0, n, size=3)
+            qs[rows, cols_] = rng.uniform(1e5, 1e7, size=3)
+            loads.append(qs)
+
+        for prof in profiles_2d:
+            te = _te_2d(n, n, prof)
+            times = {}
+            for mode in (False, True, "no_check"):
+                flex = _make_f2d(n, n, "fd", te=te)
+                flex.cache_factorization = mode
+                t0 = _tick()
+                for qs in loads:
+                    flex.qs = qs
+                    flex.run()
+                times[str(mode)] = _tick() - t0
+
+            speedup = times["False"] / times["no_check"]
+            label = f"{n}×{n}"
+            print(f"  {label:>9}  {prof:>14}  {times['False']:>11.4f}"
+                  f"  {times['True']:>10.4f}  {times['no_check']:>14.4f}  {speedup:>8.2f}x")
+        if n != sizes_2d[-1]:
+            print()
+
+
+# ── Te-sweep benchmark ────────────────────────────────────────────────────────
+
+def bench_te_sweep(sizes_1d, sizes_2d, n_solves=10):
+    """Benchmark repeated solves where Te (scalar) changes on every call.
+
+    Smart invalidation fires on every iteration: the coefficient matrix is
+    rebuilt and the LU factorization is recomputed from scratch each call.
+    All three cache modes pay the same rebuild cost; timing differences
+    reflect whether factorized() or spsolve() is faster for a
+    full-rebuild-then-solve cycle, and the overhead of smart invalidation
+    bookkeeping.  Contrast with bench_lu_cache_run for the load-only case.
+
+    Te values are drawn uniformly from [10 km, 80 km] — a geologically
+    representative range spanning thin oceanic to thick cratonic lithosphere.
+    """
+    rng = np.random.default_rng(42)
+
+    print("\nTe sweep  (repeated solves, scalar Te changes each call — full rebuild)")
+    print(f"  n_solves = {n_solves}  |  Te range: 10–80 km")
+    cols = [
+        ("grid", 9), ("t_False(s)", 11), ("t_True(s)", 10), ("t_no_check(s)", 14),
+    ]
+    _hdr(cols)
+
+    # ── 1D ────────────────────────────────────────────────────────────────────
+    for n in sizes_1d:
+        te_vals = rng.uniform(10e3, 80e3, n_solves)
+        loads = []
+        for _ in range(n_solves):
+            qs = np.zeros(n)
+            idx = rng.integers(0, n, size=3)
+            qs[idx] = rng.uniform(1e5, 1e7, size=3)
+            loads.append(qs)
+
+        times = {}
+        for mode in (False, True, "no_check"):
+            flex = _make_f1d(n, "fd", te=te_vals[0])
+            flex.cache_factorization = mode
+            t0 = _tick()
+            for te_val, qs in zip(te_vals, loads):
+                flex.te = te_val
+                flex.qs = qs
+                flex.run()
+            times[str(mode)] = _tick() - t0
+
+        print(f"  {'1D-' + str(n):>9}  {times['False']:>11.4f}"
+              f"  {times['True']:>10.4f}  {times['no_check']:>14.4f}")
+    print()
+
+    # ── 2D ────────────────────────────────────────────────────────────────────
+    for n in sizes_2d:
+        te_vals = rng.uniform(10e3, 80e3, n_solves)
+        loads = []
+        for _ in range(n_solves):
+            qs = np.zeros((n, n))
+            rows = rng.integers(0, n, size=3)
+            cols_ = rng.integers(0, n, size=3)
+            qs[rows, cols_] = rng.uniform(1e5, 1e7, size=3)
+            loads.append(qs)
+
+        times = {}
+        for mode in (False, True, "no_check"):
+            flex = _make_f2d(n, n, "fd", te=te_vals[0])
+            flex.cache_factorization = mode
+            t0 = _tick()
+            for te_val, qs in zip(te_vals, loads):
+                flex.te = te_val
+                flex.qs = qs
+                flex.run()
+            times[str(mode)] = _tick() - t0
+
+        label = f"{n}×{n}"
+        print(f"  {label:>9}  {times['False']:>11.4f}"
+              f"  {times['True']:>10.4f}  {times['no_check']:>14.4f}")
+    print()
+
+
 # ── entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -803,8 +965,16 @@ if __name__ == "__main__":
         bench_2d_sas(sizes=[10, 25, 50, 100])
         bench_2d_load_geometry(sizes_fd=[25, 50, 100, 200])
 
-        print("\n--- LU cache ---")
+        print("\n--- LU cache (fd_solve() path) ---")
         bench_lu_cache(sizes_1d=[500, 2000, 5000], sizes_2d=[50, 100, 200],
+                       n_solves=10)
+
+        print("\n--- LU cache (run() path) ---")
+        bench_lu_cache_run(sizes_1d=[500, 2000, 5000], sizes_2d=[50, 100, 200],
+                           n_solves=10)
+
+        print("\n--- Te sweep ---")
+        bench_te_sweep(sizes_1d=[500, 2000, 5000], sizes_2d=[50, 100, 200],
                        n_solves=10)
     finally:
         tee.close()
