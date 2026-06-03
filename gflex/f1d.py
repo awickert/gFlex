@@ -584,9 +584,13 @@ class F1D(Flexure):
         """
         self._check_warnings_FD()
         self.gridded_x()
-        # Only generate coefficient matrix if it is not already provided
+        # Only generate coefficient matrix if it is not already provided.
+        # In no_check mode the matrix is freed after factorization to save
+        # memory; _lu being set is sufficient to skip the rebuild.
         if self.coeff_matrix is not None:
             pass
+        elif self.cache_factorization == "no_check" and self._lu is not None:
+            pass  # coeff_matrix was freed after factorization; _lu still valid
         else:
             self.elasprepFD()  # define dx4 and D within self
             self._build_coefficient_matrix()
@@ -1337,6 +1341,7 @@ class F1D(Flexure):
         elif self.cache_factorization == "no_check":
             if self._lu is None:
                 self._lu = factorized(self.coeff_matrix)
+                self.coeff_matrix = None  # _lu is sole owner; _solve_fd uses _lu as rebuild-skip signal
             self.w = self._lu(rhs)
         else:  # True: hash-validated cache
             h = _matrix_hash(self.coeff_matrix)
