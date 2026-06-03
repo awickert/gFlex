@@ -1337,6 +1337,7 @@ class F1D(Flexure):
         elif self.cache_factorization == "no_check":
             if self._lu is None:
                 self._lu = factorized(self.coeff_matrix)
+                self.coeff_matrix = None  # LU owns the factored form; matrix no longer needed
             self.w = self._lu(rhs)
         else:  # True: hash-validated cache
             h = _matrix_hash(self.coeff_matrix)
