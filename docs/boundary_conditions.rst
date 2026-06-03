@@ -233,7 +233,7 @@ lithospheric flexure literature, referring to a plate whose edge is
 fractured and therefore transmits neither bending moment nor shear.
 
 *Geological context:* ``zero_moment_zero_shear`` is the most physically motivated
-of the six conditions for Earth science applications:
+of the five conditions for Earth science applications:
 
 - Passive or rifted continental margin, where the plate edge is
   effectively free
