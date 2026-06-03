@@ -44,6 +44,30 @@ def _matrix_hash(A):
     h.update(csr.indptr.tobytes())
     return h.digest()
 
+
+# Sentinel for "attribute not yet assigned" — used by property setters to
+# distinguish a first-time assignment (no cache to invalidate) from a genuine
+# value change.
+_UNSET = object()
+
+
+def _value_changed(current, new):
+    """Return True if *new* differs meaningfully from *current*.
+
+    Handles None, Python scalars, NumPy scalars, NumPy arrays, strings, and
+    dicts (inhomogeneous BC specifications).  Returns False when *current* is
+    ``_UNSET`` so that first-time assignments never trigger cache invalidation.
+    """
+    if current is _UNSET:
+        return False
+    if isinstance(current, dict) or isinstance(new, dict):
+        return current != new
+    try:
+        return not np.array_equal(current, new)
+    except Exception:
+        return True
+
+
 # Scientific colour maps (optional but strongly recommended).
 # Install with:  pip install cmcrameri
 try:
@@ -1001,6 +1025,215 @@ class Flexure(Utility, Plotting):
             self.planetary_radius
         except AttributeError:
             self.planetary_radius = None
+
+    def _invalidate_matrix_cache(self):
+        """Clear the FD coefficient matrix and LU factorisation caches.
+
+        Called automatically by property setters whenever a matrix-determining
+        input (``te``, ``E``, ``nu``, boundary conditions, grid spacing, …) is
+        reassigned to a different value.  The caches are rebuilt transparently
+        on the next ``run()`` call.
+
+        Note: in-place NumPy array mutations (e.g. ``flex.te[5] = 40e3``)
+        bypass the setter and do **not** trigger this method.  Reassign the
+        full array (``flex.te = new_array``) to ensure correct invalidation.
+        """
+        d = self.__dict__
+        if "coeff_matrix" in d:
+            d["coeff_matrix"] = None
+        if "_lu" in d:
+            d["_lu"] = None
+        if "_lu_matrix_hash" in d:
+            d["_lu_matrix_hash"] = None
+
+    # ── Properties: matrix-determining inputs ─────────────────────────────────
+    # Each setter invalidates the coefficient matrix and LU cache when the
+    # value actually changes.  Repeated run() calls with identical physics
+    # therefore reuse the cached factorisation at no extra cost.
+
+    @property
+    def te(self):
+        """Elastic thickness [m] (scalar or array)."""
+        return self._te
+
+    @te.setter
+    def te(self, value):
+        if _value_changed(self.__dict__.get("_te", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._te = value
+
+    @property
+    def E(self):
+        """Young's modulus [Pa]."""
+        return self._E
+
+    @E.setter
+    def E(self, value):
+        if _value_changed(self.__dict__.get("_E", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._E = value
+
+    @property
+    def nu(self):
+        """Poisson's ratio [-]."""
+        return self._nu
+
+    @nu.setter
+    def nu(self, value):
+        if _value_changed(self.__dict__.get("_nu", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._nu = value
+
+    @property
+    def g(self):
+        """Gravitational acceleration [m s⁻²]."""
+        return self._g
+
+    @g.setter
+    def g(self, value):
+        if _value_changed(self.__dict__.get("_g", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._g = value
+
+    @property
+    def rho_m(self):
+        """Mantle density [kg m⁻³]."""
+        return self._rho_m
+
+    @rho_m.setter
+    def rho_m(self, value):
+        changed = _value_changed(self.__dict__.get("_rho_m", _UNSET), value)
+        self._rho_m = value
+        if "_rho_fill" in self.__dict__:
+            self.__dict__["drho"] = value - self._rho_fill
+        if changed:
+            self._invalidate_matrix_cache()
+
+    @property
+    def rho_fill(self):
+        """Infill density [kg m⁻³]."""
+        return self._rho_fill
+
+    @rho_fill.setter
+    def rho_fill(self, value):
+        changed = _value_changed(self.__dict__.get("_rho_fill", _UNSET), value)
+        self._rho_fill = value
+        if "_rho_m" in self.__dict__:
+            self.__dict__["drho"] = self._rho_m - value
+        if changed:
+            self._invalidate_matrix_cache()
+
+    @property
+    def dx(self):
+        """Grid spacing in x [m]."""
+        return self._dx
+
+    @dx.setter
+    def dx(self, value):
+        if _value_changed(self.__dict__.get("_dx", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._dx = value
+
+    @property
+    def dy(self):
+        """Grid spacing in y [m]."""
+        return self._dy
+
+    @dy.setter
+    def dy(self, value):
+        if _value_changed(self.__dict__.get("_dy", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._dy = value
+
+    @property
+    def bc_west(self):
+        """West boundary condition."""
+        return self._bc_west
+
+    @bc_west.setter
+    def bc_west(self, value):
+        if _value_changed(self.__dict__.get("_bc_west", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._bc_west = value
+
+    @property
+    def bc_east(self):
+        """East boundary condition."""
+        return self._bc_east
+
+    @bc_east.setter
+    def bc_east(self, value):
+        if _value_changed(self.__dict__.get("_bc_east", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._bc_east = value
+
+    @property
+    def bc_north(self):
+        """North boundary condition (2-D only)."""
+        return self._bc_north
+
+    @bc_north.setter
+    def bc_north(self, value):
+        if _value_changed(self.__dict__.get("_bc_north", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._bc_north = value
+
+    @property
+    def bc_south(self):
+        """South boundary condition (2-D only)."""
+        return self._bc_south
+
+    @bc_south.setter
+    def bc_south(self, value):
+        if _value_changed(self.__dict__.get("_bc_south", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._bc_south = value
+
+    @property
+    def sigma_xx(self):
+        """In-plane normal stress in x [Pa]."""
+        return self._sigma_xx
+
+    @sigma_xx.setter
+    def sigma_xx(self, value):
+        if _value_changed(self.__dict__.get("_sigma_xx", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._sigma_xx = value
+
+    @property
+    def sigma_yy(self):
+        """In-plane normal stress in y [Pa]."""
+        return self._sigma_yy
+
+    @sigma_yy.setter
+    def sigma_yy(self, value):
+        if _value_changed(self.__dict__.get("_sigma_yy", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._sigma_yy = value
+
+    @property
+    def sigma_xy(self):
+        """In-plane shear stress [Pa]."""
+        return self._sigma_xy
+
+    @sigma_xy.setter
+    def sigma_xy(self, value):
+        if _value_changed(self.__dict__.get("_sigma_xy", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._sigma_xy = value
+
+    @property
+    def planetary_radius(self):
+        """Planetary radius for spherical-domain corrections [m], or None."""
+        return self.__dict__.get("_planetary_radius")
+
+    @planetary_radius.setter
+    def planetary_radius(self, value):
+        if _value_changed(self.__dict__.get("_planetary_radius", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._planetary_radius = value
+
+    # ── End matrix-determining properties ─────────────────────────────────────
 
     @property
     def method(self):
