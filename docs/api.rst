@@ -167,11 +167,31 @@ attribute **before** calling :meth:`~gflex.base.Flexure.initialize`:
        hash of the coefficient matrix matches the stored hash; it is
        recomputed when any of Te, dx/dy, BCs, or physical parameters change.
    * - ``"no_check"``
-     - Cache without hash check.  The stored factorization is always
-       reused, regardless of whether inputs have changed.  Use only
-       when you can guarantee the coefficient matrix is stable across
-       calls; it gives the maximum performance benefit but will silently
-       produce wrong results if the matrix actually changes.
+     - Cache without hash check.  The stored factorization is reused on
+       every call without computing a hash.  Gives the maximum performance
+       benefit.  The coefficient matrix is freed from memory immediately
+       after factorization; only the LU factorization is retained.  Smart
+       invalidation (see below) still applies: reassigning a
+       matrix-determining input clears the cache and triggers a rebuild on
+       the next call.
+
+**Smart invalidation**
+
+Reassigning any matrix-determining attribute — ``te``, ``E``, ``nu``,
+``g``, ``rho_m``, ``rho_fill``, ``dx``, ``dy``, boundary conditions, or
+in-plane stresses — automatically clears the cached coefficient matrix and
+LU factorization.  No explicit cache management is needed between solves
+when only ``qs`` changes.
+
+.. note::
+
+   Smart invalidation is triggered by *assignment* (``flex.te = new_array``),
+   not by in-place mutation of a NumPy array (``flex.te[5] = 40e3``).  If
+   you mutate an array in place, reassign it afterwards to ensure the cache
+   is correctly invalidated::
+
+      flex.te[5] = 40e3
+      flex.te = flex.te   # trigger invalidation
 
 Example (coupling loop)::
 
