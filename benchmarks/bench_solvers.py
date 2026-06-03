@@ -966,15 +966,18 @@ if __name__ == "__main__":
         bench_2d_load_geometry(sizes_fd=[25, 50, 100, 200])
 
         print("\n--- LU cache (fd_solve() path) ---")
-        bench_lu_cache(sizes_1d=[500, 2000, 5000], sizes_2d=[50, 100, 200],
+        bench_lu_cache(sizes_1d=[500, 2000, 5000, 10000, 20000],
+                       sizes_2d=[50, 100, 200, 300, 400],
                        n_solves=10)
 
         print("\n--- LU cache (run() path) ---")
-        bench_lu_cache_run(sizes_1d=[500, 2000, 5000], sizes_2d=[50, 100, 200],
+        bench_lu_cache_run(sizes_1d=[500, 2000, 5000, 10000, 20000],
+                           sizes_2d=[50, 100, 200, 300, 400],
                            n_solves=10)
 
         print("\n--- Te sweep ---")
-        bench_te_sweep(sizes_1d=[500, 2000, 5000], sizes_2d=[50, 100, 200],
+        bench_te_sweep(sizes_1d=[500, 2000, 5000, 10000, 20000],
+                       sizes_2d=[50, 100, 200, 300, 400],
                        n_solves=10)
     finally:
         tee.close()
