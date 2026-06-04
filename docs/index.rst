@@ -53,7 +53,7 @@ Installation
 
    pip install gflex
 
-gFlex requires Python ≥ 3.10 and depends on NumPy, SciPy, and Matplotlib.
+gFlex requires Python ≥ 3.11 and depends on NumPy, SciPy, and Matplotlib.
 
 Quick start
 -----------
