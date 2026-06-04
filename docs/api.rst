@@ -95,13 +95,13 @@ problematic boundary conditions.
 **BC-type warnings** fire whenever a side carries a BC whose physical
 interpretation deserves verification:
 
-* ``'zero_moment_zero_shear'`` — assumes a free broken plate end (zero moment and shear
+* ``'zero_moment_zero_shear'`` (alias ``'free'``) — assumes a free broken plate end (zero moment and shear
   force).  Physically appropriate for rifted or passive continental margins,
   subduction trenches with an applied edge load (slab pull), and broken-plate
   flexure (Turcotte & Schubert).  Often applied uncritically elsewhere in the
   literature — verify that one of these settings applies.
 
-**Proximity warnings** fire for ``'zero_displacement_zero_slope'`` boundaries when the
+**Proximity warnings** fire for ``'zero_displacement_zero_slope'`` (alias ``'clamped'``) boundaries when the
 nearest loaded cell is within one flexural wavelength
 (:math:`\lambda = 2\pi\alpha`, where
 :math:`\alpha = (4D / \Delta\rho g)^{1/4}`)
