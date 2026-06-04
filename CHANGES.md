@@ -1,6 +1,6 @@
 # Release Notes
 
-## [2.0.0] - 2026-06-04
+## [2.0.0b1] - 2026-06-04
 
 ### Breaking changes
 
@@ -147,7 +147,7 @@
 
 ### Tests
 
-- 329 tests passing across 1-D and 2-D FD, FFT, SAS/SAS_NG solvers, all BC
+- 335 tests passing across 1-D and 2-D FD, FFT, SAS/SAS_NG solvers, all BC
   types, inhomogeneous BCs, domain padding, warnings, and BC aliases.
 - `TestNestedModelGradientRoundTrip`: verifies that `np.gradient`-extracted
   slopes used as inhomogeneous Dirichlet BCs reproduce the full-domain interior
