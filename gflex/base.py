@@ -113,6 +113,28 @@ _BC_DICT_TO_STRING = {
     frozenset({"slope", "shear"}):         "zero_slope_zero_shear",
 }
 
+VALID_BC_STRINGS_2D = frozenset({
+    "zero_displacement_zero_slope", "clamped",
+    "zero_displacement_zero_moment",
+    "zero_moment_zero_shear", "free",
+    "zero_slope_zero_shear", "mirror",
+    "periodic",
+})
+"""All boundary-condition strings accepted by :class:`~gflex.F2D`'s FD solver.
+
+Canonical names (``zero_displacement_zero_slope``, ``zero_displacement_zero_moment``,
+``zero_moment_zero_shear``, ``zero_slope_zero_shear``, ``periodic``) plus their
+short aliases (``clamped``, ``free``, ``mirror``).  Wrappers can validate user
+input against this set instead of maintaining a parallel copy.
+"""
+
+VALID_BC_STRINGS_1D = VALID_BC_STRINGS_2D | frozenset({"sandbox"})
+"""All boundary-condition strings accepted by :class:`~gflex.F1D`'s FD solver.
+
+A superset of :data:`VALID_BC_STRINGS_2D` that additionally includes
+``"sandbox"`` (free end, 1-D only).
+"""
+
 
 def _resolve_bc(bc, edge_label, dimension):
     """Return the canonical BC type string for *bc* (str or dict).
@@ -1666,10 +1688,10 @@ class Flexure(Utility, Plotting):
                         "clamped",
                         "zero_displacement_zero_moment",
                         "periodic",
+                        "zero_slope_zero_shear",
                         "mirror",
                         "zero_moment_zero_shear",
                         "free",
-                        "zero_slope_zero_shear",
                         "sandbox",
                     ]
                 )
@@ -1679,10 +1701,10 @@ class Flexure(Utility, Plotting):
                         "clamped",
                         "zero_displacement_zero_moment",
                         "periodic",
+                        "zero_slope_zero_shear",
                         "mirror",
                         "zero_moment_zero_shear",
                         "free",
-                        "zero_slope_zero_shear",
                     ]
                 )
                 # Boundary conditions should be defined by this point -- whether via
@@ -1722,8 +1744,8 @@ class Flexure(Utility, Plotting):
                         norm = "zero_displacement_zero_slope"
                     elif norm == "free":
                         norm = "zero_moment_zero_shear"
-                    elif norm == "zero_slope_zero_shear":
-                        norm = "mirror"
+                    elif norm == "mirror":
+                        norm = "zero_slope_zero_shear"
                     setattr(self, f"_bc_{edge}_norm", norm)
                 # Validate array BC value lengths against edge dimensions.
                 # Only when dict BCs are present (config-file paths use string BCs

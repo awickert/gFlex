@@ -1,4 +1,5 @@
 from ._version import __version__
+from .base import VALID_BC_STRINGS_1D, VALID_BC_STRINGS_2D
 from .blender import export_for_blender
 from .bmi import BmiGflex
 from .f1d import F1D, pad_domain_1d, recommended_pad_width_1d, smooth_pad_Te_1d
@@ -17,4 +18,6 @@ __all__ = [
     "recommended_pad_width_1d",
     "smooth_pad_Te",
     "smooth_pad_Te_1d",
+    "VALID_BC_STRINGS_1D",
+    "VALID_BC_STRINGS_2D",
 ]
