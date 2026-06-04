@@ -379,7 +379,7 @@ class F1D(Flexure):
     rho_fill : float
         Infill material density [kg m⁻³] (0 for air, ~1000 for water,
         ~2700 for rock).
-    te : float or ndarray of shape (N,)
+    T_e : float or ndarray of shape (N,)
         Elastic thickness [m].  A scalar is broadcast to the full grid.
     qs : ndarray of shape (N,)
         Surface load stress [Pa].
