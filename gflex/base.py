@@ -1560,10 +1560,11 @@ class Flexure(Utility, Plotting):
         """
         Validate boundary conditions and prepare BC state for the chosen solver.
 
-        For ``FD``: checks that every edge BC is one of the five accepted
-        strings (``'zero_displacement_zero_slope'``, ``'zero_moment_zero_shear'``,
-        ``'zero_slope_zero_shear'``, ``'mirror'``, ``'periodic'``) and exits with an
-        informative message if not.  A pre-built ``coeff_matrix`` bypasses
+        For ``FD``: checks that every edge BC is one of the accepted strings
+        (``'zero_displacement_zero_slope'`` / ``'clamped'``,
+        ``'zero_moment_zero_shear'`` / ``'free'``,
+        ``'mirror'``, ``'periodic'``, etc.) and exits with an informative
+        message if not.  A pre-built ``coeff_matrix`` bypasses
         the check (coupled-model use case).
 
         For ``FFT``: ensures the BC attributes exist; the FFT solver
@@ -1641,10 +1642,12 @@ class Flexure(Utility, Plotting):
                 self.bc1D = np.array(
                     [
                         "zero_displacement_zero_slope",
+                        "clamped",
                         "zero_displacement_zero_moment",
                         "periodic",
                         "mirror",
                         "zero_moment_zero_shear",
+                        "free",
                         "zero_slope_zero_shear",
                         "sandbox",
                     ]
@@ -1652,10 +1655,12 @@ class Flexure(Utility, Plotting):
                 self.bc2D = np.array(
                     [
                         "zero_displacement_zero_slope",
+                        "clamped",
                         "zero_displacement_zero_moment",
                         "periodic",
                         "mirror",
                         "zero_moment_zero_shear",
+                        "free",
                         "zero_slope_zero_shear",
                     ]
                 )
@@ -1692,7 +1697,11 @@ class Flexure(Utility, Plotting):
                         raise ValueError(
                             "For a flexural solution, grid must be 1D or 2D."
                         )
-                    if norm == "zero_slope_zero_shear":
+                    if norm == "clamped":
+                        norm = "zero_displacement_zero_slope"
+                    elif norm == "free":
+                        norm = "zero_moment_zero_shear"
+                    elif norm == "zero_slope_zero_shear":
                         norm = "mirror"
                     setattr(self, f"_bc_{edge}_norm", norm)
                 # Validate array BC value lengths against edge dimensions.
