@@ -11,8 +11,8 @@ The full script is at ``examples/greenland_flexure.py``.
 Datasets
 --------
 
-**Ice thickness** — BedMachine Greenland v6 (Morlighem et al. 2017), available
-from NSIDC (Earthdata login required).  The native 150 m grid is subsampled to
+**Ice thickness** — BedMachine Greenland v6 (Morlighem et al. 2017, 2025),
+available from NSIDC (Earthdata login required).  The native 150 m grid is subsampled to
 ~10 km before passing to gFlex; at that resolution each FD solve takes a few
 seconds.
 
@@ -117,6 +117,10 @@ Morlighem M. et al. (2017), BedMachine v3: Complete bed topography and ocean
 bathymetry mapping of Greenland from multi-beam echo sounding combined with
 mass conservation, *Geophys. Res. Lett.*, 44, 11051–11061,
 `doi:10.1002/2017GL074954 <https://doi.org/10.1002/2017GL074954>`_.
+
+Morlighem M. et al. (2025), IceBridge BedMachine Greenland, Version 6
+[Data Set], NASA NSIDC DAAC,
+`doi:10.5067/6B6B225B8V2D <https://doi.org/10.5067/6B6B225B8V2D>`_.
 
 Steffen R., Audet P., and Lund B. (2018), Weakened lithosphere beneath
 Greenland inferred from effective elastic thickness: A hot spot effect?,

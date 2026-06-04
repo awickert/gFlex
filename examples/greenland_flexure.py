@@ -22,6 +22,8 @@ References
 Morlighem M. et al. (2017), BedMachine v3: Complete bed topography and ocean
     bathymetry mapping of Greenland, GRL 44, 11051–11061,
     doi:10.1002/2017GL074954.
+Morlighem M. et al. (2025), IceBridge BedMachine Greenland, Version 6,
+    NSIDC IDBMG4, doi:10.5067/6B6B225B8V2D.
 Steffen R., Audet P., and Lund B. (2018), Weakened lithosphere beneath
     Greenland inferred from effective elastic thickness: A hot spot effect?,
     GRL 45(10), 4733–4742, doi:10.1029/2017GL076885.
