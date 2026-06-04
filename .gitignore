@@ -56,6 +56,10 @@ docs/_static/flowchart.png
 # Example script output figures (canonical copies live in docs/_static/)
 examples/*.png
 
+# Local output from analysis and benchmark scripts
+analysis/results/
+benchmarks/results/
+
 # PyBuilder
 target/
 
