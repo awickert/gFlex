@@ -14,9 +14,7 @@
   `ValueError`.  Convert any remaining INI configs to YAML format.
 
 - **Iterative FD solver removed** — `F1D` now always uses a direct sparse LU
-  factorization.  Setting `Solver = 'iterative'` has no effect (a message is
-  printed and the direct solver is used instead).  The `ConvergenceTolerance`
-  configuration key is ignored.
+  factorization.  The `ConvergenceTolerance` configuration key is ignored.
 - **G2009 plate solution removed** — the finite-difference solver now always
   uses the vWC1994 stencil.  Setting `PlateSolutionType = 'G2009'` previously
   selected a different stencil; it is now a no-op attribute (ignored silently).

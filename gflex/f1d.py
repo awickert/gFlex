@@ -390,8 +390,7 @@ class F1D(Flexure):
         FD options: ``'zero_displacement_zero_slope'`` (alias ``'clamped'``),
         ``'zero_displacement_zero_moment'``,
         ``'zero_moment_zero_shear'`` (alias ``'free'``),
-        ``'mirror'``, ``'periodic'``, ``'sandbox'``.
-        ``'zero_slope_zero_shear'`` is a deprecated alias for ``'mirror'``.
+        ``'zero_slope_zero_shear'`` (alias ``'mirror'``), ``'periodic'``, ``'sandbox'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).
     sigma_xx : float, optional
         Normal stress applied at the plate ends [Pa].  FD only.
