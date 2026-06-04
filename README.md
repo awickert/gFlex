@@ -22,7 +22,7 @@ Full documentation, including a configuration file parameter reference, accuracy
 pip install gflex
 ```
 
-gFlex requires **Python ≥ 3.10**. Dependencies (numpy, scipy, matplotlib, pyyaml) are installed automatically.
+gFlex requires **Python ≥ 3.11**. Dependencies (numpy, scipy, matplotlib, pyyaml) are installed automatically.
 
 For a development install from source:
 
