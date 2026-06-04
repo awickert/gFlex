@@ -344,7 +344,7 @@ def _make_f1d(n, method, te=_TE_REF, solver="direct",
     flex.method = method
     flex.solver = solver
     flex.dx = 5000.0
-    flex.te = te
+    flex.T_e = te
     flex.qs = np.zeros(n)
     flex.qs[n // 4 : 3 * n // 4] = 1e6
     flex.bc_west = bc
@@ -363,7 +363,7 @@ def _make_f2d(nx, ny, method, te=_TE_REF, solver="direct",
     flex.solver = solver
     flex.dx = 5000.0
     flex.dy = 5000.0
-    flex.te = te
+    flex.T_e = te
     if qs is None:
         flex.qs = np.zeros((ny, nx))
         # Central quarter-area load (central 50 % of each axis = 25 % of domain
@@ -892,7 +892,7 @@ def bench_te_sweep(sizes_1d, sizes_2d, n_solves=10):
             flex.cache_factorization = mode
             t0 = _tick()
             for te_val, qs in zip(te_vals, loads):
-                flex.te = te_val
+                flex.T_e = te_val
                 flex.qs = qs
                 flex.run()
             times[str(mode)] = _tick() - t0
@@ -918,7 +918,7 @@ def bench_te_sweep(sizes_1d, sizes_2d, n_solves=10):
             flex.cache_factorization = mode
             t0 = _tick()
             for te_val, qs in zip(te_vals, loads):
-                flex.te = te_val
+                flex.T_e = te_val
                 flex.qs = qs
                 flex.run()
             times[str(mode)] = _tick() - t0

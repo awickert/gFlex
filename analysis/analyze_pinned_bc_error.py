@@ -86,7 +86,7 @@ def run_1d(nx):
 
     s = F1D()
     s.dx       = dx
-    s.te       = te
+    s.T_e      = te
     s.E        = E
     s.nu       = nu
     s.rho_m    = rho_m
@@ -129,7 +129,7 @@ def run_2d(ny, nx):
     s.nu       = nu
     s.rho_m    = rho_m
     s.rho_fill = rho_fill
-    s.te       = te
+    s.T_e      = te
     s.qs       = qs
     s.dx       = dx
     s.dy       = dy

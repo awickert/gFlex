@@ -50,7 +50,7 @@ def _run_once(nx):
 
     s = F1D()
     s.dx      = dx
-    s.te      = TE
+    s.T_e     = TE
     s.E       = E
     s.nu      = NU
     s.rho_m   = RHO_M

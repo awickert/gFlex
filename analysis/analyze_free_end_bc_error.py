@@ -198,7 +198,7 @@ def run_mms_1d(solver_class, nx, te, E, nu, rho_m, rho_fill, g, W0, L):
 
     s = solver_class()
     s.dx       = dx
-    s.te       = te
+    s.T_e      = te
     s.E        = E
     s.nu       = nu
     s.rho_m    = rho_m
@@ -252,7 +252,7 @@ def run_mms_2d(solver_class, ny, nx, te, E, nu, rho_m, rho_fill, g, W0, L):
     s.nu       = nu
     s.rho_m    = rho_m
     s.rho_fill = rho_fill
-    s.te       = te
+    s.T_e      = te
     s.qs       = qs
     s.dx       = dx
     s.dy       = dy
@@ -430,7 +430,7 @@ def _run_1d_check(solver_class):
     dx = L / (nx - 1)
     s = solver_class()
     s.dx       = dx
-    s.te       = te
+    s.T_e      = te
     s.E        = E
     s.nu       = nu
     s.rho_m    = rho_m
@@ -509,7 +509,7 @@ def _run_2d_check(solver_class, n=51):
     s.nu       = nu
     s.rho_m    = rho_m
     s.rho_fill = rho_fill
-    s.te       = te
+    s.T_e      = te
     s.qs       = qs
     s.dx       = dx
     s.dy       = dy
