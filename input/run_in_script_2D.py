@@ -19,10 +19,10 @@ flex.nu = 0.25  # Poisson's Ratio
 flex.rho_m = 3300.0  # mantle_density
 flex.rho_fill = 0.0  # infill_material_density
 
-flex.te = 35000.0 * np.ones(
+flex.T_e = 35000.0 * np.ones(
     (50, 50)
 )  # Elastic thickness [m] -- scalar but may be an array
-flex.te[:, -3:] = 0.0
+flex.T_e[:, -3:] = 0.0
 flex.qs = np.zeros((50, 50))  # Template array for surface load stresses
 flex.qs[10:40, 10:40] += 1e6  # Populating this template
 flex.dx = 5000.0  # grid cell size, x-oriented [m]
