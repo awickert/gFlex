@@ -142,7 +142,8 @@ point (``gflex <config_file>``).
    theory
    numerical_methods
    boundary_conditions
-   example
+   tutorial
+   greenland_example
    api
    configuration
    accuracy

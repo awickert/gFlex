@@ -1,5 +1,5 @@
-Worked Example
-==============
+Tutorial
+========
 
 This page walks through a complete gFlex workflow using a physically motivated
 2-D scenario: a circular surface load on a plate whose elastic thickness
