@@ -148,6 +148,29 @@ def test_fd_0slope0shear_equals_mirror():
 
 
 # ---------------------------------------------------------------------------
+# BC aliases: 'clamped' and 'free'
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("alias,canonical", [
+    ("clamped", "zero_displacement_zero_slope"),
+    ("free",    "zero_moment_zero_shear"),
+])
+def test_fd_bc_alias_equals_canonical_1d(alias, canonical):
+    """Short aliases produce bit-identical results to their canonical names."""
+    import warnings
+    N  = 100
+    qs = np.zeros(N)
+    qs[N // 3 : N // 2] = 1e6
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        w_alias    = _run(qs, bc_w=alias,    bc_e=alias).w
+        w_canonical = _run(qs, bc_w=canonical, bc_e=canonical).w
+
+    np.testing.assert_array_equal(w_alias, w_canonical)
+
+
+# ---------------------------------------------------------------------------
 # Large-domain interior checks: zero_slope_zero_shear, zero_displacement_zero_slope, zero_moment_zero_shear
 # ---------------------------------------------------------------------------
 

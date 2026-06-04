@@ -572,5 +572,28 @@ def test_fd_2d_0displacement0moment_half_domain_antisymmetric():
     np.testing.assert_allclose(flex_half.w, flex_full.w[:, :Nx_half], rtol=1e-6, atol=1e-10)
 
 
+# ---------------------------------------------------------------------------
+# BC aliases: 'clamped' and 'free'
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("alias,canonical", [
+    ("clamped", "zero_displacement_zero_slope"),
+    ("free",    "zero_moment_zero_shear"),
+])
+def test_fd_bc_alias_equals_canonical_2d(alias, canonical):
+    """Short aliases produce bit-identical results to their canonical names in 2-D."""
+    import warnings
+    Ny, Nx = 40, 40
+    qs = np.zeros((Ny, Nx))
+    qs[Ny // 3 : Ny // 2, Nx // 3 : Nx // 2] = 1e6
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        w_alias     = _run(qs, bc_w=alias,    bc_e=alias,    bc_n=alias,    bc_s=alias).w
+        w_canonical = _run(qs, bc_w=canonical, bc_e=canonical, bc_n=canonical, bc_s=canonical).w
+
+    np.testing.assert_array_equal(w_alias, w_canonical)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
