@@ -29,9 +29,20 @@
   `te` name still works but raises a `DeprecationWarning`; it will be removed
   in a future release.  Update all occurrences: `flex.te = …` → `flex.T_e = …`.
 
+- **`"mirror"` is now an alias for `"zero_slope_zero_shear"`** — the canonical
+  BC name is `"zero_slope_zero_shear"` (consistent with all other long-form names);
+  `"mirror"` remains a permanent short alias (like `"clamped"` and `"free"`) and
+  does not trigger any warning.
+
+- **`solver` attribute now raises `ValueError` for unsupported values** —
+  only `"direct"` is supported in this release.  Passing any other string
+  (e.g. `"iterative"`) previously silently fell back to the direct solver;
+  it now raises `ValueError` immediately.  An iterative solver may be added
+  in a future version, at which point additional values will become valid.
+
 - **BC string case normalised; v1.x PascalCase strings deprecated** — all
   boundary-condition strings are now lowercase (`"zero_displacement_zero_slope"`,
-  `"zero_moment_zero_shear"`, `"mirror"`, `"periodic"`).  The old v1.x
+  `"zero_moment_zero_shear"`, `"zero_slope_zero_shear"`, `"periodic"`).  The old v1.x
   PascalCase names (`"0Displacement0Slope"`, `"0Moment0Shear"`, `"Mirror"`,
   etc.) are still accepted but trigger a `DeprecationWarning` and will be
   removed in a future release.  See the `boundary_conditions` page for the
@@ -55,14 +66,16 @@
   broken-plate problems with applied edge loads.  Both 1-D and 2-D; verified
   by a round-trip unit test (`TestNestedModelGradientRoundTrip`).
 
-- **`"clamped"` and `"free"` BC aliases** — concise alternatives to the full
-  canonical names: `"clamped"` normalises to `"zero_displacement_zero_slope"`;
-  `"free"` normalises to `"zero_moment_zero_shear"`.  Both produce
-  bit-identical results to their canonical names.
+- **`gflex.VALID_BC_STRINGS_1D` and `gflex.VALID_BC_STRINGS_2D`** — public
+  `frozenset` constants listing every accepted BC string (canonical names and
+  aliases).  Wrappers can validate user input against these sets instead of
+  maintaining a parallel copy that drifts with new releases.
 
-- **`"zero_slope_zero_shear"` normalises to `"mirror"`** — the two BCs are
-  mathematically identical (same even-reflection ghost equations); the former
-  name is accepted silently and collapses to `"mirror"` internally.
+- **`"clamped"`, `"free"`, and `"mirror"` BC aliases** — concise alternatives to the full
+  canonical names: `"clamped"` normalises to `"zero_displacement_zero_slope"`;
+  `"free"` normalises to `"zero_moment_zero_shear"`;
+  `"mirror"` normalises to `"zero_slope_zero_shear"`.  All three produce
+  bit-identical results to their canonical names.
 
 ### Performance
 
