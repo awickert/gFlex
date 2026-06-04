@@ -387,9 +387,10 @@ class F1D(Flexure):
         Grid spacing [m].
     bc_west, bc_east : str
         Boundary conditions on the west (left) and east (right) ends.
-        FD options: ``'zero_displacement_zero_slope'``, ``'zero_displacement_zero_moment'``,
-        ``'zero_moment_zero_shear'``, ``'mirror'``, ``'periodic'``,
-        ``'sandbox'``.
+        FD options: ``'zero_displacement_zero_slope'`` (alias ``'clamped'``),
+        ``'zero_displacement_zero_moment'``,
+        ``'zero_moment_zero_shear'`` (alias ``'free'``),
+        ``'mirror'``, ``'periodic'``, ``'sandbox'``.
         ``'zero_slope_zero_shear'`` is a deprecated alias for ``'mirror'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).
     sigma_xx : float, optional

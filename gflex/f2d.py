@@ -344,8 +344,10 @@ class F2D(Flexure):
         Grid spacing in the y (row) direction [m].
     bc_west, bc_east, bc_north, bc_south : str
         Boundary conditions on the west, east, north, and south edges.
-        FD options: ``'zero_displacement_zero_slope'``, ``'zero_displacement_zero_moment'``,
-        ``'zero_moment_zero_shear'``, ``'mirror'``, ``'periodic'``.
+        FD options: ``'zero_displacement_zero_slope'`` (alias ``'clamped'``),
+        ``'zero_displacement_zero_moment'``,
+        ``'zero_moment_zero_shear'`` (alias ``'free'``),
+        ``'mirror'``, ``'periodic'``.
         ``'zero_slope_zero_shear'`` is a deprecated alias for ``'mirror'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).
     sigma_xx : float, optional
