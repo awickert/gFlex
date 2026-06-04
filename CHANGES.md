@@ -23,6 +23,12 @@
 - **`PlateSolutionType` removed from the public interface** — the attribute is
   no longer documented or read by any solver.  Existing scripts that set it
   will not raise an error, but the value has no effect.
+- **`te` attribute renamed to `T_e`** — the elastic-thickness attribute on
+  `F1D` and `F2D` is now `T_e` (PEP 8 subscript notation; avoids ambiguity
+  with a time variable `t` and a generic elastic parameter `e`).  The old
+  `te` name still works but raises a `DeprecationWarning`; it will be removed
+  in a future release.  Update all occurrences: `flex.te = …` → `flex.T_e = …`.
+
 - **BC string case normalised; v1.x PascalCase strings deprecated** — all
   boundary-condition strings are now lowercase (`"zero_displacement_zero_slope"`,
   `"zero_moment_zero_shear"`, `"mirror"`, `"periodic"`).  The old v1.x
