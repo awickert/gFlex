@@ -197,6 +197,8 @@ volcanic signal.
    sub-domain centred on the SE Greenland coast (~64°N 40°W), straddling
    the ice-sheet margin and the forebulge.
 
+|
+
 .. figure:: _static/greenland_volcano_nested.png
    :width: 100%
    :alt: Fine sub-domain: background, total, and seamount signal
