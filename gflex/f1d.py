@@ -456,6 +456,11 @@ class F1D(Flexure):
         deflection array is stored in ``self.w`` on return.  Call
         :meth:`finalize` afterwards to restore any internally modified
         state.
+
+        For repeated solves (e.g. a coupling loop), set
+        ``cache_factorization = True`` before :meth:`initialize` to reuse the
+        LU factorisation when only ``qs`` changes; use ``"no_check"`` for
+        maximum throughput when the coefficient matrix is guaranteed stable.
         """
         self.bc_check()
         self.solver_start_time = time.time()
@@ -816,7 +821,7 @@ class F1D(Flexure):
             == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear"])
         ).any():
             self.bc_rigidity_west = _RigidityBC.ZERO_CURVATURE
-        elif self._bc_west_norm in ("mirror", "zero_displacement_zero_moment"):
+        elif self._bc_west_norm in ("zero_slope_zero_shear", "zero_displacement_zero_moment"):
             self.bc_rigidity_west = _RigidityBC.MIRROR
         else:
             raise RuntimeError("Invalid Te B.C. case")
@@ -828,7 +833,7 @@ class F1D(Flexure):
             == np.array(["zero_displacement_zero_slope", "zero_moment_zero_shear"])
         ).any():
             self.bc_rigidity_east = _RigidityBC.ZERO_CURVATURE
-        elif self._bc_east_norm in ("mirror", "zero_displacement_zero_moment"):
+        elif self._bc_east_norm in ("zero_slope_zero_shear", "zero_displacement_zero_moment"):
             self.bc_rigidity_east = _RigidityBC.MIRROR
         else:
             raise RuntimeError("Invalid Te B.C. case")
@@ -941,7 +946,7 @@ class F1D(Flexure):
             self._bc_zero_displacement_zero_slope()
         if self._bc_east_norm == "zero_moment_zero_shear" or self._bc_west_norm == "zero_moment_zero_shear":
             self._bc_zero_moment_zero_shear()
-        if self._bc_east_norm == "mirror" or self._bc_west_norm == "mirror":
+        if self._bc_east_norm == "zero_slope_zero_shear" or self._bc_west_norm == "zero_slope_zero_shear":
             self._bc_mirror()
         if self._bc_east_norm == "zero_displacement_zero_moment" or self._bc_west_norm == "zero_displacement_zero_moment":
             self._bc_zero_displacement_zero_moment()
@@ -1141,7 +1146,7 @@ class F1D(Flexure):
         a mountain range up to the range crest (or, more correctly, the halfway
         point across the mountain range).
         """
-        if self._bc_west_norm == "mirror":
+        if self._bc_west_norm == "zero_slope_zero_shear":
             i = 0
             # self.l2[i] += np.nan
             # self.l1[i] += np.nan
@@ -1155,7 +1160,7 @@ class F1D(Flexure):
             self.r1[i] += 0
             self.r2[i] += 0
 
-        if self._bc_east_norm == "mirror":
+        if self._bc_east_norm == "zero_slope_zero_shear":
             i = -2
             self.l2[i] += 0
             self.l1[i] += 0
@@ -1324,9 +1329,10 @@ class F1D(Flexure):
             if self.debug:
                 print("Using direct solution with UMFpack")
         else:
-            if not self.quiet:
-                print("Solution type not understood:")
-                print("Defaulting to direct solution with UMFpack")
+            raise ValueError(
+                f"solver={self.solver!r} is not supported; only 'direct' is available "
+                "in this release.  An iterative solver may be added in a future version."
+            )
 
         if self.cache_factorization not in (False, True, "no_check"):
             raise ValueError(
