@@ -23,6 +23,40 @@
 - **`PlateSolutionType` removed from the public interface** — the attribute is
   no longer documented or read by any solver.  Existing scripts that set it
   will not raise an error, but the value has no effect.
+- **BC string case normalised; v1.x PascalCase strings deprecated** — all
+  boundary-condition strings are now lowercase (`"zero_displacement_zero_slope"`,
+  `"zero_moment_zero_shear"`, `"mirror"`, `"periodic"`).  The old v1.x
+  PascalCase names (`"0Displacement0Slope"`, `"0Moment0Shear"`, `"Mirror"`,
+  etc.) are still accepted but trigger a `DeprecationWarning` and will be
+  removed in a future release.  See the `boundary_conditions` page for the
+  full mapping.
+
+### New features
+
+- **Inhomogeneous (prescribed-value) boundary conditions** in 1-D and 2-D FD
+  solver.  Any edge can carry a combination of prescribed displacement, slope,
+  moment, and/or shear by passing a dict instead of a string:
+
+  ```python
+  flex.bc_west = {"displacement": w_arr, "slope": dwdx_arr}
+  flex.bc_east = {"moment": M0, "shear": V0}
+  ```
+
+  The primary use case is **nested-domain (coarse-to-fine) modelling**: extract
+  `w` and `np.gradient`-based slopes at the boundary of a fine sub-domain from
+  a coarse regional solve, impose them as BCs, and the fine solver inherits the
+  full far-field loading through those four boundary arrays.  Also supports
+  broken-plate problems with applied edge loads.  Both 1-D and 2-D; verified
+  by a round-trip unit test (`TestNestedModelGradientRoundTrip`).
+
+- **`"clamped"` and `"free"` BC aliases** — concise alternatives to the full
+  canonical names: `"clamped"` normalises to `"zero_displacement_zero_slope"`;
+  `"free"` normalises to `"zero_moment_zero_shear"`.  Both produce
+  bit-identical results to their canonical names.
+
+- **`"zero_slope_zero_shear"` normalises to `"mirror"`** — the two BCs are
+  mathematically identical (same even-reflection ghost equations); the former
+  name is accepted silently and collapses to `"mirror"` internally.
 
 ### Performance
 
@@ -67,6 +101,44 @@
   intent of the existing proximity warning).  The corrected implementation
   decouples the boundary row (enforcing w = 0 exactly) and folds the
   even-reflected ghost into the adjacent interior node (enforcing dw/dx = 0).
+- Fixed the same two ghost-node bugs in the **2-D `zero_displacement_zero_slope`**
+  boundary condition (boundary rows/columns not decoupled as Dirichlet
+  constraints; even-reflection ghost absent at the first interior row/column on
+  all four edges).  Convergence recovers from first order (O(Δx^0.92)) to
+  second order (O(Δx^1.99)).
+- Fixed a ghost-node inconsistency in the **`zero_moment_zero_shear`** FD
+  boundary condition (1-D and 2-D).  The first interior node's stencil used a
+  shear ghost evaluated at a staggered location one cell inward, inconsistent
+  with the moment ghost used at the boundary node itself.  The corrected
+  implementation uses the moment condition consistently at both rows, recovering
+  second-order convergence (O(Δx^2.00) in 1-D, O(Δx^2.01) in 2-D) from first
+  order.
+
+### Documentation
+
+- New `boundary_conditions` page: comprehensive reference covering all BC
+  types with a summary table (structural-mechanics and geophysical names), SVG
+  diagrams for each condition, physical guidance on when each is appropriate,
+  and a deprecation table mapping v1.x PascalCase strings to their v2.0
+  lowercase equivalents.
+- New `greenland_example` page: a realistic Greenland ice-sheet flexure model
+  (BedMachine v6 ice thickness; Steffen et al. spatially variable elastic
+  thickness) and a hypothetical nested-domain seamount scenario that illustrates
+  how inhomogeneous BCs couple a coarse regional model to a fine local one.
+- Accuracy page extended with MMS convergence tables and figures for the 2-D
+  `zero_displacement_zero_slope` ghost-node fix and the 1-D/2-D
+  `zero_moment_zero_shear` ghost-node fix.
+
+### Tests
+
+- 325+ tests passing across 1-D and 2-D FD, FFT, SAS/SAS_NG solvers, all BC
+  types, inhomogeneous BCs, domain padding, warnings, and BC aliases.
+- `TestNestedModelGradientRoundTrip`: verifies that `np.gradient`-extracted
+  slopes used as inhomogeneous Dirichlet BCs reproduce the full-domain interior
+  to within 2 % of peak deflection, confirming the slope sign convention for
+  all four edges in the nested-domain workflow.
+- Parametrised alias tests confirm `"clamped"` and `"free"` produce
+  bit-identical results to their canonical names in both 1-D and 2-D.
 
 ## [1.4.0](https://github.com/awickert/gFlex/releases/tag/v1.4.0) - 2026-05-29
 
