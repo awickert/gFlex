@@ -176,12 +176,19 @@ response.
 Results
 ~~~~~~~
 
-Two fine solves are run with identical boundary conditions: one with ice load
-only (background) and one with ice plus the seamount load (total).  Their
-difference isolates the volcanic signal.
+Both fine-domain results are new, independent finite-difference solutions on
+the 2 km grid — not subsamplings or interpolations of the coarse result.  The
+prescribed displacement and slope at each boundary encode the cumulative plate
+response to the *entire* ice sheet, including the bulk of the Greenland load
+that lies well outside the fine window.  A homogeneous boundary condition
+(e.g., clamped or free edges) would ignore that far-field loading and give a
+physically wrong answer even in the domain interior.  Two solves are run with
+identical boundary conditions: one with ice load only (background) and one
+with ice plus the seamount load (total).  Their difference isolates the
+volcanic signal.
 
 .. figure:: _static/greenland_volcano_context.png
-   :width: 60%
+   :width: 40%
    :alt: Regional Greenland deflection with fine sub-domain outlined
    :align: center
 
@@ -207,9 +214,12 @@ difference isolates the volcanic signal.
 The background panel demonstrates that the inhomogeneous boundary conditions
 successfully reproduce the regional ice-sheet deformation field inside the
 fine domain: the gradient from deep depression to forebulge is smooth and
-consistent with the coarse model.  The volcanic signal panel isolates the
-plate response to the new load alone, free of the much larger ice-loading
-signal.
+consistent with the coarse model.  This agreement is a direct consequence of
+the boundary conditions carrying the far-field loading information — the fine
+solver only needs to know the local ice load and the plate state at its edges,
+and the rest of Greenland's influence arrives through those four boundary
+arrays.  The volcanic signal panel isolates the plate response to the new load
+alone, free of the much larger ice-loading signal.
 
 References
 ----------
