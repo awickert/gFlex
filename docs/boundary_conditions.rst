@@ -85,7 +85,7 @@ geological context, and ball-and-stick diagrams appear in the sections below.
      - Structural mechanics
      - Geophysical
      - Description
-   * - ``zero_displacement_zero_slope``
+   * - ``zero_displacement_zero_slope`` (alias: ``clamped``)
      - :math:`w`,\ :math:`S`
      - clamped end
      - —
@@ -95,7 +95,7 @@ geological context, and ball-and-stick diagrams appear in the sections below.
      - simply supported
      - —
      - No deflection, free to rotate
-   * - ``zero_moment_zero_shear``
+   * - ``zero_moment_zero_shear`` (alias: ``free``)
      - :math:`M`,\ :math:`V`
      - free end
      - broken plate
