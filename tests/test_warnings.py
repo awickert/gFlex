@@ -45,7 +45,7 @@ def _run_1d(qs, bc_w, bc_e):
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.te = Te
+    flex.T_e = Te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.bc_west = bc_w
@@ -68,7 +68,7 @@ def _run_2d(qs, bc_w, bc_e, bc_n, bc_s):
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.te = Te
+    flex.T_e = Te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.dy = dx
@@ -248,7 +248,7 @@ def _make_2d_base():
     flex.rho_m    = rho_m
     flex.rho_fill = rho_fill
     flex.g        = g
-    flex.te       = 35e3
+    flex.T_e      = 35e3
     flex.dx = flex.dy = 10e3
     flex.qs = np.zeros((20, 20))
     return flex

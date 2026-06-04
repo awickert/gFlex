@@ -19,7 +19,7 @@ def _run_flex_1d(Te, qs, dx, method="fd", bc_w="zero_moment_zero_shear",
     flex.nu = 0.25
     flex.rho_m = 3300.0
     flex.rho_fill = 0.0
-    flex.te = Te
+    flex.T_e = Te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.bc_west = bc_w

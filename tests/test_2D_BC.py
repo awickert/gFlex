@@ -63,7 +63,7 @@ def _run(qs, method="fd", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.te = Te
+    flex.T_e = Te
     flex.qs = qs.copy()
     flex.dx = dx_
     flex.dy = dy_

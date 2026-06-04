@@ -49,7 +49,7 @@ def _run_1d(Te_in, qs, bc="zero_displacement_zero_slope", method="fd"):
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.te = Te_in.copy() if isinstance(Te_in, np.ndarray) else Te_in
+    flex.T_e = Te_in.copy() if isinstance(Te_in, np.ndarray) else Te_in
     flex.qs = qs.copy()
     flex.dx = dx
     flex.bc_west = bc

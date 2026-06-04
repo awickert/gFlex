@@ -56,7 +56,7 @@ def _run(ny, nx, qs, dx, dy, method="fd", bc="zero_moment_zero_shear"):
     flex.nu = _nu
     flex.rho_m = _rho_m
     flex.rho_fill = _rho_fill
-    flex.te = _Te
+    flex.T_e = _Te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.dy = dy

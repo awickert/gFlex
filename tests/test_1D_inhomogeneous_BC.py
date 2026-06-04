@@ -116,7 +116,7 @@ def _run(bc_west, bc_east, nx=NX, L=L_DOMAIN):
     flex.nu       = NU
     flex.rho_m    = RHO_M
     flex.rho_fill = RHO_F
-    flex.te       = TE
+    flex.T_e      = TE
     flex.dx       = dx
     flex.qs       = np.zeros(nx)   # deflection driven by BCs, not distributed load
     flex.bc_west  = bc_west

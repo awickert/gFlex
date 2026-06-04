@@ -19,7 +19,7 @@ def _make_f1d(cache=False):
     flex.rho_m = 3300.0
     flex.rho_fill = 0.0
     flex.g = 9.8
-    flex.te = 35e3
+    flex.T_e = 35e3
     flex.dx = 10e3
     nx = 100
     flex.qs = np.zeros(nx)
@@ -42,7 +42,7 @@ def _make_f2d(cache=False):
     flex.rho_m = 3300.0
     flex.rho_fill = 0.0
     flex.g = 9.8
-    flex.te = 35e3
+    flex.T_e = 35e3
     flex.dx = 10e3
     flex.dy = 10e3
     ny, nx = 40, 40
@@ -196,8 +196,8 @@ def test_no_check_te_change_triggers_full_rebuild():
     flex.run()
     w_first = flex.w.copy()
 
-    flex.te = 20e3  # different Te → smart invalidation fires
-    assert flex._lu is None, "_lu must be cleared when te changes"
+    flex.T_e = 20e3  # different Te → smart invalidation fires
+    assert flex._lu is None, "_lu must be cleared when T_e changes"
     flex.run()
 
     assert flex.coeff_matrix is None, "coeff_matrix freed again after rebuild"

@@ -136,7 +136,7 @@ def _run_1d(dx, qs, bc):
     s.nu       = NU
     s.rho_m    = RHO_M
     s.rho_fill = RHO_F
-    s.te       = TE
+    s.T_e      = TE
     s.dx       = dx
     s.qs       = qs
     s.bc_west  = bc
@@ -160,7 +160,7 @@ def _run_2d(dx, qs, bc):
     s.nu       = NU
     s.rho_m    = RHO_M
     s.rho_fill = RHO_F
-    s.te       = TE
+    s.T_e      = TE
     s.dx       = dx
     s.dy       = dx
     s.qs       = qs

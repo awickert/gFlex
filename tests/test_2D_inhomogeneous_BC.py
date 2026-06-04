@@ -101,7 +101,7 @@ def _run(bc_west, bc_east, bc_north="mirror", bc_south="mirror",
     flex.nu       = NU
     flex.rho_m    = RHO_M
     flex.rho_fill = RHO_F
-    flex.te       = TE
+    flex.T_e      = TE
     flex.dx       = dx
     flex.dy       = dx
     flex.qs       = np.zeros((ny, nx)) if qs_override is None else qs_override
@@ -254,7 +254,7 @@ def _run_vte(bc_west, bc_east, bc_north, bc_south,
     flex.nu       = NU
     flex.rho_m    = RHO_M
     flex.rho_fill = RHO_F
-    flex.te       = _make_variable_te(ny, nx) if te is None else te
+    flex.T_e      = _make_variable_te(ny, nx) if te is None else te
     flex.dx       = dx
     flex.dy       = dx
     flex.qs       = np.zeros((ny, nx))
@@ -419,7 +419,7 @@ def _run_ns(bc_north, bc_south, bc_west="mirror", bc_east="mirror",
     flex.nu       = NU
     flex.rho_m    = RHO_M
     flex.rho_fill = RHO_F
-    flex.te       = TE
+    flex.T_e      = TE
     flex.dx       = dx
     flex.dy       = dy
     flex.qs       = np.zeros((ny, nx))
@@ -472,7 +472,7 @@ def _run_sq(bc_west, bc_east, bc_north, bc_south, n=_SQ_N):
     flex.nu       = NU
     flex.rho_m    = RHO_M
     flex.rho_fill = RHO_F
-    flex.te       = TE
+    flex.T_e      = TE
     flex.dx       = dx
     flex.dy       = dx
     flex.qs       = np.zeros((n, n))
@@ -1425,7 +1425,7 @@ def _run_full_nrt():
     flex.nu       = NU
     flex.rho_m    = RHO_M
     flex.rho_fill = RHO_F
-    flex.te       = TE
+    flex.T_e      = TE
     flex.dx       = dx
     flex.dy       = dx
     flex.qs       = qs
@@ -1479,7 +1479,7 @@ class TestNestedModelGradientRoundTrip:
         flex2.nu       = NU
         flex2.rho_m    = RHO_M
         flex2.rho_fill = RHO_F
-        flex2.te       = TE
+        flex2.T_e      = TE
         flex2.dx       = dx
         flex2.dy       = dx
         flex2.qs       = qs_full[i1:i2+1, j1:j2+1]

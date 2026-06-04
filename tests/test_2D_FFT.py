@@ -34,7 +34,7 @@ def _run(qs, method="fft", bc_w="", bc_e="", bc_n="", bc_s="",
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.te = Te
+    flex.T_e = Te
     flex.qs = qs.copy()
     flex.dx = dx_
     flex.dy = dy_
@@ -114,7 +114,7 @@ def test_fft_2d_periodic_rho_fill_exact():
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill_water
-    flex.te = Te
+    flex.T_e = Te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.dy = dy

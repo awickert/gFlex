@@ -34,7 +34,7 @@ def _run_flex_1d(qs, method="fft", bc_w="", bc_e="", sigma_xx=None):
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.te = Te
+    flex.T_e = Te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.bc_west = bc_w

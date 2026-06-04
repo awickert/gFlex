@@ -47,7 +47,7 @@ def _run(qs, method="fd", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero_
     flex.nu = nu
     flex.rho_m = rho_m
     flex.rho_fill = rho_fill
-    flex.te = Te if te is None else te
+    flex.T_e = Te if te is None else te
     flex.qs = qs.copy()
     flex.dx = dx
     flex.bc_west = bc_w

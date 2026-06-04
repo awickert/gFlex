@@ -58,7 +58,7 @@ def _run(qs, method="sas", bc_w="zero_moment_zero_shear", bc_e="zero_moment_zero
     flex.nu      = nu
     flex.rho_m   = rho_m
     flex.rho_fill = rho_fill
-    flex.te      = Te
+    flex.T_e     = Te
     flex.qs      = qs.copy()
     flex.dx      = dx
     flex.bc_west    = bc_w
@@ -148,7 +148,7 @@ def _run_sas_ng(x, q, xw):
     flex.nu       = nu
     flex.rho_m    = rho_m
     flex.rho_fill = rho_fill
-    flex.te       = Te
+    flex.T_e      = Te
     flex.x        = x.copy()
     flex.q        = q.copy()
     flex.xw       = xw.copy()

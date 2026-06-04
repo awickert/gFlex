@@ -37,7 +37,7 @@ def _1d_fd():
     flex.quiet = True;  flex.method = "fd";  flex.solver = "direct"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.te = _Te * np.ones(N);  flex.qs = qs;  flex.dx = _dx
+    flex.T_e = _Te * np.ones(N);  flex.qs = qs;  flex.dx = _dx
     flex.bc_west = flex.bc_east = "periodic"
     flex.initialize();  flex.run()
     return flex
@@ -50,7 +50,7 @@ def _1d_sas():
     flex.quiet = True;  flex.method = "sas"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.te = _Te;  flex.qs = qs;  flex.dx = _dx
+    flex.T_e = _Te;  flex.qs = qs;  flex.dx = _dx
     flex.initialize();  flex.run()
     return flex
 
@@ -62,7 +62,7 @@ def _1d_fft():
     flex.quiet = True;  flex.method = "fft"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.te = _Te;  flex.qs = qs;  flex.dx = _dx
+    flex.T_e = _Te;  flex.qs = qs;  flex.dx = _dx
     flex.bc_west = flex.bc_east = "periodic"
     flex.initialize();  flex.run()
     return flex
@@ -76,7 +76,7 @@ def _1d_sas_ng():
     flex.quiet = True;  flex.method = "sas_ng"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.te = _Te
+    flex.T_e = _Te
     flex.x = x;  flex.q = q;  flex.xw = x.copy()
     flex.initialize();  flex.run()
     return flex
@@ -89,7 +89,7 @@ def _2d_fd():
     flex.quiet = True;  flex.method = "fd";  flex.solver = "direct"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.te = _Te * np.ones((N, N));  flex.qs = qs
+    flex.T_e = _Te * np.ones((N, N));  flex.qs = qs
     flex.dx = flex.dy = _dx
     flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "periodic"
     flex.initialize();  flex.run()
@@ -103,7 +103,7 @@ def _2d_sas():
     flex.quiet = True;  flex.method = "sas"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.te = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx
+    flex.T_e = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx
     flex.initialize();  flex.run()
     return flex
 
@@ -115,7 +115,7 @@ def _2d_fft():
     flex.quiet = True;  flex.method = "fft"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.te = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx   # scalar Te required
+    flex.T_e = _Te;  flex.qs = qs;  flex.dx = flex.dy = _dx   # scalar Te required
     flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "periodic"
     flex.initialize();  flex.run()
     return flex
@@ -134,7 +134,7 @@ def _2d_sas_ng():
     flex.quiet = True;  flex.method = "sas_ng"
     flex.g = _g;  flex.E = _E;  flex.nu = _nu
     flex.rho_m = _rho_m;  flex.rho_fill = _rho_f
-    flex.te = _Te
+    flex.T_e = _Te
     flex.x = xf;  flex.y = yf;  flex.q = q
     flex.xw = xf.copy();  flex.yw = yf.copy()
     flex.initialize();  flex.run()
