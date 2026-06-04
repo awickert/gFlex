@@ -8,8 +8,8 @@ STATUS: These tests FAIL until 2-D inhomogeneous BC machinery is implemented.
 Mirror-structure counterpart to test_1D_inhomogeneous_BC.py
 -----------------------------------------------------------
 The domain is long in x (10α) and narrow in y (NY=11 cells).  The north and
-south edges carry ``bc_north="mirror"`` / ``bc_south="mirror"``, which forces
-dw/dy = 0 there.  With a uniform load (qs = 0) and y-independent BCs the 2-D
+south edges carry ``bc_north="zero_slope_zero_shear"`` / ``bc_south="zero_slope_zero_shear"``,
+which forces dw/dy = 0 there.  With a uniform load (qs = 0) and y-independent BCs the 2-D
 plate equation reduces to its 1-D form, so the numerical solution should be
 y-uniform and the centre row should match the 1-D semi-infinite exact solution.
 
@@ -232,7 +232,7 @@ _VTE_W0 = 75.0    # prescribed displacement, m
 
 _DISP_BC = {"displacement": _VTE_W0, "slope": 0.0}
 _CLAMP   = "zero_displacement_zero_slope"
-_MIRROR  = "mirror"
+_MIRROR  = "zero_slope_zero_shear"
 
 
 def _make_variable_te(ny, nx):

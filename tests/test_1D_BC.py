@@ -2,12 +2,11 @@
 """Tests for 1-D FD boundary conditions, cross-validated against analytical references.
 
 Boundary conditions tested:
-  periodic       — exact via FFT spectral formula (covered in test_1D_FFT.py)
-  mirror         — exact: cosine eigenfunction; mirror == periodic on 2× even-extended domain
-  zero_slope_zero_shear   — same physical intent as mirror (symmetry BC) but different stencil;
-                   shown here to be genuinely distinct from mirror
+  periodic                    — exact via FFT spectral formula (covered in test_1D_FFT.py)
+  zero_slope_zero_shear       — symmetry / mirror BC; alias "mirror" also accepted; shown to be
+                                numerically identical to "mirror" (same stencil)
   zero_displacement_zero_slope — clamped end; vs SAS (infinite plate) for load far from boundary
-  zero_moment_zero_shear  — free end; vs SAS (interior) + Hetényi semi-infinite plate formula (near end)
+  zero_moment_zero_shear      — free end; vs SAS (interior) + Hetényi semi-infinite plate formula
 
 Grid convention: node-centred, x[i] = i*dx, boundary nodes at x[0]=0 and x[N-1]=(N-1)*dx.
 """
@@ -113,11 +112,11 @@ def test_fd_mirror_equals_periodic_2x():
 
 
 # ---------------------------------------------------------------------------
-# zero_slope_zero_shear: distinct from mirror despite same physical intent
+# zero_slope_zero_shear / mirror alias: verify identical results
 # ---------------------------------------------------------------------------
 
 def test_fd_0slope0shear_equals_mirror():
-    """zero_slope_zero_shear and mirror are numerically identical stencils.
+    """zero_slope_zero_shear and its alias mirror produce identical results.
 
     Both BCs enforce even reflection of the ghost nodes:
       dw/dx = 0 at x=0  →  w[-1] = w[1]

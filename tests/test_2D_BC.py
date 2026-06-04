@@ -3,9 +3,8 @@
 
 Boundary conditions tested
 --------------------------
-mirror            — exact 2-D cosine eigenfunction; mirror == periodic on the
-                    2(N-1)×2(M-1) even-extended domain
-zero_slope_zero_shear      — shown to be genuinely distinct from mirror
+zero_slope_zero_shear — exact 2-D cosine eigenfunction; alias "mirror" also accepted;
+                        equivalent to periodic on the 2(N-1)×2(M-1) even-extended domain
 zero_displacement_zero_slope — interior matches SAS (large domain, load far from edge)
 zero_moment_zero_shear     — same
 
@@ -15,7 +14,7 @@ sigma_xx direction — kx-only load (ky = 0): sigma_yy and sigma_xy have NO
                      effect; sigma_xx does (no axis-swap check)
 sigma_yy direction — ky-only load (kx = 0): sigma_xx and sigma_xy have NO effect
 sigma_xy diagonal  — x-reflection symmetry: w(+σ_xy)[i,j] = w(−σ_xy)[i,N-1-j]
-                     for a symmetric load and mirror BCs (validates the sign
+                     for a symmetric load and zero_slope_zero_shear BCs (validates the sign
                      pattern of the cj±1 i±1 stencil)
 sigma monotonicity — tensile reduces deflection, compressive increases it,
                      for every BC type and every sigma component
@@ -145,11 +144,11 @@ def test_fd_2d_mirror_equals_periodic_2x2():
 
 
 # ---------------------------------------------------------------------------
-# zero_slope_zero_shear: distinct from mirror despite the same physical intent
+# zero_slope_zero_shear / mirror alias: verify identical results in 2-D
 # ---------------------------------------------------------------------------
 
 def test_fd_2d_0slope0shear_equals_mirror():
-    """zero_slope_zero_shear and mirror are numerically identical stencils in 2-D.
+    """zero_slope_zero_shear and its alias mirror produce identical results in 2-D.
 
     Both BCs enforce even reflection of the ghost nodes along each axis:
       dw/dn = 0 at boundary  →  first ghost = adjacent interior node

@@ -3,10 +3,9 @@
 
 Warning types covered:
   zero_moment_zero_shear   — UserWarning fires for any side carrying that BC
-  zero_slope_zero_shear    — DeprecationWarning fires (alias for mirror)
   proximity       — fires when nearest loaded cell is within one flexural
                     wavelength of a zero_displacement_zero_slope boundary; absent for
-                    mirror / periodic, and when the load is far enough away
+                    zero_slope_zero_shear / mirror / periodic, and when the load is far enough away
 """
 
 import warnings
