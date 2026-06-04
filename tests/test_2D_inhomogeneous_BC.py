@@ -1371,3 +1371,143 @@ class TestArrayValuedBCs:
         _, w_b  = _run({"moment": M0_b,       "shear": 0.0}, "zero_moment_zero_shear")
         _, w_ab = _run({"moment": M0_a + M0_b,"shear": 0.0}, "zero_moment_zero_shear")
         np.testing.assert_allclose(w_ab, w_a + w_b, rtol=1e-10, atol=0)
+
+
+# ---------------------------------------------------------------------------
+# Nested-model gradient round-trip
+# ---------------------------------------------------------------------------
+# Motivation: the nested-model use case (e.g. a coarse Greenland solve feeding
+# a fine sub-domain solve) extracts w and dw/dn from a coarse solve and
+# re-imposes them as inhomogeneous Dirichlet BCs on the fine sub-domain.
+#
+# The slope sign convention is:
+#   west / north:  slope = dw/dx or dw/dy  in the *positive* coordinate
+#                  direction (east / south-row-index).  Positive slope gives
+#                  positive deflection decaying inward.
+#   east / south:  same coordinate direction, but the domain is "behind" the
+#                  boundary, so the same positive slope drives negative
+#                  deflection (sign flip under ξ = L − coord).
+#
+# Test strategy:
+#   1. Solve a full N×N problem with an off-centre load and clamped BCs.
+#   2. Extract w and np.gradient-based slopes at the boundary of an interior
+#      window (rows I1:I2+1, cols J1:J2+1).
+#   3. Re-solve the window with those as all-four-edge Dirichlet BCs and the
+#      same load.
+#   4. Check that the window interior matches the full solution to within the
+#      O(dx²) accuracy of np.gradient.
+#
+# A sign error on any single edge would flip the deflection trend at that
+# edge, causing an O(1) error in the interior — far above the threshold.
+# ---------------------------------------------------------------------------
+
+_NRT_N   = 40      # full-domain cells (40×40)
+_NRT_DX  = ALPHA * 0.25   # ~25 % of flexural parameter → 40 cells ≈ 10α
+_NRT_I1, _NRT_I2 = 10, 30   # sub-domain row window (inclusive)
+_NRT_J1, _NRT_J2 = 10, 30   # sub-domain col window (inclusive)
+
+
+def _run_full_nrt():
+    """Full 40×40 solve with an off-centre rectangular load, all sides clamped."""
+    n  = _NRT_N
+    dx = _NRT_DX
+    qs = np.zeros((n, n))
+    # Off-centre load so the 2-D solution has genuine gradients on all four
+    # sub-domain edges (a centred load would make N/S or E/W slopes trivially zero).
+    qs[12:22, 14:24] = 1.0e6   # 1 MPa patch, shifted NW of centre
+
+    flex = F2D()
+    flex.quiet    = True
+    flex.method   = "fd"
+    flex.solver   = "direct"
+    flex.g        = G
+    flex.E        = E
+    flex.nu       = NU
+    flex.rho_m    = RHO_M
+    flex.rho_fill = RHO_F
+    flex.te       = TE
+    flex.dx       = dx
+    flex.dy       = dx
+    flex.qs       = qs
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = \
+        "zero_displacement_zero_slope"
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        flex.initialize()
+        flex.run()
+        w  = flex.w.copy()
+        flex.finalize()
+    return w, qs
+
+
+class TestNestedModelGradientRoundTrip:
+    """Round-trip: extract w and slopes from a full solve, re-solve sub-domain.
+
+    Verifies the slope (gradient) sign convention on all four edges at once.
+    The slope convention used for extraction must match gFlex's internal
+    convention:
+
+      west / east:  slope = dw/dx  (np.gradient(w, dx, axis=1))
+      north / south: slope = dw/dy (np.gradient(w, dy, axis=0))
+
+    where dy increases with row index (row 0 = north → row n-1 = south).
+    """
+
+    # 2 % of peak deflection — generous enough for np.gradient O(dx²) error,
+    # tight enough to catch any sign flip (which would produce O(1) error).
+    RTOL = 0.02
+
+    def test_all_four_edges(self):
+        """Sub-domain interior matches full solve after gradient-BC round-trip."""
+        w_full, qs_full = _run_full_nrt()
+        dx = _NRT_DX
+        i1, i2 = _NRT_I1, _NRT_I2
+        j1, j2 = _NRT_J1, _NRT_J2
+
+        dw_dx = np.gradient(w_full, dx, axis=1)   # positive = eastward
+        dw_dy = np.gradient(w_full, dx, axis=0)   # positive = southward (row-index dir)
+
+        n_sub_y = i2 - i1 + 1
+        n_sub_x = j2 - j1 + 1
+
+        flex2 = F2D()
+        flex2.quiet    = True
+        flex2.method   = "fd"
+        flex2.solver   = "direct"
+        flex2.g        = G
+        flex2.E        = E
+        flex2.nu       = NU
+        flex2.rho_m    = RHO_M
+        flex2.rho_fill = RHO_F
+        flex2.te       = TE
+        flex2.dx       = dx
+        flex2.dy       = dx
+        flex2.qs       = qs_full[i1:i2+1, j1:j2+1]
+        flex2.bc_west  = {"displacement": w_full[i1:i2+1, j1],
+                          "slope":        dw_dx[i1:i2+1, j1]}
+        flex2.bc_east  = {"displacement": w_full[i1:i2+1, j2],
+                          "slope":        dw_dx[i1:i2+1, j2]}
+        flex2.bc_north = {"displacement": w_full[i1, j1:j2+1],
+                          "slope":        dw_dy[i1, j1:j2+1]}
+        flex2.bc_south = {"displacement": w_full[i2, j1:j2+1],
+                          "slope":        dw_dy[i2, j1:j2+1]}
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            flex2.initialize()
+            flex2.run()
+            w_sub = flex2.w.copy()
+            flex2.finalize()
+
+        # Compare interior nodes (exclude boundary rows/cols, which are by
+        # construction equal to the prescribed displacement values).
+        w_sub_int  = w_sub[1:-1, 1:-1]
+        w_full_int = w_full[i1+1:i2, j1+1:j2]
+
+        scale = np.max(np.abs(w_full_int))
+        err   = np.max(np.abs(w_sub_int - w_full_int)) / scale
+        assert err < self.RTOL, (
+            f"Nested round-trip L-inf error {err:.3e} exceeds {self.RTOL:.0%}; "
+            "check gradient sign convention (west/east: dw/dx; "
+            "north/south: dw/dy in row-index direction)"
+        )
