@@ -177,7 +177,7 @@ attribute **before** calling :meth:`~gflex.base.Flexure.initialize`:
 
 **Smart invalidation**
 
-Reassigning any matrix-determining attribute — ``te``, ``E``, ``nu``,
+Reassigning any matrix-determining attribute — ``T_e``, ``E``, ``nu``,
 ``g``, ``rho_m``, ``rho_fill``, ``dx``, ``dy``, boundary conditions, or
 in-plane stresses — automatically clears the cached coefficient matrix and
 LU factorization.  No explicit cache management is needed between solves
@@ -185,13 +185,13 @@ when only ``qs`` changes.
 
 .. note::
 
-   Smart invalidation is triggered by *assignment* (``flex.te = new_array``),
-   not by in-place mutation of a NumPy array (``flex.te[5] = 40e3``).  If
+   Smart invalidation is triggered by *assignment* (``flex.T_e = new_array``),
+   not by in-place mutation of a NumPy array (``flex.T_e[5] = 40e3``).  If
    you mutate an array in place, reassign it afterwards to ensure the cache
    is correctly invalidated::
 
-      flex.te[5] = 40e3
-      flex.te = flex.te   # trigger invalidation
+      flex.T_e[5] = 40e3
+      flex.T_e = flex.T_e   # trigger invalidation
 
 Example (coupling loop)::
 

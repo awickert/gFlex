@@ -70,7 +70,7 @@ confirming that free-end boundary artefacts were inflating the unpadded result.
    te_pad, qs_pad, p = pad_domain(te_proj, qs, dx=dx, dy=dy,
                                    E=65e9, nu=0.25, rho_m=3300., g=9.81)
    flex = F2D()
-   flex.te, flex.qs = te_pad, qs_pad
+   flex.T_e, flex.qs = te_pad, qs_pad
    flex.dx, flex.dy = dx, dy
    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = \
        'zero_displacement_zero_slope'

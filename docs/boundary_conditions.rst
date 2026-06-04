@@ -475,7 +475,7 @@ west end, with a free ``zero_moment_zero_shear`` condition at the far east end:
    flex.method   = 'fd'
    flex.g = g;  flex.E = E;  flex.nu = nu
    flex.rho_m = rho_m;  flex.rho_fill = rho_fill
-   flex.te       = Te
+   flex.T_e      = Te
    flex.qs       = np.zeros(nx)   # no distributed load — forcing is at the boundary
    flex.dx       = dx
    flex.bc_west  = {"moment": 0.0, "shear": V0}   # trench: zero moment, prescribed shear

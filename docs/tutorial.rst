@@ -106,7 +106,7 @@ Running gFlex
 
    flex.g        = g;     flex.E  = E;    flex.nu = nu
    flex.rho_m    = rho_m; flex.rho_fill = rho_fill
-   flex.te       = Te_grid
+   flex.T_e      = Te_grid
    flex.qs       = qs
    flex.dx       = dx;    flex.dy = dy
 
@@ -155,7 +155,7 @@ deflection side by side), plot the arrays directly:
        cmap=cmc.lajolla_r, aspect='equal')
    axes[0].set_title("Load thickness, mantle equivalent [m]")
 
-   axes[1].imshow(flex.te / 1e3,
+   axes[1].imshow(flex.T_e / 1e3,
        extent=(0, dx/1000*ncols, dy/1000*nrows, 0),
        cmap=cmc.roma, aspect='equal')
    axes[1].set_title(r"Elastic thickness $T_e$ [km]")
@@ -198,7 +198,7 @@ NumPy or gFlex installed:
        path='/tmp/gflex_blender_mesh.py',
        z_exaggeration=200.0,
        qs=flex.qs,
-       Te=flex.te,
+       Te=flex.T_e,
        rho_m=rho_m,
        g=g,
    )

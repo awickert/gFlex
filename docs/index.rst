@@ -71,7 +71,7 @@ Quick start
    flex.nu = 0.25
    flex.rho_m = 3300.
    flex.rho_fill = 0.
-   flex.te = 35e3 * np.ones((50, 50))   # uniform 35 km elastic thickness
+   flex.T_e = 35e3 * np.ones((50, 50))   # uniform 35 km elastic thickness
    flex.qs = np.zeros((50, 50))
    flex.qs[10:40, 10:40] = 1e6          # 150 × 150 km load at 1 MPa
    flex.dx = flex.dy = 5000.            # 5 km grid
