@@ -53,6 +53,9 @@ coverage.xml
 docs/_build/
 docs/_static/flowchart.png
 
+# Example script output figures (canonical copies live in docs/_static/)
+examples/*.png
+
 # PyBuilder
 target/
 
