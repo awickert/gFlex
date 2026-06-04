@@ -598,16 +598,16 @@ class Plotting:
                     plt.ylim((-yabsmax, yabsmax))
                     # Plot title selector -- be infomrative
                     try:
-                        self.te
+                        self.T_e
                         if self.method == "fd":
-                            if type(self.te) is np.ndarray:
-                                if (self.te != (self.te).mean()).any():
+                            if type(self.T_e) is np.ndarray:
+                                if (self.T_e != (self.T_e).mean()).any():
                                     plt.title(titletext, fontsize=16)
                                 else:
                                     plt.title(
                                         titletext
                                         + ", $T_e$ = "
-                                        + str((self.te / 1000).mean())
+                                        + str((self.T_e / 1000).mean())
                                         + " km",
                                         fontsize=16,
                                     )
@@ -615,13 +615,13 @@ class Plotting:
                                 plt.title(
                                     titletext
                                     + ", $T_e$ = "
-                                    + str(self.te / 1000)
+                                    + str(self.T_e / 1000)
                                     + " km",
                                     fontsize=16,
                                 )
                         else:
                             plt.title(
-                                titletext + ", $T_e$ = " + str(self.te / 1000) + " km",
+                                titletext + ", $T_e$ = " + str(self.T_e / 1000) + " km",
                                 fontsize=16,
                             )
                     except AttributeError:
@@ -765,7 +765,7 @@ class Plotting:
             _defl_norm = None
             _defl_vmin, _defl_vmax = -w_abs, w_abs
 
-        _has_te_grid = isinstance(self.te, np.ndarray) and self.te.ndim == 2
+        _has_te_grid = isinstance(self.T_e, np.ndarray) and self.T_e.ndim == 2
 
         xlabel = "longitude [deg E]" if self.latlon else "x [km]"
         ylabel = "latitude [deg N]" if self.latlon else "y [km]"
@@ -800,7 +800,7 @@ class Plotting:
         if _has_te_grid:
             ax_te.set_title(r"Elastic thickness $T_e$ [km]", fontsize=16)
             im_te = ax_te.imshow(
-                self.te / 1e3, extent=_ext(self.te), cmap=_cmap_te,
+                self.T_e / 1e3, extent=_ext(self.T_e), cmap=_cmap_te,
             )
             ax_te.set_xlabel(xlabel, fontsize=12, fontweight="bold")
             ax_te.set_ylabel(ylabel, fontsize=12, fontweight="bold")
@@ -1030,13 +1030,13 @@ class Flexure(Utility, Plotting):
         """Clear the FD coefficient matrix and LU factorisation caches.
 
         Called automatically by property setters whenever a matrix-determining
-        input (``te``, ``E``, ``nu``, boundary conditions, grid spacing, …) is
+        input (``T_e``, ``E``, ``nu``, boundary conditions, grid spacing, …) is
         reassigned to a different value.  The caches are rebuilt transparently
         on the next ``run()`` call.
 
-        Note: in-place NumPy array mutations (e.g. ``flex.te[5] = 40e3``)
+        Note: in-place NumPy array mutations (e.g. ``flex.T_e[5] = 40e3``)
         bypass the setter and do **not** trigger this method.  Reassign the
-        full array (``flex.te = new_array``) to ensure correct invalidation.
+        full array (``flex.T_e = new_array``) to ensure correct invalidation.
         """
         d = self.__dict__
         if "coeff_matrix" in d:
@@ -1052,15 +1052,36 @@ class Flexure(Utility, Plotting):
     # therefore reuse the cached factorisation at no extra cost.
 
     @property
-    def te(self):
+    def T_e(self):
         """Elastic thickness [m] (scalar or array)."""
+        return self._te
+
+    @T_e.setter
+    def T_e(self, value):
+        if _value_changed(self.__dict__.get("_te", _UNSET), value):
+            self._invalidate_matrix_cache()
+        self._te = value
+
+    @property
+    def te(self):
+        """Deprecated alias for :attr:`T_e`; will be removed in a future release."""
+        import warnings
+        warnings.warn(
+            "The 'te' attribute is deprecated; use 'T_e' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._te
 
     @te.setter
     def te(self, value):
-        if _value_changed(self.__dict__.get("_te", _UNSET), value):
-            self._invalidate_matrix_cache()
-        self._te = value
+        import warnings
+        warnings.warn(
+            "The 'te' attribute is deprecated; use 'T_e' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self.T_e = value
 
     @property
     def E(self):
@@ -1435,12 +1456,12 @@ class Flexure(Utility, Plotting):
         # Ensure that Te is of floating-point type to avoid integer math
         # and floor division
         try:
-            self.te = self.te.astype(float)  # array
+            self.T_e = self.T_e.astype(float)  # array
         except AttributeError:
             # Integer scalar Te does not seem to be a problem, but taking this step
             # anyway for consistency
             try:
-                self.te = float(self.te)  # integer
+                self.T_e = float(self.T_e)  # integer
             except (AttributeError, ValueError, TypeError):
                 # If not already defined, then an input file is being used, and this
                 # code should bring the grid in as floating point type... just later.
@@ -1798,7 +1819,7 @@ class Flexure(Utility, Plotting):
                 "Inconsistent size of q0 array and coefficient matrix."
             )
 
-    def te_array_size_check(self):
+    def T_e_array_size_check(self):
         """
         Checks that Te and q0 array sizes are compatible
         For finite difference solution.
@@ -1806,13 +1827,13 @@ class Flexure(Utility, Plotting):
         # Only if they are both defined and are arrays
         # Both being arrays is a possible bug in this check routine that I have
         # intentionally introduced
-        if isinstance(self.te, np.ndarray) and isinstance(self.qs, np.ndarray):
+        if isinstance(self.T_e, np.ndarray) and isinstance(self.qs, np.ndarray):
             # Doesn't touch non-arrays or 1D arrays
-            if type(self.te) is np.ndarray:
-                if (np.array(self.te.shape) != np.array(self.qs.shape)).any():
+            if type(self.T_e) is np.ndarray:
+                if (np.array(self.T_e.shape) != np.array(self.qs.shape)).any():
                     raise ValueError(
                         f"q0 and Te arrays have incompatible shapes: "
-                        f"qs={self.qs.shape}, te={self.te.shape}."
+                        f"qs={self.qs.shape}, te={self.T_e.shape}."
                     )
             else:
                 if self.debug:
@@ -1855,17 +1876,17 @@ class Flexure(Utility, Plotting):
         if self.filename:
             # Try to import Te grid or scalar for the finite difference solution
             # Try float first (scalar Te); fall back to string (file path)
-            self.te = self.configGet(
+            self.T_e = self.configGet(
                 "float", "input", "elastic_thickness", optional=True
             )
-            if self.te is None:
+            if self.T_e is None:
                 Tepath = self.configGet(
                     "string", "input", "elastic_thickness", optional=False
                 )
-                self.te = Tepath
+                self.T_e = Tepath
             else:
                 Tepath = None
-            if self.te is None:
+            if self.T_e is None:
                 if self.coeff_matrix is not None:
                     pass
                 else:
@@ -1875,17 +1896,17 @@ class Flexure(Utility, Plotting):
                         "No input elastic thickness or coefficient matrix supplied."
                     )
         # or if getter/setter
-        if isinstance(self.te, str):
+        if isinstance(self.T_e, str):
             # Try to import Te grid or scalar for the finite difference solution
-            Tepath = self.te
+            Tepath = self.T_e
         else:
             Tepath = None  # in case no self.filename present (like for GRASS GIS)
         # If there is a Tepath, import Te
         # Assume that even if a coeff_matrix is defined
         # That the user wants Te if they gave the path
         if Tepath:
-            self.te = self.loadFile(self.te, close_on_fail=False)
-            if self.te is None:
+            self.T_e = self.loadFile(self.T_e, close_on_fail=False)
+            if self.T_e is None:
                 print("Requested Te file is provided but cannot be located.")
                 print("No scalar elastic thickness is provided in configuration file")
                 print("(Typo in path to input Te grid?)")
@@ -1900,8 +1921,8 @@ class Flexure(Utility, Plotting):
 
             # Check that Te is the proper size if it was loaded
             # Will be array if it was loaded
-            if self.te.any():
-                self.te_array_size_check()
+            if self.T_e.any():
+                self.T_e_array_size_check()
 
     def _solve_fft(self):
         """
@@ -1930,7 +1951,7 @@ class Flexure(Utility, Plotting):
         # Config-file parameter loading
         # FFT requires scalar (uniform) Te; that check is performed in F1D/F2D
         if self.filename:
-            self.te = self.configGet("float", "input", "elastic_thickness")
+            self.T_e = self.configGet("float", "input", "elastic_thickness")
             # qs may still be coming from q0 when driven by a config file
             try:
                 self.qs
@@ -1950,7 +1971,7 @@ class Flexure(Utility, Plotting):
             self.x = np.arange(self.dx / 2.0, self.dx * self.qs.shape[0], self.dx)
         if self.filename:
             # Define the (scalar) elastic thickness
-            self.te = self.configGet("float", "input", "elastic_thickness")
+            self.T_e = self.configGet("float", "input", "elastic_thickness")
             # Define a stress-based qs = q0
             self.qs = self.q0.copy()
             # Remove self.q0 to avoid issues with multiply-defined inputs
@@ -1977,7 +1998,7 @@ class Flexure(Utility, Plotting):
         """
         if self.filename:
             # Define the (scalar) elastic thickness
-            self.te = self.configGet("float", "input", "elastic_thickness")
+            self.T_e = self.configGet("float", "input", "elastic_thickness")
             # See if it wants to be run in lat/lon
             # Could put under in 2D if-statement, but could imagine an eventual desire
             # to change this and have 1D lat/lon profiles as well.

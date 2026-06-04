@@ -124,7 +124,7 @@ def export_for_blender(
         flex.solver = 'direct'
         flex.g = 9.8;  flex.E = 65e9;  flex.nu = 0.25
         flex.rho_m = 3300.;  flex.rho_fill = 0.
-        flex.te = 35e3 * np.ones((100, 100))
+        flex.T_e = 35e3 * np.ones((100, 100))
         flex.qs = np.zeros((100, 100));  flex.qs[40:60, 40:60] = 1e6
         flex.dx = flex.dy = 5000.
         flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = 'zero_moment_zero_shear'

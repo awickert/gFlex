@@ -56,7 +56,7 @@ flex.quiet = True
 flex.method = "fd"
 flex.g = g;  flex.E = E;  flex.nu = nu
 flex.rho_m = rho_m;  flex.rho_fill = rho_fill
-flex.te = Te_grid
+flex.T_e = Te_grid
 flex.qs = qs
 flex.dx = dx;  flex.dy = dy
 flex.bc_west = flex.bc_east = flex.bc_south = flex.bc_north = "zero_moment_zero_shear"

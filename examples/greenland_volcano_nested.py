@@ -150,7 +150,7 @@ flex_c.E        = E
 flex_c.nu       = NU
 flex_c.rho_m    = RHO_MANTLE
 flex_c.rho_fill = RHO_FILL
-flex_c.te       = te_pad
+flex_c.T_e       = te_pad
 flex_c.qs       = qs_pad
 flex_c.dx       = dx_c
 flex_c.dy       = dy_c
@@ -255,7 +255,7 @@ def _run_fine(qs_load):
     flex_f.nu       = NU
     flex_f.rho_m    = RHO_MANTLE
     flex_f.rho_fill = RHO_FILL
-    flex_f.te       = te_fine
+    flex_f.T_e       = te_fine
     flex_f.qs       = qs_load
     flex_f.dx       = FINE_DX
     flex_f.dy       = FINE_DX

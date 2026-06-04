@@ -126,7 +126,7 @@ def smooth_pad_Te_1d(Te, pad_width, Te_out=None):
         Te_pad = smooth_pad_Te_1d(Te, p)
         qs_pad = np.pad(qs, p, mode='constant')
         flex = F1D()
-        flex.te = Te_pad
+        flex.T_e = Te_pad
         flex.qs = qs_pad
         # ... set other parameters and run ...
         w_inner = flex.w[p:-p]   # trim padding from output
@@ -216,7 +216,7 @@ def pad_domain_1d(Te, qs, dx, n_wavelengths=1.0, Te_out=None,
     To run :class:`F1D` with the padded arrays::
 
         flex = gflex.F1D()
-        flex.te = Te_pad
+        flex.T_e = Te_pad
         flex.qs = qs_pad
         # ... set other parameters and run ...
         w_inner = flex.w[p:-p]   # trim padding from output
@@ -246,7 +246,7 @@ def _sandbox_easter_egg():
     solver = F1D()
     solver.dx = dx
     solver.qs = qs_load
-    solver.te = 0.012      # 12 mm plywood
+    solver.T_e = 0.012     # 12 mm plywood
     solver.E = 10e9
     solver.nu = 0.30
     solver.rho_m = 1.0     # negligible buoyancy (floor on a table)
@@ -416,7 +416,7 @@ class F1D(Flexure):
         flex.nu = 0.25
         flex.rho_m = 3300.
         flex.rho_fill = 1000.
-        flex.te = 30e3
+        flex.T_e = 30e3
         flex.qs = np.zeros(300)
         flex.qs[100:200] = 1e6      # 100-cell load
         flex.dx = 4000.             # 4 km grid
@@ -491,13 +491,13 @@ class F1D(Flexure):
         """
         Release all model state.
 
-        Restores ``self.te`` to its pre-run value if gFlex padded it
+        Restores ``self.T_e`` to its pre-run value if gFlex padded it
         internally.  Then calls the base ``finalize``, which deletes
         ``w``, ``qs``, and the cached coefficient matrix.  Read ``w``
         before calling this method.
         """
         with contextlib.suppress(AttributeError):
-            self.te = self.te_unpadded
+            self.T_e = self.T_e_unpadded
         if self.verbose:
             print("F1D finalized")
         super().finalize()
@@ -542,9 +542,9 @@ class F1D(Flexure):
             return
         nx = self.qs.shape[0]
         Te_arr = (
-            self.te
-            if isinstance(self.te, np.ndarray)
-            else np.full(nx, float(self.te))
+            self.T_e
+            if isinstance(self.T_e, np.ndarray)
+            else np.full(nx, float(self.T_e))
         )
         Te_loaded = Te_arr[loaded]
         D_loaded = self.E * Te_loaded**3 / (12 * (1 - self.nu**2))
@@ -632,17 +632,17 @@ class F1D(Flexure):
         self.gridded_x()
 
         # Te must be scalar or a uniform array
-        if np.isscalar(self.te):
+        if np.isscalar(self.T_e):
             pass
-        elif np.all(self.te == np.mean(self.te)):
-            self.te = float(np.mean(self.te))
+        elif np.all(self.T_e == np.mean(self.T_e)):
+            self.T_e = float(np.mean(self.T_e))
         else:
             raise ValueError(
                 "The FFT solution requires a scalar (uniform) Te. "
                 "For spatially variable Te, use the finite difference method."
             )
 
-        D = self.E * self.te**3 / (12.0 * (1.0 - self.nu**2))
+        D = self.E * self.T_e**3 / (12.0 * (1.0 - self.nu**2))
         # 1-D flexural parameter α = (4D / Δρg)^0.25
         alpha = (4.0 * D / (self.drho * self.g)) ** 0.25
 
@@ -658,7 +658,7 @@ class F1D(Flexure):
         N_work = len(qs_work)
         k = scipy.fft.rfftfreq(N_work, d=self.dx) * 2.0 * np.pi
         Q = scipy.fft.rfft(qs_work, workers=-1)
-        denom = D * k**4 + self.sigma_xx * self.te * k**2 + self.drho * self.g
+        denom = D * k**4 + self.sigma_xx * self.T_e * k**2 + self.drho * self.g
         w_work = scipy.fft.irfft(-Q / denom, n=N_work, workers=-1)
 
         if periodic:
@@ -700,17 +700,17 @@ class F1D(Flexure):
         # * If scalar, okay.
         # * If grid, convert to scalar if a singular value
         # * Else, throw an error.
-        if np.isscalar(self.te):
+        if np.isscalar(self.T_e):
             pass
-        elif np.all(self.te == np.mean(self.te)):
-            self.te = np.mean(self.te)
+        elif np.all(self.T_e == np.mean(self.T_e)):
+            self.T_e = np.mean(self.T_e)
         else:
             raise ValueError(
                 "The analytical solution requires a scalar (uniform) Te. "
                 "For spatially variable Te, use the finite difference method."
             )
 
-        self.D = self.E * self.te**3 / (12 * (1 - self.nu**2))  # Flexural rigidity
+        self.D = self.E * self.T_e**3 / (12 * (1 - self.nu**2))  # Flexural rigidity
         self.alpha = (
             4 * self.D / (self.drho * self.g)
         ) ** 0.25  # 1D flexural parameter
@@ -756,7 +756,7 @@ class F1D(Flexure):
         """Precompute dx⁴, dx², and the flexural rigidity array D for the FD solver."""
         self.dx4 = self.dx**4
         self.dx2 = self.dx**2  # Needed if horizontal (i.e., tectonic) stresses
-        self.D = self.E * self.te**3 / (12 * (1 - self.nu**2))
+        self.D = self.E * self.T_e**3 / (12 * (1 - self.nu**2))
 
     def _build_coefficient_matrix(self):
         """
@@ -836,10 +836,10 @@ class F1D(Flexure):
         #############
         # PAD ARRAY #
         #############
-        if np.isscalar(self.te):
+        if np.isscalar(self.T_e):
             self.D *= np.ones(self.qs.shape)  # And leave Te as a scalar for checks
         else:
-            self.te_unpadded = self.te.copy()
+            self.T_e_unpadded = self.T_e.copy()
         # F2D keeps this inside the "else" and handles this differently,
         # largely because it has different ways of computing the flexural
         # response with variable Te. We'll keep everything simpler here and
@@ -886,15 +886,15 @@ class F1D(Flexure):
         self.l2_coeff_i = (Dm1 / 2.0 + D0 - Dp1 / 2.0) / self.dx4
         self.l1_coeff_i = (
             -6.0 * D0 + 2.0 * Dp1
-        ) / self.dx4 - self.sigma_xx * self.te / self.dx2
+        ) / self.dx4 - self.sigma_xx * self.T_e / self.dx2
         self.c0_coeff_i = (
             (-2.0 * Dm1 + 10.0 * D0 - 2.0 * Dp1) / self.dx4
-            + 2 * self.sigma_xx * self.te / self.dx2
+            + 2 * self.sigma_xx * self.T_e / self.dx2
             + self.drho * self.g
         )
         self.r1_coeff_i = (
             2.0 * Dm1 - 6.0 * D0
-        ) / self.dx4 - self.sigma_xx * self.te / self.dx2
+        ) / self.dx4 - self.sigma_xx * self.T_e / self.dx2
         self.r2_coeff_i = (-Dm1 / 2.0 + D0 + Dp1 / 2.0) / self.dx4
         # These will be just the 1, -4, 6, -4, 1 for constant Te
 
@@ -1316,7 +1316,7 @@ class F1D(Flexure):
 
         if self.debug:
             print("qs", self.qs.shape)
-            print("Te", self.te.shape)
+            print("Te", self.T_e.shape)
             self.calc_max_flexural_wavelength()
             print("maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells")
 
