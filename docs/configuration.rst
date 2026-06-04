@@ -130,7 +130,7 @@ Parameters
     For FD: ``zero_displacement_zero_slope`` (alias ``clamped``),
     ``zero_displacement_zero_moment``,
     ``zero_moment_zero_shear`` (alias ``free``),
-    ``zero_slope_zero_shear``, ``mirror``, or ``periodic``.
+    ``zero_slope_zero_shear`` (alias ``mirror``), or ``periodic``.
     See :doc:`boundary_conditions` for the physical meaning of each and
     guidance on choosing.
 

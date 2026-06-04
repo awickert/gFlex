@@ -5,8 +5,7 @@ Boundary conditions specify what happens at the edges of the modelled domain.
 gFlex supports five named conditions for the finite-difference (FD) solver;
 each imposes constraints on which plate mechanical quantities — deflection,
 slope, bending moment, and shear force — vanish at that edge.
-(``zero_slope_zero_shear`` is accepted as a deprecated alias for ``mirror``
-and is not a distinct condition.)
+Three short aliases (``clamped``, ``free``, ``mirror``) are also accepted.
 
 The spectral (FFT) and analytical-superposition (SAS / SAS_NG) methods do
 not use these named conditions.  FFT zero-pads the domain by
@@ -100,10 +99,10 @@ geological context, and ball-and-stick diagrams appear in the sections below.
      - free end
      - broken plate
      - Free, unsupported plate end
-   * - ``mirror`` (alias: ``zero_slope_zero_shear``)
+   * - ``zero_slope_zero_shear`` (alias: ``mirror``)
      - :math:`S`,\ :math:`V`
      - —
-     - mirror
+     - mirror / symmetry
      - Even reflection; model half of a symmetric system
    * - ``periodic``
      - —
@@ -113,7 +112,8 @@ geological context, and ball-and-stick diagrams appear in the sections below.
 
 The "Geophysical" column reflects established usage in the lithospheric
 flexure literature.  ``zero_moment_zero_shear`` is known as the "broken plate"
-condition; ``mirror`` is used under that name in geophysical modeling.
+condition; ``zero_slope_zero_shear`` (short alias ``mirror``) is used under
+the symmetry-plane or mirror name in geophysical modeling.
 The remaining conditions are referred to by their structural-mechanics names,
 or have no name at all.
 
@@ -249,8 +249,8 @@ of the five conditions for Earth science applications:
 
    *Free end* — no bending moment and no shear force; the plate ends freely ("broken plate").
 
-mirror
-------
+zero_slope_zero_shear
+---------------------
 
 Even reflection at the boundary: the system is identical on both sides,
 so only half the domain need be modelled.  The deflection at the ghost
@@ -261,11 +261,14 @@ Naturally compatible with cosine-series (Discrete Cosine Transform)
 solutions.  For the distinction between even and odd reflections, see
 :ref:`contrast-with-mirror` in the ``zero_displacement_zero_moment`` section above.
 
+*Short alias:* ``mirror`` — accepted without any warning and normalised to
+``zero_slope_zero_shear`` internally.
+
 *Standard names:* No standard structural-mechanics or geophysical name.
 The condition is universally understood as a symmetry or mirror boundary.
 
-*Why* ``zero_slope_zero_shear`` *is an alias:* the even-reflection ghost
-node (:math:`w_\text{ghost} = +w_\text{interior}`) makes both the slope
+*Why the even-reflection ghost node enforces zero slope and zero shear:*
+the rule :math:`w_\text{ghost} = +w_\text{interior}` makes both the slope
 and the shear force vanish at the boundary automatically.  In the
 central-difference stencil, the slope at the boundary node is
 
@@ -284,15 +287,12 @@ even symmetry:
    \frac{w_{i+2} - 2w_{i+1} + 2w_{i-1} - w_{i-2}}{2\,\Delta x^3}
    \xrightarrow{w_{i-k}=w_{i+k}} 0.
 
-The ``mirror`` ghost-node rule therefore simultaneously enforces
+The even-reflection ghost-node rule therefore simultaneously enforces
 :math:`\mathrm{d}w/\mathrm{d}x = 0` and
 :math:`\mathrm{d}^3w/\mathrm{d}x^3 = 0` — precisely the
-``zero_slope_zero_shear`` prescription.  The two names reach the same
-stencil by different routes and are mathematically identical.
-The string ``'zero_slope_zero_shear'`` is accepted for backwards
-compatibility and is normalised to ``'mirror'`` internally.
+``zero_slope_zero_shear`` prescription.
 
-*Geological context:* ``mirror`` applies wherever the load and plate
+*Geological context:* ``zero_slope_zero_shear`` applies wherever the load and plate
 geometry are symmetric about the boundary plane:
 
 - One flank of a mountain range, orogenic belt, or subduction trench
@@ -301,10 +301,10 @@ geometry are symmetric about the boundary plane:
 - One quarter of a bilaterally symmetric ice dome or volcanic edifice
   (``mirror`` on two perpendicular axes)
 
-.. figure:: _static/bc_diagram_mirror.svg
+.. figure:: _static/bc_diagram_zero_slope_zero_shear.svg
    :width: 80%
    :align: center
-   :alt: Diagram of the mirror (symmetry plane) boundary condition
+   :alt: Diagram of the zero_slope_zero_shear (symmetry plane) boundary condition
 
    *Symmetry plane* — even reflection; use when the system is symmetric about the boundary.
 
