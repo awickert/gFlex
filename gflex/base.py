@@ -1085,27 +1085,6 @@ class Flexure(Utility, Plotting):
         self._te = value
 
     @property
-    def te(self):
-        """Deprecated alias for :attr:`T_e`; will be removed in a future release."""
-        import warnings
-        warnings.warn(
-            "The 'te' attribute is deprecated; use 'T_e' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self._te
-
-    @te.setter
-    def te(self, value):
-        import warnings
-        warnings.warn(
-            "The 'te' attribute is deprecated; use 'T_e' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.T_e = value
-
-    @property
     def E(self):
         """Young's modulus [Pa]."""
         return self._E

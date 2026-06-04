@@ -1,6 +1,6 @@
 # Release Notes
 
-## [Unreleased]
+## [2.0.0] - 2026-06-04
 
 ### Breaking changes
 
@@ -25,9 +25,8 @@
   will not raise an error, but the value has no effect.
 - **`te` attribute renamed to `T_e`** — the elastic-thickness attribute on
   `F1D` and `F2D` is now `T_e` (PEP 8 subscript notation; avoids ambiguity
-  with a time variable `t` and a generic elastic parameter `e`).  The old
-  `te` name still works but raises a `DeprecationWarning`; it will be removed
-  in a future release.  Update all occurrences: `flex.te = …` → `flex.T_e = …`.
+  with a time variable `t` and a generic elastic parameter `e`).  `flex.te`
+  now raises `AttributeError`.  Update all occurrences: `flex.te = …` → `flex.T_e = …`.
 
 - **`"mirror"` is now an alias for `"zero_slope_zero_shear"`** — the canonical
   BC name is `"zero_slope_zero_shear"` (consistent with all other long-form names);
@@ -150,7 +149,7 @@
 
 ### Tests
 
-- 325+ tests passing across 1-D and 2-D FD, FFT, SAS/SAS_NG solvers, all BC
+- 329 tests passing across 1-D and 2-D FD, FFT, SAS/SAS_NG solvers, all BC
   types, inhomogeneous BCs, domain padding, warnings, and BC aliases.
 - `TestNestedModelGradientRoundTrip`: verifies that `np.gradient`-extracted
   slopes used as inhomogeneous Dirichlet BCs reproduce the full-domain interior
