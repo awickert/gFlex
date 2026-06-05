@@ -37,12 +37,11 @@
   it now raises `ValueError` immediately.  An iterative solver may be added
   in a future version, at which point additional values will become valid.
 
-- **BC string case normalised; v1.x PascalCase strings deprecated** — all
+- **BC string case normalised; v1.x PascalCase strings removed** — all
   boundary-condition strings are now lowercase (`"zero_displacement_zero_slope"`,
   `"zero_moment_zero_shear"`, `"zero_slope_zero_shear"`, `"periodic"`).  The old v1.x
   PascalCase names (`"0Displacement0Slope"`, `"0Moment0Shear"`, `"Mirror"`,
-  etc.) are still accepted but trigger a `DeprecationWarning` and will be
-  removed in a future release.  See the `boundary_conditions` page for the
+  etc.) now raise `ValueError`.  See the `boundary_conditions` page for the
   full mapping.
 
 ### New features
