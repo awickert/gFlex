@@ -577,6 +577,7 @@ def test_fd_2d_0displacement0moment_half_domain_antisymmetric():
 
 @pytest.mark.parametrize("alias,canonical", [
     ("clamped", "zero_displacement_zero_slope"),
+    ("pinned",  "zero_displacement_zero_moment"),
     ("free",    "zero_moment_zero_shear"),
 ])
 def test_fd_bc_alias_equals_canonical_2d(alias, canonical):

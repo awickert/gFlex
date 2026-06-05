@@ -115,7 +115,7 @@ _BC_DICT_TO_STRING = {
 
 VALID_BC_STRINGS_2D = frozenset({
     "zero_displacement_zero_slope", "clamped",
-    "zero_displacement_zero_moment",
+    "zero_displacement_zero_moment", "pinned",
     "zero_moment_zero_shear", "free",
     "zero_slope_zero_shear", "mirror",
     "periodic",
@@ -124,8 +124,8 @@ VALID_BC_STRINGS_2D = frozenset({
 
 Canonical names (``zero_displacement_zero_slope``, ``zero_displacement_zero_moment``,
 ``zero_moment_zero_shear``, ``zero_slope_zero_shear``, ``periodic``) plus their
-short aliases (``clamped``, ``free``, ``mirror``).  Wrappers can validate user
-input against this set instead of maintaining a parallel copy.
+short aliases (``clamped``, ``pinned``, ``free``, ``mirror``).  Wrappers can validate
+user input against this set instead of maintaining a parallel copy.
 """
 
 VALID_BC_STRINGS_1D = VALID_BC_STRINGS_2D | frozenset({"sandbox"})
@@ -1666,6 +1666,7 @@ class Flexure(Utility, Plotting):
                         "zero_displacement_zero_slope",
                         "clamped",
                         "zero_displacement_zero_moment",
+                        "pinned",
                         "periodic",
                         "zero_slope_zero_shear",
                         "mirror",
@@ -1679,6 +1680,7 @@ class Flexure(Utility, Plotting):
                         "zero_displacement_zero_slope",
                         "clamped",
                         "zero_displacement_zero_moment",
+                        "pinned",
                         "periodic",
                         "zero_slope_zero_shear",
                         "mirror",
@@ -1721,6 +1723,8 @@ class Flexure(Utility, Plotting):
                         )
                     if norm == "clamped":
                         norm = "zero_displacement_zero_slope"
+                    elif norm == "pinned":
+                        norm = "zero_displacement_zero_moment"
                     elif norm == "free":
                         norm = "zero_moment_zero_shear"
                     elif norm == "mirror":

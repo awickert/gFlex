@@ -89,8 +89,8 @@ Six boundary conditions are available for FD solutions (see also Table 1 in Wick
 
 | Name | Condition | Physical interpretation |
 |------|-----------|------------------------|
-| `zero_displacement_zero_slope` | w = 0, dw/dx = 0 | Clamped end: zero deflection and zero slope (no rotation) |
-| `zero_displacement_zero_moment` | w = 0, d²w/dx² = 0 | Simply supported (pinned) end: zero deflection, free to rotate |
+| `zero_displacement_zero_slope` | w = 0, dw/dx = 0 | Clamped end: zero deflection and zero slope (no rotation) — alias `clamped` |
+| `zero_displacement_zero_moment` | w = 0, d²w/dx² = 0 | Simply supported (pinned) end: zero deflection, free to rotate — alias `pinned` |
 | `zero_moment_zero_shear` | d²w/dx² = d³w/dx³ = 0 | Broken plate: free end with no moment or shear |
 | `zero_slope_zero_shear` | dw/dx = d³w/dx³ = 0 | Plate is level at the boundary but free to deflect there; no shear transmitted |
 | `mirror` | w(b − x) = w(b + x) | Mirror-symmetry plane — model only half of a symmetric system |

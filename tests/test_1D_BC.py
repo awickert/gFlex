@@ -152,6 +152,7 @@ def test_fd_0slope0shear_equals_mirror():
 
 @pytest.mark.parametrize("alias,canonical", [
     ("clamped", "zero_displacement_zero_slope"),
+    ("pinned",  "zero_displacement_zero_moment"),
     ("free",    "zero_moment_zero_shear"),
 ])
 def test_fd_bc_alias_equals_canonical_1d(alias, canonical):

@@ -67,10 +67,11 @@
   aliases).  Wrappers can validate user input against these sets instead of
   maintaining a parallel copy that drifts with new releases.
 
-- **`"clamped"`, `"free"`, and `"mirror"` BC aliases** — concise alternatives to the full
+- **`"clamped"`, `"pinned"`, `"free"`, and `"mirror"` BC aliases** — concise alternatives to the full
   canonical names: `"clamped"` normalises to `"zero_displacement_zero_slope"`;
+  `"pinned"` normalises to `"zero_displacement_zero_moment"`;
   `"free"` normalises to `"zero_moment_zero_shear"`;
-  `"mirror"` normalises to `"zero_slope_zero_shear"`.  All three produce
+  `"mirror"` normalises to `"zero_slope_zero_shear"`.  All four produce
   bit-identical results to their canonical names.
 
 ### Performance

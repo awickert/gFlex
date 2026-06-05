@@ -388,7 +388,7 @@ class F1D(Flexure):
     bc_west, bc_east : str
         Boundary conditions on the west (left) and east (right) ends.
         FD options: ``'zero_displacement_zero_slope'`` (alias ``'clamped'``),
-        ``'zero_displacement_zero_moment'``,
+        ``'zero_displacement_zero_moment'`` (alias ``'pinned'``),
         ``'zero_moment_zero_shear'`` (alias ``'free'``),
         ``'zero_slope_zero_shear'`` (alias ``'mirror'``), ``'periodic'``, ``'sandbox'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).

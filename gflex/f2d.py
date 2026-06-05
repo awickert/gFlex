@@ -345,7 +345,7 @@ class F2D(Flexure):
     bc_west, bc_east, bc_north, bc_south : str
         Boundary conditions on the west, east, north, and south edges.
         FD options: ``'zero_displacement_zero_slope'`` (alias ``'clamped'``),
-        ``'zero_displacement_zero_moment'``,
+        ``'zero_displacement_zero_moment'`` (alias ``'pinned'``),
         ``'zero_moment_zero_shear'`` (alias ``'free'``),
         ``'zero_slope_zero_shear'`` (alias ``'mirror'``), ``'periodic'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).

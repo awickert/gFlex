@@ -5,7 +5,7 @@ Boundary conditions specify what happens at the edges of the modelled domain.
 gFlex supports five named conditions for the finite-difference (FD) solver;
 each imposes constraints on which plate mechanical quantities — deflection,
 slope, bending moment, and shear force — vanish at that edge.
-Three short aliases (``clamped``, ``free``, ``mirror``) are also accepted.
+Four short aliases (``clamped``, ``pinned``, ``free``, ``mirror``) are also accepted.
 
 The spectral (FFT) and analytical-superposition (SAS / SAS_NG) methods do
 not use these named conditions.  FFT zero-pads the domain by
@@ -89,9 +89,9 @@ geological context, and ball-and-stick diagrams appear in the sections below.
      - clamped end
      - —
      - No deflection, no rotation
-   * - ``zero_displacement_zero_moment``
+   * - ``zero_displacement_zero_moment`` (alias: ``pinned``)
      - :math:`w`,\ :math:`M`
-     - simply supported
+     - simply supported / pinned
      - —
      - No deflection, free to rotate
    * - ``zero_moment_zero_shear`` (alias: ``free``)
