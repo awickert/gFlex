@@ -234,15 +234,17 @@ The **input/** directory contains several example scripts. The public API also p
 
 Domain-padding utilities (reduce spurious boundary effects when using variable *Te*):
 
+* `pad_domain(Te, qs, dx, ...)` — unified helper for both 1-D and 2-D; pads the elastic thickness and load arrays and returns the padding width.
+
+Lower-level building blocks:
+
 *2-D (F2D):*
 * `recommended_pad_width(Te, dx, ...)` — returns the recommended padding width (in cells).
 * `smooth_pad_Te(Te, pad_width, ...)` — extends a 2-D variable-*Te* array with a smooth linear taper.
-* `pad_domain(Te, qs, dx, ...)` — pads both the 2-D elastic thickness and load arrays and returns the padding width.
 
 *1-D (F1D):*
 * `recommended_pad_width_1d(Te, dx, ...)` — returns the recommended 1-D padding width (in cells).
 * `smooth_pad_Te_1d(Te, pad_width, ...)` — extends a 1-D variable-*Te* array with a smooth linear taper.
-* `pad_domain_1d(Te, qs, dx, ...)` — pads both the 1-D elastic thickness and load arrays and returns the padding width.
 
 See the [API reference](https://gflex.readthedocs.io/en/latest/api.html) for full documentation of these functions.
 
