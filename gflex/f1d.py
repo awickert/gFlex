@@ -31,7 +31,7 @@ from gflex.base import Flexure, _RigidityBC, _matrix_hash
 from gflex.f2d import flexural_wavelengths
 
 
-def _recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
+def recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
                                g=9.8, n_wavelengths=1.0):
     """
     Return the recommended padding width in grid cells for a 1-D variable-Te run.
@@ -69,7 +69,7 @@ def _recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.
 
     Examples
     --------
-    >>> _recommended_pad_width_1d(Te=35e3, dx=5000.)
+    >>> recommended_pad_width_1d(Te=35e3, dx=5000.)
     94
     """
     drho = rho_m - rho_fill
@@ -79,7 +79,7 @@ def _recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.
     return int(np.ceil(n_wavelengths * lambda_1D / dx))
 
 
-def _smooth_pad_Te_1d(Te, pad_width, Te_out=None):
+def smooth_pad_Te_1d(Te, pad_width, Te_out=None):
     """
     Pad a 1-D elastic thickness array with a smooth linear taper.
 
@@ -138,7 +138,7 @@ def _smooth_pad_Te_1d(Te, pad_width, Te_out=None):
 def _pad_domain_1d(Te, qs, dx, n_wavelengths=1.0, Te_out=None,
                    E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0, g=9.8):
     """Pad a 1-D domain. Called by :func:`pad_domain`; see that function for docs."""
-    p = _recommended_pad_width_1d(
+    p = recommended_pad_width_1d(
         Te, dx, E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill,
         g=g, n_wavelengths=n_wavelengths,
     )
@@ -146,7 +146,7 @@ def _pad_domain_1d(Te, qs, dx, n_wavelengths=1.0, Te_out=None,
     if Te_arr.ndim == 0:
         Te_padded = float(Te_arr)
     else:
-        Te_padded = _smooth_pad_Te_1d(Te_arr, p, Te_out=Te_out)
+        Te_padded = smooth_pad_Te_1d(Te_arr, p, Te_out=Te_out)
     qs_padded = np.pad(qs, p, mode="constant")
     return Te_padded, qs_padded, p
 

@@ -82,7 +82,7 @@ def flexural_wavelengths(Te, E, nu, rho_m, rho_fill, g):
     }
 
 
-def _recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
+def recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
                             g=9.8, n_wavelengths=1.0):
     """
     Return the recommended padding width in grid cells for a variable-Te run.
@@ -126,7 +126,7 @@ def _recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
     return int(np.ceil(n_wavelengths * r["lambda_2D"] / dx))
 
 
-def _smooth_pad_Te(Te, pad_width, Te_out=None):
+def smooth_pad_Te(Te, pad_width, Te_out=None):
     """
     Pad a 2-D elastic thickness array with a smooth linear taper.
 
@@ -205,7 +205,7 @@ def _pad_domain_2d(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
     """Pad a 2-D domain. Called by :func:`pad_domain`; see that function for docs."""
     if dy is None:
         dy = dx
-    p = _recommended_pad_width(
+    p = recommended_pad_width(
         Te, min(dx, dy), E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill,
         g=g, n_wavelengths=n_wavelengths,
     )
@@ -213,7 +213,7 @@ def _pad_domain_2d(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
     if Te_arr.ndim == 0:
         Te_padded = float(Te_arr)
     else:
-        Te_padded = _smooth_pad_Te(Te_arr, p, Te_out=Te_out)
+        Te_padded = smooth_pad_Te(Te_arr, p, Te_out=Te_out)
     qs_padded = np.pad(qs, p, mode="constant")
     return Te_padded, qs_padded, p
 

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from gflex import pad_domain
-from gflex.f2d import F2D, _pad_domain_2d, _recommended_pad_width, _smooth_pad_Te
+from gflex.f2d import F2D, _pad_domain_2d, recommended_pad_width, smooth_pad_Te
 
 
 def _run_flex_2d(Te, qs, dx, dy, bc="zero_displacement_zero_slope"):
@@ -128,7 +128,7 @@ def test_variable_Te_abrupt_padding_artefact():
 
     # Smooth: use the new utility — reduces the step at the inner/outer
     # boundary to ~1/pad of the abrupt value
-    Te_smooth = _smooth_pad_Te(Te_inner, pad_width=pad, Te_out=Te_mean)
+    Te_smooth = smooth_pad_Te(Te_inner, pad_width=pad, Te_out=Te_mean)
 
     w_const = _run_flex_2d(Te_const, qs, dx, dy)
     w_abrupt = _run_flex_2d(Te_abrupt, qs, dx, dy)
@@ -156,9 +156,9 @@ def test_variable_Te_abrupt_padding_artefact():
 
 
 def test_recommended_pad_width():
-    """_recommended_pad_width returns a positive integer that scales with Te."""
-    p_thin = _recommended_pad_width(Te=20e3, dx=5000.0)
-    p_thick = _recommended_pad_width(Te=50e3, dx=5000.0)
+    """recommended_pad_width returns a positive integer that scales with Te."""
+    p_thin = recommended_pad_width(Te=20e3, dx=5000.0)
+    p_thick = recommended_pad_width(Te=50e3, dx=5000.0)
     assert isinstance(p_thin, int) and p_thin > 0
     assert p_thick > p_thin  # stiffer plate → wider flexural wavelength → more padding
 
