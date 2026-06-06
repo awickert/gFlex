@@ -706,6 +706,8 @@ class F2D(Flexure):
             self.w = self.w[pn : pn + ny_i, pw : pw + nx_i]
             self.qs = _qs_inner
             self.T_e = _Te_inner
+            # Restore grid metadata to match the cropped domain.
+            self.ny, self.nx = ny_i, nx_i
             if hasattr(self, "T_e_unpadded"):
                 self.T_e_unpadded = _Te_inner
 

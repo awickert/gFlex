@@ -595,6 +595,9 @@ class F1D(Flexure):
             self.w = self.w[pw_w : pw_w + nx_i]
             self.qs = _qs_inner
             self.T_e = _Te_inner
+            # Restore grid metadata to match the cropped domain.
+            self.nx = nx_i
+            self._x_local = np.arange(0, self.dx * nx_i, self.dx)
             # Keep finalize()'s T_e restore in sync with the inner domain.
             if hasattr(self, "T_e_unpadded"):
                 self.T_e_unpadded = _Te_inner
