@@ -279,3 +279,116 @@ def test_string_bc_not_rejected_on_non_fd_solver(method):
         flex.bc_check()
     except ValueError:
         pytest.fail("ValueError raised for string BCs on non-FD solver")
+
+
+# ---------------------------------------------------------------------------
+# FFT: partial-periodic BC warning
+# ---------------------------------------------------------------------------
+
+def _run_1d_fft(qs, bc_w, bc_e):
+    flex = F1D()
+    flex.quiet = True
+    flex.method = "fft"
+    flex.solver = "direct"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill
+    flex.T_e = Te
+    flex.qs = qs.copy()
+    flex.dx = dx
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        flex.initialize()
+        flex.run()
+    return [str(x.message) for x in w if issubclass(x.category, UserWarning)]
+
+
+def _run_2d_fft(qs, bc_w, bc_e, bc_n, bc_s):
+    flex = F2D()
+    flex.quiet = True
+    flex.method = "fft"
+    flex.solver = "direct"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill
+    flex.T_e = Te
+    flex.qs = qs.copy()
+    flex.dx = dx
+    flex.dy = dx
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
+    flex.bc_north = bc_n
+    flex.bc_south = bc_s
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        flex.initialize()
+        flex.run()
+    return [str(x.message) for x in w if issubclass(x.category, UserWarning)]
+
+
+def test_fft_1d_partial_periodic_warns():
+    """FFT 1-D: one periodic BC and one non-periodic raises UserWarning."""
+    qs = np.zeros(100)
+    qs[50] = 1e6
+    msgs = _run_1d_fft(qs, bc_w="periodic", bc_e="")
+    assert any("no_outside_loads" in m for m in msgs), msgs
+    assert any("bc_east" in m for m in msgs), msgs
+
+
+def test_fft_1d_all_periodic_no_warn():
+    """FFT 1-D: both periodic → no partial-periodic warning."""
+    qs = np.zeros(100)
+    qs[50] = 1e6
+    msgs = _run_1d_fft(qs, bc_w="periodic", bc_e="periodic")
+    assert not any("no_outside_loads" in m for m in msgs), msgs
+
+
+def test_fft_1d_none_periodic_no_warn():
+    """FFT 1-D: no periodic BCs → no partial-periodic warning."""
+    qs = np.zeros(100)
+    qs[50] = 1e6
+    msgs = _run_1d_fft(qs, bc_w="", bc_e="")
+    assert not any("no_outside_loads" in m for m in msgs), msgs
+
+
+def test_fft_2d_partial_periodic_warns():
+    """FFT 2-D: one periodic BC and three non-periodic raises UserWarning."""
+    qs = np.zeros((60, 60))
+    qs[30, 30] = 1e6
+    msgs = _run_2d_fft(qs, bc_w="periodic", bc_e="", bc_n="", bc_s="")
+    assert any("no_outside_loads" in m for m in msgs), msgs
+    assert any("bc_east" in m for m in msgs), msgs
+
+
+def test_fft_2d_all_periodic_no_warn():
+    """FFT 2-D: all four periodic → no partial-periodic warning."""
+    qs = np.zeros((60, 60))
+    qs[30, 30] = 1e6
+    msgs = _run_2d_fft(qs, bc_w="periodic", bc_e="periodic",
+                       bc_n="periodic", bc_s="periodic")
+    assert not any("no_outside_loads" in m for m in msgs), msgs
+
+
+def test_fft_2d_none_periodic_no_warn():
+    """FFT 2-D: no periodic BCs → no partial-periodic warning."""
+    qs = np.zeros((60, 60))
+    qs[30, 30] = 1e6
+    msgs = _run_2d_fft(qs, bc_w="", bc_e="", bc_n="", bc_s="")
+    assert not any("no_outside_loads" in m for m in msgs), msgs
+
+
+def test_fft_2d_partial_periodic_names_non_periodic_bcs():
+    """FFT 2-D warning names every non-periodic BC side."""
+    qs = np.zeros((60, 60))
+    qs[30, 30] = 1e6
+    msgs = _run_2d_fft(qs, bc_w="periodic", bc_e="periodic", bc_n="periodic", bc_s="")
+    partial = [m for m in msgs if "no_outside_loads" in m]
+    assert partial, "expected a partial-periodic warning"
+    assert "bc_south" in partial[0]
+    assert "bc_west" not in partial[0]
