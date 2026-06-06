@@ -30,8 +30,8 @@ from scipy.sparse.linalg import factorized, spsolve
 from gflex.base import Flexure, _RigidityBC, _matrix_hash
 
 
-def recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
-                              g=9.8, n_wavelengths=1.0):
+def _recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
+                               g=9.8, n_wavelengths=1.0):
     """
     Return the recommended padding width in grid cells for a 1-D variable-Te run.
 
@@ -68,7 +68,7 @@ def recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0
 
     Examples
     --------
-    >>> recommended_pad_width_1d(Te=35e3, dx=5000.)
+    >>> _recommended_pad_width_1d(Te=35e3, dx=5000.)
     94
     """
     drho = rho_m - rho_fill
@@ -78,7 +78,7 @@ def recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0
     return int(np.ceil(n_wavelengths * lambda_1D / dx))
 
 
-def smooth_pad_Te_1d(Te, pad_width, Te_out=None):
+def _smooth_pad_Te_1d(Te, pad_width, Te_out=None):
     """
     Pad a 1-D elastic thickness array with a smooth linear taper.
 
@@ -99,8 +99,7 @@ def smooth_pad_Te_1d(Te, pad_width, Te_out=None):
     Te : 1-D array
         Elastic thickness [m] for the inner domain.
     pad_width : int
-        Width of the padding on each end in grid cells.  Use
-        :func:`recommended_pad_width_1d` to obtain a suitable value.
+        Width of the padding on each end in grid cells.
     Te_out : float, optional
         Te value at the outer edge of the padding.
         Defaults to ``Te.mean()``.
@@ -109,27 +108,6 @@ def smooth_pad_Te_1d(Te, pad_width, Te_out=None):
     -------
     Te_padded : 1-D array of length ``len(Te) + 2 * pad_width``
         Padded elastic thickness with a smooth linear taper.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> Te = 35e3 * np.ones(10)
-    >>> Te_pad = smooth_pad_Te_1d(Te, pad_width=4)
-    >>> Te_pad.shape
-    (18,)
-
-    To run :class:`F1D` with the padded arrays::
-
-        import numpy as np
-        from gflex import F1D, smooth_pad_Te_1d, recommended_pad_width_1d
-        p = recommended_pad_width_1d(Te, dx=5000.)
-        Te_pad = smooth_pad_Te_1d(Te, p)
-        qs_pad = np.pad(qs, p, mode='constant')
-        flex = F1D()
-        flex.T_e = Te_pad
-        flex.qs = qs_pad
-        # ... set other parameters and run ...
-        w_inner = flex.w[p:-p]   # trim padding from output
     """
     Te = np.asarray(Te, dtype=float)
     if Te.ndim != 1:
@@ -156,76 +134,18 @@ def smooth_pad_Te_1d(Te, pad_width, Te_out=None):
     return Te_padded
 
 
-def pad_domain_1d(Te, qs, dx, n_wavelengths=1.0, Te_out=None,
-                  E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0, g=9.8):
-    """
-    Pad both the elastic thickness and surface load arrays for use with F1D.
-
-    Combines :func:`recommended_pad_width_1d` and :func:`smooth_pad_Te_1d`
-    into a single call, and zero-pads *qs* to match.  The returned pad width
-    *p* can be used to trim the deflection output after the run::
-
-        w_inner = flex.w[p:-p]
-
-    Parameters
-    ----------
-    Te : 1-D array
-        Elastic thickness [m] for the inner domain.
-    qs : 1-D array
-        Surface load [Pa] for the inner domain.
-    dx : float
-        Grid cell size [m].
-    n_wavelengths : float, optional
-        Padding width expressed as a number of flexural wavelengths.
-        Default 1.0; use 0.5 for a less conservative (narrower) padding.
-    Te_out : float, optional
-        Te value at the outer edge of the padding.
-        Defaults to ``Te.mean()``.
-    E : float, optional
-        Young's modulus [Pa].  Default 65 GPa.
-    nu : float, optional
-        Poisson's ratio.  Default 0.25.
-    rho_m : float, optional
-        Mantle density [kg m^-3].  Default 3300.
-    rho_fill : float, optional
-        Infill density [kg m^-3].  Default 0 (air).
-    g : float, optional
-        Gravitational acceleration [m s^-2].  Default 9.8.
-
-    Returns
-    -------
-    Te_padded : 1-D array of length ``len(Te) + 2p``
-        Smoothly tapered elastic thickness.
-    qs_padded : 1-D array of length ``len(qs) + 2p``
-        Surface load zero-padded to match.
-    p : int
-        Pad width in grid cells (same on both ends).
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> Te = 10e3 * np.ones(5)
-    >>> qs = np.zeros(5)
-    >>> Te_pad, qs_pad, p = pad_domain_1d(Te, qs, dx=10000.,
-    ...     E=65e9, nu=0.25, rho_m=3300., rho_fill=0., g=9.8)
-    >>> p
-    19
-    >>> Te_pad.shape
-    (43,)
-
-    To run :class:`F1D` with the padded arrays::
-
-        flex = gflex.F1D()
-        flex.T_e = Te_pad
-        flex.qs = qs_pad
-        # ... set other parameters and run ...
-        w_inner = flex.w[p:-p]   # trim padding from output
-    """
-    p = recommended_pad_width_1d(
+def _pad_domain_1d(Te, qs, dx, n_wavelengths=1.0, Te_out=None,
+                   E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0, g=9.8):
+    """Pad a 1-D domain. Called by :func:`pad_domain`; see that function for docs."""
+    p = _recommended_pad_width_1d(
         Te, dx, E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill,
         g=g, n_wavelengths=n_wavelengths,
     )
-    Te_padded = smooth_pad_Te_1d(Te, p, Te_out=Te_out)
+    Te_arr = np.asarray(Te, dtype=float)
+    if Te_arr.ndim == 0:
+        Te_padded = float(Te_arr)
+    else:
+        Te_padded = _smooth_pad_Te_1d(Te_arr, p, Te_out=Te_out)
     qs_padded = np.pad(qs, p, mode="constant")
     return Te_padded, qs_padded, p
 
@@ -574,7 +494,7 @@ class F1D(Flexure):
                     f"at Te = {Te_loaded[worst]/1e3:.1f} km). "
                     "The flexural forebulge peaks near one wavelength from the load "
                     "and will be suppressed by this boundary. "
-                    "Use pad_domain_1d() to extend the domain before solving, "
+                    "Use pad_domain() to extend the domain before solving, "
                     "then trim w to the original extent.",
                     UserWarning,
                     stacklevel=4,
