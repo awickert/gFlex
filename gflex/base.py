@@ -1628,15 +1628,25 @@ class Flexure(Utility, Plotting):
         # Check that boundary conditions are acceptable with code implementation
         # Acceptable b.c.'s
         if self.method == "fft":
-            # Ensure BC attributes exist; FFT handles them internally
-            # 'periodic' → exact transform; anything else → zero-padded (no_outside_loads)
-            for attr in ("BC_E", "BC_W"):
-                if not hasattr(self, attr):
-                    setattr(self, attr, "")
+            # Ensure BC attributes exist; FFT handles them internally.
+            # 'periodic' → exact transform; anything else → zero-padded (no_outside_loads).
+            try:
+                self.bc_east
+            except AttributeError:
+                self.bc_east = ""
+            try:
+                self.bc_west
+            except AttributeError:
+                self.bc_west = ""
             if self.dimension == 2:
-                for attr in ("BC_N", "BC_S"):
-                    if not hasattr(self, attr):
-                        setattr(self, attr, "")
+                try:
+                    self.bc_north
+                except AttributeError:
+                    self.bc_north = ""
+                try:
+                    self.bc_south
+                except AttributeError:
+                    self.bc_south = ""
             else:
                 self.bc_south = None
                 self.bc_north = None
