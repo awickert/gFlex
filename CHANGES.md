@@ -59,6 +59,13 @@
   (α₁D ≈ √2 × α₂D), causing ~41 % over-padding on every non-periodic 2-D
   FFT run.  Both `F1D` and `F2D` now derive α from `flexural_wavelengths()`
   rather than hardcoding the formula.
+- Fixed stale `self.nx` (F1D) and `self.nx`/`self.ny` (F2D) after a
+  `'no_outside_loads'` FD run.  The auto-padding path calls
+  `gridded_x()` / `build_diagonals()` on the enlarged domain, which set
+  these attributes to the padded size.  They were not restored when `w`
+  and `qs` were cropped back to the original domain, leaving them
+  inconsistent with `w.shape` until the next run.  Now explicitly
+  restored after the crop.
 
 ----
 
