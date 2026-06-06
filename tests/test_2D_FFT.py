@@ -368,5 +368,34 @@ def test_fft_2d_pad_n_alpha_changes_padding():
     np.testing.assert_allclose(flex4.w, flex8.w, atol=2e-3 * peak)
 
 
+# ---------------------------------------------------------------------------
+# FFT with no BCs set (regression: bc_check was setting legacy BC_E/BC_W/BC_N/BC_S
+# attributes instead of bc_east/bc_west/bc_north/bc_south, causing AttributeError)
+# ---------------------------------------------------------------------------
+
+def test_fft_2d_no_bcs_set():
+    """FFT runs correctly when no BC attributes are ever assigned."""
+    flex = F2D()
+    flex.quiet = True
+    flex.method = "fft"
+    flex.solver = "direct"
+    flex.g = 9.8
+    flex.E = E
+    flex.nu = 0.25
+    flex.rho_m = 3300.0
+    flex.rho_fill = 0.0
+    flex.T_e = Te
+    qs = np.zeros((60, 60))
+    qs[25:35, 25:35] = 1e6
+    flex.qs = qs
+    flex.dx = dx
+    flex.dy = dy
+    # no BC attributes set at all
+    flex.initialize()
+    flex.run()
+    assert flex.w.shape == (60, 60)
+    assert flex.w.min() < 0  # subsidence under load
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

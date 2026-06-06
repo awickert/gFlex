@@ -215,5 +215,33 @@ def test_fft_pad_n_alpha_changes_padding():
     np.testing.assert_allclose(flex4.w, flex8.w, atol=1e-3 * peak)
 
 
+# ---------------------------------------------------------------------------
+# FFT with no BCs set (regression: bc_check was setting legacy BC_E/BC_W
+# attributes instead of bc_east/bc_west, causing AttributeError in _solve_fft)
+# ---------------------------------------------------------------------------
+
+def test_fft_1d_no_bcs_set():
+    """FFT runs correctly when bc_west and bc_east are never assigned."""
+    flex = F1D()
+    flex.quiet = True
+    flex.method = "fft"
+    flex.solver = "direct"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill
+    flex.T_e = Te
+    qs = np.zeros(100)
+    qs[40:60] = 1e6
+    flex.qs = qs
+    flex.dx = dx
+    # bc_west and bc_east deliberately not set
+    flex.initialize()
+    flex.run()
+    assert flex.w.shape == (100,)
+    assert flex.w.min() < 0  # subsidence under load
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
