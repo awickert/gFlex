@@ -379,10 +379,10 @@ class F2D(Flexure):
         In-plane shear stress :math:`\\sigma_{xy}` [Pa].
         Supported by ``fd`` and ``fft``.  Default ``0``.
     fft_pad_n_alpha : int or float
-        Number of flexural-parameter units (α = (4D/Δρg)^0.25) to
+        Number of 2-D flexural-parameter units (α₂D = (D/Δρg)^0.25) to
         zero-pad on each side for non-periodic FFT runs.  Periodic images
-        of the load are separated by 2 × ``fft_pad_n_alpha`` × α.
-        Default ``4`` (8α total separation).  Ignored when
+        of the load are separated by 2 × ``fft_pad_n_alpha`` × α₂D.
+        Default ``4`` (8α₂D total separation).  Ignored when
         ``method != 'fft'`` or when all BCs are ``'periodic'``.
     quiet : bool
         Suppress timing output.  Default ``False``.
@@ -610,10 +610,10 @@ class F2D(Flexure):
           Lx = Nx·dx and Ly = Ny·dy.
 
         * Any other BC (including ``'no_outside_loads'`` or unset) — the load
-          is zero-padded by ``fft_pad_n_alpha`` × α on each side in both x
-          and y (default 4α), then trimmed back to the original shape.
-          Periodic images of the load are separated by
-          2 × ``fft_pad_n_alpha`` × α of zeros (default 8α), which is
+          is zero-padded by ``fft_pad_n_alpha`` × α₂D on each side in both
+          x and y (default 4α₂D), where α₂D = (D/Δρg)^0.25 is the 2-D
+          flexural parameter.  Periodic images are separated by
+          2 × ``fft_pad_n_alpha`` × α₂D of zeros (default 8α₂D), which is
           sufficient for the response to decay to negligible amplitude.
           This is the spectral equivalent of the ``'no_outside_loads'``
           boundary condition used by the SAS solver.
@@ -632,7 +632,10 @@ class F2D(Flexure):
             )
 
         D = self.E * self.T_e**3 / (12.0 * (1.0 - self.nu**2))
-        alpha = (4.0 * D / (self.drho * self.g)) ** 0.25
+        alpha = flexural_wavelengths(
+            self.T_e, E=self.E, nu=self.nu,
+            rho_m=self.rho_m, rho_fill=self.rho_fill, g=self.g,
+        )["alpha_2D"]
 
         ny, nx = self.qs.shape
         periodic = (

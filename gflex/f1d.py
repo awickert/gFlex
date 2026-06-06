@@ -28,6 +28,7 @@ from scipy.sparse import spdiags
 from scipy.sparse.linalg import factorized, spsolve
 
 from gflex.base import Flexure, _RigidityBC, _matrix_hash
+from gflex.f2d import flexural_wavelengths
 
 
 def _recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
@@ -315,10 +316,10 @@ class F1D(Flexure):
     sigma_xx : float, optional
         Normal stress applied at the plate ends [Pa].  FD only.
     fft_pad_n_alpha : int or float
-        Number of flexural-parameter units (α = (4D/Δρg)^0.25) to
+        Number of 1-D flexural-parameter units (α₁D = (4D/Δρg)^0.25) to
         zero-pad on each side for non-periodic FFT runs.  Periodic images
-        of the load are separated by 2 × ``fft_pad_n_alpha`` × α.
-        Default ``4`` (8α total separation).  Ignored when
+        of the load are separated by 2 × ``fft_pad_n_alpha`` × α₁D.
+        Default ``4`` (8α₁D total separation).  Ignored when
         ``method != 'fft'`` or when all BCs are ``'periodic'``.
     quiet : bool
         Suppress timing output.  Default ``False``.
@@ -543,10 +544,10 @@ class F1D(Flexure):
           period L = N · dx.
 
         * Any other BC (including ``'no_outside_loads'`` or unset) — the
-          load array is zero-padded by ``fft_pad_n_alpha`` × α on each
-          side (default 4α), then trimmed back to the original length.
-          Periodic images of the load are separated by
-          2 × ``fft_pad_n_alpha`` × α of zeros (default 8α), which is
+          load array is zero-padded by ``fft_pad_n_alpha`` × α₁D on each
+          side (default 4α₁D), where α₁D = (4D/Δρg)^0.25 is the 1-D
+          flexural parameter.  Periodic images are separated by
+          2 × ``fft_pad_n_alpha`` × α₁D of zeros (default 8α₁D), which is
           sufficient for the response to decay to negligible amplitude.
           This is the spectral equivalent of the ``'no_outside_loads'``
           boundary condition used by the SAS solver.
@@ -572,8 +573,10 @@ class F1D(Flexure):
             )
 
         D = self.E * self.T_e**3 / (12.0 * (1.0 - self.nu**2))
-        # 1-D flexural parameter α = (4D / Δρg)^0.25
-        alpha = (4.0 * D / (self.drho * self.g)) ** 0.25
+        alpha = flexural_wavelengths(
+            self.T_e, E=self.E, nu=self.nu,
+            rho_m=self.rho_m, rho_fill=self.rho_fill, g=self.g,
+        )["alpha_1D"]
 
         periodic = (self.bc_west == "periodic") and (self.bc_east == "periodic")
 
