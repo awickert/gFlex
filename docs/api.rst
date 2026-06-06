@@ -69,10 +69,32 @@ reduces spurious deflections at the domain boundary caused by sharp rigidity
 gradients, and ensures that the flexural forebulge can develop freely before
 reaching the boundary.
 
+**All-in-one helper**
+
 :func:`~gflex.pad_domain` handles both 1-D and 2-D grids and both scalar
-and array elastic thickness.
+and array elastic thickness.  It calls the lower-level helpers below and
+is the recommended starting point.
 
 .. autofunction:: gflex.pad_domain
+
+**Lower-level building blocks**
+
+These two pairs of functions are the building blocks used by
+:func:`~gflex.pad_domain`.  Use them directly when you need finer control —
+for example, to compute the pad width once and apply it to multiple arrays,
+or to inspect the tapered Te grid before running the solver.
+
+*Recommended pad width* (number of cells):
+
+.. autofunction:: gflex.recommended_pad_width
+
+.. autofunction:: gflex.recommended_pad_width_1d
+
+*Smooth Te taper* (extends a Te array into the padding zone):
+
+.. autofunction:: gflex.smooth_pad_Te
+
+.. autofunction:: gflex.smooth_pad_Te_1d
 
 FD boundary-condition warnings
 ------------------------------
