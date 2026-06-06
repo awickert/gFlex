@@ -28,7 +28,9 @@ Parameters
       all boundary conditions are ``periodic`` the domain tiles exactly;
       for any other boundary condition the load is zero-padded by
       :math:`4\alpha` on each side, approximating the ``no_outside_loads``
-      condition.  In-plane stresses (:math:`\sigma_{xx}`, :math:`\sigma_{yy}`,
+      condition (the default when BCs are unset).  Setting only *some* BCs to
+      ``periodic`` triggers a ``UserWarning`` and falls back to zero-padding.
+      In-plane stresses (:math:`\sigma_{xx}`, :math:`\sigma_{yy}`,
       :math:`\sigma_{xy}`) are supported.
     * ``sas`` — Superposition of Analytical Solutions.  Constant elastic
       thickness only; fast and analytically exact.
