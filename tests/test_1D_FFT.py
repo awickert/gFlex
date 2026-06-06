@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from gflex.f1d import F1D
+from gflex.f2d import flexural_wavelengths
 
 
 # ---------------------------------------------------------------------------
@@ -102,7 +103,7 @@ def test_fft_padded_matches_manual_padding():
     flex_auto = _run_flex_1d(qs, sigma_xx=sigma_xx)
 
     # Manual padding to match what the code does internally
-    alpha = (4.0 * D / (drho * g)) ** 0.25
+    alpha = flexural_wavelengths(Te, E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill, g=g)["alpha_1D"]
     pad = int(np.ceil(4.0 * alpha / dx))
     qs_padded = np.pad(qs, pad, mode="constant")
 
@@ -139,7 +140,7 @@ def test_fft_padded_end_load_vs_fd():
     flex_fft = _run_flex_1d(qs, sigma_xx=sigma_xx)
 
     # FD/periodic on the same manually padded domain — equivalent problem
-    alpha = (4.0 * D / (drho * g)) ** 0.25
+    alpha = flexural_wavelengths(Te, E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill, g=g)["alpha_1D"]
     pad = int(np.ceil(4.0 * alpha / dx))
     qs_large = np.pad(qs, pad, mode="constant")
 
