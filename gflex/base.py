@@ -1004,6 +1004,12 @@ class Flexure(Utility, Plotting):
         self.verbose = True
         self.debug = False
 
+        # FFT padding: number of α units (α = (4D/Δρg)^0.25) to zero-pad on
+        # each side for non-periodic runs.  Periodic images are separated by
+        # 2 × fft_pad_n_alpha × α, so the default of 4 gives 8α separation.
+        # Only used when method='fft' and BCs are not all 'periodic'.
+        self.fft_pad_n_alpha = 4
+
         # x and y to None for checks
         self.x = None
         self.y = None

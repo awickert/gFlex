@@ -314,6 +314,12 @@ class F1D(Flexure):
         SAS option: ``'no_outside_loads'`` (the default when unset).
     sigma_xx : float, optional
         Normal stress applied at the plate ends [Pa].  FD only.
+    fft_pad_n_alpha : int or float
+        Number of flexural-parameter units (α = (4D/Δρg)^0.25) to
+        zero-pad on each side for non-periodic FFT runs.  Periodic images
+        of the load are separated by 2 × ``fft_pad_n_alpha`` × α.
+        Default ``4`` (8α total separation).  Ignored when
+        ``method != 'fft'`` or when all BCs are ``'periodic'``.
     quiet : bool
         Suppress timing output.  Default ``False``.
     verbose : bool
@@ -537,14 +543,13 @@ class F1D(Flexure):
           period L = N · dx.
 
         * Any other BC (including ``'no_outside_loads'`` or unset) — the
-          load array is zero-padded by four flexural wavelengths (α) on
-          each side before the transform, then trimmed back to the original
-          length afterwards.  This is mathematically identical to the
-          periodic case, but with a padded domain large enough that the
-          periodic images of the load are separated by ~8α of zeros and
-          therefore do not influence the interior solution.  It is the
-          spectral equivalent of the ``'no_outside_loads'`` boundary
-          condition used by the SAS solver.
+          load array is zero-padded by ``fft_pad_n_alpha`` × α on each
+          side (default 4α), then trimmed back to the original length.
+          Periodic images of the load are separated by
+          2 × ``fft_pad_n_alpha`` × α of zeros (default 8α), which is
+          sufficient for the response to decay to negligible amplitude.
+          This is the spectral equivalent of the ``'no_outside_loads'``
+          boundary condition used by the SAS solver.
 
         In both cases the solution is spectral (no spatial discretisation
         error in the transfer function itself); any residual error comes
@@ -575,8 +580,7 @@ class F1D(Flexure):
         if periodic:
             qs_work = self.qs
         else:
-            # Zero-pad by 4α on each side (no_outside_loads assumption)
-            pad = int(np.ceil(4.0 * alpha / self.dx))
+            pad = int(np.ceil(self.fft_pad_n_alpha * alpha / self.dx))
             qs_work = np.pad(self.qs, pad, mode="constant")
 
         N_work = len(qs_work)

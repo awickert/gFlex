@@ -378,6 +378,12 @@ class F2D(Flexure):
     sigma_xy : float, optional
         In-plane shear stress :math:`\\sigma_{xy}` [Pa].
         Supported by ``fd`` and ``fft``.  Default ``0``.
+    fft_pad_n_alpha : int or float
+        Number of flexural-parameter units (α = (4D/Δρg)^0.25) to
+        zero-pad on each side for non-periodic FFT runs.  Periodic images
+        of the load are separated by 2 × ``fft_pad_n_alpha`` × α.
+        Default ``4`` (8α total separation).  Ignored when
+        ``method != 'fft'`` or when all BCs are ``'periodic'``.
     quiet : bool
         Suppress timing output.  Default ``False``.
     verbose : bool
@@ -604,10 +610,13 @@ class F2D(Flexure):
           Lx = Nx·dx and Ly = Ny·dy.
 
         * Any other BC (including ``'no_outside_loads'`` or unset) — the load
-          is zero-padded by four flexural wavelengths (α) on each side in
-          both x and y, then trimmed back to the original shape.  This is
-          the spectral equivalent of the ``'no_outside_loads'`` boundary
-          condition used by the SAS solver.
+          is zero-padded by ``fft_pad_n_alpha`` × α on each side in both x
+          and y (default 4α), then trimmed back to the original shape.
+          Periodic images of the load are separated by
+          2 × ``fft_pad_n_alpha`` × α of zeros (default 8α), which is
+          sufficient for the response to decay to negligible amplitude.
+          This is the spectral equivalent of the ``'no_outside_loads'``
+          boundary condition used by the SAS solver.
 
         Requires uniform (scalar) elastic thickness; for variable *Te* use
         the finite-difference method instead.
@@ -636,8 +645,8 @@ class F2D(Flexure):
         if periodic:
             qs_work = self.qs
         else:
-            pad_x = int(np.ceil(4.0 * alpha / self.dx))
-            pad_y = int(np.ceil(4.0 * alpha / self.dy))
+            pad_x = int(np.ceil(self.fft_pad_n_alpha * alpha / self.dx))
+            pad_y = int(np.ceil(self.fft_pad_n_alpha * alpha / self.dy))
             qs_work = np.pad(
                 self.qs, ((pad_y, pad_y), (pad_x, pad_x)), mode="constant"
             )
