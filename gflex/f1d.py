@@ -311,7 +311,10 @@ class F1D(Flexure):
         FD options: ``'zero_displacement_zero_slope'`` (alias ``'clamped'``),
         ``'zero_displacement_zero_moment'`` (alias ``'pinned'``),
         ``'zero_moment_zero_shear'`` (alias ``'free'``),
-        ``'zero_slope_zero_shear'`` (alias ``'mirror'``), ``'periodic'``, ``'sandbox'``.
+        ``'zero_slope_zero_shear'`` (alias ``'mirror'``), ``'periodic'``,
+        ``'no_outside_loads'`` (auto-pad by one flexural wavelength and apply
+        ``'zero_displacement_zero_slope'`` at the new outer edge; ``self.w``
+        is trimmed to the original domain), ``'sandbox'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).
         FFT: set both to ``'periodic'`` for exact periodic behavior; any other
         value (including unset) uses zero-padding to approximate
@@ -514,10 +517,65 @@ class F1D(Flexure):
     def _solve_fd(self):
         """Run the finite-difference solution pipeline.
 
-        Calls :meth:`_check_warnings_FD` first to flag potentially problematic
-        boundary conditions, then assembles and solves the sparse banded system.
-        After the call, the deflection is available in ``self.w``.
+        If ``bc_west`` or ``bc_east`` is ``'no_outside_loads'``, auto-pads
+        those sides by one flexural wavelength (zero load, tapered Te if
+        array), applies ``'zero_displacement_zero_slope'`` at the new outer
+        edge, solves on the extended domain, then crops ``self.w`` back to
+        the original shape before returning.
+
+        For all other BCs, calls :meth:`_check_warnings_FD`, assembles and
+        solves the sparse banded system.  The deflection is available in
+        ``self.w`` after the call.
         """
+        # ------------------------------------------------------------------
+        # Auto-pad any 'no_outside_loads' sides before building the matrix.
+        # _bc_*_norm is 'no_outside_loads' here because bc_check() validates
+        # it as a legal FD BC string and passes it through unchanged.
+        # ------------------------------------------------------------------
+        _pad_west = self._bc_west_norm == "no_outside_loads"
+        _pad_east = self._bc_east_norm == "no_outside_loads"
+        _qs_inner = _Te_inner = None
+        pw_w = pw_e = 0
+
+        if _pad_west or _pad_east:
+            p = recommended_pad_width_1d(
+                self.T_e, self.dx,
+                E=self.E, nu=self.nu, rho_m=self.rho_m,
+                rho_fill=self.rho_fill, g=self.g,
+            )
+            pw_w = p if _pad_west else 0
+            pw_e = p if _pad_east else 0
+            _qs_inner = self.qs.copy()
+            _Te_inner = self.T_e
+            self.qs = np.pad(self.qs, (pw_w, pw_e), mode="constant")
+            if not np.isscalar(self.T_e):
+                Te_arr = np.asarray(self.T_e, dtype=float)
+                Te_out = float(Te_arr.mean())
+                nx_i = len(_qs_inner)
+                Te_pad = np.full(nx_i + pw_w + pw_e, Te_out)
+                Te_pad[pw_w : pw_w + nx_i] = Te_arr
+                for k in range(pw_w):
+                    Te_pad[k] = (1 - k / pw_w) * Te_out + (k / pw_w) * Te_arr[0]
+                for k in range(pw_e):
+                    Te_pad[nx_i + pw_w + pw_e - 1 - k] = (
+                        (1 - k / pw_e) * Te_out + (k / pw_e) * Te_arr[-1]
+                    )
+                self.T_e = Te_pad
+            if _pad_west:
+                self._bc_west_norm = "zero_displacement_zero_slope"
+            if _pad_east:
+                self._bc_east_norm = "zero_displacement_zero_slope"
+            if not self.quiet:
+                sides = []
+                if _pad_west:
+                    sides.append(f"west +{pw_w}")
+                if _pad_east:
+                    sides.append(f"east +{pw_e}")
+                print(
+                    f"FD 'no_outside_loads': auto-padding ({', '.join(sides)} cells); "
+                    "w trimmed to original domain on return."
+                )
+
         self._check_warnings_FD()
         self.gridded_x()
         # Only generate coefficient matrix if it is not already provided.
@@ -531,6 +589,15 @@ class F1D(Flexure):
             self.elasprepFD()  # define dx4 and D within self
             self._build_coefficient_matrix()
         self.fd_solve()  # Get the deflection, "w"
+
+        if pw_w or pw_e:
+            nx_i = _qs_inner.shape[0]
+            self.w = self.w[pw_w : pw_w + nx_i]
+            self.qs = _qs_inner
+            self.T_e = _Te_inner
+            # Keep finalize()'s T_e restore in sync with the inner domain.
+            if hasattr(self, "T_e_unpadded"):
+                self.T_e_unpadded = _Te_inner
 
     def _solve_fft(self):
         """Spectral (FFT) flexural solution for uniform elastic thickness.

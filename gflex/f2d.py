@@ -200,6 +200,56 @@ def smooth_pad_Te(Te, pad_width, Te_out=None):
     return Te_padded
 
 
+def _auto_pad_Te_2d(Te, pn, ps, pw, pe, Te_out=None):
+    """Asymmetric smooth Te taper for F2D auto-padding.
+
+    Like :func:`smooth_pad_Te` but supports independent widths on each side.
+    Each padded side is tapered linearly from the inner-domain edge value to
+    *Te_out*.  Corner cells use an L-infinity blend of the two adjacent edge
+    tapers.  Sides with a zero pad width are left at *Te_out*.
+    """
+    Te = np.asarray(Te, dtype=float)
+    if Te_out is None:
+        Te_out = float(Te.mean())
+    ny_i, nx_i = Te.shape
+    ny_o, nx_o = ny_i + pn + ps, nx_i + pw + pe
+    out = np.full((ny_o, nx_o), Te_out)
+    out[pn : pn + ny_i, pw : pw + nx_i] = Te
+    # Edge tapers (inner column/row band only; corners overwritten below)
+    for k in range(pn):
+        out[k, pw : pw + nx_i] = (1 - k / pn) * Te_out + (k / pn) * Te[0, :]
+    for k in range(ps):
+        out[ny_o - 1 - k, pw : pw + nx_i] = (
+            (1 - k / ps) * Te_out + (k / ps) * Te[-1, :]
+        )
+    for k in range(pw):
+        out[pn : pn + ny_i, k] = (1 - k / pw) * Te_out + (k / pw) * Te[:, 0]
+    for k in range(pe):
+        out[pn : pn + ny_i, nx_o - 1 - k] = (
+            (1 - k / pe) * Te_out + (k / pe) * Te[:, -1]
+        )
+    # Corner blending (L-infinity distance)
+    for ky in range(pn):
+        ay = ky / pn
+        for kx in range(pw):
+            out[ky, kx] = (1 - max(ay, kx / pw)) * Te_out + max(ay, kx / pw) * Te[0, 0]
+        for kx in range(pe):
+            out[ky, nx_o - 1 - kx] = (
+                (1 - max(ay, kx / pe)) * Te_out + max(ay, kx / pe) * Te[0, -1]
+            )
+    for ky in range(ps):
+        ay = ky / ps
+        for kx in range(pw):
+            out[ny_o - 1 - ky, kx] = (
+                (1 - max(ay, kx / pw)) * Te_out + max(ay, kx / pw) * Te[-1, 0]
+            )
+        for kx in range(pe):
+            out[ny_o - 1 - ky, nx_o - 1 - kx] = (
+                (1 - max(ay, kx / pe)) * Te_out + max(ay, kx / pe) * Te[-1, -1]
+            )
+    return out
+
+
 def _pad_domain_2d(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
                    E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0, g=9.8):
     """Pad a 2-D domain. Called by :func:`pad_domain`; see that function for docs."""
@@ -367,7 +417,10 @@ class F2D(Flexure):
         FD options: ``'zero_displacement_zero_slope'`` (alias ``'clamped'``),
         ``'zero_displacement_zero_moment'`` (alias ``'pinned'``),
         ``'zero_moment_zero_shear'`` (alias ``'free'``),
-        ``'zero_slope_zero_shear'`` (alias ``'mirror'``), ``'periodic'``.
+        ``'zero_slope_zero_shear'`` (alias ``'mirror'``), ``'periodic'``,
+        ``'no_outside_loads'`` (auto-pad by one flexural wavelength and apply
+        ``'zero_displacement_zero_slope'`` at the new outer edges; ``self.w``
+        is trimmed to the original domain).
         SAS option: ``'no_outside_loads'`` (the default when unset).
         FFT: set all four to ``'periodic'`` for exact periodic behavior; any
         other value (including unset) uses zero-padding to approximate
@@ -580,10 +633,57 @@ class F2D(Flexure):
     def _solve_fd(self):
         """Run the finite-difference solution pipeline.
 
-        Calls :meth:`_check_warnings_FD` first to flag potentially problematic
-        boundary conditions, then assembles and solves the sparse banded system.
-        After the call, the deflection is available in ``self.w``.
+        If any BC is ``'no_outside_loads'``, auto-pads those sides by one
+        flexural wavelength (zero load, tapered Te if array), applies
+        ``'zero_displacement_zero_slope'`` at the new outer edges, solves on
+        the extended domain, then crops ``self.w`` back to the original shape.
+
+        For all other BCs, calls :meth:`_check_warnings_FD`, assembles and
+        solves the sparse banded system.  The deflection is available in
+        ``self.w`` after the call.
         """
+        # ------------------------------------------------------------------
+        # Auto-pad any 'no_outside_loads' sides.
+        # ------------------------------------------------------------------
+        _pad_north = self._bc_north_norm == "no_outside_loads"
+        _pad_south = self._bc_south_norm == "no_outside_loads"
+        _pad_west  = self._bc_west_norm  == "no_outside_loads"
+        _pad_east  = self._bc_east_norm  == "no_outside_loads"
+        _qs_inner = _Te_inner = None
+        pn = ps = pw = pe = 0
+
+        if _pad_north or _pad_south or _pad_west or _pad_east:
+            p = recommended_pad_width(
+                self.T_e, min(self.dx, self.dy),
+                E=self.E, nu=self.nu, rho_m=self.rho_m,
+                rho_fill=self.rho_fill, g=self.g,
+            )
+            pn = p if _pad_north else 0
+            ps = p if _pad_south else 0
+            pw = p if _pad_west  else 0
+            pe = p if _pad_east  else 0
+            _qs_inner = self.qs.copy()
+            _Te_inner = self.T_e
+            self.qs = np.pad(self.qs, ((pn, ps), (pw, pe)), mode="constant")
+            if not np.isscalar(self.T_e):
+                self.T_e = _auto_pad_Te_2d(
+                    np.asarray(self.T_e, dtype=float), pn, ps, pw, pe
+                )
+            if _pad_north: self._bc_north_norm = "zero_displacement_zero_slope"
+            if _pad_south: self._bc_south_norm = "zero_displacement_zero_slope"
+            if _pad_west:  self._bc_west_norm  = "zero_displacement_zero_slope"
+            if _pad_east:  self._bc_east_norm  = "zero_displacement_zero_slope"
+            if not self.quiet:
+                sides = []
+                if _pad_north: sides.append(f"north +{pn}")
+                if _pad_south: sides.append(f"south +{ps}")
+                if _pad_west:  sides.append(f"west +{pw}")
+                if _pad_east:  sides.append(f"east +{pe}")
+                print(
+                    f"FD 'no_outside_loads': auto-padding ({', '.join(sides)} cells); "
+                    "w trimmed to original domain on return."
+                )
+
         self._check_warnings_FD()
         # Only generate coefficient matrix if it is not already provided.
         # In no_check mode the matrix is freed after factorization to save
@@ -596,6 +696,14 @@ class F2D(Flexure):
             self.elasprep()
             self._build_coefficient_matrix()
         self.fd_solve()
+
+        if pn or ps or pw or pe:
+            ny_i, nx_i = _qs_inner.shape
+            self.w = self.w[pn : pn + ny_i, pw : pw + nx_i]
+            self.qs = _qs_inner
+            self.T_e = _Te_inner
+            if hasattr(self, "T_e_unpadded"):
+                self.T_e_unpadded = _Te_inner
 
     def _solve_fft(self):
         """Spectral (FFT) flexural solution for uniform elastic thickness.

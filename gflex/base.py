@@ -1690,6 +1690,7 @@ class Flexure(Utility, Plotting):
                         "zero_moment_zero_shear",
                         "free",
                         "sandbox",
+                        "no_outside_loads",
                     ]
                 )
                 self.bc2D = np.array(
@@ -1703,6 +1704,7 @@ class Flexure(Utility, Plotting):
                         "mirror",
                         "zero_moment_zero_shear",
                         "free",
+                        "no_outside_loads",
                     ]
                 )
                 # Boundary conditions should be defined by this point -- whether via

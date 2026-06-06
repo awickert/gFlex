@@ -21,6 +21,17 @@
   zero-padded by `fft_pad_n_alpha × α` cells on each side, placing
   periodic images at least `2 × fft_pad_n_alpha × α` apart.  `F1D` uses
   α₁D = (4D/Δρg)^0.25; `F2D` uses α₂D = (D/Δρg)^0.25.
+- **FD `'no_outside_loads'` boundary condition** — `F1D` and `F2D` now
+  accept `'no_outside_loads'` as a valid `bc_*` string when
+  `method='fd'`.  On each side where it is set, the solver automatically
+  pads the domain by one flexural wavelength with zero loads, applies a
+  clamped (`zero_displacement_zero_slope`) outer boundary, solves, and
+  crops `w` back to the original domain.  The padding is invisible to the
+  caller: `w.shape == qs.shape` on return.  Sides with explicit BCs are
+  unaffected, so mixing `'no_outside_loads'` with `'mirror'`,
+  `'zero_displacement_zero_slope'`, etc. on opposite sides is supported.
+  Variable-`Te` arrays are tapered smoothly into the padded region.
+
 - **Domain-padding API unified** — `pad_domain(Te, qs, dx, ...)` now
   dispatches to 1-D or 2-D based on the shape of `qs`.  The former
   `pad_domain_1d` public function is now the private `_pad_domain_1d`
