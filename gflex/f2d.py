@@ -369,6 +369,10 @@ class F2D(Flexure):
         ``'zero_moment_zero_shear'`` (alias ``'free'``),
         ``'zero_slope_zero_shear'`` (alias ``'mirror'``), ``'periodic'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).
+        FFT: set all four to ``'periodic'`` for exact periodic behavior; any
+        other value (including unset) uses zero-padding to approximate
+        ``'no_outside_loads'``.  Setting only some to ``'periodic'`` raises a
+        ``UserWarning`` and falls back to zero-padding.
     sigma_xx : float, optional
         Normal in-plane stress in the x-direction :math:`\\sigma_{xx}` [Pa].
         Supported by ``fd`` and ``fft``.  Default ``0``.
@@ -644,6 +648,26 @@ class F2D(Flexure):
             and self.bc_north == "periodic"
             and self.bc_south == "periodic"
         )
+        any_periodic = (
+            self.bc_west == "periodic"
+            or self.bc_east == "periodic"
+            or self.bc_north == "periodic"
+            or self.bc_south == "periodic"
+        )
+        if any_periodic and not periodic:
+            non_periodic = [s for s, bc in [("bc_west", self.bc_west),
+                                             ("bc_east", self.bc_east),
+                                             ("bc_north", self.bc_north),
+                                             ("bc_south", self.bc_south)]
+                            if bc != "periodic"]
+            warnings.warn(
+                f"FFT method: {', '.join(non_periodic)} "
+                f"{'is' if len(non_periodic) == 1 else 'are'} not 'periodic' — "
+                "falling back to no_outside_loads zero-padding. "
+                "Set all four BCs to 'periodic' for exact periodic behavior, "
+                "or leave all unset for no_outside_loads.",
+                UserWarning, stacklevel=4,
+            )
 
         if periodic:
             qs_work = self.qs

@@ -313,6 +313,10 @@ class F1D(Flexure):
         ``'zero_moment_zero_shear'`` (alias ``'free'``),
         ``'zero_slope_zero_shear'`` (alias ``'mirror'``), ``'periodic'``, ``'sandbox'``.
         SAS option: ``'no_outside_loads'`` (the default when unset).
+        FFT: set both to ``'periodic'`` for exact periodic behavior; any other
+        value (including unset) uses zero-padding to approximate
+        ``'no_outside_loads'``.  Setting only one to ``'periodic'`` raises a
+        ``UserWarning`` and falls back to zero-padding.
     sigma_xx : float, optional
         Normal stress applied at the plate ends [Pa].  FD only.
     fft_pad_n_alpha : int or float
@@ -579,6 +583,19 @@ class F1D(Flexure):
         )["alpha_1D"]
 
         periodic = (self.bc_west == "periodic") and (self.bc_east == "periodic")
+        any_periodic = (self.bc_west == "periodic") or (self.bc_east == "periodic")
+        if any_periodic and not periodic:
+            non_periodic = [s for s, bc in [("bc_west", self.bc_west),
+                                             ("bc_east", self.bc_east)]
+                            if bc != "periodic"]
+            warnings.warn(
+                f"FFT method: {' and '.join(non_periodic)} "
+                f"{'is' if len(non_periodic) == 1 else 'are'} not 'periodic' — "
+                "falling back to no_outside_loads zero-padding. "
+                "Set both bc_west and bc_east to 'periodic' for exact periodic "
+                "behavior, or leave both unset for no_outside_loads.",
+                UserWarning, stacklevel=4,
+            )
 
         if periodic:
             qs_work = self.qs
