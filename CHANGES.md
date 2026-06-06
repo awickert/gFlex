@@ -1,5 +1,37 @@
 # Release Notes
 
+## [Unreleased]
+
+### New features
+
+- **FFT partial-periodic warning** — `F1D` and `F2D` now issue a
+  `UserWarning` when `method='fft'` and only some (but not all) boundary
+  conditions are set to `'periodic'`.  The solver silently falls back to
+  zero-padded no_outside_loads in this case; the warning names the
+  non-periodic sides and explains the fix.
+- **`fft_pad_n_alpha`** — new instance attribute on `F1D` and `F2D`
+  (default ``4``) that controls the FFT zero-padding width: the load is
+  zero-padded by `fft_pad_n_alpha × α` cells on each side, placing
+  periodic images at least `2 × fft_pad_n_alpha × α` apart.  `F1D` uses
+  α₁D = (4D/Δρg)^0.25; `F2D` uses α₂D = (D/Δρg)^0.25.
+- **Domain-padding API unified** — `pad_domain(Te, qs, dx, ...)` now
+  dispatches to 1-D or 2-D based on the shape of `qs`.  The former
+  `pad_domain_1d` public function is now the private `_pad_domain_1d`
+  (called internally by `pad_domain`).  `smooth_pad_Te`,
+  `recommended_pad_width`, `smooth_pad_Te_1d`, and
+  `recommended_pad_width_1d` remain public for callers that need finer
+  control.
+
+### Bug fixes
+
+- Fixed 2-D FFT zero-padding width: was using the 1-D flexural parameter
+  α₁D = (4D/Δρg)^0.25 instead of the 2-D parameter α₂D = (D/Δρg)^0.25
+  (α₁D ≈ √2 × α₂D), causing ~41 % over-padding on every non-periodic 2-D
+  FFT run.  Both `F1D` and `F2D` now derive α from `flexural_wavelengths()`
+  rather than hardcoding the formula.
+
+----
+
 ## [2.0.0b1] - 2026-06-04
 
 ### Breaking changes
