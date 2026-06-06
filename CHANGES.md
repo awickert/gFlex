@@ -24,6 +24,13 @@
 
 ### Bug fixes
 
+- Fixed FFT crash when no boundary conditions are set: `bc_check()` was
+  populating legacy uppercase attributes (`BC_E`, `BC_W`, `BC_N`, `BC_S`)
+  instead of the current lowercase properties (`bc_east`, `bc_west`, etc.).
+  `_solve_fft()` reads the lowercase properties; with BCs unset the
+  property getter raised `AttributeError`.  Callers that did not explicitly
+  assign a BC (e.g. GRASS GIS `r.flexure`) were affected.  Fix: default
+  unset BCs to `""` via the property setter, mirroring the SAS path.
 - Fixed 2-D FFT zero-padding width: was using the 1-D flexural parameter
   α₁D = (4D/Δρg)^0.25 instead of the 2-D parameter α₂D = (D/Δρg)^0.25
   (α₁D ≈ √2 × α₂D), causing ~41 % over-padding on every non-periodic 2-D
