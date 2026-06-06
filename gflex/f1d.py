@@ -941,17 +941,10 @@ class F1D(Flexure):
             # If both boundaries are periodic, we are good to go (and self-consistent)
             pass  # It is just a shift in the coeff. matrix creation.
         else:
-            # If only one boundary is periodic and the other doesn't implicitly
-            # involve a periodic boundary, this is illegal!
-            # I could allow it, but would have to rewrite the periodic b.c. case,
-            # which I don't want to do to allow something that doesn't make
-            # physical sense... so if anyone wants to do this for some unforeseen
-            # reason, they can just split my function into two pieces themselves.i
-            raise ValueError(
-                "The boundary opposite a periodic boundary condition must also be "
-                "periodic. Having one periodic and one non-periodic boundary on the "
-                "same axis is not physically meaningful."
-            )
+            # bc_check() has already warned; this branch is unreachable in
+            # normal flow because _bc_periodic() is only called when both sides
+            # are periodic (see _apply_bc_flexure).
+            pass
         self.diags = np.vstack(
             (
                 self.r1,

@@ -1747,6 +1747,26 @@ class Flexure(Utility, Plotting):
                     elif norm == "mirror":
                         norm = "zero_slope_zero_shear"
                     setattr(self, f"_bc_{edge}_norm", norm)
+                # Warn when only one side of an opposite pair is 'periodic'.
+                # Periodic BCs tile the domain edge-to-edge, so a one-sided
+                # periodic is non-physical in most cases — but a use case we
+                # have not imagined may exist, so a warning rather than an error.
+                for side_a, side_b in (("west", "east"), ("north", "south")):
+                    if self.dimension == 1 and side_a == "north":
+                        continue
+                    norm_a = getattr(self, f"_bc_{side_a}_norm", None)
+                    norm_b = getattr(self, f"_bc_{side_b}_norm", None)
+                    if (norm_a == "periodic") != (norm_b == "periodic"):
+                        periodic_side  = side_a if norm_a == "periodic" else side_b
+                        missing_side   = side_b if norm_a == "periodic" else side_a
+                        warnings.warn(
+                            f"FD method: bc_{periodic_side} is 'periodic' but "
+                            f"bc_{missing_side} is not — periodic boundary conditions "
+                            f"connect opposite edges, so a one-sided periodic is "
+                            f"non-physical in most cases. Set bc_{missing_side} to "
+                            f"'periodic' as well, or choose a different BC.",
+                            UserWarning, stacklevel=4,
+                        )
                 # Validate array BC value lengths against edge dimensions.
                 # Only when dict BCs are present (config-file paths use string BCs
                 # and qs may not be set yet at this point).

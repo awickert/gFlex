@@ -1254,11 +1254,7 @@ class F2D(Flexure):
                 self.cj_2i0[:, j] += np.inf
 
             else:
-                raise ValueError(
-                    "The boundary opposite a periodic boundary condition must also be "
-                    "periodic. Having one periodic and one non-periodic boundary on the "
-                    "same axis is not physically meaningful."
-                )
+                pass  # bc_check() has already warned; proceed with no west periodic stencil
         elif self._bc_west_norm == "zero_displacement_zero_slope":
             # Boundary column (j=0): decouple so c0·w[j=0,i] = 0 → w = 0 exactly.
             j = 0
@@ -1399,11 +1395,7 @@ class F2D(Flexure):
                 self.cj2i0[:, j] += np.inf
 
             else:
-                raise ValueError(
-                    "The boundary opposite a periodic boundary condition must also be "
-                    "periodic. Having one periodic and one non-periodic boundary on the "
-                    "same axis is not physically meaningful."
-                )
+                pass  # bc_check() has already warned; proceed with no east periodic stencil
 
         elif self._bc_east_norm == "zero_displacement_zero_slope":
             # First interior column (j=-2): even reflection w[N,i]=w[N-2,i] encodes zero slope.
@@ -1524,11 +1516,7 @@ class F2D(Flexure):
                 pass  # Will address the N-S (whole-matrix-involving) boundary condition
                 # inclusion below, when constructing sparse matrix diagonals
             else:
-                raise ValueError(
-                    "The boundary opposite a periodic boundary condition must also be "
-                    "periodic. Having one periodic and one non-periodic boundary on the "
-                    "same axis is not physically meaningful."
-                )
+                pass  # bc_check() has already warned; proceed with no north periodic stencil
         elif self._bc_north_norm == "zero_displacement_zero_slope":
             # Boundary row (i=0): decouple so c0·w[j,i=0] = 0 → w = 0 exactly.
             i = 0
@@ -1642,11 +1630,7 @@ class F2D(Flexure):
                 pass  # Will address the N-S (whole-matrix-involving) boundary condition
                 # inclusion below, when constructing sparse matrix diagonals
             else:
-                raise ValueError(
-                    "The boundary opposite a periodic boundary condition must also be "
-                    "periodic. Having one periodic and one non-periodic boundary on the "
-                    "same axis is not physically meaningful."
-                )
+                pass  # bc_check() has already warned; proceed with no south periodic stencil
         elif self._bc_south_norm == "zero_displacement_zero_slope":
             # First interior row (i=-2): even reflection w[j,N]=w[j,N-2] encodes zero slope.
             i = -2

@@ -4,6 +4,13 @@
 
 ### New features
 
+- **FD one-sided periodic warning** — `F1D` and `F2D` now issue a
+  `UserWarning` when `method='fd'` and exactly one side of an opposite
+  boundary pair (west/east or north/south) is `'periodic'`.  Periodic BCs
+  tile opposite edges together, so a one-sided periodic is non-physical in
+  most cases; the warning names both sides and suggests the fix.  The solver
+  proceeds rather than raising an error, in case an unforeseen use case
+  requires it.
 - **FFT partial-periodic warning** — `F1D` and `F2D` now issue a
   `UserWarning` when `method='fft'` and only some (but not all) boundary
   conditions are set to `'periodic'`.  The solver silently falls back to

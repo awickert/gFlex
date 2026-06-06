@@ -392,3 +392,69 @@ def test_fft_2d_partial_periodic_names_non_periodic_bcs():
     assert partial, "expected a partial-periodic warning"
     assert "bc_south" in partial[0]
     assert "bc_west" not in partial[0]
+
+
+# ---------------------------------------------------------------------------
+# FD: one-sided periodic BC warning
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bc_w,bc_e", [
+    ("periodic", "zero_displacement_zero_slope"),
+    ("zero_displacement_zero_slope", "periodic"),
+])
+def test_fd_1d_one_sided_periodic_warns(bc_w, bc_e):
+    """FD 1-D: exactly one of west/east 'periodic' raises UserWarning."""
+    qs = np.zeros(80)
+    qs[40] = 1e6
+    msgs = _run_1d(qs, bc_w, bc_e)
+    assert any("non-physical" in m for m in msgs), msgs
+
+
+def test_fd_1d_both_periodic_no_warn():
+    """FD 1-D: both periodic → no one-sided-periodic warning."""
+    qs = np.zeros(80)
+    qs[40] = 1e6
+    msgs = _run_1d(qs, "periodic", "periodic")
+    assert not any("non-physical" in m for m in msgs), msgs
+
+
+def test_fd_1d_neither_periodic_no_warn():
+    """FD 1-D: neither periodic → no one-sided-periodic warning."""
+    qs = np.zeros(80)
+    qs[40] = 1e6
+    msgs = _run_1d(qs, "zero_displacement_zero_slope", "zero_displacement_zero_slope")
+    assert not any("non-physical" in m for m in msgs), msgs
+
+
+@pytest.mark.parametrize("pair", [
+    ("periodic", "zero_displacement_zero_slope", "mirror", "mirror"),   # W only
+    ("mirror", "periodic", "mirror", "mirror"),                          # E only
+    ("mirror", "mirror", "periodic", "zero_displacement_zero_slope"),   # N only
+    ("mirror", "mirror", "mirror", "periodic"),                          # S only
+])
+def test_fd_2d_one_sided_periodic_warns(pair):
+    """FD 2-D: exactly one side of a pair 'periodic' raises UserWarning."""
+    qs = np.zeros((80, 80))
+    qs[40, 40] = 1e6
+    bc_w, bc_e, bc_n, bc_s = pair
+    msgs = _run_2d(qs, bc_w, bc_e, bc_n, bc_s)
+    assert any("non-physical" in m for m in msgs), msgs
+
+
+def test_fd_2d_all_periodic_no_warn():
+    """FD 2-D: all four periodic → no one-sided-periodic warning."""
+    qs = np.zeros((80, 80))
+    qs[40, 40] = 1e6
+    msgs = _run_2d(qs, "periodic", "periodic", "periodic", "periodic")
+    assert not any("non-physical" in m for m in msgs), msgs
+
+
+def test_fd_2d_one_sided_periodic_names_sides():
+    """FD 2-D warning message names the periodic side and the missing side."""
+    qs = np.zeros((80, 80))
+    qs[40, 40] = 1e6
+    msgs = _run_2d(qs, "periodic", "mirror", "mirror", "mirror")
+    onesided = [m for m in msgs if "non-physical" in m]
+    assert onesided, "expected a one-sided-periodic warning"
+    assert "bc_west" in onesided[0]
+    assert "bc_east" in onesided[0]
