@@ -28,10 +28,9 @@ conditions (``zero_displacement_zero_moment`` was added after publication):
 .. tip::
 
    Flexural solutions can be sensitive to boundary conditions.  When in
-   doubt, use :func:`~gflex.pad_domain` (2-D) or
-   :func:`~gflex.pad_domain_1d` (1-D) to push the boundaries far from the
-   region of interest, and choose ``zero_moment_zero_shear`` (free end) to minimise
-   their influence.
+   doubt, use :func:`~gflex.pad_domain` to push the boundaries far from the
+   region of interest (works for both 1-D and 2-D), and choose
+   ``zero_moment_zero_shear`` (free end) to minimise their influence.
 
 ----
 
