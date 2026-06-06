@@ -1371,7 +1371,7 @@ class F2D(Flexure):
             raise RuntimeError("Invalid boundary condition")
 
         if self.bc_east == "periodic":
-            # See more extensive comments above (BC_W)
+            # See more extensive comments above (bc_west)
 
             if self.bc_west == "periodic":
                 # New arrays -- new diagonals, but mostly empty. Just corners of blocks

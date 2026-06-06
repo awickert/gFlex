@@ -543,7 +543,7 @@ class F1D(Flexure):
 
         FFT inherently assumes a periodic domain.  Two modes are supported:
 
-        * ``BC_W = BC_E = 'periodic'`` — the load array is used as-is.
+        * ``bc_west = bc_east = 'periodic'`` — the load array is used as-is.
           The solution is exact for a load that genuinely repeats with
           period L = N · dx.
 
