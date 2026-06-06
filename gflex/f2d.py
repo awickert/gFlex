@@ -82,8 +82,8 @@ def flexural_wavelengths(Te, E, nu, rho_m, rho_fill, g):
     }
 
 
-def recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
-                           g=9.8, n_wavelengths=1.0):
+def _recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
+                            g=9.8, n_wavelengths=1.0):
     """
     Return the recommended padding width in grid cells for a variable-Te run.
 
@@ -126,7 +126,7 @@ def recommended_pad_width(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0,
     return int(np.ceil(n_wavelengths * r["lambda_2D"] / dx))
 
 
-def smooth_pad_Te(Te, pad_width, Te_out=None):
+def _smooth_pad_Te(Te, pad_width, Te_out=None):
     """
     Pad a 2-D elastic thickness array with a smooth linear taper.
 
@@ -149,8 +149,7 @@ def smooth_pad_Te(Te, pad_width, Te_out=None):
     Te : (M, N) array
         Elastic thickness [m] for the inner domain.
     pad_width : int
-        Width of the padding ring in grid cells.  Use
-        :func:`recommended_pad_width` to obtain a suitable value.
+        Width of the padding ring in grid cells.
     Te_out : float, optional
         Te value at the outer edge of the padding ring.
         Defaults to ``Te.mean()``.
@@ -159,28 +158,6 @@ def smooth_pad_Te(Te, pad_width, Te_out=None):
     -------
     Te_padded : (M + 2*pad_width, N + 2*pad_width) array
         Padded elastic thickness with a smooth linear taper.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from gflex import smooth_pad_Te
-    >>> Te = 35e3 * np.ones((10, 10))
-    >>> Te_pad = smooth_pad_Te(Te, pad_width=4)
-    >>> Te_pad.shape
-    (18, 18)
-
-    To run :class:`F2D` with the padded grid::
-
-        import numpy as np
-        from gflex import F2D, smooth_pad_Te, recommended_pad_width
-        p = recommended_pad_width(Te, dx=5000.)
-        Te_pad = smooth_pad_Te(Te, p)
-        qs_pad = np.pad(qs, p, mode='constant')
-        flex = F2D()
-        flex.T_e = Te_pad
-        flex.qs = qs_pad
-        # ... set other parameters and run ...
-        w_inner = flex.w[p:-p, p:-p]   # trim padding from output
     """
     Te = np.asarray(Te, dtype=float)
     if Te.ndim != 2:
@@ -223,33 +200,62 @@ def smooth_pad_Te(Te, pad_width, Te_out=None):
     return Te_padded
 
 
+def _pad_domain_2d(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
+                   E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0, g=9.8):
+    """Pad a 2-D domain. Called by :func:`pad_domain`; see that function for docs."""
+    if dy is None:
+        dy = dx
+    p = _recommended_pad_width(
+        Te, min(dx, dy), E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill,
+        g=g, n_wavelengths=n_wavelengths,
+    )
+    Te_arr = np.asarray(Te, dtype=float)
+    if Te_arr.ndim == 0:
+        Te_padded = float(Te_arr)
+    else:
+        Te_padded = _smooth_pad_Te(Te_arr, p, Te_out=Te_out)
+    qs_padded = np.pad(qs, p, mode="constant")
+    return Te_padded, qs_padded, p
+
+
 def pad_domain(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
                E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0, g=9.8):
     """
-    Pad both the elastic thickness and surface load arrays for use with F2D.
+    Pad a flexure domain for use with :class:`F1D` or :class:`F2D`.
 
-    Combines :func:`recommended_pad_width` and :func:`smooth_pad_Te` into a
-    single call, and zero-pads *qs* to match.  The returned pad width *p* can
-    be used to trim the deflection output after the run::
+    Dispatches to a 1-D or 2-D implementation based on the shape of *qs*.
+    For array *Te*, the padding region is tapered from the inner-domain edge
+    values toward *Te_out* to avoid an abrupt rigidity step.  For scalar *Te*,
+    only the load array is zero-padded; *Te* is returned unchanged as a float.
 
+    The returned pad width *p* can be used to trim the deflection output after
+    the run::
+
+        # 2-D
         w_inner = flex.w[p:-p, p:-p]
+        # 1-D
+        w_inner = flex.w[p:-p]
 
     Parameters
     ----------
-    Te : (M, N) array
-        Elastic thickness [m] for the inner domain.
-    qs : (M, N) array
-        Surface load [Pa] for the inner domain.
+    Te : scalar or array
+        Elastic thickness [m].  A scalar is broadcast to the full padded grid
+        internally by :class:`F1D` / :class:`F2D`; no tapering is applied.
+        A 1-D array is expected when *qs* is 1-D; a 2-D array when *qs* is 2-D.
+    qs : 1-D or 2-D array
+        Surface load [Pa] for the inner domain.  Shape determines whether
+        1-D or 2-D padding is applied.
     dx : float
-        Grid cell size in the x-direction [m].
+        Grid cell size [m].  For 2-D grids, this is the x-direction spacing.
     dy : float, optional
-        Grid cell size in the y-direction [m].  Defaults to *dx*.
+        Grid cell size in the y-direction [m].  2-D only; ignored for 1-D.
+        Defaults to *dx*.
     n_wavelengths : float, optional
         Padding width expressed as a number of flexural wavelengths.
         Default 1.0; use 0.5 for a less conservative (narrower) padding.
     Te_out : float, optional
-        Te value at the outer edge of the padding ring.
-        Defaults to ``Te.mean()``.
+        Te value at the outer edge of the padding region.
+        Only used for array *Te*; defaults to ``Te.mean()``.
     E : float, optional
         Young's modulus [Pa].  Default 65 GPa.
     nu : float, optional
@@ -263,43 +269,57 @@ def pad_domain(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
 
     Returns
     -------
-    Te_padded : (M + 2p, N + 2p) array
-        Smoothly tapered elastic thickness.
-    qs_padded : (M + 2p, N + 2p) array
-        Surface load zero-padded to match.
+    Te_padded : float or array
+        Elastic thickness for the padded domain.  Float when *Te* is scalar;
+        array of shape ``(len(qs) + 2p,)`` (1-D) or ``(M+2p, N+2p)`` (2-D)
+        when *Te* is an array.
+    qs_padded : array
+        Surface load zero-padded to the padded domain shape.
     p : int
-        Pad width in grid cells (same on all four sides).
+        Pad width in grid cells (same on both ends / all four sides).
 
     Examples
     --------
+    2-D scalar Te:
+
     >>> import numpy as np
     >>> from gflex import pad_domain
-    >>> Te = 10e3 * np.ones((5, 5))
     >>> qs = np.zeros((5, 5))
-    >>> Te_pad, qs_pad, p = pad_domain(Te, qs, dx=10000.,
+    >>> Te_pad, qs_pad, p = pad_domain(10e3, qs, dx=10000.,
     ...     E=65e9, nu=0.25, rho_m=3300., rho_fill=0., g=9.8)
     >>> p
     13
+    >>> qs_pad.shape
+    (31, 31)
+    >>> Te_pad   # scalar returned unchanged
+    10000.0
+
+    2-D array Te:
+
+    >>> Te = 10e3 * np.ones((5, 5))
+    >>> Te_pad, qs_pad, p = pad_domain(Te, qs, dx=10000.,
+    ...     E=65e9, nu=0.25, rho_m=3300., rho_fill=0., g=9.8)
     >>> Te_pad.shape
     (31, 31)
 
-    To run :class:`F2D` with the padded grids::
+    1-D:
 
-        flex = gflex.F2D()
-        flex.T_e = Te_pad
-        flex.qs = qs_pad
-        # ... set other parameters and run ...
-        w_inner = flex.w[p:-p, p:-p]   # trim padding from output
+    >>> qs_1d = np.zeros(5)
+    >>> Te_pad, qs_pad, p = pad_domain(10e3, qs_1d, dx=10000.)
+    >>> qs_pad.shape
+    (43,)
     """
-    if dy is None:
-        dy = dx
-    p = recommended_pad_width(
-        Te, min(dx, dy), E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill,
-        g=g, n_wavelengths=n_wavelengths,
+    qs = np.asarray(qs)
+    if qs.ndim == 1:
+        from gflex.f1d import _pad_domain_1d
+        return _pad_domain_1d(
+            Te, qs, dx, n_wavelengths=n_wavelengths, Te_out=Te_out,
+            E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill, g=g,
+        )
+    return _pad_domain_2d(
+        Te, qs, dx, dy=dy, n_wavelengths=n_wavelengths, Te_out=Te_out,
+        E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill, g=g,
     )
-    Te_padded = smooth_pad_Te(Te, p, Te_out=Te_out)
-    qs_padded = np.pad(qs, p, mode="constant")
-    return Te_padded, qs_padded, p
 
 
 class F2D(Flexure):
