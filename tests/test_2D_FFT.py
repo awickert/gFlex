@@ -328,5 +328,45 @@ def test_fft_2d_padded_matches_manual_padding():
     )
 
 
+# ---------------------------------------------------------------------------
+# fft_pad_n_alpha
+# ---------------------------------------------------------------------------
+
+def test_fft_2d_pad_n_alpha_default():
+    """Default fft_pad_n_alpha is 4."""
+    flex = F2D()
+    assert flex.fft_pad_n_alpha == 4
+
+
+def test_fft_2d_pad_n_alpha_changes_padding():
+    """Larger fft_pad_n_alpha converges to the same answer as the default."""
+    N = 80
+    qs = np.zeros((N, N))
+    qs[35:45, 35:45] = 1e6
+
+    flex4 = _run(qs)   # default 4α
+
+    flex8 = F2D()
+    flex8.quiet = True
+    flex8.method = "fft"
+    flex8.g = g
+    flex8.E = E
+    flex8.nu = nu
+    flex8.rho_m = rho_m
+    flex8.rho_fill = rho_fill
+    flex8.T_e = Te
+    flex8.qs = qs.copy()
+    flex8.dx = dx
+    flex8.dy = dy
+    flex8.bc_west = flex8.bc_east = flex8.bc_north = flex8.bc_south = ""
+    flex8.fft_pad_n_alpha = 8
+    flex8.initialize()
+    flex8.run()
+
+    # Both should agree to within 0.1 % of peak deflection; 4α is well-converged
+    peak = np.abs(flex4.w).max()
+    np.testing.assert_allclose(flex4.w, flex8.w, atol=1e-3 * peak)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

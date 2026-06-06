@@ -172,5 +172,47 @@ def test_fft_end_load_monotonicity():
     assert flex_c.w.min() < flex_0.w.min(), "compressive end load should increase subsidence"
 
 
+# ---------------------------------------------------------------------------
+# fft_pad_n_alpha
+# ---------------------------------------------------------------------------
+
+def test_fft_pad_n_alpha_default():
+    """Default fft_pad_n_alpha is 4."""
+    flex = F1D()
+    assert flex.fft_pad_n_alpha == 4
+
+
+def test_fft_pad_n_alpha_changes_padding():
+    """Larger fft_pad_n_alpha produces a wider pad and converges to the same answer."""
+    N = 100
+    qs = np.zeros(N)
+    qs[40:60] = 1e6
+
+    flex4 = _run_flex_1d(qs)                    # default 4α
+    flex4.fft_pad_n_alpha = 4                   # explicit default
+
+    flex8 = F1D()
+    flex8.quiet = True
+    flex8.method = "fft"
+    flex8.solver = "direct"
+    flex8.g = g
+    flex8.E = E
+    flex8.nu = nu
+    flex8.rho_m = rho_m
+    flex8.rho_fill = rho_fill
+    flex8.T_e = Te
+    flex8.qs = qs.copy()
+    flex8.dx = dx
+    flex8.bc_west = ""
+    flex8.bc_east = ""
+    flex8.fft_pad_n_alpha = 8
+    flex8.initialize()
+    flex8.run()
+
+    # Both should agree to within 0.1 % of peak deflection; 4α is well-converged
+    peak = np.abs(flex4.w).max()
+    np.testing.assert_allclose(flex4.w, flex8.w, atol=1e-3 * peak)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
