@@ -422,10 +422,13 @@ class F2D(Flexure):
         ``'zero_displacement_zero_slope'`` at the new outer edges; ``self.w``
         is trimmed to the original domain).
         SAS option: ``'no_outside_loads'`` (the default when unset).
-        FFT: set all four to ``'periodic'`` for exact periodic behavior; any
-        other value (including unset) uses zero-padding to approximate
-        ``'no_outside_loads'``.  Setting only some to ``'periodic'`` raises a
-        ``UserWarning`` and falls back to zero-padding.
+        FFT: each opposite pair (west/east, north/south) is treated
+        independently — set both sides of a pair to ``'periodic'`` for
+        exact periodicity along that axis, or leave them unset (or set to
+        ``'no_outside_loads'``) to zero-pad that axis.  Mixing periodic
+        and non-periodic axes is valid.  Setting only one side of a pair
+        to ``'periodic'`` raises a ``UserWarning`` and falls back to
+        zero-padding for that axis.
     sigma_xx : float, optional
         Normal in-plane stress in the x-direction :math:`\\sigma_{xx}` [Pa].
         Supported by ``fd`` and ``fft``.  Default ``0``.
@@ -440,7 +443,8 @@ class F2D(Flexure):
         zero-pad on each side for non-periodic FFT runs.  Periodic images
         of the load are separated by 2 × ``fft_pad_n_alpha`` × α₂D.
         Default ``4`` (8α₂D total separation).  Ignored when
-        ``method != 'fft'`` or when all BCs are ``'periodic'``.
+        ``method != 'fft'`` or when both sides of the relevant axis are
+        ``'periodic'``.
     quiet : bool
         Suppress timing output.  Default ``False``.
     verbose : bool
@@ -715,20 +719,23 @@ class F2D(Flexure):
 
         **Boundary conditions and periodicity**
 
-        FFT inherently assumes a periodic domain.  Two modes are supported:
+        Each opposite pair of boundaries (west/east, north/south) is handled
+        independently:
 
-        * All four BCs set to ``'periodic'`` — the load array is used as-is.
-          The solution is exact for a load that genuinely tiles with periods
-          Lx = Nx·dx and Ly = Ny·dy.
+        * Both sides of a pair set to ``'periodic'`` — that axis is treated as
+          genuinely periodic and the load is used as-is along that dimension.
 
-        * Any other BC (including ``'no_outside_loads'`` or unset) — the load
-          is zero-padded by ``fft_pad_n_alpha`` × α₂D on each side in both
-          x and y (default 4α₂D), where α₂D = (D/Δρg)^0.25 is the 2-D
-          flexural parameter.  Periodic images are separated by
-          2 × ``fft_pad_n_alpha`` × α₂D of zeros (default 8α₂D), which is
-          sufficient for the response to decay to negligible amplitude.
-          This is the spectral equivalent of the ``'no_outside_loads'``
-          boundary condition used by the SAS solver.
+        * Any other value (including ``'no_outside_loads'`` or unset) — that
+          axis is zero-padded by ``fft_pad_n_alpha`` × α₂D on each side
+          (default 4α₂D), where α₂D = (D/Δρg)^0.25 is the 2-D flexural
+          parameter.  Periodic images are separated by at least
+          2 × ``fft_pad_n_alpha`` × α₂D of zeros (default 8α₂D).
+
+        Mixing periodic and non-periodic axes is supported: e.g.
+        ``bc_west = bc_east = 'periodic'`` with ``bc_north`` and ``bc_south``
+        unset gives an x-periodic, y-padded domain.  Setting only *one* side
+        of a pair to ``'periodic'`` raises a ``UserWarning`` and the axis
+        falls back to zero-padding.
 
         Requires uniform (scalar) elastic thickness; for variable *Te* use
         the finite-difference method instead.
@@ -750,41 +757,31 @@ class F2D(Flexure):
         )["alpha_2D"]
 
         ny, nx = self.qs.shape
-        periodic = (
-            self.bc_west == "periodic"
-            and self.bc_east == "periodic"
-            and self.bc_north == "periodic"
-            and self.bc_south == "periodic"
-        )
-        any_periodic = (
-            self.bc_west == "periodic"
-            or self.bc_east == "periodic"
-            or self.bc_north == "periodic"
-            or self.bc_south == "periodic"
-        )
-        if any_periodic and not periodic:
-            non_periodic = [s for s, bc in [("bc_west", self.bc_west),
-                                             ("bc_east", self.bc_east),
-                                             ("bc_north", self.bc_north),
-                                             ("bc_south", self.bc_south)]
-                            if bc != "periodic"]
-            warnings.warn(
-                f"FFT method: {', '.join(non_periodic)} "
-                f"{'is' if len(non_periodic) == 1 else 'are'} not 'periodic' — "
-                "falling back to no_outside_loads zero-padding. "
-                "Set all four BCs to 'periodic' for exact periodic behavior, "
-                "or leave all unset for no_outside_loads.",
-                UserWarning, stacklevel=4,
-            )
 
-        if periodic:
-            qs_work = self.qs
-        else:
-            pad_x = int(np.ceil(self.fft_pad_n_alpha * alpha / self.dx))
-            pad_y = int(np.ceil(self.fft_pad_n_alpha * alpha / self.dy))
-            qs_work = np.pad(
-                self.qs, ((pad_y, pad_y), (pad_x, pad_x)), mode="constant"
-            )
+        # Per-axis periodicity: each opposite pair is independent.
+        periodic_x = (self.bc_west  == "periodic") and (self.bc_east  == "periodic")
+        periodic_y = (self.bc_north == "periodic") and (self.bc_south == "periodic")
+
+        # Warn when exactly one side of a pair is periodic (non-physical).
+        for (bc_a, bc_b, name_a, name_b) in [
+            (self.bc_west,  self.bc_east,  "bc_west",  "bc_east"),
+            (self.bc_north, self.bc_south, "bc_north", "bc_south"),
+        ]:
+            if (bc_a == "periodic") != (bc_b == "periodic"):
+                non_periodic = name_a if bc_a != "periodic" else name_b
+                periodic_side = name_b if bc_a != "periodic" else name_a
+                warnings.warn(
+                    f"FFT method: {non_periodic} is not 'periodic' but "
+                    f"{periodic_side} is — falling back to no_outside_loads "
+                    "zero-padding for this axis.  Set both sides of each pair "
+                    "to 'periodic' for exact periodic behavior, or leave both "
+                    "unset for no_outside_loads.",
+                    UserWarning, stacklevel=4,
+                )
+
+        pad_x = 0 if periodic_x else int(np.ceil(self.fft_pad_n_alpha * alpha / self.dx))
+        pad_y = 0 if periodic_y else int(np.ceil(self.fft_pad_n_alpha * alpha / self.dy))
+        qs_work = np.pad(self.qs, ((pad_y, pad_y), (pad_x, pad_x)), mode="constant")
 
         ny_work, nx_work = qs_work.shape
         kx = scipy.fft.rfftfreq(nx_work, d=self.dx) * 2.0 * np.pi
@@ -802,10 +799,7 @@ class F2D(Flexure):
         )
         w_work = scipy.fft.irfft2(-Q / denom, s=qs_work.shape, workers=-1)
 
-        if periodic:
-            self.w = w_work
-        else:
-            self.w = w_work[pad_y : pad_y + ny, pad_x : pad_x + nx]
+        self.w = w_work[pad_y : pad_y + ny, pad_x : pad_x + nx]
 
     def _solve_sas(self):
         """Run the gridded superposition-of-analytical-solutions pipeline."""

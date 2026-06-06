@@ -384,7 +384,7 @@ def test_fft_2d_none_periodic_no_warn():
 
 
 def test_fft_2d_partial_periodic_names_non_periodic_bcs():
-    """FFT 2-D warning names every non-periodic BC side."""
+    """FFT 2-D warning names the unpaired BC side."""
     qs = np.zeros((60, 60))
     qs[30, 30] = 1e6
     msgs = _run_2d_fft(qs, bc_w="periodic", bc_e="periodic", bc_n="periodic", bc_s="")
@@ -392,6 +392,33 @@ def test_fft_2d_partial_periodic_names_non_periodic_bcs():
     assert partial, "expected a partial-periodic warning"
     assert "bc_south" in partial[0]
     assert "bc_west" not in partial[0]
+
+
+def test_fft_2d_mixed_axes_no_warn():
+    """FFT 2-D: paired x-periodic + unset y is valid — no warning."""
+    qs = np.zeros((60, 60))
+    qs[30, 30] = 1e6
+    msgs = _run_2d_fft(qs, bc_w="periodic", bc_e="periodic", bc_n="", bc_s="")
+    assert not any("no_outside_loads" in m for m in msgs), msgs
+
+
+def test_fft_2d_mixed_axes_warns_for_unpaired_x():
+    """FFT 2-D: bc_west='periodic' but bc_east unset → warning naming bc_east."""
+    qs = np.zeros((60, 60))
+    qs[30, 30] = 1e6
+    msgs = _run_2d_fft(qs, bc_w="periodic", bc_e="", bc_n="periodic", bc_s="periodic")
+    partial = [m for m in msgs if "no_outside_loads" in m]
+    assert partial, "expected a partial-periodic warning"
+    assert "bc_east" in partial[0]
+
+
+def test_fft_2d_two_unpaired_warns_twice():
+    """FFT 2-D: both pairs one-sided → two separate warnings."""
+    qs = np.zeros((60, 60))
+    qs[30, 30] = 1e6
+    msgs = _run_2d_fft(qs, bc_w="periodic", bc_e="", bc_n="periodic", bc_s="")
+    partial = [m for m in msgs if "no_outside_loads" in m]
+    assert len(partial) == 2, f"expected 2 partial-periodic warnings, got {len(partial)}"
 
 
 # ---------------------------------------------------------------------------

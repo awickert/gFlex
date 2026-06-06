@@ -11,11 +11,16 @@
   most cases; the warning names both sides and suggests the fix.  The solver
   proceeds rather than raising an error, in case an unforeseen use case
   requires it.
-- **FFT partial-periodic warning** — `F1D` and `F2D` now issue a
-  `UserWarning` when `method='fft'` and only some (but not all) boundary
-  conditions are set to `'periodic'`.  The solver silently falls back to
-  zero-padded no_outside_loads in this case; the warning names the
-  non-periodic sides and explains the fix.
+- **FFT per-axis boundary conditions** — `F2D` now handles the west/east
+  and north/south boundary-condition pairs independently for
+  `method='fft'`.  Setting both sides of a pair to `'periodic'` makes
+  that axis genuinely periodic; leaving them unset (or `'no_outside_loads'`)
+  zero-pads that axis.  Mixing periodic and non-periodic axes is supported
+  (e.g. `bc_west = bc_east = 'periodic'` with north/south unset gives an
+  x-periodic, y-padded domain).  Setting only one side of a pair to
+  `'periodic'` raises a `UserWarning` and falls back to zero-padding for
+  that axis.  `F1D` behaviour is unchanged (single axis, both sides must
+  match).
 - **`fft_pad_n_alpha`** — new instance attribute on `F1D` and `F2D`
   (default ``4``) that controls the FFT zero-padding width: the load is
   zero-padded by `fft_pad_n_alpha × α` cells on each side, placing
