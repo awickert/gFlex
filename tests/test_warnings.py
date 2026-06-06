@@ -146,7 +146,7 @@ def test_1d_proximity_no_warning_empty_load():
 
 
 def test_1d_proximity_warning_message_content():
-    """Proximity warning message contains wavelength fraction and pad_domain_1d hint."""
+    """Proximity warning message contains wavelength fraction and pad_domain() hint."""
     qs = np.zeros(40)
     qs[2] = 1e6
     msgs = _run_1d(qs, "zero_displacement_zero_slope", "zero_displacement_zero_slope")
@@ -154,7 +154,7 @@ def test_1d_proximity_warning_message_content():
     assert prox, "expected at least one proximity warning"
     msg = prox[0]
     assert "flexural wavelengths" in msg
-    assert "pad_domain_1d()" in msg
+    assert "pad_domain()" in msg
 
 
 # ---------------------------------------------------------------------------

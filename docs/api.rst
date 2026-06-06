@@ -69,21 +69,10 @@ reduces spurious deflections at the domain boundary caused by sharp rigidity
 gradients, and ensures that the flexural forebulge can develop freely before
 reaching the boundary.
 
-**2-D (F2D)**
+:func:`~gflex.pad_domain` handles both 1-D and 2-D grids and both scalar
+and array elastic thickness.
 
 .. autofunction:: gflex.pad_domain
-
-.. autofunction:: gflex.smooth_pad_Te
-
-.. autofunction:: gflex.recommended_pad_width
-
-**1-D (F1D)**
-
-.. autofunction:: gflex.pad_domain_1d
-
-.. autofunction:: gflex.smooth_pad_Te_1d
-
-.. autofunction:: gflex.recommended_pad_width_1d
 
 FD boundary-condition warnings
 ------------------------------

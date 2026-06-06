@@ -87,10 +87,9 @@ Parameters
 ``elastic_thickness``
     Elastic thickness [m].  Either a scalar value or a path to a
     space-delimited array.  Arrays are required for FD solutions with
-    spatially variable *Te*.  Use :func:`~gflex.smooth_pad_Te` and
-    :func:`~gflex.pad_domain` (2-D) or :func:`~gflex.smooth_pad_Te_1d` and
-    :func:`~gflex.pad_domain_1d` (1-D) to extend a variable-*Te* grid with a
-    smooth boundary buffer before running.
+    spatially variable *Te*.  Use :func:`~gflex.pad_domain` to extend a
+    variable-*Te* grid with a smooth boundary buffer before running (works
+    for both 1-D and 2-D; scalar *Te* is also supported).
 
 ``xw``, ``yw``
     *(SAS_NG only)*  Vectors of x (and y for 2-D) coordinates at which to

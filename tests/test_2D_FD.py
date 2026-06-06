@@ -3,7 +3,8 @@
 import numpy as np
 import pytest
 
-from gflex.f2d import F2D, pad_domain, recommended_pad_width, smooth_pad_Te
+from gflex import pad_domain
+from gflex.f2d import F2D, _pad_domain_2d, _recommended_pad_width, _smooth_pad_Te
 
 
 def _run_flex_2d(Te, qs, dx, dy, bc="zero_displacement_zero_slope"):
@@ -127,7 +128,7 @@ def test_variable_Te_abrupt_padding_artefact():
 
     # Smooth: use the new utility — reduces the step at the inner/outer
     # boundary to ~1/pad of the abrupt value
-    Te_smooth = smooth_pad_Te(Te_inner, pad_width=pad, Te_out=Te_mean)
+    Te_smooth = _smooth_pad_Te(Te_inner, pad_width=pad, Te_out=Te_mean)
 
     w_const = _run_flex_2d(Te_const, qs, dx, dy)
     w_abrupt = _run_flex_2d(Te_abrupt, qs, dx, dy)
@@ -155,9 +156,9 @@ def test_variable_Te_abrupt_padding_artefact():
 
 
 def test_recommended_pad_width():
-    """recommended_pad_width returns a positive integer that scales with Te."""
-    p_thin = recommended_pad_width(Te=20e3, dx=5000.0)
-    p_thick = recommended_pad_width(Te=50e3, dx=5000.0)
+    """_recommended_pad_width returns a positive integer that scales with Te."""
+    p_thin = _recommended_pad_width(Te=20e3, dx=5000.0)
+    p_thick = _recommended_pad_width(Te=50e3, dx=5000.0)
     assert isinstance(p_thin, int) and p_thin > 0
     assert p_thick > p_thin  # stiffer plate → wider flexural wavelength → more padding
 
@@ -169,7 +170,7 @@ def test_pad_domain():
     qs = np.ones((ny, nx))
     dx = dy = 5000.0
 
-    Te_pad, qs_pad, p = pad_domain(Te, qs, dx=dx, dy=dy)
+    Te_pad, qs_pad, p = _pad_domain_2d(Te, qs, dx=dx, dy=dy)
 
     assert isinstance(p, int) and p > 0
     assert Te_pad.shape == (ny + 2 * p, nx + 2 * p)
@@ -183,6 +184,34 @@ def test_pad_domain():
     pad_mask = np.ones(qs_pad.shape, dtype=bool)
     pad_mask[p:-p, p:-p] = False
     assert np.all(qs_pad[pad_mask] == 0.0)
+
+
+def test_pad_domain_unified_2d_scalar_te():
+    """pad_domain() with scalar Te zero-pads qs and returns Te as a float."""
+    ny, nx = 10, 15
+    qs = np.ones((ny, nx))
+    Te_scalar = 35e3
+    Te_pad, qs_pad, p = pad_domain(Te_scalar, qs, dx=5000.0)
+    assert isinstance(p, int) and p > 0
+    assert isinstance(Te_pad, float)
+    assert Te_pad == Te_scalar
+    assert qs_pad.shape == (ny + 2 * p, nx + 2 * p)
+    pad_mask = np.ones(qs_pad.shape, dtype=bool)
+    pad_mask[p:-p, p:-p] = False
+    assert np.all(qs_pad[pad_mask] == 0.0)
+
+
+def test_pad_domain_unified_1d_dispatch():
+    """pad_domain() dispatches to 1-D when qs is 1-D."""
+    nx = 10
+    qs = np.ones(nx)
+    Te_scalar = 35e3
+    Te_pad, qs_pad, p = pad_domain(Te_scalar, qs, dx=5000.0)
+    assert isinstance(p, int) and p > 0
+    assert isinstance(Te_pad, float)
+    assert qs_pad.shape == (nx + 2 * p,)
+    assert np.all(qs_pad[:p] == 0.0)
+    assert np.all(qs_pad[-p:] == 0.0)
 
 
 def test_2d_fd_uniform_te_array_equals_scalar():

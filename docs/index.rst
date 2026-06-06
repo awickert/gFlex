@@ -126,9 +126,9 @@ Run from the command line::
 See :doc:`configuration` for a full parameter reference and annotated
 examples.
 
-The package also provides domain-padding utilities for variable-*Te* grids
-(see :func:`~gflex.pad_domain` for 2-D and :func:`~gflex.pad_domain_1d`
-for 1-D), a flexural wavelength calculator
+The package also provides a unified domain-padding utility for variable-*Te*
+grids (see :func:`~gflex.pad_domain`; works for both 1-D and 2-D), a
+flexural wavelength calculator
 (see :func:`~gflex.flexural_wavelengths`), a Landlab component, a CSDMS
 Basic Model Interface (:class:`~gflex.BmiGflex`), and a command-line entry
 point (``gflex <config_file>``).
