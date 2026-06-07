@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="565" viewBox="0 0 900 565">
+  <rect width="900" height="565" fill="white"/>
+
+  <!-- Title -->
+  <text x="450" y="40" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="bold"
+        fill="#222222">gFlex Boundary Conditions</text>
+
+  <!-- ── Row label swim-lane strips ─────────────────────────────────────── -->
+  <rect x="12" y="88"  width="38" height="210" rx="4" ry="4" fill="#F2F2F2" stroke="#BBBBBB" stroke-width="0.8"/>
+  <rect x="12" y="304" width="38" height="128" rx="4" ry="4" fill="#F2F2F2" stroke="#BBBBBB" stroke-width="0.8"/>
+  <rect x="12" y="438" width="38" height="56"  rx="4" ry="4" fill="#F2F2F2" stroke="#BBBBBB" stroke-width="0.8"/>
+
+  <!-- ── Column headers ─────────────────────────────────────────────────── -->
+  <rect x="54"  y="52" width="390" height="32" rx="4" ry="4" fill="#4472C4"/>
+  <rect x="452" y="52" width="436" height="32" rx="4" ry="4" fill="#548235"/>
+
+  <!-- ── FD content cells ───────────────────────────────────────────────── -->
+  <rect x="54"  y="88" width="390" height="210" rx="4" ry="4" fill="#FFFCF5" stroke="#C55A11" stroke-width="1.0"/>
+  <rect x="452" y="88" width="436" height="210" rx="4" ry="4" fill="#FFFCF5" stroke="#C55A11" stroke-width="1.0"/>
+
+  <!-- ── FFT content cells ──────────────────────────────────────────────── -->
+  <rect x="54"  y="304" width="390" height="128" rx="4" ry="4" fill="#F9F5FF" stroke="#8E44AD" stroke-width="1.0"/>
+  <rect x="452" y="304" width="436" height="128" rx="4" ry="4" fill="#F9F5FF" stroke="#8E44AD" stroke-width="1.0"/>
+
+  <!-- ── SAS content cells ──────────────────────────────────────────────── -->
+  <rect x="54"  y="438" width="390" height="56" rx="4" ry="4" fill="#EEF9F3" stroke="#1E8449" stroke-width="1.0"/>
+  <rect x="452" y="438" width="436" height="56" rx="4" ry="4" fill="#EEF9F3" stroke="#1E8449" stroke-width="1.0"/>
+
+  <!-- ── Aliases bar ────────────────────────────────────────────────────── -->
+  <rect x="54" y="500" width="834" height="44" rx="4" ry="4" fill="#F5F5F5" stroke="#AAAAAA" stroke-width="0.8"/>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- TEXT                                                                 -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Column header labels -->
+  <text x="249" y="73" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="bold"
+        fill="white">F1D</text>
+  <text x="670" y="73" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="bold"
+        fill="white">F2D</text>
+
+  <!-- Row label text (rotated 90°) -->
+  <text text-anchor="middle" dominant-baseline="central"
+        font-family="Arial,Helvetica,sans-serif" font-size="13" font-style="italic"
+        fill="#888888" transform="rotate(-90,31,193)">
+    <tspan x="31" y="193" dominant-baseline="central">FD</tspan>
+  </text>
+  <text text-anchor="middle" dominant-baseline="central"
+        font-family="Arial,Helvetica,sans-serif" font-size="13" font-style="italic"
+        fill="#888888" transform="rotate(-90,31,368)">
+    <tspan x="31" y="368" dominant-baseline="central">FFT</tspan>
+  </text>
+  <text text-anchor="middle" dominant-baseline="central"
+        font-family="Arial,Helvetica,sans-serif" font-size="13" font-style="italic"
+        fill="#888888" transform="rotate(-90,31,466)">
+    <tspan x="31" y="466" dominant-baseline="central">SAS</tspan>
+  </text>
+
+  <!-- ── FD: F1D ──────────────────────────────────────────────────────── -->
+  <text x="249" y="109" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="bold"
+        fill="#333333">Each side (W, E) independently:</text>
+
+  <text x="72" y="130" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; zero_displacement_zero_slope&#x2002; (clamped)</text>
+  <text x="72" y="152" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; zero_displacement_zero_moment&#x2002; (pinned)</text>
+  <text x="72" y="174" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; zero_moment_zero_shear&#x2002; (free)</text>
+  <text x="72" y="196" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; zero_slope_zero_shear&#x2002; (mirror)</text>
+  <text x="72" y="218" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; periodic&#x2002; &#xB9;</text>
+  <text x="72" y="240" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; no_outside_loads&#x2002; &#xB2;</text>
+
+  <text x="72" y="260" font-family="Arial,Helvetica,sans-serif" font-size="11" font-style="italic" fill="#888888">&#xB9; UserWarning if only one side of pair is &#x2018;periodic&#x2019;</text>
+  <text x="72" y="275" font-family="Arial,Helvetica,sans-serif" font-size="11" font-style="italic" fill="#888888">&#xB2; auto-pads &#x2265;1 wavelength; w trimmed to original domain</text>
+
+  <!-- ── FD: F2D ──────────────────────────────────────────────────────── -->
+  <text x="670" y="109" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="bold"
+        fill="#333333">Each side (W, E, N, S) independently:</text>
+
+  <text x="470" y="130" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; zero_displacement_zero_slope&#x2002; (clamped)</text>
+  <text x="470" y="152" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; zero_displacement_zero_moment&#x2002; (pinned)</text>
+  <text x="470" y="174" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; zero_moment_zero_shear&#x2002; (free)</text>
+  <text x="470" y="196" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; zero_slope_zero_shear&#x2002; (mirror)</text>
+  <text x="470" y="218" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; periodic&#x2002; &#xB9;</text>
+  <text x="470" y="240" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; no_outside_loads&#x2002; &#xB2;</text>
+
+  <text x="470" y="260" font-family="Arial,Helvetica,sans-serif" font-size="11" font-style="italic" fill="#888888">&#xB9; UserWarning if only one side of a pair (W/E or N/S) is &#x2018;periodic&#x2019;</text>
+  <text x="470" y="275" font-family="Arial,Helvetica,sans-serif" font-size="11" font-style="italic" fill="#888888">&#xB2; auto-pads &#x2265;1 wavelength; w trimmed to original domain</text>
+
+  <!-- ── FFT: F1D ─────────────────────────────────────────────────────── -->
+  <text x="249" y="324" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="bold"
+        fill="#333333">W/E pair:</text>
+
+  <text x="72" y="346" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; both &#x2018;periodic&#x2019;&#x2002; &#x2192;&#x2002; exact periodic solution</text>
+  <text x="72" y="366" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; otherwise&#x2002; &#x2192;&#x2002; zero-pad&#x2002; (fft_pad_n_alpha &#xD7; &#x3B1;&#x2081;D)</text>
+  <text x="72" y="386" font-family="Arial,Helvetica,sans-serif" font-size="11" font-style="italic" fill="#888888">&#xB9; warn if one side is &#x2018;periodic&#x2019; and the other is not</text>
+
+  <!-- ── FFT: F2D ─────────────────────────────────────────────────────── -->
+  <text x="670" y="324" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="bold"
+        fill="#333333">W/E and N/S pairs handled independently:</text>
+
+  <text x="470" y="346" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; both sides &#x2018;periodic&#x2019;&#x2002; &#x2192;&#x2002; that axis is exact periodic</text>
+  <text x="470" y="366" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2022;&#x2002; otherwise&#x2002; &#x2192;&#x2002; zero-padded&#x2002; (fft_pad_n_alpha &#xD7; &#x3B1;&#x2082;D)</text>
+  <text x="470" y="386" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#555555">&#x21D2;&#x2002; 4 valid combinations (e.g. x-periodic + y-padded)</text>
+  <text x="470" y="408" font-family="Arial,Helvetica,sans-serif" font-size="11" font-style="italic" fill="#888888">&#xB9; warn if one side of a pair is &#x2018;periodic&#x2019; and the other is not</text>
+
+  <!-- ── SAS ───────────────────────────────────────────────────────────── -->
+  <text x="249" y="471" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2018;no_outside_loads&#x2019;&#x2002; (always)&#x2002; &#x2014;&#x2002; native infinite-plate solution</text>
+  <text x="670" y="471" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#333333">&#x2018;no_outside_loads&#x2019;&#x2002; (always)&#x2002; &#x2014;&#x2002; native infinite-plate solution</text>
+
+  <!-- ── Aliases bar ────────────────────────────────────────────────────── -->
+  <text x="471" y="517" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#555555">Aliases:&#x2002;&#x2002; clamped &#x2192; zero_displacement_zero_slope&#x2002; &#xB7;&#x2002; pinned &#x2192; zero_displacement_zero_moment</text>
+  <text x="471" y="533" text-anchor="middle"
+        font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#555555">free &#x2192; zero_moment_zero_shear&#x2002; &#xB7;&#x2002; mirror &#x2192; zero_slope_zero_shear</text>
+
+</svg>
