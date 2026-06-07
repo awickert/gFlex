@@ -2,19 +2,30 @@ Boundary Conditions
 ===================
 
 Boundary conditions specify what happens at the edges of the modelled domain.
-gFlex supports five named conditions for the finite-difference (FD) solver;
-each imposes constraints on which plate mechanical quantities — deflection,
-slope, bending moment, and shear force — vanish at that edge.
+gFlex supports six named conditions for the finite-difference (FD) solver;
+five impose constraints on which plate mechanical quantities — deflection,
+slope, bending moment, and shear force — vanish at that edge, and one
+(``no_outside_loads``) automatically extends the domain before solving.
 Four short aliases (``clamped``, ``pinned``, ``free``, ``mirror``) are also accepted.
 
-The spectral (FFT) and analytical-superposition (SAS / SAS_NG) methods do
-not use these named conditions.  FFT zero-pads the domain by
-:math:`4\alpha` on each side (approximating ``no_outside_loads`` except when
-all edges are set to ``periodic``), and SAS / SAS_NG always assume
-``no_outside_loads``.
+For the spectral (FFT) solver, boundary conditions are handled per opposite-edge
+pair (W/E and N/S independently): if both sides of a pair are set to
+``periodic``, that axis uses an exact periodic solution; otherwise the axis is
+zero-padded by :math:`\approx 4\alpha` before solving, which is equivalent to
+``no_outside_loads`` for that axis.  The analytical-superposition (SAS / SAS_NG)
+methods always assume ``no_outside_loads``.
+
+.. figure:: _static/boundary_conditions.svg
+   :width: 100%
+   :align: center
+   :alt: Overview of all gFlex boundary conditions by solver and dimensionality
+
+   Overview of all boundary conditions and their applicability across solver
+   families (FD, FFT, SAS) and dimensionality (F1D, F2D).
 
 The following figure from Wickert (2016) illustrates four of the five
-conditions (``zero_displacement_zero_moment`` was added after publication):
+mechanically-named conditions (``zero_displacement_zero_moment`` was added
+after publication):
 
 .. figure:: _static/fig4_bc_schematics.png
    :width: 55%
@@ -107,7 +118,12 @@ geological context, and ball-and-stick diagrams appear in the sections below.
      - —
      - —
      - —
-     - Domain tiles infinitely in both directions
+     - Domain wraps; opposite edges connected (per-axis pair for FFT)
+   * - ``no_outside_loads``
+     - —
+     - —
+     - semi-infinite plate
+     - Auto-pad by ≥1 :math:`\alpha`; ``w`` trimmed to original domain
 
 The "Geophysical" column reflects established usage in the lithospheric
 flexure literature.  ``zero_moment_zero_shear`` is known as the "broken plate"
@@ -310,9 +326,15 @@ geometry are symmetric about the boundary plane:
 periodic
 --------
 
-Wrap-around: the domain tiles infinitely in both directions, and the
-solution wraps so that opposite edges are connected.  Native to FFT-based
+Wrap-around: the domain tiles infinitely in the direction normal to that edge,
+and the solution wraps so that opposite edges are connected.  Native to FFT-based
 spectral solutions, where periodicity is inherent to the transform.
+
+For the FFT solver, ``periodic`` is applied per opposite-edge pair: setting both
+``bc_west`` and ``bc_east`` to ``periodic`` makes the x-axis exactly periodic;
+setting both ``bc_north`` and ``bc_south`` to ``periodic`` makes the y-axis
+exactly periodic.  Mixed axes are valid — for example, x-periodic and y-padded.
+A ``UserWarning`` is raised if only one side of a pair is ``periodic``.
 
 *Standard names:* No standard structural-mechanics or geophysical name.
 
@@ -335,6 +357,36 @@ the region of interest:
    :alt: Diagram of the periodic boundary condition
 
    *periodic* — the domain wraps around; opposite edges are connected.
+
+no_outside_loads
+----------------
+
+Emulates a plate that extends beyond the model domain with no loads applied
+outside.  The finite-difference solver automatically pads the domain by at
+least one flexural wavelength
+(:math:`\alpha = (D / \Delta\rho\,g)^{1/4}`) on each side where this
+condition is applied, solves on the extended domain with
+``zero_displacement_zero_slope`` at the outer edge, then trims the result
+back to the original extent.  The padding width and the solve are
+deterministic given the physical parameters, so the feature is safe to use
+in coupling loops.
+
+``no_outside_loads`` may be applied to any subset of edges — for example,
+west and east only while north and south use a different condition.
+
+*Geological context:* ``no_outside_loads`` is the most physically appropriate
+FD condition when the load is entirely contained within the model domain and
+the surrounding lithosphere is unloaded.  Natural choices include:
+
+- Any self-contained load (seamount, ice cap, sedimentary basin)
+- Coupling gFlex to a landscape evolution or ice-sheet model where the
+  loaded region is surrounded by unloaded lithosphere
+
+*FFT and SAS:* The FFT solver zero-pads non-periodic axes by default, which
+is equivalent to ``no_outside_loads`` for those axes.  Explicitly setting
+FFT edges to ``no_outside_loads`` produces the same result and suppresses any
+partial-periodic warning.  SAS / SAS_NG always assume ``no_outside_loads`` —
+it is the native assumption of the analytical superposition approach.
 
 ----
 
