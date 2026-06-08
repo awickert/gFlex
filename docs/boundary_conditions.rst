@@ -6,7 +6,7 @@ gFlex supports six named conditions for the finite-difference (FD) solver;
 five impose constraints on which plate mechanical quantities — deflection,
 slope, bending moment, and shear force — vanish at that edge, and one
 (``no_outside_loads``) automatically extends the domain before solving.
-Four short aliases (``clamped``, ``pinned``, ``free``, ``mirror``) are also accepted.
+Five short aliases (``clamped``, ``pinned``, ``free``, ``mirror``, ``infinite``) are also accepted.
 
 For the spectral (FFT) solver, boundary conditions are handled per opposite-edge
 pair (W/E and N/S independently): if both sides of a pair are set to
@@ -119,7 +119,7 @@ geological context, and ball-and-stick diagrams appear in the sections below.
      - —
      - —
      - Domain wraps; opposite edges connected (per-axis pair for FFT)
-   * - ``no_outside_loads``
+   * - ``no_outside_loads`` (alias: ``infinite``)
      - —
      - —
      - semi-infinite plate
@@ -360,6 +360,9 @@ the region of interest:
 
 no_outside_loads
 ----------------
+
+*Short alias:* ``infinite`` — accepted without any warning and normalised to
+``no_outside_loads`` internally.
 
 Emulates a plate that extends beyond the model domain with no loads applied
 outside.  The finite-difference solver automatically pads the domain by at
