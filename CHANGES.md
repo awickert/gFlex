@@ -26,6 +26,10 @@
   zero-padded by `fft_pad_n_alpha × α` cells on each side, placing
   periodic images at least `2 × fft_pad_n_alpha × α` apart.  `F1D` uses
   α₁D = (4D/Δρg)^0.25; `F2D` uses α₂D = (D/Δρg)^0.25.
+- **`'infinite'` alias** — added ``'infinite'`` as a short alias for the
+  ``'no_outside_loads'`` boundary condition, consistent with the existing
+  aliases (``'clamped'``, ``'pinned'``, ``'free'``, ``'mirror'``).
+
 - **FD `'no_outside_loads'` boundary condition** — `F1D` and `F2D` now
   accept `'no_outside_loads'` as a valid `bc_*` string when
   `method='fd'`.  On each side where it is set, the solver automatically
