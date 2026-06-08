@@ -242,3 +242,5 @@ def test_fft_2d_no_outside_loads_mixed_no_warn():
                     "no_outside_loads", "no_outside_loads")
     periodic_warns = [str(w.message) for w in caught if "no_outside_loads" in str(w.message)]
     assert not periodic_warns, f"unexpected warnings: {periodic_warns}"
+
+
