@@ -543,6 +543,16 @@ class F1D(Flexure):
                 E=self.E, nu=self.nu, rho_m=self.rho_m,
                 rho_fill=self.rho_fill, g=self.g,
             )
+            _matrix_cached = self.coeff_matrix is not None or self._lu is not None
+            _prev_p = getattr(self, "_nol_pad_width", p)
+            if _matrix_cached and _prev_p != p:
+                raise ValueError(
+                    f"FD 'no_outside_loads': T_e changed between runs, altering "
+                    f"the required pad width ({_prev_p} → {p} cells). "
+                    "The cached coefficient matrix is invalid. "
+                    "Call initialize() to rebuild."
+                )
+            self._nol_pad_width = p
             pw_w = p if _pad_west else 0
             pw_e = p if _pad_east else 0
             _qs_inner = self.qs.copy()
