@@ -119,13 +119,15 @@ VALID_BC_STRINGS_2D = frozenset({
     "zero_moment_zero_shear", "free",
     "zero_slope_zero_shear", "mirror",
     "periodic",
+    "no_outside_loads", "infinite",
 })
 """All boundary-condition strings accepted by :class:`~gflex.F2D`'s FD solver.
 
 Canonical names (``zero_displacement_zero_slope``, ``zero_displacement_zero_moment``,
-``zero_moment_zero_shear``, ``zero_slope_zero_shear``, ``periodic``) plus their
-short aliases (``clamped``, ``pinned``, ``free``, ``mirror``).  Wrappers can validate
-user input against this set instead of maintaining a parallel copy.
+``zero_moment_zero_shear``, ``zero_slope_zero_shear``, ``periodic``,
+``no_outside_loads``) plus their short aliases (``clamped``, ``pinned``, ``free``,
+``mirror``, ``infinite``).  Wrappers can validate user input against this set instead
+of maintaining a parallel copy.
 """
 
 VALID_BC_STRINGS_1D = VALID_BC_STRINGS_2D | frozenset({"sandbox"})
@@ -1691,6 +1693,7 @@ class Flexure(Utility, Plotting):
                         "free",
                         "sandbox",
                         "no_outside_loads",
+                        "infinite",
                     ]
                 )
                 self.bc2D = np.array(
@@ -1705,6 +1708,7 @@ class Flexure(Utility, Plotting):
                         "zero_moment_zero_shear",
                         "free",
                         "no_outside_loads",
+                        "infinite",
                     ]
                 )
                 # Boundary conditions should be defined by this point -- whether via
@@ -1748,6 +1752,8 @@ class Flexure(Utility, Plotting):
                         norm = "zero_moment_zero_shear"
                     elif norm == "mirror":
                         norm = "zero_slope_zero_shear"
+                    elif norm == "infinite":
+                        norm = "no_outside_loads"
                     setattr(self, f"_bc_{edge}_norm", norm)
                 # Warn when only one side of an opposite pair is 'periodic'.
                 # Periodic BCs tile the domain edge-to-edge, so a one-sided
