@@ -244,3 +244,26 @@ def test_fft_2d_no_outside_loads_mixed_no_warn():
     assert not periodic_warns, f"unexpected warnings: {periodic_warns}"
 
 
+# ---------------------------------------------------------------------------
+# 'infinite' alias is identical to 'no_outside_loads'
+# ---------------------------------------------------------------------------
+
+def test_1d_infinite_alias_matches_no_outside_loads():
+    """'infinite' alias produces the same FD result as 'no_outside_loads'."""
+    qs = np.zeros(100)
+    qs[50] = 1e6
+    w_nol = _make_1d(qs, "no_outside_loads", "no_outside_loads")
+    w_inf = _make_1d(qs, "infinite", "infinite")
+    np.testing.assert_array_equal(w_inf, w_nol)
+
+
+def test_2d_infinite_alias_matches_no_outside_loads():
+    """'infinite' alias produces the same FD result as 'no_outside_loads' (2-D)."""
+    qs = np.zeros((40, 40))
+    qs[20, 20] = 1e6
+    w_nol = _make_2d(qs, "no_outside_loads", "no_outside_loads",
+                     "no_outside_loads", "no_outside_loads")
+    w_inf = _make_2d(qs, "infinite", "infinite", "infinite", "infinite")
+    np.testing.assert_array_equal(w_inf, w_nol)
+
+
