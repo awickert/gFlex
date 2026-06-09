@@ -790,8 +790,8 @@ class F1D(Flexure):
 
         # Zeroth, start the timer and print the boundary conditions to the screen
         self.coeff_start_time = time.time()
-        _logger.info("Boundary condition, West: %s %s", self.bc_west, type(self.bc_west))
-        _logger.info("Boundary condition, East: %s %s", self.bc_east, type(self.bc_east))
+        _logger.info("Boundary condition, West: %s", self.bc_west)
+        _logger.info("Boundary condition, East: %s", self.bc_east)
 
         if self.bc_east == "sandbox" or self.bc_west == "sandbox":
             _sandbox_easter_egg()
@@ -951,8 +951,8 @@ class F1D(Flexure):
         # http://scicomp.stackexchange.com/questions/5355/writing-the-poisson-equation-finite-difference-matrix-with-neumann-boundary-cond
         # http://scicomp.stackexchange.com/questions/7175/trouble-implementing-neumann-boundary-conditions-because-the-ghost-points-cannot
 
-        _logger.info("Boundary condition, West: %s %s", self.bc_west, type(self.bc_west))
-        _logger.info("Boundary condition, East: %s %s", self.bc_east, type(self.bc_east))
+        _logger.info("Boundary condition, West: %s", self.bc_west)
+        _logger.info("Boundary condition, East: %s", self.bc_east)
 
         # In 2D, these are handled inside the function; in 1D, there are separate
         # defined functions. Keeping these due to inertia and fear of cut/paste

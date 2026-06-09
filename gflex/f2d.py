@@ -942,10 +942,10 @@ class F2D(Flexure):
 
         # Zeroth, start the timer and print the boundary conditions to the screen
         self.coeff_start_time = time.time()
-        _logger.info("Boundary condition, West: %s %s", self.bc_west, type(self.bc_west))
-        _logger.info("Boundary condition, East: %s %s", self.bc_east, type(self.bc_east))
-        _logger.info("Boundary condition, North: %s %s", self.bc_north, type(self.bc_north))
-        _logger.info("Boundary condition, South: %s %s", self.bc_south, type(self.bc_south))
+        _logger.info("Boundary condition, West: %s", self.bc_west)
+        _logger.info("Boundary condition, East: %s", self.bc_east)
+        _logger.info("Boundary condition, North: %s", self.bc_north)
+        _logger.info("Boundary condition, South: %s", self.bc_south)
 
         # First, set flexural rigidity boundary conditions to flesh out this padded
         # array
