@@ -502,8 +502,25 @@ class F2D(Flexure):
             any filename supplied to the constructor.
         """
         self.dimension = 2  # Set it here in case it wasn't set for selection before
+        self._total_start_time = time.time()
         super().initialize()
         _logger.info("F2D initialized")
+        if hasattr(self, "qs") and hasattr(self, "dx") and hasattr(self, "dy"):
+            _logger.info(
+                "  Grid: ny=%d, nx=%d, dy=%.1f m, dx=%.1f m",
+                self.qs.shape[0], self.qs.shape[1], self.dy, self.dx,
+            )
+        if hasattr(self, "T_e"):
+            if np.ndim(self.T_e) == 0:
+                _logger.info("  T_e: %.1f m", float(self.T_e))
+            else:
+                _logger.info(
+                    "  T_e: array, shape=%s, range=[%.1f, %.1f] m",
+                    self.T_e.shape, np.min(self.T_e), np.max(self.T_e),
+                )
+        if hasattr(self, "method"):
+            _logger.info("  Method: %s", self.method)
+        _logger.info("")
 
     def run(self):
         """
@@ -546,7 +563,7 @@ class F2D(Flexure):
         self.method_func()
 
         self.time_to_solve = time.time() - self.solver_start_time
-        _logger.info("Time to solve [s]: %s", self.time_to_solve)
+        _logger.info("  Time to solve [s]: %.6f", self.time_to_solve)
 
     def finalize(self):
         """
@@ -559,7 +576,11 @@ class F2D(Flexure):
         """
         with contextlib.suppress(AttributeError):
             self.T_e = self.T_e_unpadded
+        _logger.info("")
         _logger.info("F2D finalized")
+        if hasattr(self, "_total_start_time"):
+            _logger.info("  Total runtime [s]: %.6f", time.time() - self._total_start_time)
+        _logger.info("")
         super().finalize()
 
     ########################################
@@ -688,10 +709,9 @@ class F2D(Flexure):
             if _pad_west:  sides.append(f"west +{pw}")
             if _pad_east:  sides.append(f"east +{pe}")
             _logger.info(
-                    "FD 'no_outside_loads': auto-padding (%s cells); "
-                    "w trimmed to original domain on return.",
-                    ", ".join(sides),
-                )
+                "  FD 'no_outside_loads': auto-padding (%s cells).",
+                ", ".join(sides),
+            )
 
         self._check_warnings_FD()
         # Only generate coefficient matrix if it is not already provided.
@@ -942,10 +962,10 @@ class F2D(Flexure):
 
         # Zeroth, start the timer and print the boundary conditions to the screen
         self.coeff_start_time = time.time()
-        _logger.info("Boundary condition, West: %s", self.bc_west)
-        _logger.info("Boundary condition, East: %s", self.bc_east)
-        _logger.info("Boundary condition, North: %s", self.bc_north)
-        _logger.info("Boundary condition, South: %s", self.bc_south)
+        _logger.info("  Boundary condition, West: %s", self.bc_west)
+        _logger.info("  Boundary condition, East: %s", self.bc_east)
+        _logger.info("  Boundary condition, North: %s", self.bc_north)
+        _logger.info("  Boundary condition, South: %s", self.bc_south)
 
         # First, set flexural rigidity boundary conditions to flesh out this padded
         # array
@@ -967,7 +987,7 @@ class F2D(Flexure):
         # Finally, compute the total time this process took
         self.coeff_creation_time = time.time() - self.coeff_start_time
         _logger.info(
-            "Time to construct coefficient (operator) array [s]: %s",
+            "  Time to construct coefficient (operator) array [s]: %.6f",
             self.coeff_creation_time,
         )
 

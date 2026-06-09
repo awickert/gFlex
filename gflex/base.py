@@ -292,13 +292,11 @@ class Utility:
                 # Carry on if the variable is optional
                 var = None
                 if not self.grass:
-                    _logger.info("")
                     _logger.info('No value entered for optional parameter "%s"', name)
                     _logger.info('in category "%s" in configuration file.', category)
                     _logger.info(
                         "No action related to this optional parameter will be taken."
                     )
-                    _logger.info("")
             else:
                 msg = (
                     f'Problem loading {vartype} "{name}" in category '
@@ -1406,7 +1404,6 @@ class Flexure(Utility, Plotting):
         _logger.info("****************************" + "*" * len(__version__))
         _logger.info("*** Initializing gFlex v" + __version__ + " ***")
         _logger.info("****************************" + "*" * len(__version__))
-        _logger.info("")
         _logger.info("Open-source licensed under GNU GPL v3")
         _logger.info("")
 
@@ -1587,7 +1584,6 @@ class Flexure(Utility, Plotting):
         for _attr in ("w", "qs", "coeff_matrix", "_lu", "_lu_matrix_hash"):
             with contextlib.suppress(AttributeError):
                 delattr(self, _attr)
-        _logger.info("")
 
     # SAVING TO FILE AND PLOTTING STEPS
 
@@ -1949,7 +1945,6 @@ class Flexure(Utility, Plotting):
         """
         Set-up for the finite difference solution method
         """
-        _logger.info("Finite Difference Solution Technique")
         # Used to check for coeff_matrix here, but now doing so in self.bc_check()
         # called by f1d and f2d at the start
         #
@@ -2036,7 +2031,6 @@ class Flexure(Utility, Plotting):
         performed by :meth:`FD` and :meth:`SAS`; the scalar-:math:`T_e`
         requirement is enforced in :class:`F1D` and :class:`F2D`.
         """
-        _logger.info("FFT Spectral Solution Technique")
         # Define qs from q0 if not already set by a getter/setter
         try:
             self.qs
