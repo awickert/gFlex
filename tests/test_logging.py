@@ -2,11 +2,12 @@
 
 import logging
 import time
+import warnings
 
 import numpy as np
 import pytest
 
-from gflex import F1D
+from gflex import F1D, F2D
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -125,6 +126,41 @@ def test_sas_does_not_set_linear_solve_time():
     assert not hasattr(flex, "linear_solve_time")
 
 
+def test_2d_fd_sets_linear_solve_time():
+    """2D FD run sets linear_solve_time >= 0 and <= time_to_solve."""
+    flex = F2D()
+    flex.quiet = True
+    flex.method = "fd"
+    flex.bc_north = flex.bc_south = "zero_moment_zero_shear"
+    flex.bc_west  = flex.bc_east  = "zero_moment_zero_shear"
+    flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = 0.0; flex.g = 9.8
+    flex.T_e = 30e3; flex.dx = flex.dy = 10e3
+    n = 20
+    flex.qs = np.zeros((n, n)); flex.qs[n // 2, n // 2] = 1e6
+    flex.initialize()
+    flex.run()
+    assert hasattr(flex, "linear_solve_time")
+    assert flex.linear_solve_time >= 0
+    assert flex.linear_solve_time <= flex.time_to_solve
+
+
+def test_fft_does_not_set_linear_solve_time():
+    """FFT run does not set linear_solve_time (no matrix factorisation)."""
+    flex = F1D()
+    flex.quiet = True
+    flex.method = "fft"
+    flex.bc_west = flex.bc_east = ""
+    flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = 0.0; flex.g = 9.8
+    flex.T_e = 30e3; flex.dx = 10e3
+    n = 51
+    flex.qs = np.zeros(n); flex.qs[n // 2] = 1e6
+    flex.initialize()
+    flex.run()
+    assert not hasattr(flex, "linear_solve_time")
+
+
 def test_total_start_time_precedes_solver():
     """_total_start_time is set before the solver starts."""
     flex = _make_fd_1d()
@@ -132,3 +168,24 @@ def test_total_start_time_precedes_solver():
     assert hasattr(flex, "_total_start_time")
     flex.run()
     assert flex._total_start_time <= time.time() - flex.time_to_solve
+
+
+# ── 6. bc_check UserWarning for FD BCs passed to analytical solver ─────────────
+
+def test_bc_check_warns_fd_bcs_on_sas():
+    """bc_check issues UserWarning when FD BCs are passed to SAS solver."""
+    flex = F1D()
+    flex.quiet = True
+    flex.method = "sas"
+    flex.bc_west = flex.bc_east = "zero_moment_zero_shear"
+    flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = 0.0; flex.g = 9.8
+    flex.T_e = 30e3; flex.dx = 10e3
+    n = 51
+    flex.qs = np.zeros(n); flex.qs[n // 2] = 1e6
+    flex.initialize()
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        flex.run()
+    messages = [str(w.message) for w in caught if issubclass(w.category, UserWarning)]
+    assert any("no_outside_loads" in m for m in messages)
