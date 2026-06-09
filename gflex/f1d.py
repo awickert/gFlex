@@ -444,7 +444,10 @@ class F1D(Flexure):
         self.method_func()
 
         self.time_to_solve = time.time() - self.solver_start_time
-        _logger.info("  Time to solve [s]: %.6f", self.time_to_solve)
+        if hasattr(self, "linear_solve_time"):
+            _logger.info("  Time for linear solve [s]: %.6f", self.linear_solve_time)
+        else:
+            _logger.info("  Time to solve [s]: %.6f", self.time_to_solve)
 
     def finalize(self):
         """
@@ -1364,6 +1367,7 @@ class F1D(Flexure):
         # qs negative so bends down with positive load, bends up with negative load
         # (i.e. material removed)
         rhs = -self.qs + self._bc_rhs_correction
+        _ls_start = time.time()
         if self.cache_factorization is False:
             self.w = spsolve(self.coeff_matrix, rhs, use_umfpack=True)
         elif self.cache_factorization == "no_check":
@@ -1377,6 +1381,7 @@ class F1D(Flexure):
                 self._lu = factorized(self.coeff_matrix)
                 self._lu_matrix_hash = h
             self.w = self._lu(rhs)
+        self.linear_solve_time = time.time() - _ls_start
 
         if self.debug:
             _logger.debug("w.shape:")

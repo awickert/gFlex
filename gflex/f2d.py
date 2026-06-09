@@ -563,7 +563,10 @@ class F2D(Flexure):
         self.method_func()
 
         self.time_to_solve = time.time() - self.solver_start_time
-        _logger.info("  Time to solve [s]: %.6f", self.time_to_solve)
+        if hasattr(self, "linear_solve_time"):
+            _logger.info("  Time for linear solve [s]: %.6f", self.linear_solve_time)
+        else:
+            _logger.info("  Time to solve [s]: %.6f", self.time_to_solve)
 
     def finalize(self):
         """
@@ -2602,6 +2605,7 @@ class F2D(Flexure):
         if rhs_corr is not None:
             q0vector = q0vector + rhs_corr.reshape(-1, order="C")
 
+        _ls_start = time.time()
         if self.cache_factorization is False:
             wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
         elif self.cache_factorization == "no_check":
@@ -2615,6 +2619,7 @@ class F2D(Flexure):
                 self._lu = factorized(self.coeff_matrix)
                 self._lu_matrix_hash = h
             wvector = self._lu(q0vector)
+        self.linear_solve_time = time.time() - _ls_start
 
         # Reshape into grid
         self.w = wvector.reshape(self.qs.shape)
