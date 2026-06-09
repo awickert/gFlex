@@ -4,6 +4,8 @@ import numpy as np
 import pytest
 
 from gflex import flexural_wavelengths
+from gflex.f1d import recommended_pad_width_1d
+from gflex.f2d import recommended_pad_width
 
 
 # Standard geophysical parameters used throughout
@@ -45,3 +47,29 @@ def test_known_value_2D_alpha():
     alpha_expected = (D / ((rho_m - rho_fill) * g)) ** 0.25
     r = flexural_wavelengths(Te=Te, rho_m=rho_m, rho_fill=rho_fill, E=E, nu=nu, g=g)
     np.testing.assert_allclose(r["alpha_2D"], alpha_expected, rtol=1e-12)
+
+
+# ---------------------------------------------------------------------------
+# drho <= 0 raises ValueError
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("rho_fill", [3300.0, 3500.0])
+def test_flexural_wavelengths_drho_nonpositive_raises(rho_fill):
+    """flexural_wavelengths raises ValueError when rho_fill >= rho_m."""
+    with pytest.raises(ValueError, match="rho_fill"):
+        flexural_wavelengths(Te=30e3, rho_m=3300.0, rho_fill=rho_fill,
+                             E=65e9, nu=0.25, g=9.8)
+
+
+@pytest.mark.parametrize("rho_fill", [3300.0, 3500.0])
+def test_recommended_pad_width_1d_drho_nonpositive_raises(rho_fill):
+    """recommended_pad_width_1d raises ValueError when rho_fill >= rho_m."""
+    with pytest.raises(ValueError, match="rho_fill"):
+        recommended_pad_width_1d(Te=35e3, dx=5000.0, rho_m=3300.0, rho_fill=rho_fill)
+
+
+@pytest.mark.parametrize("rho_fill", [3300.0, 3500.0])
+def test_recommended_pad_width_drho_nonpositive_raises(rho_fill):
+    """recommended_pad_width raises ValueError when rho_fill >= rho_m."""
+    with pytest.raises(ValueError, match="rho_fill"):
+        recommended_pad_width(Te=35e3, dx=5000.0, rho_m=3300.0, rho_fill=rho_fill)

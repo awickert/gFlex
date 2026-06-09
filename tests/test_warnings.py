@@ -485,3 +485,35 @@ def test_fd_2d_one_sided_periodic_names_sides():
     assert onesided, "expected a one-sided-periodic warning"
     assert "bc_west" in onesided[0]
     assert "bc_east" in onesided[0]
+
+
+# ---------------------------------------------------------------------------
+# ValueError when rho_fill >= rho_m
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("rho_fill", [3300.0, 3500.0])
+def test_initialize_drho_nonpositive_raises_1d(rho_fill):
+    """F1D.initialize raises ValueError when rho_fill >= rho_m."""
+    flex = F1D()
+    flex.quiet = True; flex.method = "fd"; flex.solver = "direct"
+    flex.g = 9.8; flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = rho_fill
+    flex.T_e = 35e3; flex.dx = 5000.0
+    flex.qs = np.zeros(100); flex.qs[50] = 1e6
+    flex.bc_west = flex.bc_east = "zero_displacement_zero_slope"
+    with pytest.raises(ValueError, match="rho_fill"):
+        flex.initialize()
+
+
+@pytest.mark.parametrize("rho_fill", [3300.0, 3500.0])
+def test_initialize_drho_nonpositive_raises_2d(rho_fill):
+    """F2D.initialize raises ValueError when rho_fill >= rho_m."""
+    flex = F2D()
+    flex.quiet = True; flex.method = "fd"; flex.solver = "direct"
+    flex.g = 9.8; flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = rho_fill
+    flex.T_e = 35e3; flex.dx = flex.dy = 5000.0
+    flex.qs = np.zeros((40, 40)); flex.qs[20, 20] = 1e6
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "zero_displacement_zero_slope"
+    with pytest.raises(ValueError, match="rho_fill"):
+        flex.initialize()
