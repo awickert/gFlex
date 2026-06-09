@@ -12,6 +12,7 @@ from gflex.bmi import BmiGflex
 
 INPUT_DIR = pathlib.Path(__file__).parent.parent / "input"
 CONFIG_1D = str(INPUT_DIR / "input_f1d.yaml")
+CONFIG_2D = str(INPUT_DIR / "input_f2d.yaml")
 
 
 @pytest.fixture
@@ -23,8 +24,17 @@ def bmi_1d():
     bmi.finalize()
 
 
+@pytest.fixture
+def bmi_2d():
+    """Initialized 2-D BmiGflex; finalized after the test."""
+    bmi = BmiGflex()
+    bmi.initialize(CONFIG_2D)
+    yield bmi
+    bmi.finalize()
+
+
 # ------------------------------------------------------------------
-# Smoke test
+# Smoke tests
 # ------------------------------------------------------------------
 
 
@@ -182,3 +192,75 @@ def test_set_value_at_indices(bmi_1d):
     src = np.zeros(1)
     bmi_1d.get_value_at_indices("lithosphere__load_pressure", src, inds)
     assert src[0] == pytest.approx(1e9)
+
+
+# ==================================================================
+# 2-D BMI tests
+# ==================================================================
+
+
+def test_2d_initialize_update_finalize():
+    bmi = BmiGflex()
+    bmi.initialize(CONFIG_2D)
+    bmi.update()
+    bmi.finalize()
+
+
+# ------------------------------------------------------------------
+# 2-D grid introspection
+# ------------------------------------------------------------------
+
+
+def test_get_grid_rank_2d(bmi_2d):
+    assert bmi_2d.get_grid_rank(0) == 2
+
+
+def test_get_grid_shape_2d(bmi_2d):
+    shape = np.zeros(2, dtype=np.intp)
+    bmi_2d.get_grid_shape(0, shape)
+    assert len(shape) == 2
+    assert np.all(shape > 0)
+
+
+def test_get_grid_size_2d(bmi_2d):
+    n = bmi_2d.get_grid_size(0)
+    shape = np.zeros(2, dtype=np.intp)
+    bmi_2d.get_grid_shape(0, shape)
+    assert n == shape[0] * shape[1]
+
+
+def test_get_grid_spacing_2d(bmi_2d):
+    spacing = np.zeros(2)
+    bmi_2d.get_grid_spacing(0, spacing)
+    assert np.all(spacing > 0.0)
+
+
+def test_get_grid_origin_2d(bmi_2d):
+    origin = np.zeros(2)
+    bmi_2d.get_grid_origin(0, origin)
+    assert origin[0] == pytest.approx(0.0)
+    assert origin[1] == pytest.approx(0.0)
+
+
+# ------------------------------------------------------------------
+# 2-D get_value / set_value round-trip
+# ------------------------------------------------------------------
+
+
+def test_2d_deflection_nonzero_after_update(bmi_2d):
+    """Non-zero load must produce non-zero deflection after update()."""
+    bmi_2d.update()
+    n = bmi_2d.get_grid_size(0)
+    w = np.zeros(n)
+    bmi_2d.get_value("lithosphere__vertical_displacement", w)
+    assert np.any(w != 0.0)
+
+
+def test_2d_set_value_affects_deflection(bmi_2d):
+    """Setting load to zero then updating must yield zero deflection."""
+    n = bmi_2d.get_grid_size(0)
+    bmi_2d.set_value("lithosphere__load_pressure", np.zeros(n))
+    bmi_2d.update()
+    w = np.zeros(n)
+    bmi_2d.get_value("lithosphere__vertical_displacement", w)
+    assert np.allclose(w, 0.0)
