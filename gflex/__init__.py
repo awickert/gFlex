@@ -1,3 +1,7 @@
+import logging
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
 from ._version import __version__
 from .base import VALID_BC_STRINGS_1D, VALID_BC_STRINGS_2D
 from .blender import export_for_blender

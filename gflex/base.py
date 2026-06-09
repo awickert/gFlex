@@ -19,6 +19,7 @@ along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
 import hashlib
+import logging
 import os
 
 import warnings
@@ -28,6 +29,33 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from ._version import __version__
+
+_logger = logging.getLogger(__name__)
+
+# Module-level console handler for the convenience quiet=False mode.
+_console_handler: logging.StreamHandler | None = None
+
+
+def _apply_log_level(level: int) -> None:
+    """Set the gflex logger level and manage the convenience console handler.
+
+    Called by the quiet/verbose/debug property setters.  In a coupling
+    context the application configures its own handlers and log level for
+    the 'gflex' logger; this function is a convenience for standalone use.
+    """
+    global _console_handler
+    gflex_log = logging.getLogger("gflex")
+    if level < logging.WARNING:
+        if _console_handler is None:
+            _console_handler = logging.StreamHandler()
+            _console_handler.setFormatter(logging.Formatter("%(message)s"))
+            gflex_log.addHandler(_console_handler)
+        gflex_log.setLevel(level)
+    else:
+        if _console_handler is not None:
+            gflex_log.removeHandler(_console_handler)
+            _console_handler = None
+        gflex_log.setLevel(logging.WARNING)
 
 
 def _matrix_hash(A):
@@ -238,13 +266,12 @@ class Utility:
                 if var == "" and not optional:
                     # "" is acceptable for boundary conditions
                     if name[:18] != "boundary_condition":
-                        if not self.quiet:
-                            print(
-                                "An empty input string here is not an acceptable"
-                                " option."
-                            )
-                            print(name, "is not optional.")
-                            print("Program crash likely to occur.")
+                        _logger.warning(
+                            "An empty input string here is not an acceptable"
+                            " option."
+                        )
+                        _logger.warning("%s is not optional.", name)
+                        _logger.warning("Program crash likely to occur.")
             elif vartype == "integer" or vartype == "int":
                 var = int(raw)
             elif vartype == "boolean" or vartype == "bool":
@@ -264,15 +291,14 @@ class Utility:
             if optional:
                 # Carry on if the variable is optional
                 var = None
-                if self.verbose or self.debug:
-                    if not self.grass:
-                        print("")
-                        print('No value entered for optional parameter "' + name + '"')
-                        print('in category "' + category + '" in configuration file.')
-                        print(
-                            "No action related to this optional parameter will be taken."
-                        )
-                        print("")
+                if not self.grass:
+                    _logger.info("")
+                    _logger.info('No value entered for optional parameter "%s"', name)
+                    _logger.info('in category "%s" in configuration file.', category)
+                    _logger.info(
+                        "No action related to this optional parameter will be taken."
+                    )
+                    _logger.info("")
             else:
                 msg = (
                     f'Problem loading {vartype} "{name}" in category '
@@ -381,11 +407,9 @@ class Utility:
                 except AttributeError:
                     pass
                 else:
-                    if not self.quiet:
-                        print("dx and dy being overwritten -- supply a full grid")
+                    _logger.info("dx and dy being overwritten -- supply a full grid")
             else:
-                if not self.quiet:
-                    print("dx and dy being overwritten -- supply a full grid")
+                _logger.info("dx and dy being overwritten -- supply a full grid")
             # Boundaries
             n = np.max(self.y) + self.alpha
             s = np.min(self.y) - self.alpha
@@ -448,8 +472,8 @@ class Utility:
                 f"Looked relative to model Python files and relative to "
                 f"configuration file path {self.inpath!r}."
             )
-        elif out is not None and self.verbose:
-            print(f"Loading {var} from {format_name}")
+        elif out is not None:
+            _logger.info("Loading %s from %s", var, format_name)
 
         return out
 
@@ -488,8 +512,7 @@ class Plotting:
         # except:
         #  self.plot_choice = None
         if self.plot_choice:
-            if self.verbose:
-                print("Starting to plot " + self.plot_choice)
+            _logger.info("Starting to plot %s", self.plot_choice)
             if self.dimension == 1:
                 if self.plot_choice == "q":
                     plt.figure(1)
@@ -563,12 +586,11 @@ class Plotting:
                     ax = fig.add_subplot(1, 1, 1)
                     # Plot undeflected load
                     if self.method == "sas_ng":
-                        if not self.quiet:
-                            print(
+                        _logger.warning(
                                 "Combo plot can't work with SAS_NG! Don't have mechanism"
                                 " in place to calculate load width."
                             )
-                            print(
+                        _logger.warning(
                                 "Big problem -- what is the area represented by the loads"
                                 " at the extreme ends of the array?"
                             )
@@ -658,16 +680,14 @@ class Plotting:
                     plt.tight_layout()
                     plt.show()
                 else:
-                    if not self.quiet:
-                        print(
-                            'Incorrect plot_choice input, "'
-                            + self.plot_choice
-                            + '" provided.'
+                    _logger.warning(
+                            'Incorrect plot_choice input, "%s" provided.',
+                            self.plot_choice,
                         )
-                        print(
+                    _logger.warning(
                             "Possible input strings are: q, w, both, and (for 1D) combo"
                         )
-                        print("Unable to produce plot.")
+                    _logger.warning("Unable to produce plot.")
             elif self.dimension == 2:
                 if self.plot_choice == "q":
                     fig = plt.figure(1, figsize=(8, 6))
@@ -721,16 +741,14 @@ class Plotting:
                         plt.tight_layout()
                         plt.show()
                 else:
-                    if not self.quiet:
-                        print(
-                            'Incorrect plot_choice input, "'
-                            + self.plot_choice
-                            + '" provided.'
+                    _logger.warning(
+                            'Incorrect plot_choice input, "%s" provided.',
+                            self.plot_choice,
                         )
-                        print(
+                    _logger.warning(
                             "Possible input strings are: q, w, both, and (for 1D) combo"
                         )
-                        print("Unable to produce plot.")
+                    _logger.warning("Unable to produce plot.")
 
     def surfplot(self, z, titletext, cmap=None, vmin=None, vmax=None):
         """
@@ -854,8 +872,7 @@ class Plotting:
         """
         # Help from http://wiki.scipy.org/Cookbook/Matplotlib/Gridding_irregularly_spaced_data
 
-        if self.verbose:
-            print("Starting to interpolate grid for plotting -- can be a slow process!")
+        _logger.info("Starting to interpolate grid for plotting -- can be a slow process!")
 
         from scipy.interpolate import griddata
 
@@ -999,11 +1016,10 @@ class Flexure(Utility, Plotting):
         self.filename = filename
 
         # DEFAULT VERBOSITY
-        # Set default "quiet" to False, unless set by setter or overwritten by
-        # the configuration file.
-        self.quiet = False
-        # And also set default verbosity
-        self.verbose = True
+        # Default to quiet for library / coupling use.  Set quiet=False,
+        # verbose=True, or debug=True to enable console output.
+        self.quiet = True
+        self.verbose = False
         self.debug = False
 
         # FFT padding: number of flexural-parameter units to zero-pad on each
@@ -1076,6 +1092,44 @@ class Flexure(Utility, Plotting):
             d["_lu"] = None
         if "_lu_matrix_hash" in d:
             d["_lu_matrix_hash"] = None
+
+    # ── Verbosity properties ───────────────────────────────────────────────────
+
+    def _sync_log_level(self) -> None:
+        """Recompute and apply the effective log level from the three flags."""
+        if getattr(self, "_debug", False):
+            _apply_log_level(logging.DEBUG)
+        elif getattr(self, "_verbose", False) and not getattr(self, "_quiet", True):
+            _apply_log_level(logging.INFO)
+        else:
+            _apply_log_level(logging.WARNING)
+
+    @property
+    def quiet(self):
+        return self._quiet
+
+    @quiet.setter
+    def quiet(self, value):
+        self._quiet = bool(value)
+        self._sync_log_level()
+
+    @property
+    def verbose(self):
+        return self._verbose
+
+    @verbose.setter
+    def verbose(self, value):
+        self._verbose = bool(value)
+        self._sync_log_level()
+
+    @property
+    def debug(self):
+        return self._debug
+
+    @debug.setter
+    def debug(self, value):
+        self._debug = bool(value)
+        self._sync_log_level()
 
     # ── Properties: matrix-determining inputs ─────────────────────────────────
     # Each setter invalidates the coefficient matrix and LU cache when the
@@ -1342,23 +1396,19 @@ class Flexure(Utility, Plotting):
             self.quiet = self.configGet(
                 "bool", "verbosity", "quiet", optional=True
             ) or self.quiet
-        # Quiet overrides all others
-        if self.quiet:
-            self.debug = False
-            self.verbose = False
+        # _sync_log_level() in the property setters already enforces that quiet
+        # takes priority; no separate override block needed here.
 
         # Introduce model
         # After configuration file can define "quiet", and getter/setter should be done
         # by this point if we are going that way.
-        if not self.quiet:
-            print("")  # Blank line at start of run
-            print("")
-            print("****************************" + "*" * len(__version__))
-            print("*** Initializing gFlex v" + __version__ + " ***")
-            print("****************************" + "*" * len(__version__))
-            print("")
-            print("Open-source licensed under GNU GPL v3")
-            print("")
+        _logger.info("")
+        _logger.info("****************************" + "*" * len(__version__))
+        _logger.info("*** Initializing gFlex v" + __version__ + " ***")
+        _logger.info("****************************" + "*" * len(__version__))
+        _logger.info("")
+        _logger.info("Open-source licensed under GNU GPL v3")
+        _logger.info("")
 
         if self.filename:
             # Set clocks to None so if they are called by the getter before the
@@ -1537,8 +1587,7 @@ class Flexure(Utility, Plotting):
         for _attr in ("w", "qs", "coeff_matrix", "_lu", "_lu_matrix_hash"):
             with contextlib.suppress(AttributeError):
                 delattr(self, _attr)
-        if not self.quiet:
-            print("")
+        _logger.info("")
 
     # SAVING TO FILE AND PLOTTING STEPS
 
@@ -1554,8 +1603,7 @@ class Flexure(Utility, Plotting):
         ``plot_choice`` to ``'q'``, ``'w'``, ``'both'``, or (1D only)
         ``'combo'`` to display plots.
         """
-        if self.verbose:
-            print("Output step")
+        _logger.info("Output step")
         self.outputDeflections()
         self.plotting()
 
@@ -1579,8 +1627,7 @@ class Flexure(Utility, Plotting):
                 "string", "output", "deflection_out", optional=True
             )
         else:
-            if self.verbose:
-                print("Output filename provided.")
+            _logger.info("Output filename provided.")
         if self.w_out_file:
             if self.w_out_file[-4:] == ".npy":
                 from numpy import save
@@ -1591,8 +1638,7 @@ class Flexure(Utility, Plotting):
 
                 # Shouldn't need more than mm precision, at very most
                 savetxt(self.w_out_file, self.w, fmt="%.3f")
-                if self.verbose:
-                    print("Saving deflections --> " + self.w_out_file)
+                _logger.info("Saving deflections --> %s", self.w_out_file)
 
     def bc_check(self):
         """
@@ -1848,8 +1894,7 @@ class Flexure(Utility, Plotting):
                     or self.bc_south == ""
                     or self.bc_north == ""
                 ):
-                    if self.verbose:
-                        print(
+                    _logger.info(
                             "Assuming no_outside_loads boundary condition, as this is"
                             " implicit in the superposition-based analytical solution"
                         )
@@ -1893,8 +1938,7 @@ class Flexure(Utility, Plotting):
                         f"qs={self.qs.shape}, te={self.T_e.shape}."
                     )
             else:
-                if self.debug:
-                    print("Te and qs array sizes pass consistency check")
+                _logger.debug("Te and qs array sizes pass consistency check")
 
     ### need to determine its interface, it is best to have a uniform interface
     ### no matter it is 1D or 2D; but if it can't be that way, we can set up a
@@ -1904,8 +1948,7 @@ class Flexure(Utility, Plotting):
         """
         Set-up for the finite difference solution method
         """
-        if self.verbose:
-            print("Finite Difference Solution Technique")
+        _logger.info("Finite Difference Solution Technique")
         # Used to check for coeff_matrix here, but now doing so in self.bc_check()
         # called by f1d and f2d at the start
         #
@@ -1964,12 +2007,12 @@ class Flexure(Utility, Plotting):
         if Tepath:
             self.T_e = self.loadFile(self.T_e, close_on_fail=False)
             if self.T_e is None:
-                print("Requested Te file is provided but cannot be located.")
-                print("No scalar elastic thickness is provided in configuration file")
-                print("(Typo in path to input Te grid?)")
+                _logger.warning("Requested Te file is provided but cannot be located.")
+                _logger.warning("No scalar elastic thickness is provided in configuration file")
+                _logger.warning("(Typo in path to input Te grid?)")
                 if self.coeff_matrix is not None:
-                    print("But a coefficient matrix has been found.")
-                    print("Calculations will be carried forward using it.")
+                    _logger.warning("But a coefficient matrix has been found.")
+                    _logger.warning("Calculations will be carried forward using it.")
                 else:
                     raise FileNotFoundError(
                         "Requested Te file cannot be located and no scalar elastic "
@@ -1992,8 +2035,7 @@ class Flexure(Utility, Plotting):
         performed by :meth:`FD` and :meth:`SAS`; the scalar-:math:`T_e`
         requirement is enforced in :class:`F1D` and :class:`F2D`.
         """
-        if self.verbose:
-            print("FFT Spectral Solution Technique")
+        _logger.info("FFT Spectral Solution Technique")
         # Define qs from q0 if not already set by a getter/setter
         try:
             self.qs
