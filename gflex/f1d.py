@@ -73,6 +73,13 @@ def recommended_pad_width_1d(Te, dx, E=65e9, nu=0.25, rho_m=3300.0, rho_fill=0.0
     94
     """
     drho = rho_m - rho_fill
+    if drho <= 0:
+        raise ValueError(
+            f"rho_fill ({rho_fill} kg m⁻³) must be strictly less than "
+            f"rho_m ({rho_m} kg m⁻³). "
+            f"drho = {drho} kg m⁻³; the flexural parameter α is "
+            "undefined for non-positive drho·g."
+        )
     D = E * float(np.max(Te)) ** 3 / (12.0 * (1.0 - nu**2))
     alpha_1D = (4.0 * D / (drho * g)) ** 0.25
     lambda_1D = 2.0 * np.pi * alpha_1D

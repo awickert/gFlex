@@ -67,6 +67,13 @@ def flexural_wavelengths(Te, E, nu, rho_m, rho_fill, g):
     1.414214
     """
     drho = rho_m - rho_fill
+    if drho <= 0:
+        raise ValueError(
+            f"rho_fill ({rho_fill} kg m⁻³) must be strictly less than "
+            f"rho_m ({rho_m} kg m⁻³). "
+            f"drho = {drho} kg m⁻³; the flexural parameter α is "
+            "undefined for non-positive drho·g."
+        )
     D = (E * float(Te) ** 3) / (12.0 * (1.0 - nu**2))
     alpha_1D = (4.0 * D / (drho * g)) ** 0.25
     alpha_2D = (D / (drho * g)) ** 0.25

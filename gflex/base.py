@@ -1413,6 +1413,13 @@ class Flexure(Utility, Plotting):
         # Parameters -- rho_m and rho_fill defined, so this outside
         # of if-statement (to work with getters/setters as well)
         self.drho = self.rho_m - self.rho_fill
+        if self.drho <= 0:
+            raise ValueError(
+                f"rho_fill ({self.rho_fill} kg m⁻³) must be strictly less than "
+                f"rho_m ({self.rho_m} kg m⁻³). "
+                f"drho = {self.drho} kg m⁻³; the restoring force drho·g is "
+                "non-positive and the flexural parameter α is undefined."
+            )
         if self.filename:
             self.E = self.configGet("float", "parameter", "youngs_modulus")
             self.nu = self.configGet("float", "parameter", "poissons_ratio")
