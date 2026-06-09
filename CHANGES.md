@@ -76,6 +76,13 @@
 
 ### Bug fixes
 
+- Fixed ``bc_check()`` silently skipping BC validation when ``quiet=True``:
+  the guard ``if not self.quiet: raise ValueError(...)`` meant a
+  misconfigured analytical solver (e.g. SAS with FD boundary conditions set)
+  would proceed without error in quiet mode.  Analytical solvers always use
+  the infinite-plate assumption and ignore FD BCs regardless; the fix issues
+  a ``UserWarning`` unconditionally so the user is informed without the solve
+  being blocked.
 - Fixed FFT crash when no boundary conditions are set: `bc_check()` was
   populating legacy uppercase attributes (`BC_E`, `BC_W`, `BC_N`, `BC_S`)
   instead of the current lowercase properties (`bc_east`, `bc_west`, etc.).
