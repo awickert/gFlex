@@ -49,6 +49,23 @@
   `recommended_pad_width_1d` remain public for callers that need finer
   control.
 
+### Verbosity and logging
+
+- **Default verbosity changed to quiet** — `F1D` and `F2D` now default to
+  ``quiet=True, verbose=False, debug=False``.  In library and coupling
+  contexts (CSDMS BMI, Landlab, GRASS GIS) the calling framework controls
+  logging; gFlex should be silent unless asked.  To restore the previous
+  behaviour set ``flex.quiet = False; flex.verbose = True`` after
+  construction.
+- **Python ``logging`` module** — all ``print()`` calls in the solver path
+  have been replaced with ``logging`` calls on the ``gflex`` logger
+  (``_logger.info``, ``_logger.warning``, ``_logger.debug``).  A
+  ``NullHandler`` is registered on the ``gflex`` logger so the library
+  emits no output by default.  Standalone scripts can enable console output
+  by setting ``quiet=False`` (``logging.INFO``) or ``debug=True``
+  (``logging.DEBUG``); coupling frameworks configure their own handlers on
+  the ``"gflex"`` logger as needed.
+
 ### Input validation
 
 - `initialize()`, `flexural_wavelengths()`, `recommended_pad_width_1d()`, and
