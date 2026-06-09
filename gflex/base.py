@@ -1899,14 +1899,15 @@ class Flexure(Utility, Plotting):
                             " implicit in the superposition-based analytical solution"
                         )
             else:
-                if not self.quiet:
-                    raise ValueError(
-                        "Boundary conditions improperly defined for an analytical "
-                        "solution. Analytical solvers require 'no_outside_loads' (or "
-                        "blank) on all boundaries. FD boundary conditions such as "
-                        "'zero_moment_zero_shear' cannot be applied to analytical "
-                        "solutions."
-                    )
+                warnings.warn(
+                    "Boundary conditions improperly defined for an analytical "
+                    "solution. Analytical solvers require 'no_outside_loads' (or "
+                    "blank) on all boundaries. FD boundary conditions such as "
+                    "'zero_moment_zero_shear' are ignored by analytical solvers; "
+                    "the infinite-plate (no_outside_loads) assumption will be used.",
+                    UserWarning,
+                    stacklevel=3,
+                )
 
     def coeffArraySizeCheck(self):
         """
