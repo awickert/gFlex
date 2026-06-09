@@ -17,9 +17,12 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 import contextlib
+import logging
 import sys
 import time
 import warnings
+
+_logger = logging.getLogger(__name__)
 
 import numpy as np
 import scipy.fft
@@ -385,8 +388,7 @@ class F1D(Flexure):
         """
         self.dimension = 1  # Set it here in case it wasn't set for selection before
         super().initialize()
-        if self.verbose:
-            print("F1D initialized")
+        _logger.info("F1D initialized")
 
     def run(self):
         """
@@ -424,13 +426,11 @@ class F1D(Flexure):
         else:
             raise ValueError('method must be "fd", "fft", "sas", or "sas_ng"')
 
-        if self.verbose:
-            print("F1D run")
+        _logger.info("F1D run")
         self.method_func()
 
         self.time_to_solve = time.time() - self.solver_start_time
-        if not self.quiet:
-            print("Time to solve [s]:", self.time_to_solve)
+        _logger.info("Time to solve [s]: %s", self.time_to_solve)
 
     def finalize(self):
         """
@@ -443,8 +443,7 @@ class F1D(Flexure):
         """
         with contextlib.suppress(AttributeError):
             self.T_e = self.T_e_unpadded
-        if self.verbose:
-            print("F1D finalized")
+        _logger.info("F1D finalized")
         super().finalize()
 
     ########################################
@@ -572,15 +571,15 @@ class F1D(Flexure):
                 self._bc_west_norm = "zero_displacement_zero_slope"
             if _pad_east:
                 self._bc_east_norm = "zero_displacement_zero_slope"
-            if not self.quiet:
-                sides = []
-                if _pad_west:
-                    sides.append(f"west +{pw_w}")
-                if _pad_east:
-                    sides.append(f"east +{pw_e}")
-                print(
-                    f"FD 'no_outside_loads': auto-padding ({', '.join(sides)} cells); "
-                    "w trimmed to original domain on return."
+            sides = []
+            if _pad_west:
+                sides.append(f"west +{pw_w}")
+            if _pad_east:
+                sides.append(f"east +{pw_e}")
+            _logger.info(
+                    "FD 'no_outside_loads': auto-padding (%s cells); "
+                    "w trimmed to original domain on return.",
+                    ", ".join(sides),
                 )
 
         self._check_warnings_FD()
@@ -764,9 +763,8 @@ class F1D(Flexure):
         """
         Superposition of analytical solutions without a gridded domain
         """
-        if self.debug:
-            print("w = ")
-            print(self.xw.shape)
+        _logger.debug("w = ")
+        _logger.debug("%s", self.xw.shape)
 
         # dist shape: (N_out, N_load); vectorised over both dimensions at once.
         dist = np.abs(self.xw[:, None] - self.x[None, :])
@@ -792,9 +790,8 @@ class F1D(Flexure):
 
         # Zeroth, start the timer and print the boundary conditions to the screen
         self.coeff_start_time = time.time()
-        if self.verbose:
-            print("Boundary condition, West:", self.bc_west, type(self.bc_west))
-            print("Boundary condition, East:", self.bc_east, type(self.bc_east))
+        _logger.info("Boundary condition, West: %s %s", self.bc_west, type(self.bc_west))
+        _logger.info("Boundary condition, East: %s %s", self.bc_east, type(self.bc_east))
 
         if self.bc_east == "sandbox" or self.bc_west == "sandbox":
             _sandbox_easter_egg()
@@ -818,11 +815,10 @@ class F1D(Flexure):
 
         # Finally, compute the total time this process took
         self.coeff_creation_time = time.time() - self.coeff_start_time
-        if not self.quiet:
-            print(
-                "Time to construct coefficient (operator) array [s]:",
-                self.coeff_creation_time,
-            )
+        _logger.info(
+            "Time to construct coefficient (operator) array [s]: %s",
+            self.coeff_creation_time,
+        )
 
     def _apply_bc_rigidity(self):
         """
@@ -955,9 +951,8 @@ class F1D(Flexure):
         # http://scicomp.stackexchange.com/questions/5355/writing-the-poisson-equation-finite-difference-matrix-with-neumann-boundary-cond
         # http://scicomp.stackexchange.com/questions/7175/trouble-implementing-neumann-boundary-conditions-because-the-ghost-points-cannot
 
-        if self.verbose:
-            print("Boundary condition, West:", self.bc_west, type(self.bc_west))
-            print("Boundary condition, East:", self.bc_east, type(self.bc_east))
+        _logger.info("Boundary condition, West: %s %s", self.bc_west, type(self.bc_west))
+        _logger.info("Boundary condition, East: %s %s", self.bc_east, type(self.bc_east))
 
         # In 2D, these are handled inside the function; in 1D, there are separate
         # defined functions. Keeping these due to inertia and fear of cut/paste
@@ -1333,14 +1328,13 @@ class F1D(Flexure):
         """
 
         if self.debug:
-            print("qs", self.qs.shape)
-            print("Te", self.T_e.shape)
+            _logger.debug("qs %s", self.qs.shape)
+            _logger.debug("Te %s", self.T_e.shape)
             self.calc_max_flexural_wavelength()
-            print("maxFlexuralWavelength_ncells', self.maxFlexuralWavelength_ncells")
+            _logger.debug("maxFlexuralWavelength_ncells: %s", self.maxFlexuralWavelength_ncells)
 
         if self.solver == "direct":
-            if self.debug:
-                print("Using direct solution with UMFpack")
+            _logger.debug("Using direct solution with UMFpack")
         else:
             raise ValueError(
                 f"solver={self.solver!r} is not supported; only 'direct' is available "
@@ -1371,7 +1365,7 @@ class F1D(Flexure):
             self.w = self._lu(rhs)
 
         if self.debug:
-            print("w.shape:")
-            print(self.w.shape)
-            print("w:")
-            print(self.w)
+            _logger.debug("w.shape:")
+            _logger.debug("%s", self.w.shape)
+            _logger.debug("w:")
+            _logger.debug("%s", self.w)

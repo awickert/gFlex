@@ -17,9 +17,11 @@ You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 import contextlib
-
+import logging
 import time
 import warnings
+
+_logger = logging.getLogger(__name__)
 
 import numpy as np
 import scipy
@@ -501,8 +503,7 @@ class F2D(Flexure):
         """
         self.dimension = 2  # Set it here in case it wasn't set for selection before
         super().initialize()
-        if self.verbose:
-            print("F2D initialized")
+        _logger.info("F2D initialized")
 
     def run(self):
         """
@@ -541,13 +542,11 @@ class F2D(Flexure):
         else:
             raise ValueError('method must be "fd", "fft", "sas", or "sas_ng"')
 
-        if self.verbose:
-            print("F2D run")
+        _logger.info("F2D run")
         self.method_func()
 
         self.time_to_solve = time.time() - self.solver_start_time
-        if not self.quiet:
-            print("Time to solve [s]:", self.time_to_solve)
+        _logger.info("Time to solve [s]: %s", self.time_to_solve)
 
     def finalize(self):
         """
@@ -560,8 +559,7 @@ class F2D(Flexure):
         """
         with contextlib.suppress(AttributeError):
             self.T_e = self.T_e_unpadded
-        if self.verbose:
-            print("F2D finalized")
+        _logger.info("F2D finalized")
         super().finalize()
 
     ########################################
@@ -684,15 +682,15 @@ class F2D(Flexure):
             if _pad_south: self._bc_south_norm = "zero_displacement_zero_slope"
             if _pad_west:  self._bc_west_norm  = "zero_displacement_zero_slope"
             if _pad_east:  self._bc_east_norm  = "zero_displacement_zero_slope"
-            if not self.quiet:
-                sides = []
-                if _pad_north: sides.append(f"north +{pn}")
-                if _pad_south: sides.append(f"south +{ps}")
-                if _pad_west:  sides.append(f"west +{pw}")
-                if _pad_east:  sides.append(f"east +{pe}")
-                print(
-                    f"FD 'no_outside_loads': auto-padding ({', '.join(sides)} cells); "
-                    "w trimmed to original domain on return."
+            sides = []
+            if _pad_north: sides.append(f"north +{pn}")
+            if _pad_south: sides.append(f"south +{ps}")
+            if _pad_west:  sides.append(f"west +{pw}")
+            if _pad_east:  sides.append(f"east +{pe}")
+            _logger.info(
+                    "FD 'no_outside_loads': auto-padding (%s cells); "
+                    "w trimmed to original domain on return.",
+                    ", ".join(sides),
                 )
 
         self._check_warnings_FD()
@@ -887,9 +885,8 @@ class F2D(Flexure):
     def spatial_domain_no_grid(self):
         """Compute deflection by summing 2D Kelvin-function Green's functions at ungridded output points."""
         self.w = np.zeros(self.xw.shape)
-        if self.debug:
-            print("w = ")
-            print(self.w.shape)
+        _logger.debug("w = ")
+        _logger.debug("%s", self.w.shape)
 
         # r shape: (N_out, N_load); vectorised over both dimensions at once.
         # Memory cost is O(N_out × N_load) floats — batch if that is too large.
@@ -945,11 +942,10 @@ class F2D(Flexure):
 
         # Zeroth, start the timer and print the boundary conditions to the screen
         self.coeff_start_time = time.time()
-        if self.verbose:
-            print("Boundary condition, West:", self.bc_west, type(self.bc_west))
-            print("Boundary condition, East:", self.bc_east, type(self.bc_east))
-            print("Boundary condition, North:", self.bc_north, type(self.bc_north))
-            print("Boundary condition, South:", self.bc_south, type(self.bc_south))
+        _logger.info("Boundary condition, West: %s %s", self.bc_west, type(self.bc_west))
+        _logger.info("Boundary condition, East: %s %s", self.bc_east, type(self.bc_east))
+        _logger.info("Boundary condition, North: %s %s", self.bc_north, type(self.bc_north))
+        _logger.info("Boundary condition, South: %s %s", self.bc_south, type(self.bc_south))
 
         # First, set flexural rigidity boundary conditions to flesh out this padded
         # array
@@ -970,11 +966,10 @@ class F2D(Flexure):
 
         # Finally, compute the total time this process took
         self.coeff_creation_time = time.time() - self.coeff_start_time
-        if not self.quiet:
-            print(
-                "Time to construct coefficient (operator) array [s]:",
-                self.coeff_creation_time,
-            )
+        _logger.info(
+            "Time to construct coefficient (operator) array [s]: %s",
+            self.coeff_creation_time,
+        )
 
     def _apply_bc_rigidity(self):
         """
@@ -2556,17 +2551,15 @@ class F2D(Flexure):
         if self.debug:
             # Will fail if scalar
             with contextlib.suppress(AttributeError):
-                print("self.T_e", self.T_e.shape)
-            print("self.qs", self.qs.shape)
+                _logger.debug("self.T_e %s", self.T_e.shape)
+            _logger.debug("self.qs %s", self.qs.shape)
             self.calc_max_flexural_wavelength()
-            print(
-                "maxFlexuralWavelength_ncells: (x, y):",
+            _logger.debug(
+                "maxFlexuralWavelength_ncells: (x, y): %s %s",
                 self.maxFlexuralWavelength_ncells_x,
                 self.maxFlexuralWavelength_ncells_y,
             )
-
-        if self.debug:
-            print("Using direct solution with UMFpack")
+            _logger.debug("Using direct solution with UMFpack")
         elif self.solver != "direct":
             raise ValueError(
                 f"solver={self.solver!r} is not supported; only 'direct' is available "
