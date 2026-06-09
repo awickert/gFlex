@@ -63,6 +63,14 @@
   per-phase timing (6 decimal places); a ``finalized`` block shows total
   runtime.  gFlex output is bracketed by blank lines to separate it from
   surrounding caller messages.
+- **FD timing attributes** — after a finite-difference ``run()``, two new
+  instance attributes are set: ``coeff_creation_time`` (seconds to
+  construct the sparse coefficient matrix) and ``linear_solve_time``
+  (seconds for the backsolve).  Non-FD solvers (SAS, FFT) do not set
+  these attributes.  Both are measured with ``time.perf_counter()`` for
+  sub-microsecond resolution on all platforms.  The split is useful in
+  coupling loops where ``cache_factorization`` will eventually allow
+  skipping matrix construction on subsequent ``run()`` calls.
 - **Python ``logging`` module** — all ``print()`` calls in the solver path
   have been replaced with ``logging`` calls on the ``gflex`` logger
   (``_logger.info``, ``_logger.warning``, ``_logger.debug``).  A
