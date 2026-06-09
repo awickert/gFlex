@@ -276,7 +276,7 @@ class BmiGflex(_BmiBase):
 
     def set_value(self, name: str, src: NDArray[Any]) -> None:
         """Overwrite the entire array for variable *name* with values from *src*."""
-        self.get_value_ptr(name)[:] = src
+        self.get_value_ptr(name).flat[:] = src
 
     def set_value_at_indices(
         self,
