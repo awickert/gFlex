@@ -69,8 +69,8 @@
   (seconds for the backsolve).  Non-FD solvers (SAS, FFT) do not set
   these attributes.  Both are measured with ``time.perf_counter()`` for
   sub-microsecond resolution on all platforms.  The split is useful in
-  coupling loops where ``cache_factorization`` will eventually allow
-  skipping matrix construction on subsequent ``run()`` calls.
+  coupling loops with ``cache_factorization`` enabled, where matrix
+  construction is skipped on subsequent ``run()`` calls.
 - **Python ``logging`` module** — all ``print()`` calls in the solver path
   have been replaced with ``logging`` calls on the ``gflex`` logger
   (``_logger.info``, ``_logger.warning``, ``_logger.debug``).  A
