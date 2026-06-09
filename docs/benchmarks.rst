@@ -1,5 +1,5 @@
-Performance Benchmarks
-======================
+Performance, Benchmarks, and Memory
+=====================================
 
 The figures on this page were produced by running ``benchmarks/bench_solvers.py``
 from the repository root.  To regenerate the figures from a fresh benchmark run::
@@ -115,3 +115,148 @@ only :math:`q_s` varies (e.g., a transient ice-sheet or sediment-loading model),
 ``cache_factorization = "no_check"`` or ``True`` provides substantial speedup.
 In a parameter-sweep or inversion where :math:`T_e` changes on every iteration,
 all modes are equivalent and the rebuild cost is unavoidable.
+
+----
+
+Method complexity summary
+-------------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 20 20 38
+
+   * - Method
+     - Time
+     - Memory
+     - Notes
+   * - ``fd`` (direct sparse LU)
+     - :math:`O(N^{1.5\text{–}2})`
+     - :math:`O(N^{1.27})` measured
+     - Variable :math:`T_e`; LU memory dominates at large :math:`N`.
+       ``no_outside_loads`` pads the domain before solving — see below.
+   * - ``fft``
+     - :math:`O(N \log N)`
+     - :math:`O(N)`
+     - Uniform :math:`T_e` only.  Fastest method; memory scales linearly.
+   * - ``sas`` / ``sas_ng``
+     - :math:`O(N \log N)`\ –\ :math:`O(N^2 \log N)`
+     - :math:`O(N)`
+     - Uniform :math:`T_e` only.  Memory linear; see timing figures above.
+
+:math:`N` is the total number of grid cells after any domain padding.
+
+----
+
+FD LU memory scaling
+--------------------
+
+The FD solver's sparse LU factorisation (SuperLU, COLAMD reordering) is the
+dominant memory consumer.  Fill-in grows empirically as :math:`O(N^{1.27})`
+for a 2-D 13-point stencil — between the :math:`O(N \log N)` ideal and the
+:math:`O(N^{1.5})` worst case.
+
+.. list-table:: Empirical LU memory — 2-D FD, constant :math:`T_e = 35` km,
+                clamped BCs, SuperLU/COLAMD
+   :header-rows: 1
+   :widths: 18 16 16
+
+   * - Grid (padded)
+     - Cells :math:`N`
+     - LU RAM
+   * - 100 × 100
+     - 10,000
+     - 35 MB
+   * - 200 × 200
+     - 40,000
+     - 196 MB
+   * - 300 × 300
+     - 90,000
+     - 559 MB
+   * - 400 × 400
+     - 160,000
+     - 1.1 GB
+   * - 500 × 500
+     - 250,000
+     - 1.8 GB
+   * - 600 × 600
+     - 360,000
+     - 3.7 GB
+
+The log-log slope is **≈ 1.27**.  Extrapolating: 700 × 700 ≈ 5.8 GB;
+800 × 800 ≈ 8.7 GB.
+
+Use ``benchmarks/bench_memory.py`` to measure on your own system::
+
+   python benchmarks/bench_memory.py          # 100–400×100–400
+   python benchmarks/bench_memory.py --large  # adds 500×500, 600×600
+
+When ``cache_factorization=True`` or ``"no_check"``, the LU factors are kept
+in memory between ``run()`` calls and the table shows the steady-state
+footprint.  Without caching (the default) peak RSS briefly spikes to the
+tabulated value and then falls.
+
+----
+
+Effect of ``no_outside_loads`` padding on FD memory
+-----------------------------------------------------
+
+When any FD edge is set to ``no_outside_loads`` (alias ``infinite``), the
+solver automatically pads the domain by one flexural wavelength on each
+affected side before solving, then crops ``w`` back to the original shape.
+
+The 2-D flexural wavelength is
+
+.. math::
+
+   \lambda_{2\mathrm{D}} = 2\pi\,\alpha_{2\mathrm{D}},
+   \quad \alpha_{2\mathrm{D}} = \left(\frac{D}{\Delta\rho\,g}\right)^{1/4}.
+
+For :math:`T_e = 35` km at standard parameters (:math:`E = 65` GPa,
+:math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\text{fill}
+= 0`, :math:`g = 9.8` m s⁻²) this gives :math:`\lambda_{2\mathrm{D}}
+\approx 330` km.  At a 5 km grid spacing, one wavelength is about 67 cells.
+
+**Example: 500 × 500 grid at 5 km, all-sides** ``no_outside_loads``
+
+- Each side gains 67 cells → padded domain: **634 × 634**
+- Cell count: 250,000 → 401,956 **(1.6× more cells)**
+- At :math:`O(N^{1.27})` scaling: **≈ 2× more LU memory**
+  (1.8 GB → ~3.7 GB)
+
+Use :func:`gflex.recommended_pad_width` to estimate the padded cell count
+before running::
+
+   from gflex import recommended_pad_width
+
+   pad_cells = recommended_pad_width(Te=35e3, dx=5e3)   # → 67 cells
+   n_padded  = 500 + 2 * pad_cells                       # → 634
+   print(f"padded domain: {n_padded}×{n_padded} = {n_padded**2:,} cells")
+
+----
+
+Practical guidance
+------------------
+
+**Choose FFT or SAS when possible.**
+Both require uniform :math:`T_e`, but their memory scales as
+:math:`O(N)` and they are at least two orders of magnitude faster than FD
+at the same grid size.
+
+**Estimate the padded size before a large FD run.**
+``no_outside_loads`` BCs are convenient but silently enlarge the problem.
+For a 500 × 500 grid with all-sides ``no_outside_loads``, the LU factorisation
+needs ~3.7 GB.  Grids above ~600 × 600 (padded) approach or exceed typical
+workstation RAM.
+
+**Use** ``cache_factorization`` **in coupling loops.**
+If :math:`T_e` and the grid geometry are fixed while only :math:`q_s` changes
+(transient ice or sediment loading), ``cache_factorization = "no_check"``
+reuses the LU factors across ``run()`` calls.  The 7–12× measured speedup at
+200×200–400×400 cells is described in the benchmark figures above.
+
+**Halve padding if edge accuracy is acceptable.**
+:func:`gflex.recommended_pad_width` accepts ``n_wavelengths`` (default 1.0).
+Setting ``n_wavelengths=0.5`` halves the padding width at the cost of slightly
+larger edge artefacts::
+
+   pad_cells = recommended_pad_width(Te=35e3, dx=5e3, n_wavelengths=0.5)
