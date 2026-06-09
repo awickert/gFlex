@@ -49,6 +49,14 @@
   `recommended_pad_width_1d` remain public for callers that need finer
   control.
 
+### Input validation
+
+- `initialize()`, `flexural_wavelengths()`, `recommended_pad_width_1d()`, and
+  `recommended_pad_width()` now raise a clear `ValueError` when
+  ``rho_fill >= rho_m``.  A non-positive density contrast means the foundation
+  has no restoring force and the flexural parameter α is undefined; previously
+  the code produced a ``ZeroDivisionError`` or silent ``nan``.
+
 ### Bug fixes
 
 - Fixed FFT crash when no boundary conditions are set: `bc_check()` was
