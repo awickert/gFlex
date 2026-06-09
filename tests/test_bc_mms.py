@@ -3,13 +3,18 @@
 
 Covers boundary conditions that were either recently corrected or newly
 introduced, for which the existing periodic-MMS tests in test_1D_FD and
-test_2D_FD provide no signal.
+test_2D_FD provide no signal, plus variable-Te FD convergence.
 
 BCs tested
 ----------
 zero_displacement_zero_slope  (clamped)  — corrected 2026; convergence + Dirichlet exactness
 zero_moment_zero_shear        (free end) — corrected 2026; convergence
 zero_displacement_zero_moment (pinned)   — new in 2026; convergence
+zero_slope_zero_shear         (mirror)   — convergence; MMS uses w=cos(πx/L)
+
+Variable Te
+-----------
+variable_te_1d  — linearly-varying D; clamped BCs; MMS load derived analytically
 """
 
 import warnings
@@ -63,6 +68,10 @@ def _f4(t):
     """f''''(t)."""
     return 24 - 480*t + 2160*t**2 - 3360*t**3 + 1680*t**4
 
+def _m(t):
+    """m(t) = cos(π t) — satisfies dw/dt=0, d³w/dt³=0 at t=0,1 (mirror BC)."""
+    return np.cos(np.pi * t)
+
 
 # ---------------------------------------------------------------------------
 # 1-D MMS load builders
@@ -88,6 +97,35 @@ def _mms_1d_pinned(nx):
     w_ex = -np.sin(np.pi * xi)
     qs   = (D * (np.pi / L)**4 + DRHO_G) * np.sin(np.pi * xi)
     return dx, w_ex, qs
+
+def _mms_1d_mirror(nx):
+    """Mirror BC MMS: w_exact = -cos(π ξ), satisfies dw/dx=d³w/dx³=0 at both ends."""
+    dx   = L / (nx - 1)
+    xi   = np.arange(nx) / (nx - 1)
+    k    = np.pi / L
+    w_ex = -_m(xi)
+    qs   = (D * k**4 + DRHO_G) * _m(xi)
+    return dx, w_ex, qs
+
+# Fractional D variation for the variable-Te MMS: D(ξ) = D*(1 + _VAR_A*ξ).
+_VAR_A = 0.5
+
+def _mms_1d_variable_te(nx):
+    """Variable-Te MMS (clamped BCs): D(ξ) = D*(1+0.5ξ), w_exact = -ξ²(1-ξ)².
+
+    The manufactured load is derived analytically from
+    d²/dx²[D(x) d²w/dx²] + Δρg·w = −q, with D linear in ξ = x/L.  For
+    D(ξ) = D₀(1+aξ) and w = -g(ξ):
+
+        q(ξ) = (D₀/L⁴)·(24(1−a) + 72aξ) + Δρg·g(ξ)
+    """
+    dx   = L / (nx - 1)
+    xi   = np.arange(nx) / (nx - 1)
+    a    = _VAR_A
+    te   = TE * (1.0 + a * xi) ** (1.0/3.0)   # T_e(ξ): D(ξ) = D*(1+a*ξ)
+    w_ex = -_g(xi)
+    qs   = (D / L**4) * (24*(1-a) + 72*a*xi) + DRHO_G * _g(xi)
+    return dx, te, w_ex, qs
 
 
 # ---------------------------------------------------------------------------
@@ -120,6 +158,16 @@ def _mms_2d_pinned(n):
     qs   = (4*D*(np.pi/L)**4 + DRHO_G) * np.sin(np.pi * eta) * np.sin(np.pi * xi)
     return dx, w_ex, qs
 
+def _mms_2d_mirror(n):
+    """Mirror BC MMS 2-D: w = -cos(πη)cos(πξ), all four sides are mirror."""
+    dx  = L / (n - 1)
+    eta = np.arange(n)[:, np.newaxis] / (n - 1)
+    xi  = np.arange(n)[np.newaxis, :] / (n - 1)
+    k   = np.pi / L
+    w_ex = -_m(eta) * _m(xi)
+    qs   = (4*D * k**4 + DRHO_G) * _m(eta) * _m(xi)
+    return dx, w_ex, qs
+
 
 # ---------------------------------------------------------------------------
 # gFlex runners
@@ -137,6 +185,32 @@ def _run_1d(dx, qs, bc):
     s.rho_m    = RHO_M
     s.rho_fill = RHO_F
     s.T_e      = TE
+    s.dx       = dx
+    s.qs       = qs
+    s.bc_west  = bc
+    s.bc_east  = bc
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        s.initialize()
+        s.run()
+        w = s.w
+        s.finalize()
+    return w
+
+
+def _run_1d_te(dx, te, qs, bc):
+    """Like _run_1d but accepts a Te array for variable-rigidity tests."""
+    s = F1D()
+    s.quiet    = True
+    s.verbose  = False
+    s.debug    = False
+    s.method   = "fd"
+    s.g        = G
+    s.E        = E
+    s.nu       = NU
+    s.rho_m    = RHO_M
+    s.rho_fill = RHO_F
+    s.T_e      = te
     s.dx       = dx
     s.qs       = qs
     s.bc_west  = bc
@@ -307,3 +381,55 @@ class TestPinnedBC2D:
             errs.append(np.max(np.abs(w - w_ex)) / np.max(np.abs(w_ex)))
             dxs.append(dx)
         _assert_second_order(dxs, errs, "zero_displacement_zero_moment", "2-D")
+
+
+# ===========================================================================
+# zero_slope_zero_shear  (mirror / symmetric)
+# ===========================================================================
+
+class TestMirrorBC1D:
+
+    def test_convergence_order(self):
+        """1-D mirror BC achieves O(dx²) MMS convergence."""
+        dxs, errs = [], []
+        for nx in NX_1D:
+            dx, w_ex, qs = _mms_1d_mirror(nx)
+            w = _run_1d(dx, qs, "zero_slope_zero_shear")
+            errs.append(np.max(np.abs(w - w_ex)) / np.max(np.abs(w_ex)))
+            dxs.append(dx)
+        _assert_second_order(dxs, errs, "zero_slope_zero_shear", "1-D")
+
+
+class TestMirrorBC2D:
+
+    def test_convergence_order(self):
+        """2-D mirror BC achieves O(dx²) MMS convergence."""
+        dxs, errs = [], []
+        for n in N_2D:
+            dx, w_ex, qs = _mms_2d_mirror(n)
+            w = _run_2d(dx, qs, "zero_slope_zero_shear")
+            errs.append(np.max(np.abs(w - w_ex)) / np.max(np.abs(w_ex)))
+            dxs.append(dx)
+        _assert_second_order(dxs, errs, "zero_slope_zero_shear", "2-D")
+
+
+# ===========================================================================
+# Variable elastic thickness (FD only)
+# ===========================================================================
+
+class TestVariableTe1D:
+
+    def test_convergence_order(self):
+        """Variable-Te 1-D FD achieves O(dx²) MMS convergence.
+
+        Uses linearly-varying D(ξ) = D₀(1+0.5ξ) with clamped BCs.  The
+        manufactured load is derived analytically, so any deviation from
+        second-order convergence indicates a bug in the variable-Te stencil.
+        """
+        dxs, errs = [], []
+        for nx in NX_1D:
+            dx, te, w_ex, qs = _mms_1d_variable_te(nx)
+            w = _run_1d_te(dx, te, qs, "zero_displacement_zero_slope")
+            errs.append(np.max(np.abs(w - w_ex)) / np.max(np.abs(w_ex)))
+            dxs.append(dx)
+        _assert_second_order(dxs, errs, "variable-Te", "1-D")
