@@ -57,6 +57,12 @@
   logging; gFlex should be silent unless asked.  To restore the previous
   behaviour set ``flex.quiet = False; flex.verbose = True`` after
   construction.
+- **Verbose output restructured** — the ``quiet=False`` / ``verbose=True``
+  output now follows the BMI lifecycle: an ``initialized`` block shows
+  grid dimensions, T_e, and method; a ``run`` block shows BCs and
+  per-phase timing (6 decimal places); a ``finalized`` block shows total
+  runtime.  gFlex output is bracketed by blank lines to separate it from
+  surrounding caller messages.
 - **Python ``logging`` module** — all ``print()`` calls in the solver path
   have been replaced with ``logging`` calls on the ``gflex`` logger
   (``_logger.info``, ``_logger.warning``, ``_logger.debug``).  A
