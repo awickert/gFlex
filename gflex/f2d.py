@@ -2605,7 +2605,7 @@ class F2D(Flexure):
         if rhs_corr is not None:
             q0vector = q0vector + rhs_corr.reshape(-1, order="C")
 
-        _ls_start = time.time()
+        _ls_start = time.perf_counter()
         if self.cache_factorization is False:
             wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
         elif self.cache_factorization == "no_check":
@@ -2619,7 +2619,7 @@ class F2D(Flexure):
                 self._lu = factorized(self.coeff_matrix)
                 self._lu_matrix_hash = h
             wvector = self._lu(q0vector)
-        self.linear_solve_time = time.time() - _ls_start
+        self.linear_solve_time = time.perf_counter() - _ls_start
 
         # Reshape into grid
         self.w = wvector.reshape(self.qs.shape)

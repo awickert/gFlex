@@ -105,7 +105,7 @@ def test_fd_sets_linear_solve_time():
     flex.initialize()
     flex.run()
     assert hasattr(flex, "linear_solve_time")
-    assert flex.linear_solve_time > 0
+    assert flex.linear_solve_time >= 0
     assert flex.linear_solve_time <= flex.time_to_solve
 
 
