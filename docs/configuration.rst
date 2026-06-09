@@ -129,13 +129,20 @@ Parameters
     Boundary conditions on the west and east edges.
 
     For FD: ``zero_displacement_zero_slope`` (alias ``clamped``),
-    ``zero_displacement_zero_moment``,
+    ``zero_displacement_zero_moment`` (alias ``pinned``),
     ``zero_moment_zero_shear`` (alias ``free``),
-    ``zero_slope_zero_shear`` (alias ``mirror``), or ``periodic``.
+    ``zero_slope_zero_shear`` (alias ``mirror``),
+    ``no_outside_loads`` (alias ``infinite``), or ``periodic``.
+    When ``no_outside_loads`` is set on an FD edge, the solver
+    automatically pads the domain by one flexural wavelength, applies a
+    clamped outer boundary, solves, and crops ``w`` back to the original
+    domain — the padding is invisible to the caller.
     See :doc:`boundary_conditions` for the physical meaning of each and
     guidance on choosing.
 
-    For SAS / SAS_NG: ``no_outside_loads`` (assumed if left blank).
+    For SAS / SAS_NG: ``no_outside_loads`` is always assumed (the
+    analytical solution is inherently infinite-plate); leave blank or set
+    explicitly.
 
 .. note::
 

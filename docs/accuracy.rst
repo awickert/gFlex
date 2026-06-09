@@ -676,3 +676,172 @@ The correction is in commit ``984f7a4``.
 
 The standalone error-analysis script (covering both 1-D and 2-D) is at
 ``analysis/analyze_clamped_bc_error.py``.
+
+----
+
+``zero_slope_zero_shear`` (mirror) boundary condition: MMS verification (2026)
+-------------------------------------------------------------------------------
+
+The ``zero_slope_zero_shear`` (mirror) boundary condition enforces
+:math:`dw/dx = 0` and :math:`d^3w/dx^3 = 0` at the plate edge.  A
+cosine satisfies both conditions identically, giving the manufactured
+solution
+
+.. math::
+
+   w_\mathrm{exact}(\xi) = -W_0\,\cos(\pi\xi), \quad \xi = x/L,
+
+and the manufactured load
+
+.. math::
+
+   q_s(\xi) = \Bigl[D\!\left(\frac{\pi}{L}\right)^4 + \Delta\rho\,g\Bigr]
+              W_0\cos(\pi\xi).
+
+The 2-D extension uses the separable solution
+:math:`w = -W_0\cos(\pi\xi)\cos(\pi\eta)`, for which the load is
+
+.. math::
+
+   q_s(\xi,\eta) = \Bigl[4D\!\left(\frac{\pi}{L}\right)^4 + \Delta\rho\,g\Bigr]
+                   W_0\cos(\pi\xi)\cos(\pi\eta).
+
+Physical parameters: :math:`T_e = 30` km, :math:`E = 65` GPa,
+:math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\mathrm{fill}
+= 0`, :math:`g = 9.8` m s⁻², :math:`L = 600` km, :math:`W_0 = 1` m.
+
+Results (1-D)
+~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 12 16
+
+   * - :math:`n_x`
+     - :math:`\Delta x` [km]
+     - :math:`L^\infty` error
+   * - 26
+     - 24.0
+     - 9.50 × 10⁻⁶
+   * - 51
+     - 12.0
+     - 2.38 × 10⁻⁶
+   * - 101
+     - 6.0
+     - 5.94 × 10⁻⁷
+   * - 201
+     - 3.0
+     - 1.49 × 10⁻⁷
+   * - 401
+     - 1.5
+     - 3.81 × 10⁻⁸
+
+Convergence slopes (coarse → fine): :math:`\mathcal{O}(\Delta x^{2.06})`,
+:math:`\mathcal{O}(\Delta x^{2.03})`, :math:`\mathcal{O}(\Delta x^{2.01})`,
+:math:`\mathcal{O}(\Delta x^{1.97})`.
+
+Results (2-D)
+~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 12 16
+
+   * - :math:`n_x = n_y`
+     - :math:`\Delta x` [km]
+     - :math:`L^\infty` error
+   * - 26
+     - 24.0
+     - 3.76 × 10⁻⁵
+   * - 51
+     - 12.0
+     - 9.40 × 10⁻⁶
+   * - 101
+     - 6.0
+     - 2.35 × 10⁻⁶
+   * - 201
+     - 3.0
+     - 5.88 × 10⁻⁷
+
+Convergence slopes (coarse → fine): :math:`\mathcal{O}(\Delta x^{2.06})`,
+:math:`\mathcal{O}(\Delta x^{2.03})`, :math:`\mathcal{O}(\Delta x^{2.01})`.
+
+The test functions :func:`tests.test_bc_mms.TestMirrorBC1D.test_convergence_order`
+and :func:`tests.test_bc_mms.TestMirrorBC2D.test_convergence_order` run with
+every CI build and assert slopes > 1.8 at all refinement levels.
+
+----
+
+Variable elastic thickness: 1-D MMS verification (2026)
+---------------------------------------------------------
+
+The finite-difference solver supports spatially variable elastic thickness
+:math:`T_e(x)`.  To verify convergence, a linearly varying rigidity
+
+.. math::
+
+   D(\xi) = D_0\,(1 + a\xi), \quad a = 0.5, \quad \xi = x/L,
+
+is constructed by setting
+
+.. math::
+
+   T_e(\xi) = T_{e,\mathrm{ref}}\,(1 + a\xi)^{1/3},
+
+so that :math:`D(\xi) = E T_e^3/[12(1-\nu^2)]` ranges from :math:`D_0`
+at :math:`\xi = 0` to :math:`1.5\,D_0` at :math:`\xi = 1`.  The exact
+solution is the clamped shape function
+
+.. math::
+
+   w_\mathrm{exact}(\xi) = -W_0\,\xi^2(1-\xi)^2.
+
+Expanding the governing equation
+:math:`\partial^2/\partial x^2\!\left[D\,\partial^2 w/\partial x^2\right]
++ \Delta\rho g\,w = -q_s` for linear :math:`D` (so :math:`D'' = 0`) and
+noting that :math:`w'''' = 24/L^4` (constant) gives the manufactured load
+
+.. math::
+
+   q_s(\xi) = \frac{D_0}{L^4}\bigl[24(1-a) + 72a\xi\bigr]
+              + \Delta\rho g\,\xi^2(1-\xi)^2.
+
+Physical parameters: :math:`T_{e,\mathrm{ref}} = 30` km, :math:`E = 65` GPa,
+:math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\mathrm{fill}
+= 0`, :math:`g = 9.8` m s⁻², :math:`L = 600` km, :math:`W_0 = 1` m,
+clamped BCs on both ends.
+
+Results
+~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 12 16
+
+   * - :math:`n_x`
+     - :math:`\Delta x` [km]
+     - :math:`L^\infty` error
+   * - 26
+     - 24.0
+     - 2.07 × 10⁻³
+   * - 51
+     - 12.0
+     - 5.10 × 10⁻⁴
+   * - 101
+     - 6.0
+     - 1.27 × 10⁻⁴
+   * - 201
+     - 3.0
+     - 3.17 × 10⁻⁵
+   * - 401
+     - 1.5
+     - 7.92 × 10⁻⁶
+   * - 801
+     - 0.75
+     - 1.98 × 10⁻⁶
+
+Convergence slopes (finest four points): :math:`\mathcal{O}(\Delta x^{2.01})`,
+:math:`\mathcal{O}(\Delta x^{2.01})`, :math:`\mathcal{O}(\Delta x^{2.00})`.
+
+The test function :func:`tests.test_bc_mms.TestVariableTe1D.test_convergence_order`
+runs with every CI build.
