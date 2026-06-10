@@ -51,7 +51,10 @@ def test_initialize_update_finalize():
 
 
 def test_get_input_var_names(bmi_1d):
-    assert bmi_1d.get_input_var_names() == ("lithosphere__load_pressure",)
+    assert bmi_1d.get_input_var_names() == (
+        "lithosphere__load_pressure",
+        "lithosphere__elastic_thickness",
+    )
 
 
 def test_get_output_var_names(bmi_1d):
@@ -59,7 +62,7 @@ def test_get_output_var_names(bmi_1d):
 
 
 def test_get_input_item_count(bmi_1d):
-    assert bmi_1d.get_input_item_count() == 1
+    assert bmi_1d.get_input_item_count() == 2
 
 
 def test_get_output_item_count(bmi_1d):
@@ -70,17 +73,23 @@ def test_get_var_units_load(bmi_1d):
     assert bmi_1d.get_var_units("lithosphere__load_pressure") == "Pa"
 
 
+def test_get_var_units_te(bmi_1d):
+    assert bmi_1d.get_var_units("lithosphere__elastic_thickness") == "m"
+
+
 def test_get_var_units_deflection(bmi_1d):
     assert bmi_1d.get_var_units("lithosphere__vertical_displacement") == "m"
 
 
 def test_get_var_location(bmi_1d):
     assert bmi_1d.get_var_location("lithosphere__load_pressure") == "node"
+    assert bmi_1d.get_var_location("lithosphere__elastic_thickness") == "node"
     assert bmi_1d.get_var_location("lithosphere__vertical_displacement") == "node"
 
 
 def test_get_var_grid(bmi_1d):
     assert bmi_1d.get_var_grid("lithosphere__load_pressure") == 0
+    assert bmi_1d.get_var_grid("lithosphere__elastic_thickness") == 0
     assert bmi_1d.get_var_grid("lithosphere__vertical_displacement") == 0
 
 
@@ -185,6 +194,36 @@ def test_deflection_nonzero_after_update(bmi_1d):
     w = np.zeros(n)
     bmi_1d.get_value("lithosphere__vertical_displacement", w)
     assert np.any(w != 0.0)
+
+
+def test_get_te_nonzero(bmi_1d):
+    """lithosphere__elastic_thickness must be positive after initialize."""
+    n = bmi_1d.get_grid_size(0)
+    te = np.zeros(n)
+    bmi_1d.get_value("lithosphere__elastic_thickness", te)
+    assert np.all(te > 0)
+
+
+def test_set_te_changes_deflection(bmi_1d):
+    """A stiffer Te produces smaller-magnitude deflection under the same load."""
+    n = bmi_1d.get_grid_size(0)
+    te = np.zeros(n)
+    bmi_1d.get_value("lithosphere__elastic_thickness", te)
+    te_original = te.copy()
+
+    bmi_1d.update()
+    w_soft = np.zeros(n)
+    bmi_1d.get_value("lithosphere__vertical_displacement", w_soft)
+
+    # Double elastic thickness → much stiffer plate → smaller deflection
+    bmi_1d.set_value("lithosphere__elastic_thickness", te_original * 2.0)
+    bmi_1d.update()
+    w_stiff = np.zeros(n)
+    bmi_1d.get_value("lithosphere__vertical_displacement", w_stiff)
+
+    assert np.abs(w_stiff).max() < np.abs(w_soft).max(), (
+        "Doubling Te must reduce peak deflection magnitude"
+    )
 
 
 def test_set_value_affects_deflection(bmi_1d):
