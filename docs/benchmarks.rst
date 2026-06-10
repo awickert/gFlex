@@ -1,5 +1,5 @@
-Performance, Benchmarks, and Memory
-=====================================
+Performance
+===========
 
 The figures on this page were produced by running ``benchmarks/bench_solvers.py``
 from the repository root.  To regenerate the figures from a fresh benchmark run::
@@ -167,6 +167,16 @@ for a 2-D 13-point stencil — between the :math:`O(N \log N)` ideal and the
    after all-sides ``no_outside_loads`` padding at :math:`T_e = 35` km and
    :math:`dx = 5` km (dashed red; 67 cells added per padded side).  Both lines
    use the fitted power law.
+
+The empirical fit gives peak LU RAM as a function of total cell count
+:math:`N = n_x \times n_y`:
+
+.. math::
+
+   M \approx 2 \times 10^{-4}\, N^{1.26} \;\text{MiB}
+
+For a square domain of side :math:`n` cells, :math:`N = n^2` so
+:math:`M \approx 2 \times 10^{-4}\, n^{2.52}` MiB.
 
 .. list-table:: Empirical LU memory — 2-D FD, constant :math:`T_e = 35` km,
                 clamped BCs, SuperLU/COLAMD
