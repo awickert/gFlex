@@ -61,23 +61,32 @@ class BmiGflex(_BmiBase):
     Variables
     ---------
     Input:  ``lithosphere__load_pressure`` [Pa]  — surface normal stress q0
+    Input:  ``lithosphere__elastic_thickness`` [m] — elastic thickness Te
+            (usually constant; updating it invalidates the cached LU
+            factorisation so the next update() rebuilds the stiffness matrix)
     Output: ``lithosphere__vertical_displacement`` [m] — downward deflection w
     """
 
     _name = "gFlex Lithospheric Flexure"
-    _input_var_names = ("lithosphere__load_pressure",)
+    _input_var_names = (
+        "lithosphere__load_pressure",
+        "lithosphere__elastic_thickness",
+    )
     _output_var_names = ("lithosphere__vertical_displacement",)
 
     _var_units = {
         "lithosphere__load_pressure": "Pa",
+        "lithosphere__elastic_thickness": "m",
         "lithosphere__vertical_displacement": "m",
     }
     _var_grids = {
         "lithosphere__load_pressure": 0,
+        "lithosphere__elastic_thickness": 0,
         "lithosphere__vertical_displacement": 0,
     }
     _var_loc = {
         "lithosphere__load_pressure": "node",
+        "lithosphere__elastic_thickness": "node",
         "lithosphere__vertical_displacement": "node",
     }
 
@@ -95,6 +104,7 @@ class BmiGflex(_BmiBase):
             ) from _bmipy_import_error
         self._model = None
         self._load = None
+        self._te = None
         self._w = None
         self._values: dict[str, NDArray[Any]] = {}
         self._shape: tuple[int, ...] = ()
@@ -124,7 +134,7 @@ class BmiGflex(_BmiBase):
 
         self._model.initialize(config_file)
 
-        # Own arrays for the two BMI-exposed variables.  The model's internal
+        # Own arrays for the BMI-exposed variables.  The model's internal
         # q0 is consumed (renamed to qs, then deleted) during run(), so we
         # keep a separate copy that survives across update() calls.
         self._load = self._model.q0.copy()
@@ -138,10 +148,41 @@ class BmiGflex(_BmiBase):
         self._origin = (0.0,) * self._model.dimension
         self._current_time = 0.0
 
+        # Elastic thickness: broadcast a scalar to a full grid array so the
+        # BMI always exposes a flat array of length get_grid_size(0).
+        # When using a config file, T_e is deferred to _solve_fd() and not yet
+        # set after initialize(); read it directly from the loaded config dict.
+        try:
+            te_raw = self._model.T_e
+        except AttributeError:
+            te_raw = self._model.configGet(
+                "float", "input", "elastic_thickness", optional=True
+            )
+            if te_raw is None:
+                te_path = self._model.configGet(
+                    "string", "input", "elastic_thickness", optional=False
+                )
+                te_raw = self._model.loadFile(te_path)
+        self._te = (
+            np.full(self._shape, float(te_raw), dtype=float)
+            if np.isscalar(te_raw)
+            else np.asarray(te_raw, dtype=float).reshape(self._shape)
+        )
+        # Push Te to the model (scalar config path never set T_e as an attribute).
+        # Store a copy so the model's _te is never the same object as self._te;
+        # this ensures _value_changed() can detect in-place updates via set_value().
+        self._model.T_e = float(te_raw) if np.isscalar(te_raw) else self._te.copy()
+
         self._values = {
             "lithosphere__load_pressure": self._load,
+            "lithosphere__elastic_thickness": self._te,
             "lithosphere__vertical_displacement": self._w,
         }
+
+        # Unhook the config file so _solve_fd() does not re-read T_e (and
+        # other parameters) from disk on every run().  All parameters are now
+        # set as attributes; BMI callers use set_value() to update T_e.
+        self._model.filename = ""
 
     def update(self) -> None:
         """Compute flexural deflection for the current load.
@@ -275,8 +316,15 @@ class BmiGflex(_BmiBase):
         return dest
 
     def set_value(self, name: str, src: NDArray[Any]) -> None:
-        """Overwrite the entire array for variable *name* with values from *src*."""
+        """Overwrite the entire array for variable *name* with values from *src*.
+
+        For ``lithosphere__elastic_thickness``, the new values are pushed to
+        the solver immediately, invalidating the cached coefficient matrix so
+        that the next :meth:`update` uses the updated rigidity field.
+        """
         self.get_value_ptr(name).flat[:] = src
+        if name == "lithosphere__elastic_thickness":
+            self._model.T_e = self._te.copy()
 
     def set_value_at_indices(
         self,
@@ -284,8 +332,14 @@ class BmiGflex(_BmiBase):
         inds: NDArray[np.intp],
         src: NDArray[Any],
     ) -> None:
-        """Set selected flat-indexed elements of variable *name* from *src*."""
+        """Set selected flat-indexed elements of variable *name* from *src*.
+
+        For ``lithosphere__elastic_thickness``, the updated array is pushed to
+        the solver immediately (see :meth:`set_value`).
+        """
         self.get_value_ptr(name).flat[inds] = src
+        if name == "lithosphere__elastic_thickness":
+            self._model.T_e = self._te.copy()
 
     # ------------------------------------------------------------------
     # Grid functions — uniform rectilinear
