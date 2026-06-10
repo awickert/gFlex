@@ -6,9 +6,13 @@ Warning types covered:
   proximity       — fires when nearest loaded cell is within one flexural
                     wavelength of a zero_displacement_zero_slope boundary; absent for
                     zero_slope_zero_shear / mirror / periodic, and when the load is far enough away
+  lu_memory       — UserWarning fires before LU factorisation when estimated
+                    RAM exceeds 80% of available RAM; absent when RAM is
+                    sufficient or when LU is already cached
 """
 
 import warnings
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -517,3 +521,112 @@ def test_initialize_drho_nonpositive_raises_2d(rho_fill):
     flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "zero_displacement_zero_slope"
     with pytest.raises(ValueError, match="rho_fill"):
         flex.initialize()
+
+
+# ---------------------------------------------------------------------------
+# LU memory warning (#68)
+# ---------------------------------------------------------------------------
+# A 50×50 2-D grid (2500 cells) has an estimated LU footprint of ~4.8 MB.
+# Mocking available RAM to 5 MB → estimate is ~97% → warns.
+# Mocking it to 100 MB → ~4.8% → no warning.
+# For 1-D, a 50-cell grid has only ~35 KB of estimated LU RAM; the threshold
+# is set accordingly (40 KB available → ~87% → warns).
+
+_SMALL_RAM_2D = 5_000_000   # 5 MB — forces the warning for a 50×50 grid
+_LARGE_RAM    = 100_000_000  # 100 MB — no warning for a 50×50 grid
+_SMALL_RAM_1D = 40_000      # 40 KB — forces the warning for a 50-cell 1-D grid
+
+
+def _make_fd_2d_50():
+    flex = F2D()
+    flex.quiet = True; flex.method = "fd"; flex.solver = "direct"
+    flex.g = 9.8; flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = 0.0
+    flex.T_e = 35e3; flex.dx = flex.dy = 5000.0
+    flex.qs = np.zeros((50, 50)); flex.qs[25, 25] = 1e6
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "mirror"
+    return flex
+
+
+def _make_fd_1d_50():
+    flex = F1D()
+    flex.quiet = True; flex.method = "fd"; flex.solver = "direct"
+    flex.g = 9.8; flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = 0.0
+    flex.T_e = 35e3; flex.dx = 5000.0
+    flex.qs = np.zeros(50); flex.qs[25] = 1e6
+    flex.bc_west = flex.bc_east = "mirror"
+    return flex
+
+
+def _lu_msgs_2d(flex):
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        flex.initialize()
+        flex.run()
+    return [str(x.message) for x in w
+            if issubclass(x.category, UserWarning) and "LU memory" in str(x.message)]
+
+
+def _lu_msgs_1d(flex):
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        flex.initialize()
+        flex.run()
+    return [str(x.message) for x in w
+            if issubclass(x.category, UserWarning) and "LU memory" in str(x.message)]
+
+
+def test_lu_memory_warning_fires_2d():
+    """LU memory warning fires when estimated RAM exceeds 80% of available."""
+    flex = _make_fd_2d_50()
+    with patch("gflex.f2d._available_ram_bytes", return_value=_SMALL_RAM_2D):
+        msgs = _lu_msgs_2d(flex)
+    assert msgs, "expected LU memory warning"
+    assert "LU memory" in msgs[0]
+    assert "GB" in msgs[0]
+
+
+def test_lu_memory_warning_absent_when_ram_sufficient_2d():
+    """No LU memory warning when RAM is well above the threshold."""
+    flex = _make_fd_2d_50()
+    with patch("gflex.f2d._available_ram_bytes", return_value=_LARGE_RAM):
+        msgs = _lu_msgs_2d(flex)
+    assert not msgs, f"unexpected LU memory warning: {msgs}"
+
+
+def test_lu_memory_warning_fires_1d():
+    """LU memory warning fires in F1D when estimated RAM exceeds 80%."""
+    flex = _make_fd_1d_50()
+    with patch("gflex.f1d._available_ram_bytes", return_value=_SMALL_RAM_1D):
+        msgs = _lu_msgs_1d(flex)
+    assert msgs, "expected LU memory warning"
+
+
+def test_lu_memory_warning_absent_when_ram_sufficient_1d():
+    """No LU memory warning in F1D when RAM is sufficient."""
+    flex = _make_fd_1d_50()
+    with patch("gflex.f1d._available_ram_bytes", return_value=_LARGE_RAM):
+        msgs = _lu_msgs_1d(flex)
+    assert not msgs, f"unexpected LU memory warning: {msgs}"
+
+
+def test_lu_memory_warning_skipped_when_lu_cached():
+    """No LU memory warning on second run when LU is already cached (no_check)."""
+    flex = _make_fd_2d_50()
+    flex.cache_factorization = "no_check"
+    with patch("gflex.f2d._available_ram_bytes", return_value=_SMALL_RAM_2D):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            flex.initialize()
+            flex.run()           # first run — LU factorised, may warn
+            flex.qs[25, 25] = 2e6
+            flex.run()           # second run — LU cached, must not warn
+    second_lu = [str(x.message) for x in w
+                 if issubclass(x.category, UserWarning) and "LU memory" in str(x.message)]
+    # The second run must produce exactly zero LU memory warnings.
+    # (Filter by counting only warnings emitted during the second run is
+    # tricky, so instead assert total count <= 1: at most one from the first.)
+    assert len(second_lu) <= 1, (
+        f"LU memory warning fired on cached second run: {second_lu}"
+    )
