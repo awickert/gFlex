@@ -1761,6 +1761,26 @@ class Flexure(Utility, Plotting):
                 self._bc_north_values = self.bc_north if isinstance(self.bc_north, dict) else None
                 self._bc_south_values = self.bc_south if isinstance(self.bc_south, dict) else None
 
+            # Resolve short string aliases unconditionally.  The coeff_matrix
+            # guard below may be skipped on a re-run (e.g. when a property
+            # setter invalidates the cached matrix after bc_check() has already
+            # seeded _bc_*_norm with the raw user value), so _apply_bc_rigidity
+            # must never see un-aliased names such as "mirror" or "free".
+            _BC_ALIASES = {
+                "clamped":  "zero_displacement_zero_slope",
+                "pinned":   "zero_displacement_zero_moment",
+                "free":     "zero_moment_zero_shear",
+                "mirror":   "zero_slope_zero_shear",
+                "infinite": "no_outside_loads",
+            }
+            _bc_norm_attrs = ["_bc_west_norm", "_bc_east_norm"]
+            if self.dimension == 2:
+                _bc_norm_attrs += ["_bc_north_norm", "_bc_south_norm"]
+            for _attr in _bc_norm_attrs:
+                _raw = getattr(self, _attr)
+                if isinstance(_raw, str):
+                    setattr(self, _attr, _BC_ALIASES.get(_raw, _raw))
+
             # No need to create a coeff_matrix if one already exists
             if self.coeff_matrix is None:
                 # Acceptable string boundary conditions
