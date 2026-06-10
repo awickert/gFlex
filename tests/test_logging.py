@@ -167,7 +167,68 @@ def test_total_start_time_precedes_solver():
     flex.initialize()
     assert hasattr(flex, "_total_start_time")
     flex.run()
-    assert flex._total_start_time <= time.time() - flex.time_to_solve
+    assert flex._total_start_time <= time.perf_counter() - flex.time_to_solve
+
+
+def test_fd_sets_coeff_creation_time_1d():
+    """1D FD run sets coeff_creation_time >= 0 and <= time_to_solve."""
+    flex = _make_fd_1d()
+    flex.initialize()
+    flex.run()
+    assert hasattr(flex, "coeff_creation_time")
+    assert flex.coeff_creation_time >= 0
+    assert flex.coeff_creation_time <= flex.time_to_solve
+
+
+def test_fd_sets_coeff_creation_time_2d():
+    """2D FD run sets coeff_creation_time >= 0 and <= time_to_solve."""
+    flex = F2D()
+    flex.quiet = True
+    flex.method = "fd"
+    flex.bc_north = flex.bc_south = "zero_moment_zero_shear"
+    flex.bc_west  = flex.bc_east  = "zero_moment_zero_shear"
+    flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = 0.0; flex.g = 9.8
+    flex.T_e = 30e3; flex.dx = flex.dy = 10e3
+    n = 20
+    flex.qs = np.zeros((n, n)); flex.qs[n // 2, n // 2] = 1e6
+    flex.initialize()
+    flex.run()
+    assert hasattr(flex, "coeff_creation_time")
+    assert flex.coeff_creation_time >= 0
+    assert flex.coeff_creation_time <= flex.time_to_solve
+
+
+def test_sas_does_not_set_coeff_creation_time():
+    """SAS run does not set coeff_creation_time (no coefficient matrix)."""
+    flex = F1D()
+    flex.quiet = True
+    flex.method = "sas"
+    flex.bc_west = flex.bc_east = ""
+    flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = 0.0; flex.g = 9.8
+    flex.T_e = 30e3; flex.dx = 10e3
+    n = 51
+    flex.qs = np.zeros(n); flex.qs[n // 2] = 1e6
+    flex.initialize()
+    flex.run()
+    assert not hasattr(flex, "coeff_creation_time")
+
+
+def test_fft_does_not_set_coeff_creation_time():
+    """FFT run does not set coeff_creation_time (no coefficient matrix)."""
+    flex = F1D()
+    flex.quiet = True
+    flex.method = "fft"
+    flex.bc_west = flex.bc_east = ""
+    flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = 0.0; flex.g = 9.8
+    flex.T_e = 30e3; flex.dx = 10e3
+    n = 51
+    flex.qs = np.zeros(n); flex.qs[n // 2] = 1e6
+    flex.initialize()
+    flex.run()
+    assert not hasattr(flex, "coeff_creation_time")
 
 
 # ── 6. bc_check UserWarning for FD BCs passed to analytical solver ─────────────
