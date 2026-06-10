@@ -388,7 +388,7 @@ class F1D(Flexure):
             any filename supplied to the constructor.
         """
         self.dimension = 1  # Set it here in case it wasn't set for selection before
-        self._total_start_time = time.time()
+        self._total_start_time = time.perf_counter()
         super().initialize()
         _logger.info("F1D initialized")
         if hasattr(self, "qs") and hasattr(self, "dx"):
@@ -464,7 +464,7 @@ class F1D(Flexure):
         _logger.info("")
         _logger.info("F1D finalized")
         if hasattr(self, "_total_start_time"):
-            _logger.info("  Total runtime [s]: %.6f", time.time() - self._total_start_time)
+            _logger.info("  Total runtime [s]: %.6f", time.perf_counter() - self._total_start_time)
         _logger.info("")
         super().finalize()
 
@@ -825,7 +825,7 @@ class F1D(Flexure):
         """
 
         # Zeroth, start the timer and print the boundary conditions to the screen
-        self.coeff_start_time = time.time()
+        self.coeff_start_time = time.perf_counter()
         _logger.info("  Boundary condition, West: %s", self.bc_west)
         _logger.info("  Boundary condition, East: %s", self.bc_east)
 
@@ -850,7 +850,7 @@ class F1D(Flexure):
         self.build_diagonals()
 
         # Finally, compute the total time this process took
-        self.coeff_creation_time = time.time() - self.coeff_start_time
+        self.coeff_creation_time = time.perf_counter() - self.coeff_start_time
         _logger.info(
             "  Time to construct coefficient (operator) array [s]: %.6f",
             self.coeff_creation_time,
