@@ -4,6 +4,13 @@
 
 ### New features
 
+- **BMI `lithosphere__elastic_thickness` input variable** — `BmiGflex` now
+  exposes elastic thickness as a second input variable (CSDMS Standard Name
+  ``lithosphere__elastic_thickness`` [m]).  Te is usually constant but can be
+  updated between coupling steps via ``set_value()``; the new value is pushed
+  to the solver immediately, invalidating the cached coefficient matrix so the
+  next ``update()`` recomputes deflection with the revised rigidity field.
+
 - **FD one-sided periodic warning** — `F1D` and `F2D` now issue a
   `UserWarning` when `method='fd'` and exactly one side of an opposite
   boundary pair (west/east or north/south) is `'periodic'`.  Periodic BCs
