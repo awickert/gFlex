@@ -311,5 +311,61 @@ def test_2d_fd_convergence_order():
         )
 
 
+def test_pad_domain_2d_improves_fd_accuracy():
+    """Padded 2-D FD agrees better with FFT (infinite plate) than unpadded FD.
+
+    Load at grid cell (2, 2) — within 10 km of the SW corner, well inside one
+    flexural wavelength (≈ 467 km at Te = 35 km).  The zero_displacement_zero_slope
+    BC suppresses the flexural forebulge and distorts the deflection.
+    _pad_domain_2d pushes the effective boundary ≈ one wavelength away,
+    recovering the infinite-plate response.
+    """
+    E = 65e9
+    nu = 0.25
+    rho_m = 3300.0
+    rho_fill = 0.0
+    g = 9.8
+    Te = 35e3
+    dx = dy = 5000.0
+
+    N = 40
+    qs = np.zeros((N, N))
+    qs[2, 2] = 1e6
+    Te_arr = np.full((N, N), Te)
+
+    # FFT: infinite-plate reference
+    flex_fft = F2D()
+    flex_fft.quiet = True
+    flex_fft.method = "fft"
+    flex_fft.g = g; flex_fft.E = E; flex_fft.nu = nu
+    flex_fft.rho_m = rho_m; flex_fft.rho_fill = rho_fill
+    flex_fft.T_e = Te; flex_fft.qs = qs.copy()
+    flex_fft.dx = dx; flex_fft.dy = dy
+    flex_fft.bc_west = flex_fft.bc_east = flex_fft.bc_north = flex_fft.bc_south = ""
+    flex_fft.initialize(); flex_fft.run()
+    w_fft = flex_fft.w.copy(); flex_fft.finalize()
+
+    # Unpadded FD: boundary close to load
+    w_unpadded = _run_flex_2d(Te_arr, qs, dx, dy,
+                              bc="zero_displacement_zero_slope")
+
+    # Padded FD: boundary pushed away; trim to inner domain
+    Te_pad, qs_pad, p = _pad_domain_2d(Te_arr, qs, dx=dx, dy=dy)
+    w_padded_full = _run_flex_2d(Te_pad, qs_pad, dx, dy,
+                                 bc="zero_displacement_zero_slope")
+    w_padded = w_padded_full[p:-p, p:-p]
+
+    # Compare over the SW quadrant where the corner boundary effect is strongest
+    inner = (slice(0, N // 2), slice(0, N // 2))
+    err_unpadded = np.max(np.abs(w_unpadded[inner] - w_fft[inner]))
+    err_padded   = np.max(np.abs(w_padded[inner]   - w_fft[inner]))
+
+    assert err_padded < err_unpadded, (
+        f"Padded FD should agree better with FFT in the inner domain: "
+        f"unpadded max err = {err_unpadded:.4g} m, "
+        f"padded max err = {err_padded:.4g} m"
+    )
+
+
 if __name__ == "__main__":
     test_main()
