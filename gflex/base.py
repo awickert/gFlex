@@ -118,6 +118,41 @@ except ImportError:
     )
 
 
+# ── LU memory estimate helpers ────────────────────────────────────────────────
+# Empirical power-law fit to SuperLU/COLAMD on a gFlex-style 13-diagonal
+# sparse matrix: M_MiB ≈ C × N^exp.  Used to warn before large allocations.
+
+_LU_RAM_C   = 2.41e-4  # fit coefficient (MiB per cell^_LU_RAM_EXP)
+_LU_RAM_EXP = 1.26     # empirical log-log slope
+
+
+def _available_ram_bytes():
+    """Return available system RAM in bytes, or None if indeterminate."""
+    try:
+        import psutil
+        return psutil.virtual_memory().available
+    except ImportError:
+        pass
+    try:
+        with open("/proc/meminfo") as fh:
+            for line in fh:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) * 1024
+    except OSError:
+        pass
+    return None
+
+
+def _estimate_lu_ram_bytes(n_cells):
+    """Estimated peak LU RAM in bytes for a *n_cells*-cell FD grid.
+
+    Uses M ≈ 2.41×10⁻⁴ · N^1.26 MiB, fit to SuperLU/COLAMD on a gFlex
+    13-diagonal sparse matrix.  Accurate to within ~20 % for square 2-D grids;
+    conservative (overestimates) for 1-D problems.
+    """
+    return _LU_RAM_C * (n_cells ** _LU_RAM_EXP) * 1024 * 1024
+
+
 class _RigidityBC(Enum):
     """Internal enum for flexural-rigidity boundary condition type."""
     PERIODIC = "periodic"
