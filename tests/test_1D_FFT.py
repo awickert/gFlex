@@ -243,5 +243,33 @@ def test_fft_1d_no_bcs_set():
     assert flex.w.min() < 0  # subsidence under load
 
 
+# ---------------------------------------------------------------------------
+# Zero-padded FFT vs SAS: both model infinite plate, so they must agree
+# ---------------------------------------------------------------------------
+
+def test_fft_1d_padded_vs_sas():
+    """Zero-padded 1-D FFT agrees with SAS for a central block load.
+
+    Both methods model an infinite plate (no outside loads).  Agreement to
+    rtol=2e-3 confirms the zero-padded FFT transfer function and the SAS
+    Green's-function normalisation are consistent.
+    """
+    N = 100
+    qs = np.zeros(N)
+    qs[45:55] = 1e6
+
+    flex_fft = _run_flex_1d(qs)                       # FFT with default zero-padding
+    flex_sas = _run_flex_1d(qs, method="sas")          # SAS (exact infinite plate)
+
+    # Compare interior only, away from the auto-padded edge where the
+    # zero-pad boundary is closest and the approximation is weakest.
+    m = 15
+    np.testing.assert_allclose(
+        flex_fft.w[m : N - m],
+        flex_sas.w[m : N - m],
+        rtol=2e-3,
+    )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
