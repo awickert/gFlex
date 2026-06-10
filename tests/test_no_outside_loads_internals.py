@@ -186,6 +186,50 @@ def test_auto_pad_te_2d_inner_domain_preserved():
     np.testing.assert_array_equal(out[4:14, 4:14], Te_inner)
 
 
+def test_smooth_pad_te_2d_top_rows_monotonic():
+    """Top padding rows increase monotonically from Te_out (outer) to Te_inner edge."""
+    Te_inner = np.full((12, 12), Te)
+    Te_out = 20e3      # less than Te → taper increases inward
+    p = 6
+    Te_pad = smooth_pad_Te(Te_inner, pad_width=p, Te_out=Te_out)
+    mid_col = p + 6    # a column in the inner domain (no corner blending)
+    top_slice = Te_pad[:p, mid_col]
+    assert np.all(np.diff(top_slice) >= 0), "Top padding should increase toward inner domain"
+
+
+def test_smooth_pad_te_2d_bottom_rows_monotonic():
+    """Bottom padding rows decrease monotonically from Te_inner edge to Te_out (outer)."""
+    Te_inner = np.full((12, 12), Te)
+    Te_out = 20e3
+    p = 6
+    Te_pad = smooth_pad_Te(Te_inner, pad_width=p, Te_out=Te_out)
+    mid_col = p + 6
+    bottom_slice = Te_pad[-p:, mid_col]
+    assert np.all(np.diff(bottom_slice) <= 0), "Bottom padding should decrease toward outer edge"
+
+
+def test_smooth_pad_te_2d_left_cols_monotonic():
+    """Left padding columns increase monotonically from Te_out (outer) to Te_inner edge."""
+    Te_inner = np.full((12, 12), Te)
+    Te_out = 20e3
+    p = 6
+    Te_pad = smooth_pad_Te(Te_inner, pad_width=p, Te_out=Te_out)
+    mid_row = p + 6
+    left_slice = Te_pad[mid_row, :p]
+    assert np.all(np.diff(left_slice) >= 0), "Left padding should increase toward inner domain"
+
+
+def test_smooth_pad_te_2d_right_cols_monotonic():
+    """Right padding columns decrease monotonically from Te_inner edge to Te_out (outer)."""
+    Te_inner = np.full((12, 12), Te)
+    Te_out = 20e3
+    p = 6
+    Te_pad = smooth_pad_Te(Te_inner, pad_width=p, Te_out=Te_out)
+    mid_row = p + 6
+    right_slice = Te_pad[mid_row, -p:]
+    assert np.all(np.diff(right_slice) <= 0), "Right padding should decrease toward outer edge"
+
+
 def test_auto_pad_te_2d_outer_corners_near_te_out():
     """Outermost corner cells should be close to Te_out (fully outside)."""
     Te_inner = np.full((8, 8), 40e3)
