@@ -87,20 +87,20 @@ For a full parameter reference, see the [Configuration Files](https://gflex.read
 
 Six boundary conditions are available for FD solutions (see also Table 1 in Wickert, 2016):
 
-| Name | Condition | Physical interpretation |
-|------|-----------|------------------------|
-| `zero_displacement_zero_slope` | w = 0, dw/dx = 0 | Clamped end: zero deflection and zero slope (no rotation) — alias `clamped` |
-| `zero_displacement_zero_moment` | w = 0, d²w/dx² = 0 | Simply supported (pinned) end: zero deflection, free to rotate — alias `pinned` |
-| `zero_moment_zero_shear` | d²w/dx² = d³w/dx³ = 0 | Broken plate: free end with no moment or shear |
-| `zero_slope_zero_shear` | dw/dx = d³w/dx³ = 0 | Plate is level at the boundary but free to deflect there; no shear transmitted |
-| `mirror` | w(b − x) = w(b + x) | Mirror-symmetry plane — model only half of a symmetric system |
-| `periodic` | w(0) = w(L) | Wrap-around: the domain tiles infinitely in both directions |
+| Name | Aliases | Condition | Physical interpretation |
+|------|---------|-----------|------------------------|
+| `zero_displacement_zero_slope` | `clamped` | w = 0, dw/dx = 0 | Clamped end: zero deflection and zero slope (no rotation) |
+| `zero_displacement_zero_moment` | `pinned` | w = 0, d²w/dx² = 0 | Simply supported (pinned) end: zero deflection, free to rotate |
+| `zero_moment_zero_shear` | `free` | d²w/dx² = d³w/dx³ = 0 | Free (broken) plate end: no moment or shear force transmitted |
+| `zero_slope_zero_shear` | `mirror` | dw/dx = d³w/dx³ = 0 | Plate is level at the boundary but free to deflect there; no shear transmitted — use for symmetry planes |
+| `no_outside_loads` | `infinite` | w → 0 at ∞ | Infinite plate: the solver auto-pads the domain by one flexural wavelength |
+| `periodic` | — | w(0) = w(L) | Wrap-around: the domain tiles infinitely in both directions |
 
-For SAS and SAS_NG, `no_outside_loads` (or a blank entry) is used instead; the plate is assumed undeflected at infinity.
+For SAS and SAS_NG, `no_outside_loads` (or a blank entry) is always assumed; the analytical solution is inherently infinite-plate.
 
 **FD boundary-condition warnings:** when running F1D or F2D with the finite-difference solver, gFlex issues `UserWarning` messages for `'zero_moment_zero_shear'` (free broken plate end — verify a rifted margin is intended), `'zero_slope_zero_shear'` (no clear geological analog), and when the nearest loaded cell is within one flexural wavelength of a `'zero_displacement_zero_slope'` boundary (the forebulge would be suppressed). See the [API reference](https://gflex.readthedocs.io/en/latest/api.html#fd-boundary-condition-warnings) for how to suppress or re-enable these warnings.
 
-**A note on `zero_slope_zero_shear`:** the label in Wickert (2016) is "free displacement of a horizontally clamped boundary." The plate is forced to be exactly level at the boundary (dw/dx = 0) — as if it were clamped against rotation — while its vertical position is unconstrained and no shear force is transmitted (d³w/dx³ = 0). This is superficially similar to `mirror` (both enforce zero slope at the boundary), but `zero_slope_zero_shear` uses a different finite-difference stencil and the two produce noticeably different solutions even far from the boundary. For symmetry problems — e.g., modelling half of a symmetric mountain range or ice sheet — `mirror` is the more accurate choice.
+**A note on `zero_slope_zero_shear` / `mirror`:** the label in Wickert (2016) is "free displacement of a horizontally clamped boundary." The plate is forced to be exactly level at the boundary (dw/dx = 0) — as if it were clamped against rotation — while its vertical position is unconstrained and no shear force is transmitted (d³w/dx³ = 0). `mirror` is an alias for `zero_slope_zero_shear`; both produce identical solutions and are interchangeable. This BC is the natural choice for symmetry planes — e.g., modelling half of a symmetric mountain range or ice sheet.
 
 #### Within a Python script (with or without a configuration file)
 
@@ -136,9 +136,10 @@ flex.qs = np.zeros((50, 50)) # Template array for surface load stresses
 flex.qs[10:40, 10:40] += 1E6 # Populating this template
 flex.dx = 5000. # grid cell size, x-oriented [m]
 flex.dy = 5000. # grid cell size, y-oriented [m]
-# Boundary conditions can be:
-# (FD): zero_displacement_zero_slope, zero_displacement_zero_moment, zero_moment_zero_shear, zero_slope_zero_shear, mirror, or periodic
-# For SAS or SAS_NG, no_outside_loads is valid, and no entry defaults to this
+# Boundary conditions (FD): zero_displacement_zero_slope, zero_displacement_zero_moment,
+#   zero_moment_zero_shear, zero_slope_zero_shear, no_outside_loads, periodic
+#   (aliases: clamped, pinned, free, mirror, infinite)
+# For SAS or SAS_NG, no_outside_loads is always assumed; no entry defaults to this
 flex.bc_west = 'zero_displacement_zero_slope' # west boundary condition
 flex.bc_east = 'zero_moment_zero_shear' # east boundary condition
 flex.bc_south = 'zero_displacement_zero_slope' # south boundary condition
