@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from gflex import flexural_wavelengths
+from gflex.base import _available_ram_bytes, _estimate_lu_ram_bytes
 from gflex.f1d import recommended_pad_width_1d
 from gflex.f2d import recommended_pad_width
 
@@ -73,3 +74,38 @@ def test_recommended_pad_width_drho_nonpositive_raises(rho_fill):
     """recommended_pad_width raises ValueError when rho_fill >= rho_m."""
     with pytest.raises(ValueError, match="rho_fill"):
         recommended_pad_width(Te=35e3, dx=5000.0, rho_m=3300.0, rho_fill=rho_fill)
+
+
+# ---------------------------------------------------------------------------
+# LU memory helpers (_available_ram_bytes, _estimate_lu_ram_bytes)
+# ---------------------------------------------------------------------------
+
+def test_available_ram_bytes_returns_positive_int_or_none():
+    """_available_ram_bytes() returns a positive int on this platform, or None."""
+    result = _available_ram_bytes()
+    if result is not None:
+        assert isinstance(result, int)
+        assert result > 0
+
+
+def test_available_ram_bytes_plausible_magnitude():
+    """Available RAM is at least 10 MiB (any real machine) if detectable."""
+    result = _available_ram_bytes()
+    if result is not None:
+        assert result >= 10 * 1024 * 1024, f"implausibly low: {result} bytes"
+
+
+def test_estimate_lu_ram_bytes_known_values():
+    """Empirical fit gives ~26 MiB for 10k cells and ~838 MiB for 160k cells."""
+    # Tolerances allow ±30% around the measured benchmark values.
+    mib_10k  = _estimate_lu_ram_bytes(10_000)  / (1024 * 1024)
+    mib_160k = _estimate_lu_ram_bytes(160_000) / (1024 * 1024)
+    assert 18 < mib_10k  < 34,  f"10k cells: expected ~26 MiB, got {mib_10k:.1f}"
+    assert 587 < mib_160k < 1090, f"160k cells: expected ~838 MiB, got {mib_160k:.1f}"
+
+
+def test_estimate_lu_ram_bytes_monotone():
+    """Larger grids always yield a larger estimate."""
+    sizes = [1_000, 10_000, 40_000, 90_000, 160_000, 250_000]
+    estimates = [_estimate_lu_ram_bytes(n) for n in sizes]
+    assert estimates == sorted(estimates), "estimates are not strictly increasing"
