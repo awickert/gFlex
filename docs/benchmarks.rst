@@ -28,18 +28,27 @@ The **FD direct solver** uses a sparse LU factorisation and scales roughly as
 :math:`O(N^{1.5})` in two dimensions, where :math:`N` is the total number of
 grid cells.  At 400×400 cells (:math:`N^2 = 160\,000`) a single FD solve takes
 about 5 s; at 200×200 it takes about 0.6 s.
+In one dimension the cost is far lower: at 100–2,000 cells a 1-D FD solve
+completes in under 1 ms on this hardware, and even a 10,000-cell domain takes
+well under 10 ms.  One-dimensional FD is effectively instantaneous at any
+realistic grid size.
 
 The **FFT** method solves the problem in the spectral domain and scales as
 :math:`O(N \log N)`.  In two dimensions it is roughly two orders of magnitude
-faster than FD at the same grid size, but requires a uniform (scalar) elastic
-thickness and imposes periodic boundary conditions (or zero-padded behaviour
-with ``no_outside_loads``).
+faster than FD at the same grid size: a 400×400 solve takes about 5 ms and a
+1000×1000 solve about 40 ms on this hardware.  FFT requires a uniform (scalar)
+elastic thickness and imposes periodic boundary conditions (or zero-padded
+behaviour with ``no_outside_loads``).
 
 The **SAS** method superposes analytical deflection kernels using
-``fftconvolve``, scaling as :math:`O(N^2 \log N)` in two dimensions.  It is
-load-pattern-independent and faster than FD for small to moderate grids,
-but becomes comparable to or slower than FD at very large grids.  It also
-requires a uniform elastic thickness.
+``fftconvolve``, scaling as :math:`O(N \log N)` in total cell count.  It is
+load-pattern-independent and consistently faster than FD at all practical grid
+sizes: at 100×100 cells SAS takes about 20 ms versus 70 ms for FD; at 300×300
+cells SAS takes about 0.2 s versus 2 s for FD (roughly 10× faster).  Because
+the ``fftconvolve`` step scales as :math:`O(N \log N)` — the same asymptotic
+order as FFT — while the FD LU factorisation scales as :math:`O(N^{1.5})`, SAS
+maintains its advantage as grids grow.  SAS also requires a uniform elastic
+thickness.
 
 The Te profile has a modest effect on FD timing: the shaded band (min to max
 across all profiles tested — constant, sinusoidal, abrupt step, tanh sigmoidal,
@@ -138,10 +147,16 @@ Method complexity summary
      - :math:`O(N \log N)`
      - :math:`O(N)`
      - Uniform :math:`T_e` only.  Fastest method; memory scales linearly.
-   * - ``sas`` / ``sas_ng``
-     - :math:`O(N \log N)`\ –\ :math:`O(N^2 \log N)`
+   * - ``sas``
+     - :math:`O(N \log N)`
      - :math:`O(N)`
-     - Uniform :math:`T_e` only.  Memory linear; see timing figures above.
+     - Uniform :math:`T_e` only.  Memory linear; ``fftconvolve`` kernel
+       scales the same as FFT.  See timing figures above.
+   * - ``sas_ng``
+     - :math:`O(N^2)`
+     - :math:`O(N)`
+     - Uniform :math:`T_e` only.  Ungridded point loads; scales as the
+       direct Green's-function sum :math:`O(N_\text{load} \times N_\text{out})`.
 
 :math:`N` is the total number of grid cells after any domain padding.
 
