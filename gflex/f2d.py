@@ -30,7 +30,8 @@ from scipy.signal import fftconvolve
 from scipy.special import kei
 from scipy.sparse.linalg import factorized, spsolve
 
-from gflex.base import Flexure, _RigidityBC, _matrix_hash
+from gflex.base import (Flexure, _RigidityBC, _matrix_hash,
+                        _available_ram_bytes, _estimate_lu_ram_bytes)
 
 
 def flexural_wavelengths(Te, E, nu, rho_m, rho_fill, g):
@@ -725,6 +726,21 @@ class F2D(Flexure):
         elif self.cache_factorization == "no_check" and self._lu is not None:
             pass  # coeff_matrix was freed after factorization; _lu still valid
         else:
+            _avail = _available_ram_bytes()
+            if _avail is not None:
+                _est = _estimate_lu_ram_bytes(self.qs.size)
+                _pct = 100.0 * _est / _avail
+                if _pct > 80:
+                    warnings.warn(
+                        f"FD solver: estimated LU memory requirement "
+                        f"~{_est / 1e9:.1f} GB out of {_avail / 1e9:.1f} GB free.\n"
+                        f"{_pct:.0f}% of available RAM may be needed.\n"
+                        "The solve may exhaust memory.\n"
+                        "Consider method='fft' (requires uniform Te) "
+                        "or reducing grid resolution.",
+                        UserWarning,
+                        stacklevel=3,
+                    )
             self.elasprep()
             self._build_coefficient_matrix()
         self.fd_solve()
