@@ -116,6 +116,15 @@
   and `qs` were cropped back to the original domain, leaving them
   inconsistent with `w.shape` until the next run.  Now explicitly
   restored after the crop.
+- Fixed `RuntimeError` when a coupling loop re-runs the FD solver after a
+  property setter (e.g. assigning `T_e`) invalidates the cached coefficient
+  matrix between runs.  `bc_check()` seeds the internal `_bc_*_norm`
+  attributes with the raw user-supplied BC string, then resolves short
+  aliases (``'mirror'`` → ``'zero_slope_zero_shear'``, etc.) only inside
+  the ``coeff_matrix is None`` guard.  If the matrix was valid at
+  `bc_check()` time but later invalidated by a setter, the guard was
+  skipped and `_apply_bc_rigidity()` received an unrecognised alias string.
+  Fix: alias resolution now runs unconditionally before the guard.
 
 ----
 
