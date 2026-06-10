@@ -149,6 +149,27 @@ def test_update_until(bmi_1d):
     assert bmi_1d.get_current_time() == pytest.approx(3.0)
 
 
+def test_update_until_zero_does_not_advance(bmi_1d):
+    """update_until(0.0) at t=0 must not call update() at all."""
+    assert bmi_1d.get_current_time() == pytest.approx(0.0)
+    bmi_1d.update_until(0.0)
+    assert bmi_1d.get_current_time() == pytest.approx(0.0)
+
+
+def test_update_until_past_time_is_no_op(bmi_1d):
+    """update_until with a time <= current_time must not advance the model."""
+    bmi_1d.update()                          # advance to t = 1.0
+    t_before = bmi_1d.get_current_time()
+    bmi_1d.update_until(0.5)                 # target in the past
+    assert bmi_1d.get_current_time() == pytest.approx(t_before)
+
+
+def test_update_until_2d(bmi_2d):
+    """update_until works for 2-D BMI across multiple steps."""
+    bmi_2d.update_until(3.0)
+    assert bmi_2d.get_current_time() == pytest.approx(3.0)
+
+
 # ------------------------------------------------------------------
 # get_value / set_value round-trip
 # ------------------------------------------------------------------
