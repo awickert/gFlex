@@ -107,6 +107,26 @@ def _mms_1d_mirror(nx):
     qs   = (D * k**4 + DRHO_G) * _m(xi)
     return dx, w_ex, qs
 
+def _mms_1d_clamped_free(nx):
+    """Mixed-BC MMS: clamped at west (ξ=0), free at east (ξ=1).
+
+    Polynomial w_f(ξ) = −14ξ²+6ξ³+ξ⁴−ξ⁵ satisfies all four BCs:
+      w_f(0) = 0           (zero displacement, clamped)
+      w_f'(0) = 0          (zero slope, clamped)
+      w_f''(1) = 0         (zero moment, free end)
+      w_f'''(1) = 0        (zero shear, free end, constant D)
+
+    w_f''''(ξ) = 24 − 120ξ (linear, not constant), so the manufactured
+    load is also a polynomial.
+    """
+    dx    = L / (nx - 1)
+    xi    = np.arange(nx) / (nx - 1)
+    wf    = -14*xi**2 + 6*xi**3 + xi**4 - xi**5
+    w_ex  = -wf                                   # gFlex sign convention
+    qs    = D * (24 - 120*xi) / L**4 + DRHO_G * wf
+    return dx, w_ex, qs
+
+
 # Fractional D variation for the variable-Te MMS: D(ξ) = D*(1 + _VAR_A*ξ).
 _VAR_A = 0.5
 
@@ -167,6 +187,41 @@ def _mms_2d_mirror(n):
     w_ex = -_m(eta) * _m(xi)
     qs   = (4*D * k**4 + DRHO_G) * _m(eta) * _m(xi)
     return dx, w_ex, qs
+
+_VAR_A2D = 0.5   # x-direction D variation coefficient
+_VAR_B2D = 0.3   # y-direction D variation coefficient
+
+def _mms_2d_variable_te(n):
+    """Variable-Te MMS 2-D: D(ξ,η) = D₀(1+aξ)(1+bη), w_exact = -g(ξ)g(η).
+
+    The manufactured load is derived analytically from
+    ∂²/∂x²[D∂²w/∂x²] + 2∂²/∂x∂y[D∂²w/∂x∂y] + ∂²/∂y²[D∂²w/∂y²] + Δρg·w = −q.
+
+    All three operator terms have analytic forms in terms of g, g', g'', g''',
+    g'''' evaluated at (ξ, η).  The cross-derivative term
+    2∂²/∂x∂y[D∂²w/∂x∂y] is non-zero because D varies in both x and y and
+    w varies in both x and y; it is absent in the 1-D strip test.
+    """
+    a, b = _VAR_A2D, _VAR_B2D
+    dx  = L / (n - 1)
+    eta = np.arange(n)[:, np.newaxis] / (n - 1)   # (n, 1)
+    xi  = np.arange(n)[np.newaxis, :] / (n - 1)   # (1, n)
+    # T_e(ξ,η): D(ξ,η) = D₀·(1+a·ξ)·(1+b·η) → T_e³ ∝ D
+    te  = TE * ((1 + a*xi) * (1 + b*eta)) ** (1.0/3.0)
+    w_ex = -_g(eta) * _g(xi)
+    # ∂²/∂x²[D ∂²w/∂x²]  →  D₀·(1+b·η)·g(η)·[2a·g'''(ξ)+(1+a·ξ)·g''''(ξ)]
+    g3xi  = -12 + 24*xi
+    g3eta = -12 + 24*eta
+    T1 = (1+b*eta)*_g(eta) * (2*a*g3xi + 24*(1+a*xi))
+    # Cross term: 2·∂²/∂x∂y[D·∂²w/∂x∂y]  →  2·P(ξ)·Q(η)
+    #   where P = a·g'(ξ)+(1+a·ξ)·g''(ξ), Q = b·g'(η)+(1+b·η)·g''(η)
+    P = a*(2*xi*(1-xi)*(1-2*xi)) + (1+a*xi)*_g2(xi)
+    Q = b*(2*eta*(1-eta)*(1-2*eta)) + (1+b*eta)*_g2(eta)
+    T2 = 2*P*Q
+    # ∂²/∂y²[D ∂²w/∂y²]  →  D₀·(1+a·ξ)·g(ξ)·[2b·g'''(η)+(1+b·η)·g''''(η)]
+    T3 = (1+a*xi)*_g(xi) * (2*b*g3eta + 24*(1+b*eta))
+    qs  = D/L**4 * (T1 + T2 + T3) + DRHO_G * _g(eta) * _g(xi)
+    return dx, te, w_ex, qs
 
 
 # ---------------------------------------------------------------------------
@@ -235,6 +290,34 @@ def _run_2d(dx, qs, bc):
     s.rho_m    = RHO_M
     s.rho_fill = RHO_F
     s.T_e      = TE
+    s.dx       = dx
+    s.dy       = dx
+    s.qs       = qs
+    s.bc_west  = bc
+    s.bc_east  = bc
+    s.bc_north = bc
+    s.bc_south = bc
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        s.initialize()
+        s.run()
+        w = s.w
+        s.finalize()
+    return w
+
+
+def _run_2d_te(dx, te, qs, bc):
+    """Like _run_2d but accepts a Te array for variable-rigidity tests."""
+    s = F2D()
+    s.quiet    = True
+    s.method   = "fd"
+    s.solver   = "direct"
+    s.g        = G
+    s.E        = E
+    s.nu       = NU
+    s.rho_m    = RHO_M
+    s.rho_fill = RHO_F
+    s.T_e      = te
     s.dx       = dx
     s.dy       = dx
     s.qs       = qs
@@ -414,6 +497,47 @@ class TestMirrorBC2D:
 
 
 # ===========================================================================
+# Mixed BCs: clamped west, free east
+# ===========================================================================
+
+class TestMixedBC1D:
+
+    def test_convergence_order(self):
+        """1-D clamped-west / free-east achieves O(dx²) MMS convergence.
+
+        Uses w_f(ξ) = −14ξ²+6ξ³+ξ⁴−ξ⁵, which simultaneously satisfies the
+        clamped BC (w=w'=0 at ξ=0) and the free-end BC (w''=w'''=0 at ξ=1).
+        """
+        dxs, errs = [], []
+        for nx in NX_1D:
+            dx, w_ex, qs = _mms_1d_clamped_free(nx)
+            s = F1D()
+            s.quiet    = True
+            s.verbose  = False
+            s.debug    = False
+            s.method   = "fd"
+            s.g        = G
+            s.E        = E
+            s.nu       = NU
+            s.rho_m    = RHO_M
+            s.rho_fill = RHO_F
+            s.T_e      = TE
+            s.dx       = dx
+            s.qs       = qs
+            s.bc_west  = "zero_displacement_zero_slope"
+            s.bc_east  = "zero_moment_zero_shear"
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                s.initialize()
+                s.run()
+                w = s.w
+                s.finalize()
+            errs.append(np.max(np.abs(w - w_ex)) / np.max(np.abs(w_ex)))
+            dxs.append(dx)
+        _assert_second_order(dxs, errs, "clamped/free mixed", "1-D")
+
+
+# ===========================================================================
 # Variable elastic thickness (FD only)
 # ===========================================================================
 
@@ -433,3 +557,70 @@ class TestVariableTe1D:
             errs.append(np.max(np.abs(w - w_ex)) / np.max(np.abs(w_ex)))
             dxs.append(dx)
         _assert_second_order(dxs, errs, "variable-Te", "1-D")
+
+    def test_2d_strip_matches_1d(self):
+        """2-D FD with D(x) and uniform y-load reduces exactly to the 1-D problem.
+
+        When D depends only on x and qs is uniform in y, the 2-D plate operator
+        reduces to the 1-D operator.  With periodic y-BCs the 2-D solution is
+        constant in y, so every row must match the 1-D FD result.  Any deviation
+        indicates a bug in the variable-Te cross-derivative stencil terms.
+        """
+        nx = NX_1D[1]     # 100 cells in x
+        ny = 5            # a few rows; constant result expected for all
+        dx, te_1d, w_ex_1d, qs_1d = _mms_1d_variable_te(nx)
+
+        # Broadcast to 2-D (uniform in y)
+        te_2d = np.tile(te_1d, (ny, 1))
+        qs_2d = np.tile(qs_1d, (ny, 1))
+
+        w_1d = _run_1d_te(dx, te_1d, qs_1d, "zero_displacement_zero_slope")
+
+        s = F2D()
+        s.quiet    = True
+        s.method   = "fd"
+        s.solver   = "direct"
+        s.g        = G
+        s.E        = E
+        s.nu       = NU
+        s.rho_m    = RHO_M
+        s.rho_fill = RHO_F
+        s.T_e      = te_2d
+        s.dx       = dx
+        s.dy       = dx
+        s.qs       = qs_2d
+        s.bc_west  = "zero_displacement_zero_slope"
+        s.bc_east  = "zero_displacement_zero_slope"
+        s.bc_north = "periodic"
+        s.bc_south = "periodic"
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            s.initialize()
+            s.run()
+            w_2d = s.w
+            s.finalize()
+
+        for row in range(ny):
+            np.testing.assert_allclose(
+                w_2d[row, :], w_1d, atol=1e-6,
+                err_msg=f"2-D row {row} does not match 1-D result",
+            )
+
+
+class TestVariableTe2D:
+
+    def test_convergence_order(self):
+        """Variable-Te 2-D FD achieves O(dx²) MMS convergence.
+
+        Uses D(ξ,η) = D₀(1+0.5ξ)(1+0.3η) with clamped BCs on all four sides.
+        The manufactured load includes the cross-derivative term
+        2∂²/∂x∂y[D∂²w/∂x∂y], which is non-zero when D varies in both x and y.
+        Any slope below 1.8 indicates a bug in the variable-Te vWC1994 stencil.
+        """
+        dxs, errs = [], []
+        for n in N_2D:
+            dx, te, w_ex, qs = _mms_2d_variable_te(n)
+            w = _run_2d_te(dx, te, qs, "zero_displacement_zero_slope")
+            errs.append(np.max(np.abs(w - w_ex)) / np.max(np.abs(w_ex)))
+            dxs.append(dx)
+        _assert_second_order(dxs, errs, "variable-Te", "2-D")
