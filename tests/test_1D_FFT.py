@@ -271,5 +271,28 @@ def test_fft_1d_padded_vs_sas():
     )
 
 
+# FFT with all-zero load (regression for issue #69)
+# ---------------------------------------------------------------------------
+
+def test_fft_1d_zero_load_zero_deflection():
+    """All-zero load must produce all-zero deflection, not NaN (issue #69)."""
+    flex = F1D()
+    flex.quiet = True
+    flex.method = "fft"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill
+    flex.T_e = Te
+    flex.qs = np.zeros(50)
+    flex.dx = 5000.0
+    flex.initialize()
+    flex.run()
+    assert not np.isnan(flex.w).any(), "FFT returned NaN for all-zero load"
+    assert np.allclose(flex.w, 0.0), "FFT returned non-zero deflection for zero load"
+    flex.finalize()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

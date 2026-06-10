@@ -397,5 +397,28 @@ def test_fft_2d_no_bcs_set():
     assert flex.w.min() < 0  # subsidence under load
 
 
+# FFT with all-zero load (regression for issue #69)
+# ---------------------------------------------------------------------------
+
+def test_fft_2d_zero_load_zero_deflection():
+    """All-zero load must produce all-zero deflection, not NaN (issue #69)."""
+    flex = F2D()
+    flex.quiet = True
+    flex.method = "fft"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill
+    flex.T_e = Te
+    flex.qs = np.zeros((30, 30))
+    flex.dx = flex.dy = dx
+    flex.initialize()
+    flex.run()
+    assert not np.isnan(flex.w).any(), "FFT returned NaN for all-zero load"
+    assert np.allclose(flex.w, 0.0), "FFT returned non-zero deflection for zero load"
+    flex.finalize()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
