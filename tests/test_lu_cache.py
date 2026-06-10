@@ -160,6 +160,16 @@ def test_finalize_clears_lu_cache():
     assert not hasattr(flex, "_lu_matrix_hash")
 
 
+def test_finalize_clears_lu_cache_no_check():
+    """finalize() must delete _lu even in no_check mode (coeff_matrix was freed)."""
+    flex = _make_f1d(cache="no_check")
+    flex.run()
+    assert flex._lu is not None
+    flex.finalize()
+    assert not hasattr(flex, "_lu")
+    assert not hasattr(flex, "_lu_matrix_hash")
+
+
 # ── no_check free-solo: coeff_matrix freed after factorization ────────────────
 
 def test_1d_no_check_coeff_matrix_freed_after_factorization():
