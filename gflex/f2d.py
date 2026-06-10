@@ -537,7 +537,7 @@ class F2D(Flexure):
         maximum throughput when the coefficient matrix is guaranteed stable.
         """
         self.bc_check()
-        self.solver_start_time = time.time()
+        self.solver_start_time = time.perf_counter()
 
         if self.method == "fd":
             # Finite difference
@@ -562,7 +562,7 @@ class F2D(Flexure):
         _logger.info("F2D run")
         self.method_func()
 
-        self.time_to_solve = time.time() - self.solver_start_time
+        self.time_to_solve = time.perf_counter() - self.solver_start_time
         if hasattr(self, "linear_solve_time"):
             _logger.info("  Time for linear solve [s]: %.6f", self.linear_solve_time)
         else:
