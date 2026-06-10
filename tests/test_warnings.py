@@ -630,3 +630,64 @@ def test_lu_memory_warning_skipped_when_lu_cached():
     assert len(second_lu) <= 1, (
         f"LU memory warning fired on cached second run: {second_lu}"
     )
+
+
+def test_lu_memory_warning_skipped_when_ram_unknown():
+    """No crash and no LU memory warning when available RAM cannot be determined."""
+    flex = _make_fd_2d_50()
+    with patch("gflex.f2d._available_ram_bytes", return_value=None):
+        msgs = _lu_msgs_2d(flex)
+    assert not msgs, f"unexpected LU memory warning: {msgs}"
+
+
+def test_lu_memory_warning_message_content():
+    """Warning message contains the percentage, 'available RAM', and 'free'."""
+    flex = _make_fd_2d_50()
+    with patch("gflex.f2d._available_ram_bytes", return_value=_SMALL_RAM_2D):
+        msgs = _lu_msgs_2d(flex)
+    assert msgs, "expected LU memory warning"
+    msg = msgs[0]
+    assert "%" in msg
+    assert "available RAM" in msg
+    assert "free" in msg
+
+
+def test_lu_memory_warning_uses_padded_size():
+    """Warning fires based on the padded domain size, not the original.
+
+    50×50 original → ~4.8 MB estimated (4.8% of 100 MB → no warning).
+    With all-sides no_outside_loads the domain pads to 184×184 (~128 MB,
+    128% of 100 MB → warning fires).
+    """
+    _RAM = 100_000_000  # 100 MB: original would not warn; padded does
+    flex = F2D()
+    flex.quiet = True; flex.method = "fd"; flex.solver = "direct"
+    flex.g = 9.8; flex.E = 65e9; flex.nu = 0.25
+    flex.rho_m = 3300.0; flex.rho_fill = 0.0
+    flex.T_e = 35e3; flex.dx = flex.dy = 5000.0
+    flex.qs = np.zeros((50, 50)); flex.qs[25, 25] = 1e6
+    flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "no_outside_loads"
+    with patch("gflex.f2d._available_ram_bytes", return_value=_RAM):
+        msgs = _lu_msgs_2d(flex)
+    assert msgs, (
+        "expected LU memory warning for padded domain; "
+        "original 50×50 at 100 MB available would not trigger it"
+    )
+
+
+def test_lu_memory_warning_skipped_when_lu_cached_true_mode():
+    """No LU memory warning on second run with cache_factorization=True (hash match)."""
+    flex = _make_fd_2d_50()
+    flex.cache_factorization = True
+    with patch("gflex.f2d._available_ram_bytes", return_value=_SMALL_RAM_2D):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            flex.initialize()
+            flex.run()           # first run — factorises and caches
+            flex.qs[25, 25] = 2e6
+            flex.run()           # second run — hash matches; LU reused
+    second_lu = [str(x.message) for x in w
+                 if issubclass(x.category, UserWarning) and "LU memory" in str(x.message)]
+    assert len(second_lu) <= 1, (
+        f"LU memory warning fired on cached second run (True mode): {second_lu}"
+    )
