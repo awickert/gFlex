@@ -339,6 +339,17 @@ class F1D(Flexure):
         of the load are separated by 2 × ``fft_pad_n_alpha`` × α₁D.
         Default ``4`` (8α₁D total separation).  Ignored when
         ``method != 'fft'`` or when all BCs are ``'periodic'``.
+    cache_factorization : bool or ``"no_check"``
+        Controls LU factorisation caching for the FD ``'direct'`` solver.
+        ``False`` (default) — re-factorises on every :meth:`run` call.
+        ``True`` — reuses the cached factorisation when a hash of the
+        coefficient matrix matches; recomputes when any matrix-determining
+        input changes.  ``"no_check"`` — reuses the factorisation on every
+        call without hashing (maximum speed; the matrix is freed after
+        factorisation and only the LU factors are kept).  Smart
+        invalidation clears the cache automatically when ``T_e``, ``dx``,
+        boundary conditions, or physical parameters are reassigned.
+        Ignored when ``method != 'fd'``.
     quiet : bool
         Suppress timing output.  Default ``False``.
     verbose : bool
