@@ -131,7 +131,7 @@ Method complexity summary
      - Notes
    * - ``fd`` (direct sparse LU)
      - :math:`O(N^{1.5\text{–}2})`
-     - :math:`O(N^{1.27})` measured
+     - :math:`O(N^{1.26})` measured
      - Variable :math:`T_e`; LU memory dominates at large :math:`N`.
        ``no_outside_loads`` pads the domain before solving — see below.
    * - ``fft``
@@ -151,39 +151,52 @@ FD LU memory scaling
 --------------------
 
 The FD solver's sparse LU factorisation (SuperLU, COLAMD reordering) is the
-dominant memory consumer.  Fill-in grows empirically as :math:`O(N^{1.27})`
+dominant memory consumer.  Fill-in grows empirically as :math:`O(N^{1.26})`
 for a 2-D 13-point stencil — between the :math:`O(N \log N)` ideal and the
 :math:`O(N^{1.5})` worst case.
+
+.. figure:: _static/bench_memory.png
+   :width: 100%
+   :alt: LU RAM vs. grid size (left) and no_outside_loads padding overhead (right)
+
+   **Left:** peak LU RAM vs. total cell count for the 2-D FD solver (log-log).
+   Blue circles are measured values; the blue line is the :math:`O(N^{1.26})`
+   power-law fit; dashed/dotted grey lines are :math:`O(N^{1.0})` and
+   :math:`O(N^{1.5})` references.
+   **Right:** LU RAM for the original domain (solid blue) versus the domain
+   after all-sides ``no_outside_loads`` padding at :math:`T_e = 35` km and
+   :math:`dx = 5` km (dashed red; 67 cells added per padded side).  Both lines
+   use the fitted power law.
 
 .. list-table:: Empirical LU memory — 2-D FD, constant :math:`T_e = 35` km,
                 clamped BCs, SuperLU/COLAMD
    :header-rows: 1
-   :widths: 18 16 16
+   :widths: 18 16 20
 
-   * - Grid (padded)
+   * - Grid
      - Cells :math:`N`
      - LU RAM
    * - 100 × 100
      - 10,000
-     - 35 MB
+     - 26 MiB
    * - 200 × 200
      - 40,000
-     - 196 MB
+     - 148 MiB
    * - 300 × 300
      - 90,000
-     - 559 MB
+     - 423 MiB
    * - 400 × 400
      - 160,000
-     - 1.1 GB
-   * - 500 × 500
+     - 838 MiB
+   * - 500 × 500 *(extrapolated)*
      - 250,000
-     - 1.8 GB
-   * - 600 × 600
+     - ~1.5 GiB
+   * - 600 × 600 *(extrapolated)*
      - 360,000
-     - 3.7 GB
+     - ~2.3 GiB
 
-The log-log slope is **≈ 1.27**.  Extrapolating: 700 × 700 ≈ 5.8 GB;
-800 × 800 ≈ 8.7 GB.
+The log-log slope is **≈ 1.26**.  Extrapolating: 700 × 700 ≈ 3.4 GiB;
+800 × 800 ≈ 4.8 GiB.
 
 Use ``benchmarks/bench_memory.py`` to measure on your own system::
 
@@ -220,8 +233,8 @@ For :math:`T_e = 35` km at standard parameters (:math:`E = 65` GPa,
 
 - Each side gains 67 cells → padded domain: **634 × 634**
 - Cell count: 250,000 → 401,956 **(1.6× more cells)**
-- At :math:`O(N^{1.27})` scaling: **≈ 2× more LU memory**
-  (1.8 GB → ~3.7 GB)
+- At :math:`O(N^{1.26})` scaling: **≈ 1.8× more LU memory**
+  (~1.5 GiB → ~2.7 GiB)
 
 Use :func:`gflex.recommended_pad_width` to estimate the padded cell count
 before running::
@@ -244,9 +257,9 @@ at the same grid size.
 
 **Estimate the padded size before a large FD run.**
 ``no_outside_loads`` BCs are convenient but silently enlarge the problem.
-For a 500 × 500 grid with all-sides ``no_outside_loads``, the LU factorisation
-needs ~3.7 GB.  Grids above ~600 × 600 (padded) approach or exceed typical
-workstation RAM.
+For a 500 × 500 grid with all-sides ``no_outside_loads``, the padded domain
+is 634 × 634 and the LU factorisation needs ~2.7 GiB.  Grids above ~700 × 700
+(padded) exceed 4 GiB and may strain workstation RAM.
 
 **Use** ``cache_factorization`` **in coupling loops.**
 If :math:`T_e` and the grid geometry are fixed while only :math:`q_s` changes
