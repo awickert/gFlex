@@ -24,6 +24,25 @@
   to the solver immediately, invalidating the cached coefficient matrix so the
   next ``update()`` recomputes deflection with the revised rigidity field.
 
+- **BMI scalar physical constants** — `BmiGflex` now exposes the five
+  physical constants as single-element (grid 1) input variables, supporting
+  introspection and ensemble initialisation without separate config files:
+
+  | CSDMS Standard Name | gFlex attr | Units |
+  |---|---|---|
+  | `lithosphere__young_modulus` | `E` | Pa |
+  | `lithosphere__poisson_ratio` | `nu` | 1 |
+  | `mantle__mass-per-volume_density` | `rho_m` | kg m⁻³ |
+  | `infill_material__mass-per-volume_density` | `rho_fill` | kg m⁻³ |
+  | `planet_surface__gravitational_acceleration` | `g` | m s⁻² |
+
+  Values are read from the config file at ``initialize()`` and exposed on
+  grid 1 (shape ``(1,)``).  Updating any constant via ``set_value()``
+  propagates to the solver immediately and invalidates the cached LU
+  factorisation; the next ``update()`` rebuilds the stiffness matrix
+  automatically.  `rho_fill` is the constant most likely to change at
+  runtime (e.g. when a subaerial basin becomes subaqueous).
+
 - **FD one-sided periodic warning** — `F1D` and `F2D` now issue a
   `UserWarning` when `method='fd'` and exactly one side of an opposite
   boundary pair (west/east or north/south) is `'periodic'`.  Periodic BCs
