@@ -142,6 +142,8 @@ Interfaces
 
 gFlex can be accessed through several front-ends depending on your workflow:
 
+**Python and command-line**
+
 .. list-table::
    :header-rows: 1
    :widths: 22 12 12 54
@@ -160,11 +162,39 @@ gFlex can be accessed through several front-ends depending on your workflow:
      - stable
      - Drive gFlex from a YAML configuration file with no Python code.
        See :doc:`configuration`.
+
+**Modelling frameworks**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 12 12 54
+
+   * - Interface
+     - :math:`T_e`
+     - Status
+     - Description
    * - **CSDMS BMI** (:class:`~gflex.BmiGflex`)
      - scalar or array
      - stable
      - CSDMS Basic Model Interface for coupling in the CSDMS framework.
        Requires ``pip install gflex[bmi]``.  See :doc:`api`.
+   * - **Landlab component** (``landlab.components.gFlex``)
+     - scalar or array
+     - pending v2.0.0
+     - Landlab Earth-surface modelling framework component.  Uses
+       ``grid.at_node`` fields; compatible with the CSDMS Standard Names
+       used by the BMI.  Install with ``pip install landlab``.
+
+**GIS**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 12 12 54
+
+   * - Interface
+     - :math:`T_e`
+     - Status
+     - Description
    * - **GRASS GIS** (``r.flexure``, ``v.flexure``)
      - scalar or array
      - update in progress
@@ -174,12 +204,6 @@ gFlex can be accessed through several front-ends depending on your workflow:
        Install with ``g.extension``.
        `r.flexure <https://github.com/awickert/r.flexure>`_ —
        `v.flexure <https://github.com/awickert/v.flexure>`_.
-   * - **Landlab component** (``landlab.components.gFlex``)
-     - scalar or array
-     - pending v2.0.0
-     - Landlab Earth-surface modelling framework component.  Uses
-       ``grid.at_node`` fields; compatible with the CSDMS Standard Names
-       used by the BMI.  Install with ``pip install landlab``.
    * - **QGIS Processing provider** (``processing_gflex``)
      - scalar or array
      - v0.1.0 pending
