@@ -456,3 +456,96 @@ immediately and invalidates the cached LU factorisation, so the next
 
 .. autoclass:: gflex.BmiGflex
    :members: initialize, update, finalize, get_value, set_value
+
+Landlab component
+-----------------
+
+The Landlab component (``landlab.components.gFlex``) exposes gFlex within
+the `Landlab <https://landlab.readthedocs.io>`_ Earth-surface modelling
+framework.  It uses the same underlying solver and the same CSDMS Standard
+Name fields as the BMI, but follows Landlab conventions: construction via
+``__init__`` and time-stepping via ``run_one_step()``.
+
+**Comparison with the BMI**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 35 35
+
+   * -
+     - gFlex BMI
+     - Landlab component
+   * - Lifecycle
+     - ``initialize`` / ``update`` / ``finalize``
+     - ``__init__`` / ``run_one_step``
+   * - Load input
+     - ``set_value("load__normal_component_of_stress", q)``
+     - ``grid.at_node["load__normal_component_of_stress"][:] = q``
+   * - :math:`T_e` update
+     - ``set_value("lithosphere__elastic_thickness", te)``
+     - ``grid.at_node["lithosphere__elastic_thickness"][:] = te``
+   * - Deflection output
+     - ``get_value("lithosphere__vertical_displacement", w)``
+     - ``grid.at_node["lithosphere__vertical_displacement"]``
+
+**Field names**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 10 10 40
+
+   * - CSDMS Standard Name
+     - Direction
+     - Units
+     - Notes
+   * - ``load__normal_component_of_stress``
+     - input
+     - Pa
+     - Required.  Maps to gFlex internal :math:`q_s`.
+   * - ``lithosphere__elastic_thickness``
+     - input
+     - m
+     - Optional.  Re-read on every ``run_one_step()`` call if present,
+       enabling runtime :math:`T_e` updates without re-initialisation.
+   * - ``lithosphere__vertical_displacement``
+     - output
+     - m
+     - Total deflection :math:`w` (downward negative).
+
+``rho_fill`` defaults to ``0.0`` (air; no infill) in the Landlab component.
+Set it explicitly at construction for marine (``rho_fill=1030``) or
+sediment-filled (``rho_fill=2000``–``2700``) basins.
+
+**Coupling example**
+
+.. code-block:: python
+
+   import numpy as np
+   from landlab import RasterModelGrid
+   from landlab.components import gFlex
+
+   mg = RasterModelGrid((100, 100), xy_spacing=5000.0)
+   mg.add_zeros("load__normal_component_of_stress", at="node")
+   mg.add_zeros("topographic__elevation", at="node")
+
+   gf = gFlex(mg, E=65e9, nu=0.25, rho_m=3300, rho_fill=0, T_e=35e3)
+
+   w_prev = np.zeros(mg.number_of_nodes)
+
+   for step in range(n_steps):
+       mg.at_node["load__normal_component_of_stress"][:] = (
+           rho_ice * g * ice_thickness.ravel()
+       )
+       gf.run_one_step()
+       w = mg.at_node["lithosphere__vertical_displacement"]
+       mg.at_node["topographic__elevation"] += w - w_prev
+       w_prev = w.copy()
+
+**Installation**
+
+.. code-block:: bash
+
+   pip install landlab
+
+Requires a Landlab release that includes the gFlex v2 component
+(``landlab/landlab#2420``).
