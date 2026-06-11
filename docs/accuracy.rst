@@ -482,6 +482,103 @@ every CI build and assert slopes > 1.8 at all refinement levels.
 
 ----
 
+1-D and 2-D ``zero_displacement_zero_moment`` boundary condition: MMS verification
+-----------------------------------------------------------------------------------
+
+The ``zero_displacement_zero_moment`` (pinned / simply-supported) boundary
+condition enforces :math:`w = 0` (zero deflection) and :math:`d^2w/dx^2 = 0`
+(zero bending moment) at the plate edge.  A sine satisfies both conditions
+exactly, giving the manufactured solution
+
+.. math::
+
+   w_\mathrm{exact}(\xi) = -W_0\,\sin(\pi\xi), \quad \xi = x/L,
+
+and the manufactured load
+
+.. math::
+
+   q_s(\xi) = W_0\Bigl[D\!\left(\frac{\pi}{L}\right)^4 + \Delta\rho\,g\Bigr]
+              \sin(\pi\xi).
+
+The 2-D extension uses the separable solution
+:math:`w = -W_0\sin(\pi\xi)\sin(\pi\eta)`, for which the load is
+
+.. math::
+
+   q_s(\xi,\eta) = W_0\Bigl[4D\!\left(\frac{\pi}{L}\right)^4 + \Delta\rho\,g\Bigr]
+                   \sin(\pi\xi)\sin(\pi\eta).
+
+Physical parameters: :math:`T_e = 30` km, :math:`E = 65` GPa,
+:math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\mathrm{fill}
+= 0`, :math:`g = 9.81` m s⁻², :math:`L = 600` km, :math:`W_0 = 1600` m.
+
+Results (1-D)
+~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 12 16
+
+   * - :math:`n_x`
+     - :math:`\Delta x` [km]
+     - :math:`L^\infty` error
+   * - 26
+     - 24.0
+     - 9.49 × 10⁻⁶
+   * - 51
+     - 12.0
+     - 2.37 × 10⁻⁶
+   * - 101
+     - 6.0
+     - 5.94 × 10⁻⁷
+   * - 201
+     - 3.0
+     - 1.49 × 10⁻⁷
+   * - 401
+     - 1.5
+     - 3.81 × 10⁻⁸
+
+Convergence slopes (coarse → fine):
+:math:`\mathcal{O}(\Delta x^{2.00})`,
+:math:`\mathcal{O}(\Delta x^{2.00})`,
+:math:`\mathcal{O}(\Delta x^{2.00})`,
+:math:`\mathcal{O}(\Delta x^{1.96})`.
+
+Results (2-D)
+~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 12 16
+
+   * - :math:`n_x = n_y`
+     - :math:`\Delta x` [km]
+     - :math:`L^\infty` error
+   * - 26
+     - 24.0
+     - 3.75 × 10⁻⁵
+   * - 51
+     - 12.0
+     - 9.39 × 10⁻⁶
+   * - 101
+     - 6.0
+     - 2.35 × 10⁻⁶
+   * - 201
+     - 3.0
+     - 5.87 × 10⁻⁷
+
+Convergence slopes (coarse → fine):
+:math:`\mathcal{O}(\Delta x^{2.00})`,
+:math:`\mathcal{O}(\Delta x^{2.00})`,
+:math:`\mathcal{O}(\Delta x^{2.00})`.
+
+The test functions :func:`tests.test_bc_mms.TestPinnedBC1D.test_convergence_order`
+and :func:`tests.test_bc_mms.TestPinnedBC2D.test_convergence_order` run with
+every CI build.
+
+----
+
 Variable elastic thickness: 1-D MMS verification
 -------------------------------------------------
 
