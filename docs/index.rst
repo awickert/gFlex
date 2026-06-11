@@ -57,12 +57,6 @@ gFlex requires **Python ≥ 3.11** and depends on NumPy, SciPy, and Matplotlib.
 
 .. note::
 
-   This documentation describes gFlex **2.0.0**.  If ``pip install gflex``
-   installs an older release (e.g. 2.0.0b1), some features documented here
-   may not be available.  Install the latest release explicitly::
-
-      pip install "gflex>=2.0.0"
-
    Downstream tools that embed gFlex (QGIS Processing provider, GRASS GIS
    addons) should pin ``gflex>=2.0.0`` in their requirements.
 
