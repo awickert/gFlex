@@ -32,6 +32,8 @@ Parameters
       ``periodic`` triggers a ``UserWarning`` and falls back to zero-padding.
       In-plane stresses (:math:`\sigma_{xx}`, :math:`\sigma_{yy}`,
       :math:`\sigma_{xy}`) are supported.
+
+      .. versionadded:: 1.4.0
     * ``sas`` — Superposition of Analytical Solutions.  Constant elastic
       thickness only; fast and analytically exact.
     * ``sas_ng`` — SAS on an unstructured point set (NG = "no grid").
@@ -140,11 +142,18 @@ Parameters
     See :doc:`boundary_conditions` for the physical meaning of each and
     guidance on choosing.
 
+    .. versionadded:: 2.0.0
+       ``zero_displacement_zero_moment`` (alias ``pinned``) and
+       ``no_outside_loads`` (alias ``infinite``) are available as FD
+       boundary conditions.
+
     For SAS / SAS_NG: ``no_outside_loads`` is always assumed (the
     analytical solution is inherently infinite-plate); leave blank or set
     explicitly.
 
 .. note::
+
+   .. versionadded:: 1.4.0
 
    **In-plane stresses** (:math:`\sigma_{xx}`, :math:`\sigma_{yy}`,
    :math:`\sigma_{xy}` [Pa]) cannot be set from a configuration file.
@@ -158,7 +167,7 @@ Parameters
    All three default to zero if not set.  They are supported by ``fd``
    and ``fft`` in 2-D, and by ``fd`` and ``fft`` in 1-D (``sigma_xx``
    only).  Setting them with ``sas`` or ``sas_ng`` raises a warning and
-   has no effect.  See :doc:`theory` for the governing equations.
+   has no effect.  See :doc:`theory_and_numerics` for the governing equations.
 
 ----
 
@@ -270,7 +279,7 @@ Complete examples
 
     numerical2D:
       grid_spacing_y: 4000
-      boundary_condition_north: mirror
+      boundary_condition_north: zero_slope_zero_shear
       boundary_condition_south: zero_slope_zero_shear
 
     verbosity:
