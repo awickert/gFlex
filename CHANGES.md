@@ -70,14 +70,15 @@
   per-phase timing (6 decimal places); a ``finalized`` block shows total
   runtime.  gFlex output is bracketed by blank lines to separate it from
   surrounding caller messages.
-- **FD timing attributes** — after a finite-difference ``run()``, two new
-  instance attributes are set: ``coeff_creation_time`` (seconds to
-  construct the sparse coefficient matrix) and ``linear_solve_time``
-  (seconds for the backsolve).  Non-FD solvers (SAS, FFT) do not set
-  these attributes.  Both are measured with ``time.perf_counter()`` for
-  sub-microsecond resolution on all platforms.  The split is useful in
-  coupling loops with ``cache_factorization`` enabled, where matrix
-  construction is skipped on subsequent ``run()`` calls.
+- **Timing attributes** — after each ``run()``, three instance attributes
+  report wall-clock times measured with ``time.perf_counter()``:
+  ``time_to_solve`` (total solve time; all solvers),
+  ``coeff_creation_time`` (seconds to construct the sparse coefficient
+  matrix; FD only), and ``linear_solve_time`` (seconds for the backsolve;
+  FD only).  Non-FD solvers (SAS, FFT) do not set the latter two.  The
+  FD split is useful in coupling loops with ``cache_factorization``
+  enabled, where ``coeff_creation_time ≈ 0`` confirms the matrix was
+  reused.
 - **Python ``logging`` module** — all ``print()`` calls in the solver path
   have been replaced with ``logging`` calls on the ``gflex`` logger
   (``_logger.info``, ``_logger.warning``, ``_logger.debug``).  A
@@ -132,6 +133,13 @@
   `bc_check()` time but later invalidated by a setter, the guard was
   skipped and `_apply_bc_rigidity()` received an unrecognised alias string.
   Fix: alias resolution now runs unconditionally before the guard.
+- Fixed variable-Te 2-D MMS manufactured load: the cross-derivative term
+  used the simplified biharmonic coefficient 2 rather than the van Wees &
+  Cloetingh (1994) value 2(1−ν).  For bilinear D the missing
+  2ν·∂²D/∂x∂y·∂²w/∂x∂y term capped apparent convergence at
+  O(Δx^1.91) near n = 200–400 instead of the correct O(Δx^2.00).  The
+  fix is in test code only (`_mms_2d_variable_te` in
+  `tests/test_bc_mms.py`); the solver itself is unaffected.
 
 ----
 
