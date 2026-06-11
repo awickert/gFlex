@@ -55,7 +55,8 @@ Boundary conditions and domain padding
 A clamped boundary condition (``zero_displacement_zero_slope``) is applied on
 all four sides.  This requires that deflections approach zero before the domain
 edge — enforced here by calling :func:`~gflex.pad_domain` with one flexural
-wavelength of padding (~650 km for the mean :math:`T_e` of 46 km).  The
+wavelength of padding (~650 km, set by the maximum :math:`T_e` of 87 km in
+the domain).  The
 padding ring tapers :math:`T_e` smoothly to the domain mean and carries zero
 load; after the solve the padding is trimmed from :attr:`~gflex.F2D.w` with
 ``w = flex.w[p:-p, p:-p]``.
