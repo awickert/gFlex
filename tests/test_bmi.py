@@ -54,6 +54,11 @@ def test_get_input_var_names(bmi_1d):
     assert bmi_1d.get_input_var_names() == (
         "load__normal_component_of_stress",
         "lithosphere__elastic_thickness",
+        "lithosphere__young_modulus",
+        "lithosphere__poisson_ratio",
+        "mantle__mass-per-volume_density",
+        "infill_material__mass-per-volume_density",
+        "planet_surface__gravitational_acceleration",
     )
 
 
@@ -62,7 +67,7 @@ def test_get_output_var_names(bmi_1d):
 
 
 def test_get_input_item_count(bmi_1d):
-    assert bmi_1d.get_input_item_count() == 2
+    assert bmi_1d.get_input_item_count() == 7
 
 
 def test_get_output_item_count(bmi_1d):
@@ -81,16 +86,109 @@ def test_get_var_units_deflection(bmi_1d):
     assert bmi_1d.get_var_units("lithosphere__vertical_displacement") == "m"
 
 
+def test_get_var_units_constants(bmi_1d):
+    assert bmi_1d.get_var_units("lithosphere__young_modulus") == "Pa"
+    assert bmi_1d.get_var_units("lithosphere__poisson_ratio") == "1"
+    assert bmi_1d.get_var_units("mantle__mass-per-volume_density") == "kg m-3"
+    assert bmi_1d.get_var_units("infill_material__mass-per-volume_density") == "kg m-3"
+    assert bmi_1d.get_var_units("planet_surface__gravitational_acceleration") == "m s-2"
+
+
 def test_get_var_location(bmi_1d):
     assert bmi_1d.get_var_location("load__normal_component_of_stress") == "node"
     assert bmi_1d.get_var_location("lithosphere__elastic_thickness") == "node"
     assert bmi_1d.get_var_location("lithosphere__vertical_displacement") == "node"
+    assert bmi_1d.get_var_location("lithosphere__young_modulus") == "node"
+    assert bmi_1d.get_var_location("planet_surface__gravitational_acceleration") == "node"
 
 
 def test_get_var_grid(bmi_1d):
     assert bmi_1d.get_var_grid("load__normal_component_of_stress") == 0
     assert bmi_1d.get_var_grid("lithosphere__elastic_thickness") == 0
     assert bmi_1d.get_var_grid("lithosphere__vertical_displacement") == 0
+    assert bmi_1d.get_var_grid("lithosphere__young_modulus") == 1
+    assert bmi_1d.get_var_grid("lithosphere__poisson_ratio") == 1
+    assert bmi_1d.get_var_grid("mantle__mass-per-volume_density") == 1
+    assert bmi_1d.get_var_grid("infill_material__mass-per-volume_density") == 1
+    assert bmi_1d.get_var_grid("planet_surface__gravitational_acceleration") == 1
+
+
+# ------------------------------------------------------------------
+# Grid 1 (scalar constants)
+# ------------------------------------------------------------------
+
+
+def test_get_grid_rank_scalar(bmi_1d):
+    assert bmi_1d.get_grid_rank(1) == 1
+
+
+def test_get_grid_size_scalar(bmi_1d):
+    assert bmi_1d.get_grid_size(1) == 1
+
+
+def test_get_grid_shape_scalar(bmi_1d):
+    shape = np.zeros(1, dtype=np.intp)
+    bmi_1d.get_grid_shape(1, shape)
+    assert shape[0] == 1
+
+
+def test_get_grid_spacing_scalar(bmi_1d):
+    spacing = np.zeros(1)
+    bmi_1d.get_grid_spacing(1, spacing)
+    assert spacing[0] == pytest.approx(1.0)
+
+
+def test_get_grid_origin_scalar(bmi_1d):
+    origin = np.zeros(1)
+    bmi_1d.get_grid_origin(1, origin)
+    assert origin[0] == pytest.approx(0.0)
+
+
+# ------------------------------------------------------------------
+# Scalar constant get/set round-trips
+# ------------------------------------------------------------------
+
+
+def test_get_constants_nonzero(bmi_1d):
+    """All scalar physical constants must be positive after initialize."""
+    for name in (
+        "lithosphere__young_modulus",
+        "lithosphere__poisson_ratio",
+        "mantle__mass-per-volume_density",
+        "planet_surface__gravitational_acceleration",
+    ):
+        dest = np.zeros(1)
+        bmi_1d.get_value(name, dest)
+        assert dest[0] > 0, f"{name} should be positive"
+
+
+def test_get_infill_density_nonnegative(bmi_1d):
+    dest = np.zeros(1)
+    bmi_1d.get_value("infill_material__mass-per-volume_density", dest)
+    assert dest[0] >= 0
+
+
+def test_set_rho_fill_changes_deflection(bmi_1d):
+    """Higher infill density reduces restoring buoyancy, increasing deflection.
+
+    Δρ = ρ_m − ρ_fill, so rho_fill=1030 (ocean) < rho_fill=0 (air) restoring
+    force → larger-magnitude deflection with ocean infill.
+    """
+    n = bmi_1d.get_grid_size(0)
+
+    bmi_1d.set_value("infill_material__mass-per-volume_density", np.array([0.0]))
+    bmi_1d.update()
+    w_air = np.zeros(n)
+    bmi_1d.get_value("lithosphere__vertical_displacement", w_air)
+
+    bmi_1d.set_value("infill_material__mass-per-volume_density", np.array([1030.0]))
+    bmi_1d.update()
+    w_ocean = np.zeros(n)
+    bmi_1d.get_value("lithosphere__vertical_displacement", w_ocean)
+
+    assert np.abs(w_ocean).max() > np.abs(w_air).max(), (
+        "Ocean infill (rho_fill=1030) reduces Δρ, so peak deflection must exceed air (rho_fill=0)"
+    )
 
 
 def test_get_component_name(bmi_1d):
