@@ -140,11 +140,12 @@ deflection):
    plt.show()
 
 Or, for the three-panel view used in this example (load, :math:`T_e`,
-deflection side by side), plot the arrays directly:
+deflection side by side), plot the arrays directly.  This requires the
+``cmcrameri`` colormap package (``pip install 'gflex[plot]'``):
 
 .. code-block:: python
 
-   from cmcrameri import cm as cmc   # pip install cmcrameri
+   from cmcrameri import cm as cmc
 
    w_abs = float(np.abs(flex.w).max())
 
@@ -224,18 +225,11 @@ transparent background, ready to composite into a paper or presentation.
    the domain is 750 × 750 km.
 
 
-Logo scripts
-------------
+.. note::
 
-The scripts in ``docs/logo/`` reproduce this exact scenario at the
-settings used for the gFlex logo:
-
-* ``generate_logo_data.py`` — runs gFlex and saves ``/tmp/gflex_logo_data.npz``.
-* ``blender_logo.py`` — Blender scene script tailored for the logo (fixed
-  camera angle, load cylinder, specific lighting).
-* ``add_logo_text.py`` — composites the "gFlex" wordmark onto the rendered PNG.
-* ``make_logo.sh`` — shell script that runs all three steps in sequence.
-
-These differ from the general ``docs/examples/blender_flexure.py`` in that
-they are tuned for logo aesthetics (camera framing, load representation,
-text overlay) rather than scientific figure production.
+   The scripts in ``docs/logo/`` reproduce this scenario at the settings used
+   for the gFlex logo (``generate_logo_data.py``, ``blender_logo.py``,
+   ``add_logo_text.py``, ``make_logo.sh``).  They differ from
+   ``docs/examples/blender_flexure.py`` in camera framing, load representation,
+   and text overlay — tuned for logo aesthetics rather than scientific figure
+   production.
