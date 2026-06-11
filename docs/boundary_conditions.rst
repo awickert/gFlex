@@ -3,10 +3,13 @@ Boundary Conditions
 
 Boundary conditions specify what happens at the edges of the modelled domain.
 gFlex supports six named conditions for the finite-difference (FD) solver;
-five impose constraints on which plate mechanical quantities — deflection,
-slope, bending moment, and shear force — vanish at that edge, and one
+four impose constraints on which plate mechanical quantities — deflection,
+slope, bending moment, and shear force — vanish at that edge; one
+(``periodic``) connects opposite edges in a wrap-around domain; and one
 (``no_outside_loads``) automatically extends the domain before solving.
 Five short aliases (``clamped``, ``pinned``, ``free``, ``mirror``, ``infinite``) are also accepted.
+The interior finite-difference stencils are derived in :doc:`theory_and_numerics`;
+this page covers the boundary-node stencils and their physical interpretations.
 
 For the spectral (FFT) solver, boundary conditions are handled per opposite-edge
 pair (W/E and N/S independently): if both sides of a pair are set to
@@ -180,6 +183,8 @@ physical plate edge.
 
 zero_displacement_zero_moment
 -----------------------------
+
+.. versionadded:: 2.0.0
 
 Zero displacement and zero bending moment: the classical simply-supported
 (pinned) plate end.  The plate is held at zero deflection but is free to
@@ -361,13 +366,19 @@ the region of interest:
 no_outside_loads
 ----------------
 
+.. versionadded:: 2.0.0
+   Support for ``no_outside_loads`` in the finite-difference solver with automatic domain padding.
+   For the FFT solver and the analytical (SAS / SAS_NG) methods, this is the native assumption
+   and has always been available.
+
 *Short alias:* ``infinite`` — accepted without any warning and normalised to
 ``no_outside_loads`` internally.
 
 Emulates a plate that extends beyond the model domain with no loads applied
 outside.  The finite-difference solver automatically pads the domain by at
 least one flexural wavelength
-(:math:`\alpha = (D / \Delta\rho\,g)^{1/4}`) on each side where this
+(:math:`\lambda_\alpha = 2\pi\alpha`, where :math:`\alpha = (D / \Delta\rho\,g)^{1/4}`
+is the flexural parameter) on each side where this
 condition is applied, solves on the extended domain with
 ``zero_displacement_zero_slope`` at the outer edge, then trims the result
 back to the original extent.  The padding width and the solve are
@@ -395,6 +406,8 @@ it is the native assumption of the analytical superposition approach.
 
 Prescribed (non-zero) boundary values
 --------------------------------------
+
+.. versionadded:: 2.0.0
 
 By default every boundary condition above enforces **homogeneous** constraints
 — the two named quantities are zero at the edge.  The finite-difference solver
