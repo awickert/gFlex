@@ -199,6 +199,8 @@ gFlex can be accessed through several front-ends depending on your workflow:
    configuration
    accuracy
    benchmarks
+   grass_gis
+   qgis
    references
    changelog
 
