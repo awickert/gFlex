@@ -99,7 +99,7 @@ Kelvin-function benchmark setup
    * - Infill density :math:`\rho_\text{fill}`
      - 0 kg m⁻³ (air)
    * - :math:`g`
-     - 9.81 m s⁻²
+     - 9.8 m s⁻²
    * - Flexural parameter :math:`\alpha`
      - ≈ 21 km
    * - Domain
@@ -163,63 +163,19 @@ before choosing a grid spacing.
 
 ----
 
-1-D ``zero_displacement_zero_slope`` boundary condition: ghost-node correction (2026)
---------------------------------------------------------------------------------------
+1-D ``zero_displacement_zero_slope`` boundary condition: MMS verification
+--------------------------------------------------------------------------
 
-.. figure:: _static/clamped_bc_error.png
-   :width: 100%
-   :align: center
-   :alt: MMS error analysis — zero_displacement_zero_slope old vs corrected
-
-   **Left:** Deflection profiles at :math:`\Delta x = 3` km; exact (MMS),
-   corrected, and original implementations are indistinguishable at this scale.
-   **Centre:** Residuals (numerical − exact). The original implementation has a
-   systematic error that grows toward the boundaries; the corrected implementation
-   is everywhere within floating-point noise. **Right:** Convergence with grid
-   refinement. The original implementation converges at :math:`\mathcal{O}(\Delta
-   x^{0.97})` — first order — while the corrected implementation achieves
-   :math:`\mathcal{O}(\Delta x^{2.0})`, consistent with the interior stencil.
-
-Background
-~~~~~~~~~~
-
-The ``zero_displacement_zero_slope`` (clamped) finite-difference boundary
-condition requires the elimination of two ghost nodes outside the domain at
-each end of the plate.  In a clamped (zero-slope) condition, the ghost node
-immediately outside the boundary satisfies an **even reflection**:
-
-.. math::
-
-   w_{-1} = w_{+1} \quad\text{(west end)}
-
-rather than the odd reflection used by the zero-moment (zero-curvature)
-condition.  Additionally, the boundary row itself must be **decoupled** from
-interior nodes so that the linear system directly enforces :math:`w_0 = 0`
-as a Dirichlet constraint.
-
-The original implementation (present since gFlex 1.0, 2016) dropped ghost
-nodes by setting them to ``NaN`` rather than eliminating them via even
-reflection, and did not decouple the boundary row.  As a result:
-
-* :math:`w_0` was not strictly zero — the linear system retained off-diagonal
-  coupling that allowed the boundary value to drift.
-* The zero-slope condition was not enforced at the discrete level.
-* The convergence rate was :math:`\mathcal{O}(\Delta x)` rather than
-  :math:`\mathcal{O}(\Delta x^2)`.
-
-MMS verification
-~~~~~~~~~~~~~~~~
-
-The error is quantified with a Method of Manufactured Solutions (MMS) test.
-The exact solution
+The ``zero_displacement_zero_slope`` (clamped) boundary condition enforces
+:math:`w = 0` and :math:`dw/dx = 0` at the plate edge.  The manufactured
+solution
 
 .. math::
 
    w_\mathrm{exact}(\xi) = -W_0\,\xi^2\,(1-\xi)^2, \quad \xi = x/L,
 
-satisfies both boundary conditions at :math:`\xi = 0` and :math:`\xi = 1`
-exactly (:math:`w = 0`, :math:`dw/d\xi = 0`).  Its fourth derivative is
-constant, so the manufactured load
+satisfies both conditions at :math:`\xi = 0` and :math:`\xi = 1` exactly.
+Its fourth derivative is constant, so the manufactured load
 
 .. math::
 
@@ -228,165 +184,55 @@ constant, so the manufactured load
 
 includes a spatially varying elastic-foundation term — making this a
 nontrivial test of the full governing equation, not just the biharmonic
-operator alone.
-
-The error metric is the :math:`L^\infty` relative error:
+operator alone.  The error metric is the :math:`L^\infty` relative error:
 
 .. math::
 
    e = \frac{\max|w_\mathrm{num} - w_\mathrm{exact}|}
             {\max|w_\mathrm{exact}|}
 
-Physical parameters used: :math:`T_e = 30` km, :math:`E = 65` GPa,
+Physical parameters: :math:`T_e = 30` km, :math:`E = 65` GPa,
 :math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\mathrm{fill}
-= 0`, :math:`g = 9.81` m s⁻², :math:`L = 600` km.
+= 0`, :math:`g = 9.8` m s⁻², :math:`L = 600` km.
 
 Results
 ~~~~~~~
 
 .. list-table::
    :header-rows: 1
-   :widths: 10 12 16 16 12
+   :widths: 10 12 16
 
    * - :math:`n_x`
      - :math:`\Delta x` [km]
-     - original error
-     - corrected error
-     - factor
+     - :math:`L^\infty` error
    * - 26
      - 24.0
-     - 4.34 × 10⁻²
      - 1.84 × 10⁻³
-     - 24×
    * - 51
      - 12.0
-     - 2.75 × 10⁻²
      - 4.55 × 10⁻⁴
-     - 60×
    * - 101
      - 6.0
-     - 1.54 × 10⁻²
      - 1.14 × 10⁻⁴
-     - 135×
    * - 201
      - 3.0
-     - 8.11 × 10⁻³
      - 2.85 × 10⁻⁵
-     - 285×
    * - 401
      - 1.5
-     - 4.16 × 10⁻³
      - 7.12 × 10⁻⁶
-     - 584×
    * - 801
      - 0.75
-     - 2.11 × 10⁻³
      - 1.78 × 10⁻⁶
-     - 1184×
 
-Convergence slopes (finest three points): original :math:`\mathcal{O}(\Delta
-x^{0.97})`; corrected :math:`\mathcal{O}(\Delta x^{2.00})`.  The boundary
-value :math:`w[0]` (exactly zero in the MMS solution) was :math:`-4.9 \times
-10^{-3}` m in the original and :math:`-1.6 \times 10^{-8}` m in the
-corrected implementation at :math:`\Delta x = 0.75` km.
-
-Under an interior-only point load (:math:`q_s[0] = q_s[N-1] = 0`), the
-corrected Dirichlet decoupling enforces :math:`w[0] = 0` exactly: with all
-off-diagonal stencil entries at the boundary node removed and zero load on the
-boundary, the boundary equation reduces to :math:`c_0 w[0] = 0`.  The
-original implementation gives :math:`w[0] \approx +1.1 \times 10^{-4}` m at
-:math:`\Delta x = 3` km.
-
-Practical impact
-~~~~~~~~~~~~~~~~
-
-The original implementation gave acceptably small errors **when the boundary
-was far from any load** — the intended use case, reinforced by the
-``zero_displacement_zero_slope`` proximity warning added in gFlex 1.4.  When
-a load was placed close to a clamped boundary, the first-order error could
-produce boundary deflections of order :math:`10^{-3}` relative to the
-maximum deflection.  For a 1 km deflection this corresponds to roughly 1 mm
-of spurious boundary motion — negligible in most geoscience applications, but
-detectable in high-resolution model comparisons.
-
-The correction is in commit ``6f68270`` (not present in gFlex 1.4.0).
-See the :doc:`changelog` for the full bug-fix note.
-
-The standalone error-analysis script is at
-``analysis/analyze_clamped_bc_error.py``, and a git-worktree–based
-cross-version comparator is at ``analysis/compare_bc_versions.py``.
+Convergence slope (finest three points): :math:`\mathcal{O}(\Delta x^{2.00})`.
+The test function
+:func:`tests.test_bc_mms.TestClampedBC1D.test_convergence_order`
+runs with every CI build.
 
 ----
 
-1-D and 2-D ``zero_moment_zero_shear`` boundary condition: ghost-node correction (2026)
------------------------------------------------------------------------------------------
-
-.. figure:: _static/free_end_bc_error_1d.png
-   :width: 100%
-   :align: center
-   :alt: MMS error analysis — zero_moment_zero_shear 1-D old vs corrected
-
-   **Left:** Deflection profiles at :math:`\Delta x = 3` km; exact (MMS),
-   corrected, and original implementations are nearly indistinguishable at this
-   scale. **Centre:** Residuals (numerical − exact). The original implementation
-   has a systematic error that decays slowly toward the boundaries; the corrected
-   implementation is well within the second-order truncation error envelope.
-   **Right:** Convergence with grid refinement. The original implementation
-   converges at :math:`\mathcal{O}(\Delta x^{0.99})` — first order — while the
-   corrected implementation achieves :math:`\mathcal{O}(\Delta x^{2.00})`,
-   consistent with the interior stencil.
-
-.. figure:: _static/free_end_bc_error_2d.png
-   :width: 100%
-   :align: center
-   :alt: MMS error analysis — zero_moment_zero_shear 2-D old vs corrected
-
-   2-D analogue of the 1-D figure above (centre row shown).  The convergence
-   rates are the same: :math:`\mathcal{O}(\Delta x^{0.94})` for the original
-   and :math:`\mathcal{O}(\Delta x^{2.01})` for the corrected implementation
-   over the tested resolution range.
-
-Background
-~~~~~~~~~~
-
-The ``zero_moment_zero_shear`` (free broken-end) boundary condition requires
-eliminating one ghost node at each end of the plate.  The boundary node
-(``i=0``) uses both the moment condition
-(:math:`d^2w/dx^2 = 0 \Rightarrow w_{-1} = 2w_0 - w_1`) and the shear
-condition (:math:`d^3w/dx^3 = 0 \Rightarrow w_{-2} = 4w_0 - 4w_1 + w_2`).
-The first interior node (``i=1``) also has a ghost :math:`w_{-1}` in its
-five-point stencil that must be eliminated.
-
-The original implementation eliminated this ghost using the shear condition
-evaluated at the *staggered* location :math:`x = \Delta x` (one cell inward
-from the boundary):
-
-.. math::
-
-   \frac{d^3w}{dx^3}\bigg|_{x=\Delta x} = 0
-   \quad\Longrightarrow\quad
-   w_{-1} = 2w_0 - 2w_2 + w_3
-
-This is internally inconsistent: both the boundary row and the first interior
-row eliminate the same ghost :math:`w_{-1}`, but using different physical
-conditions evaluated at different points.  For homogeneous BCs
-(M = V = 0) the inconsistency is invisible, but it introduces a non-standard
-truncation error at ``i=1``.
-
-The corrected implementation uses the same moment condition at both rows:
-
-.. math::
-
-   \frac{d^2w}{dx^2}\bigg|_{x=0} = 0
-   \quad\Longrightarrow\quad
-   w_{-1} = 2w_0 - w_1
-
-which is the physically correct constraint for the node immediately inside
-the boundary.  All four edges (west ``j=1``, east ``j=N-2``, north ``i=1``,
-south ``i=N-2``) required the same three-line correction in the 2-D solver.
-
-MMS verification
-~~~~~~~~~~~~~~~~
+1-D and 2-D ``zero_moment_zero_shear`` boundary condition: MMS verification
+----------------------------------------------------------------------------
 
 The manufactured solution
 
@@ -414,9 +260,9 @@ The 2-D extension uses the separable solution
 :math:`w = -W_0\,f(\xi)\,f(\eta)` with :math:`f(t) = t^4(1-t)^4`,
 which satisfies the free-end condition on all four sides.
 
-Physical parameters used: :math:`T_e = 30` km, :math:`E = 65` GPa,
+Physical parameters: :math:`T_e = 30` km, :math:`E = 65` GPa,
 :math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\mathrm{fill}
-= 0`, :math:`g = 9.81` m s⁻², :math:`L = 600` km,
+= 0`, :math:`g = 9.8` m s⁻², :math:`L = 600` km,
 :math:`W_0 = 25600` m (giving :math:`|w_\mathrm{exact}|_\mathrm{max} = 100`
 m).
 
@@ -425,167 +271,66 @@ Results (1-D)
 
 .. list-table::
    :header-rows: 1
-   :widths: 10 12 16 16 12
+   :widths: 10 12 16
 
    * - :math:`n_x`
      - :math:`\Delta x` [km]
-     - original error
-     - corrected error
-     - factor
+     - :math:`L^\infty` error
    * - 26
      - 24.0
-     - 9.00 × 10⁻²
      - 1.72 × 10⁻²
-     - 5×
    * - 51
      - 12.0
-     - 6.97 × 10⁻²
      - 4.40 × 10⁻³
-     - 16×
    * - 101
      - 6.0
-     - 3.90 × 10⁻²
      - 1.11 × 10⁻³
-     - 35×
    * - 201
      - 3.0
-     - 2.02 × 10⁻²
      - 2.77 × 10⁻⁴
-     - 73×
    * - 401
      - 1.5
-     - 1.02 × 10⁻²
      - 6.93 × 10⁻⁵
-     - 148×
    * - 801
      - 0.75
-     - 5.14 × 10⁻³
      - 1.73 × 10⁻⁵
-     - 297×
 
-Convergence slopes (finest three points): original :math:`\mathcal{O}(\Delta
-x^{0.99})`; corrected :math:`\mathcal{O}(\Delta x^{2.00})`.
+Convergence slope (finest three points): :math:`\mathcal{O}(\Delta x^{2.00})`.
 
 Results (2-D)
 ~~~~~~~~~~~~~
 
 .. list-table::
    :header-rows: 1
-   :widths: 10 12 16 16 10
+   :widths: 10 12 16
 
    * - :math:`n_x = n_y`
      - :math:`\Delta x` [km]
-     - original error
-     - corrected error
-     - factor
+     - :math:`L^\infty` error
    * - 26
      - 24.0
-     - 8.73 × 10⁻²
      - 1.76 × 10⁻²
-     - 5×
    * - 51
      - 12.0
-     - 6.88 × 10⁻²
      - 4.53 × 10⁻³
-     - 15×
    * - 101
      - 6.0
-     - 3.95 × 10⁻²
      - 1.15 × 10⁻³
-     - 34×
    * - 201
      - 3.0
-     - 2.06 × 10⁻²
      - 2.85 × 10⁻⁴
-     - 72×
 
-Convergence slopes (finest two points): original :math:`\mathcal{O}(\Delta
-x^{0.94})`; corrected :math:`\mathcal{O}(\Delta x^{2.01})`.
-
-Boundary exactness
-~~~~~~~~~~~~~~~~~~
-
-Because the boundary-node equation (``i=0``) is identical in the original and
-corrected implementations — both apply the moment and shear ghost conditions
-the same way at the plate edge — both satisfy :math:`d^2w/dx^2 = 0` and
-:math:`d^3w/dx^3 = 0` to machine precision at the boundary node.  The finite-
-difference estimates of moment and shear at the edge are
-:math:`\lesssim 10^{-12}` m m⁻² and :math:`\lesssim 10^{-17}` m m⁻³ for
-both implementations under an interior-only point load.
-
-The original code's error is at ``i=1``, where the staggered shear ghost
-introduces a non-standard truncation error.  Under an interior point load at
-:math:`\Delta x = 3` km, the first-interior-node displacement differs by
-:math:`|w_\mathrm{old}[1] - w_\mathrm{new}[1]| \approx 5.5 \times 10^{-4}`
-m between old and new — it is this node-level discrepancy that accumulates to
-produce the :math:`\mathcal{O}(\Delta x)` convergence shown above.
-
-Practical impact
-~~~~~~~~~~~~~~~~
-
-The original implementation degraded the convergence rate of the
-``zero_moment_zero_shear`` boundary from second order to first order.  In
-practice, the error is largest when the domain is short relative to the
-flexural parameter :math:`\alpha` — which is unlikely in typical geoscience
-use, where free-end BCs are most appropriate for long rifted margins or
-spreading ridges that extend well beyond the loaded region.  The degradation
-is also self-consistent for homogeneous BCs (M = V = 0), so the absolute
-error is often acceptable.  However, the first-order convergence meant that
-refining the grid to improve accuracy was less efficient than expected.
-
-The correction (issues #62 and #63) is in commits ``b7eecc8`` (1-D) and
-``c117ccd`` (2-D).
-
-The standalone error-analysis script is at
-``analysis/analyze_free_end_bc_error.py``.
+Convergence slope (finest two points): :math:`\mathcal{O}(\Delta x^{2.01})`.
+The test functions
+:func:`tests.test_bc_mms.TestFreeEndBC1D.test_convergence_order` and
+:func:`tests.test_bc_mms.TestFreeEndBC2D.test_convergence_order` run with
+every CI build.
 
 ----
 
-2-D ``zero_displacement_zero_slope`` boundary condition: ghost-node correction (2026)
----------------------------------------------------------------------------------------
+2-D ``zero_displacement_zero_slope`` boundary condition: MMS verification
+--------------------------------------------------------------------------
 
-.. figure:: _static/clamped_bc_error_2d.png
-   :width: 100%
-   :align: center
-   :alt: MMS error analysis — zero_displacement_zero_slope 2-D old vs corrected
-
-   **Left:** Deflection profiles along the centre row at :math:`\Delta x = 6`
-   km; exact (MMS), corrected, and original implementations are nearly
-   indistinguishable at this scale. **Centre:** Residuals (numerical − exact)
-   along the centre row. The original implementation has a systematic error
-   that grows toward the boundaries; the corrected implementation is well within
-   the second-order truncation error envelope. **Right:** Convergence with grid
-   refinement. The original implementation converges at
-   :math:`\mathcal{O}(\Delta x^{0.92})`; the corrected implementation achieves
-   :math:`\mathcal{O}(\Delta x^{1.99})`, consistent with the interior stencil.
-
-Background
-~~~~~~~~~~
-
-The 2-D ``zero_displacement_zero_slope`` (clamped) boundary condition carries
-the same two ghost-node bugs that were present in the 1-D code:
-
-1. **Boundary column/row not decoupled.** Off-diagonal stencil entries at the
-   boundary column (or row) were left at their interior stencil values — that
-   is, the boundary nodes retained coupling to interior nodes rather than being
-   set as strict Dirichlet constraints with :math:`w = 0`.
-
-2. **Even-reflection ghost missing.** The first interior column (or row)
-   requires the even-reflection ghost :math:`w[-1, i] = w[1, i]` (for a west
-   boundary) to enforce zero slope at the grid level.  The original code left
-   this ghost out, so the zero-slope condition was only approached
-   asymptotically rather than being imposed algebraically.
-
-These are the 2-D counterparts of the 1-D issues described in the preceding
-section.  The north and south blocks additionally contained ``[!= inf] = nan``
-patterns that, while harmless in practice (those entries land outside the
-assembled matrix range), obscured the logic and have been replaced with
-consistent ``+= np.inf`` assignments.
-
-MMS verification
-~~~~~~~~~~~~~~~~
-
-The error is quantified with a Method of Manufactured Solutions (MMS) test.
 The exact solution
 
 .. math::
@@ -606,19 +351,12 @@ satisfies all four clamped boundary conditions (:math:`w = 0`,
      \bigl[24\,g(\eta) + 2\,g''(\xi)\,g''(\eta) + 24\,g(\xi)\bigr]
      + \Delta\rho\,g\,W_0\,g(\xi)\,g(\eta)
 
-includes a spatially varying elastic-foundation term, making this a
-nontrivial test of the full governing equation.
-
-The error metric is the :math:`L^\infty` relative error:
-
-.. math::
-
-   e = \frac{\max|w_\mathrm{num} - w_\mathrm{exact}|}
-            {\max|w_\mathrm{exact}|}
+includes a spatially varying elastic-foundation term.  The error metric is
+the :math:`L^\infty` relative error.
 
 Physical parameters: :math:`T_e = 30` km, :math:`E = 65` GPa,
 :math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\mathrm{fill}
-= 0`, :math:`g = 9.81` m s⁻², :math:`L = 600` km, :math:`W_0 = 1600` m
+= 0`, :math:`g = 9.8` m s⁻², :math:`L = 600` km, :math:`W_0 = 1600` m
 (max :math:`|w_\mathrm{exact}| = 6.25` m).
 
 Results
@@ -626,61 +364,33 @@ Results
 
 .. list-table::
    :header-rows: 1
-   :widths: 10 12 16 16 12
+   :widths: 10 12 16
 
    * - :math:`n_x = n_y`
      - :math:`\Delta x` [km]
-     - original error
-     - corrected error
-     - factor
+     - :math:`L^\infty` error
    * - 26
      - 24.0
-     - 3.98 × 10⁻²
      - 1.61 × 10⁻³
-     - 25×
    * - 51
      - 12.0
-     - 2.60 × 10⁻²
      - 4.31 × 10⁻⁴
-     - 60×
    * - 101
      - 6.0
-     - 1.47 × 10⁻²
      - 1.10 × 10⁻⁴
-     - 134×
    * - 201
      - 3.0
-     - 7.78 × 10⁻³
      - 2.75 × 10⁻⁵
-     - 283×
 
-Convergence slopes (finest two points): original :math:`\mathcal{O}(\Delta
-x^{0.92})`; corrected :math:`\mathcal{O}(\Delta x^{1.99})`.
-
-Under an interior-only point load (zero load on all boundary rows and
-columns), the corrected implementation gives :math:`\max|w| = 0` exactly on
-all four boundary edges; the original gives :math:`\max|w| \approx 2.2 \times
-10^{-4}` m at :math:`n = 51` (:math:`\Delta x = 12` km).
-
-Practical impact
-~~~~~~~~~~~~~~~~
-
-As with the 1-D case, the original 2-D ``zero_displacement_zero_slope``
-implementation gave acceptably small errors when the clamped boundary was far
-from any load — the intended use case.  The error grew near the boundary and
-converged at only first order, meaning grid refinement was less efficient than
-expected.  The correction enforces the Dirichlet constraint algebraically and
-recovers full second-order convergence on all four sides.
-
-The correction is in commit ``984f7a4``.
-
-The standalone error-analysis script (covering both 1-D and 2-D) is at
-``analysis/analyze_clamped_bc_error.py``.
+Convergence slope (finest two points): :math:`\mathcal{O}(\Delta x^{1.99})`.
+The test function
+:func:`tests.test_bc_mms.TestClampedBC2D.test_convergence_order`
+runs with every CI build.
 
 ----
 
-``zero_slope_zero_shear`` (mirror) boundary condition: MMS verification (2026)
--------------------------------------------------------------------------------
+``zero_slope_zero_shear`` (mirror) boundary condition: MMS verification
+------------------------------------------------------------------------
 
 The ``zero_slope_zero_shear`` (mirror) boundary condition enforces
 :math:`dw/dx = 0` and :math:`d^3w/dx^3 = 0` at the plate edge.  A
@@ -772,8 +482,8 @@ every CI build and assert slopes > 1.8 at all refinement levels.
 
 ----
 
-Variable elastic thickness: 1-D MMS verification (2026)
----------------------------------------------------------
+Variable elastic thickness: 1-D MMS verification
+-------------------------------------------------
 
 The finite-difference solver supports spatially variable elastic thickness
 :math:`T_e(x)`.  To verify convergence, a linearly varying rigidity
