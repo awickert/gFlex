@@ -194,13 +194,12 @@ _VAR_B2D = 0.3   # y-direction D variation coefficient
 def _mms_2d_variable_te(n):
     """Variable-Te MMS 2-D: D(ξ,η) = D₀(1+aξ)(1+bη), w_exact = -g(ξ)g(η).
 
-    The manufactured load is derived analytically from
-    ∂²/∂x²[D∂²w/∂x²] + 2∂²/∂x∂y[D∂²w/∂x∂y] + ∂²/∂y²[D∂²w/∂y²] + Δρg·w = −q.
-
-    All three operator terms have analytic forms in terms of g, g', g'', g''',
-    g'''' evaluated at (ξ, η).  The cross-derivative term
-    2∂²/∂x∂y[D∂²w/∂x∂y] is non-zero because D varies in both x and y and
-    w varies in both x and y; it is absent in the 1-D strip test.
+    The manufactured load is derived analytically from the full van Wees &
+    Cloetingh (1994) equation.  For bilinear D (∂²D/∂x²=∂²D/∂y²=0) the
+    cross-derivative term is 2(1−ν)·∂²D/∂x∂y·∂²w/∂x∂y, not 2·(same), so the
+    simplified form overestimates the cross-derivative contribution by a factor
+    2ν·∂²D/∂x∂y·∂²w/∂x∂y.  T_nu corrects for this: it subtracts the
+    2ν·Dxy·(∂²w/∂x∂y) term that the simplified form includes but vWC omits.
     """
     a, b = _VAR_A2D, _VAR_B2D
     dx  = L / (n - 1)
@@ -220,7 +219,10 @@ def _mms_2d_variable_te(n):
     T2 = 2*P*Q
     # ∂²/∂y²[D ∂²w/∂y²]  →  D₀·(1+a·ξ)·g(ξ)·[2b·g'''(η)+(1+b·η)·g''''(η)]
     T3 = (1+a*xi)*_g(xi) * (2*b*g3eta + 24*(1+b*eta))
-    qs  = D/L**4 * (T1 + T2 + T3) + DRHO_G * _g(eta) * _g(xi)
+    # vWC correction: T2 uses simplified coeff 2; vWC uses 2(1-ν).
+    # Difference = −2ν·∂²D/∂x∂y·∂²w/∂x∂y = −2ν·(D₀ab/L²)·(−g'(ξ)g'(η)/L²).
+    T_nu = -2*NU*a*b * (2*xi*(1-xi)*(1-2*xi)) * (2*eta*(1-eta)*(1-2*eta))
+    qs  = D/L**4 * (T1 + T2 + T3 + T_nu) + DRHO_G * _g(eta) * _g(xi)
     return dx, te, w_ex, qs
 
 

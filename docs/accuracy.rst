@@ -845,3 +845,88 @@ Convergence slopes (finest four points): :math:`\mathcal{O}(\Delta x^{2.01})`,
 
 The test function :func:`tests.test_bc_mms.TestVariableTe1D.test_convergence_order`
 runs with every CI build.
+
+----
+
+Variable elastic thickness: 2-D MMS verification
+-------------------------------------------------
+
+The 2-D variable-:math:`T_e` test uses a rigidity that varies in both
+directions:
+
+.. math::
+
+   D(\xi,\eta) = D_0\,(1 + a\xi)(1 + b\eta),
+   \quad a = 0.5,\quad b = 0.3,\quad \xi = x/L,\ \eta = y/L,
+
+constructed by setting
+
+.. math::
+
+   T_e(\xi,\eta) = T_{e,\mathrm{ref}}\,\bigl[(1+a\xi)(1+b\eta)\bigr]^{1/3}.
+
+The exact solution is the same separable clamped shape as the constant-:math:`T_e`
+2-D case:
+
+.. math::
+
+   w_\mathrm{exact}(\xi,\eta) = -g(\xi)\,g(\eta),
+   \quad g(t) = t^2(1-t)^2.
+
+Because :math:`D` varies in both :math:`x` and :math:`y`, the governing
+equation (van Wees & Cloetingh 1994) contains cross-derivative terms that are
+absent in the 1-D case.  For bilinear :math:`D` — where
+:math:`\partial^2 D/\partial x^2 = \partial^2 D/\partial y^2 = 0` — the
+equation reduces to
+
+.. math::
+
+   \frac{\partial^2}{\partial x^2}\!\left[D\frac{\partial^2 w}{\partial x^2}\right]
+   + 2\frac{\partial^2}{\partial x\,\partial y}\!\left[D\frac{\partial^2 w}{\partial x\,\partial y}\right]
+   + \frac{\partial^2}{\partial y^2}\!\left[D\frac{\partial^2 w}{\partial y^2}\right]
+   + 2(\partial_x D)(\partial_{xyy}w)
+   + 2(\partial_y D)(\partial_{xxy}w)
+   + 2(1-\nu)\frac{\partial^2 D}{\partial x\,\partial y}\frac{\partial^2 w}{\partial x\,\partial y}
+   + \Delta\rho\,g\,w = -q_s,
+
+where the last three terms arise from spatial variation of :math:`D` and are
+absent when :math:`D` is uniform.  The final term uses coefficient
+:math:`2(1-\nu)` rather than :math:`2`, reflecting the full van Wees &
+Cloetingh form (see :doc:`theory_and_numerics`).  A non-zero cross-derivative
+term exercises the off-diagonal entries of the variable-:math:`T_e`
+finite-difference stencil and provides a stronger verification than the 1-D
+strip test alone.  The manufactured load :math:`q_s` is derived analytically
+from the equation above with :math:`w = w_\mathrm{exact}`.
+
+Physical parameters: :math:`T_{e,\mathrm{ref}} = 30` km, :math:`E = 65` GPa,
+:math:`\nu = 0.25`, :math:`\rho_m = 3300` kg m⁻³, :math:`\rho_\mathrm{fill}
+= 0`, :math:`g = 9.8` m s⁻², :math:`L = 600` km, clamped BCs on all four sides.
+
+Results
+~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 12 16
+
+   * - :math:`n_x = n_y`
+     - :math:`\Delta x` [km]
+     - :math:`L^\infty` error
+   * - 26
+     - 24.0
+     - 1.86 × 10⁻³
+   * - 51
+     - 12.0
+     - 4.98 × 10⁻⁴
+   * - 101
+     - 6.0
+     - 1.26 × 10⁻⁴
+   * - 201
+     - 3.0
+     - 3.16 × 10⁻⁵
+
+Convergence slopes (coarse → fine): :math:`\mathcal{O}(\Delta x^{1.90})`,
+:math:`\mathcal{O}(\Delta x^{1.98})`, :math:`\mathcal{O}(\Delta x^{2.00})`.
+
+The test function :func:`tests.test_bc_mms.TestVariableTe2D.test_convergence_order`
+runs with every CI build.
