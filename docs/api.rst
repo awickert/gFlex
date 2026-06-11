@@ -33,6 +33,8 @@ Output
 In-plane stresses
 -----------------
 
+.. versionadded:: 1.4.0
+
 In-plane stresses are set as attributes directly on the solver instance
 before calling :meth:`initialize`.  They are not available as configuration
 file keys.
@@ -58,7 +60,7 @@ file keys.
 
 All three default to zero if not assigned; setting any of them with
 ``SAS`` or ``SAS_NG`` raises a :exc:`RuntimeWarning` and has no effect.
-See :doc:`theory` for the governing equations that include these terms.
+See :doc:`theory_and_numerics` for the governing equations that include these terms.
 
 Domain-padding utilities
 ------------------------
@@ -159,6 +161,8 @@ Or use a context manager for a single run::
 LU factorization cache
 ----------------------
 
+.. versionadded:: 2.0.0
+
 For coupling workflows that call :meth:`~gflex.F1D.run` (or
 :meth:`~gflex.F2D.run`) repeatedly with the same grid, elastic thickness,
 and boundary conditions, the sparse-LU factorization of the coefficient
@@ -219,8 +223,42 @@ Example (coupling loop)::
 
 The cache is cleared by :meth:`~gflex.base.Flexure.finalize`.
 
-Flexural wavelength
--------------------
+Timing attributes
+-----------------
+
+.. versionadded:: 2.0.0
+
+After each :meth:`~gflex.base.Flexure.run` call, the following read-only
+attributes report wall-clock times measured with :func:`time.perf_counter`:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 15 55
+
+   * - Attribute
+     - Solvers
+     - Description
+   * - ``time_to_solve``
+     - All
+     - Total solve wall time [s] from the start of :meth:`run` to the end.
+   * - ``coeff_creation_time``
+     - FD only
+     - Time [s] to construct the sparse coefficient matrix.  Not set for
+       SAS or FFT solvers.  In a coupling loop with
+       ``cache_factorization`` enabled, this is zero on cache-hit calls.
+   * - ``linear_solve_time``
+     - FD only
+     - Time [s] for the LU backsolve (triangular solve).  Not set for
+       SAS or FFT solvers.
+
+``coeff_creation_time`` and ``linear_solve_time`` together account for most
+of ``time_to_solve``; the remainder is boundary-condition setup and array
+housekeeping.  Both are most useful in coupling loops:
+``coeff_creation_time`` confirms the coefficient matrix was reused (value ≈ 0)
+and ``linear_solve_time`` shows the marginal cost per :meth:`run` call.
+
+Flexural wavelengths
+--------------------
 
 .. autofunction:: gflex.flexural_wavelengths
 
