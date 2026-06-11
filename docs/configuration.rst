@@ -151,6 +151,13 @@ Parameters
     analytical solution is inherently infinite-plate); leave blank or set
     explicitly.
 
+    .. note::
+
+       The v1.x PascalCase strings (``"0Displacement0Slope"``,
+       ``"0Moment0Shear"``, ``"Mirror"``, etc.) now raise ``ValueError``
+       in v2.0.  Replace them with the lowercase canonical forms above.
+       See :doc:`boundary_conditions` for the full mapping.
+
 .. note::
 
    .. versionadded:: 1.4.0
