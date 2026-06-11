@@ -1361,15 +1361,7 @@ class Flexure(Utility, Plotting):
     @method.setter
     def method(self, value):
         if isinstance(value, str):
-            lo = value.lower()
-            if value != lo:
-                import warnings
-                warnings.warn(
-                    f"method='{value}' is deprecated and will likely be removed in v2.0; use '{lo}' instead.",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-            self._method = lo
+            self._method = value.lower()
         else:
             self._method = value
 
