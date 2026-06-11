@@ -169,8 +169,11 @@ gFlex can be accessed through several front-ends depending on your workflow:
      - scalar or array
      - update in progress
      - Raster and vector interfaces for use inside a GRASS GIS session.
-       ``r.flexure`` uses FD or FFT; ``v.flexure`` uses SAS_NG for
-       scattered point loads.  Install with ``g.extension``.
+       ``r.flexure`` uses FD, FFT, or SAS with optional variable
+       :math:`T_e`; ``v.flexure`` uses SAS_NG for scattered point loads.
+       Install with ``g.extension``.
+       `r.flexure <https://github.com/awickert/r.flexure>`_ —
+       `v.flexure <https://github.com/awickert/v.flexure>`_.
    * - **Landlab component** (``landlab.components.gFlex``)
      - scalar or array
      - pending v2.0.0
@@ -199,8 +202,6 @@ gFlex can be accessed through several front-ends depending on your workflow:
    configuration
    accuracy
    benchmarks
-   grass_gis
-   qgis
    references
    changelog
 
