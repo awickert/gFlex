@@ -46,11 +46,16 @@ class BmiGflex(_BmiBase):
     Supports 1-D and 2-D gridded flexure solutions (FD, FFT, SAS methods).
     The SAS_NG point-load method is not suited to the BMI grid model.
 
-    Grid
-    ----
-    All variables share grid identifier 0, a uniform rectilinear grid.
-    Grid shape follows NumPy / C order: (nrows,) in 1-D or (nrows, ncols)
-    in 2-D, with spacing (dy, dx) and origin at (0, 0).
+    Grids
+    -----
+    Grid 0 — the spatial flexure grid (uniform rectilinear).
+        Shape (nrows,) in 1-D or (nrows, ncols) in 2-D, with spacing
+        (dy, dx) and origin at (0, 0).
+
+    Grid 1 — scalar parameter grid (uniform rectilinear, shape (1,)).
+        Holds the five physical constants below.  These are spatially
+        uniform by assumption; exposing them as single-element arrays
+        supports introspection and ensemble initialisation via the BMI.
 
     Time
     ----
@@ -58,36 +63,82 @@ class BmiGflex(_BmiBase):
     nominal: start=0, step=1, end=inf. Each call to update() applies
     the current load and computes deflection.
 
-    Variables
-    ---------
-    Input:  ``load__normal_component_of_stress`` [Pa]  — surface normal stress q0
-    Input:  ``lithosphere__elastic_thickness`` [m] — elastic thickness Te
-            (usually constant; updating it invalidates the cached LU
-            factorisation so the next update() rebuilds the stiffness matrix)
-    Output: ``lithosphere__vertical_displacement`` [m] — downward deflection w
+    Variables — grid 0
+    ------------------
+    Input:  ``load__normal_component_of_stress`` [Pa]
+            Surface-normal load stress q_s = ρ g h.  Material-agnostic.
+    Input:  ``lithosphere__elastic_thickness`` [m]
+            Elastic thickness T_e.  Updating it invalidates the cached LU
+            factorisation; the next update() rebuilds the stiffness matrix.
+    Output: ``lithosphere__vertical_displacement`` [m]
+            Lithospheric deflection w (downward negative).
+
+    Variables — grid 1 (scalar constants)
+    --------------------------------------
+    Input:  ``lithosphere__young_modulus`` [Pa]
+    Input:  ``lithosphere__poisson_ratio`` [1]
+    Input:  ``mantle__mass-per-volume_density`` [kg m-3]
+    Input:  ``infill_material__mass-per-volume_density`` [kg m-3]
+    Input:  ``planet_surface__gravitational_acceleration`` [m s-2]
+
+    Changes to any scalar constant via set_value() are pushed to the
+    solver immediately and invalidate the cached LU factorisation, so
+    the next update() rebuilds the stiffness matrix automatically.
     """
 
     _name = "gFlex Lithospheric Flexure"
+
+    # Maps BMI name → (model attribute name, UDUNITS string).
+    # Used to build _var_units, _var_grids, _var_loc and to propagate
+    # set_value() calls to the underlying solver.
+    _CONST_VARS: dict[str, tuple[str, str]] = {
+        "lithosphere__young_modulus":                 ("E",        "Pa"),
+        "lithosphere__poisson_ratio":                 ("nu",       "1"),
+        "mantle__mass-per-volume_density":            ("rho_m",    "kg m-3"),
+        "infill_material__mass-per-volume_density":   ("rho_fill", "kg m-3"),
+        "planet_surface__gravitational_acceleration": ("g",        "m s-2"),
+    }
+
     _input_var_names = (
         "load__normal_component_of_stress",
         "lithosphere__elastic_thickness",
+        "lithosphere__young_modulus",
+        "lithosphere__poisson_ratio",
+        "mantle__mass-per-volume_density",
+        "infill_material__mass-per-volume_density",
+        "planet_surface__gravitational_acceleration",
     )
     _output_var_names = ("lithosphere__vertical_displacement",)
 
     _var_units = {
-        "load__normal_component_of_stress": "Pa",
-        "lithosphere__elastic_thickness": "m",
-        "lithosphere__vertical_displacement": "m",
+        "load__normal_component_of_stress":           "Pa",
+        "lithosphere__elastic_thickness":             "m",
+        "lithosphere__vertical_displacement":         "m",
+        "lithosphere__young_modulus":                 "Pa",
+        "lithosphere__poisson_ratio":                 "1",
+        "mantle__mass-per-volume_density":            "kg m-3",
+        "infill_material__mass-per-volume_density":   "kg m-3",
+        "planet_surface__gravitational_acceleration": "m s-2",
     }
     _var_grids = {
-        "load__normal_component_of_stress": 0,
-        "lithosphere__elastic_thickness": 0,
-        "lithosphere__vertical_displacement": 0,
+        "load__normal_component_of_stress":           0,
+        "lithosphere__elastic_thickness":             0,
+        "lithosphere__vertical_displacement":         0,
+        "lithosphere__young_modulus":                 1,
+        "lithosphere__poisson_ratio":                 1,
+        "mantle__mass-per-volume_density":            1,
+        "infill_material__mass-per-volume_density":   1,
+        "planet_surface__gravitational_acceleration": 1,
     }
     _var_loc = {
-        "load__normal_component_of_stress": "node",
-        "lithosphere__elastic_thickness": "node",
-        "lithosphere__vertical_displacement": "node",
+        "load__normal_component_of_stress":           "node",
+        "lithosphere__elastic_thickness":             "node",
+        "lithosphere__vertical_displacement":         "node",
+        "lithosphere__young_modulus":                 "node",
+        "lithosphere__poisson_ratio":                 "node",
+        "mantle__mass-per-volume_density":            "node",
+        "infill_material__mass-per-volume_density":   "node",
+        "planet_surface__gravitational_acceleration": "node",
     }
 
     def __init__(self) -> None:
@@ -175,13 +226,17 @@ class BmiGflex(_BmiBase):
 
         self._values = {
             "load__normal_component_of_stress": self._load,
-            "lithosphere__elastic_thickness": self._te,
+            "lithosphere__elastic_thickness":   self._te,
             "lithosphere__vertical_displacement": self._w,
         }
 
+        # Scalar physical constants: 1-element arrays on grid 1.
+        for bmi_name, (attr, _) in self._CONST_VARS.items():
+            self._values[bmi_name] = np.array([float(getattr(self._model, attr))])
+
         # Unhook the config file so _solve_fd() does not re-read T_e (and
         # other parameters) from disk on every run().  All parameters are now
-        # set as attributes; BMI callers use set_value() to update T_e.
+        # set as attributes; BMI callers use set_value() to update them.
         self._model.filename = ""
 
     def update(self) -> None:
@@ -318,13 +373,17 @@ class BmiGflex(_BmiBase):
     def set_value(self, name: str, src: NDArray[Any]) -> None:
         """Overwrite the entire array for variable *name* with values from *src*.
 
-        For ``lithosphere__elastic_thickness``, the new values are pushed to
-        the solver immediately, invalidating the cached coefficient matrix so
-        that the next :meth:`update` uses the updated rigidity field.
+        For ``lithosphere__elastic_thickness`` and the five scalar physical
+        constants, the new values are pushed to the solver immediately,
+        invalidating the cached coefficient matrix so that the next
+        :meth:`update` uses the updated parameters.
         """
         self.get_value_ptr(name).flat[:] = src
         if name == "lithosphere__elastic_thickness":
             self._model.T_e = self._te.copy()
+        elif name in self._CONST_VARS:
+            attr = self._CONST_VARS[name][0]
+            setattr(self._model, attr, float(self._values[name][0]))
 
     def set_value_at_indices(
         self,
@@ -334,12 +393,16 @@ class BmiGflex(_BmiBase):
     ) -> None:
         """Set selected flat-indexed elements of variable *name* from *src*.
 
-        For ``lithosphere__elastic_thickness``, the updated array is pushed to
-        the solver immediately (see :meth:`set_value`).
+        For ``lithosphere__elastic_thickness`` and the scalar physical
+        constants, the updated array is pushed to the solver immediately
+        (see :meth:`set_value`).
         """
         self.get_value_ptr(name).flat[inds] = src
         if name == "lithosphere__elastic_thickness":
             self._model.T_e = self._te.copy()
+        elif name in self._CONST_VARS:
+            attr = self._CONST_VARS[name][0]
+            setattr(self._model, attr, float(self._values[name][0]))
 
     # ------------------------------------------------------------------
     # Grid functions — uniform rectilinear
@@ -347,10 +410,14 @@ class BmiGflex(_BmiBase):
 
     def get_grid_rank(self, grid: int) -> int:
         """Return the number of dimensions of grid *grid*."""
+        if grid == 1:
+            return 1
         return len(self._shape)
 
     def get_grid_size(self, grid: int) -> int:
         """Return the total number of nodes in grid *grid*."""
+        if grid == 1:
+            return 1
         return int(np.prod(self._shape))
 
     def get_grid_type(self, grid: int) -> str:
@@ -361,21 +428,30 @@ class BmiGflex(_BmiBase):
         self, grid: int, shape: NDArray[np.intp]
     ) -> NDArray[np.intp]:
         """Fill *shape* with the grid dimensions and return it."""
-        shape[:] = self._shape
+        if grid == 1:
+            shape[:] = (1,)
+        else:
+            shape[:] = self._shape
         return shape
 
     def get_grid_spacing(
         self, grid: int, spacing: NDArray[np.float64]
     ) -> NDArray[np.float64]:
         """Fill *spacing* with the grid cell spacings [m] and return it."""
-        spacing[:] = self._spacing
+        if grid == 1:
+            spacing[:] = (1.0,)
+        else:
+            spacing[:] = self._spacing
         return spacing
 
     def get_grid_origin(
         self, grid: int, origin: NDArray[np.float64]
     ) -> NDArray[np.float64]:
         """Fill *origin* with the grid origin coordinates [m] and return it."""
-        origin[:] = self._origin
+        if grid == 1:
+            origin[:] = (0.0,)
+        else:
+            origin[:] = self._origin
         return origin
 
     # ------------------------------------------------------------------
