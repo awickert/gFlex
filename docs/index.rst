@@ -146,20 +146,17 @@ gFlex can be accessed through several front-ends depending on your workflow:
 
 .. list-table::
    :header-rows: 1
-   :widths: 22 12 12 54
+   :widths: 24 12 64
 
    * - Interface
      - :math:`T_e`
-     - Status
      - Description
    * - **Python API** (:class:`~gflex.F1D` / :class:`~gflex.F2D`)
      - scalar or array
-     - stable
      - Full programmatic control.  The primary interface; all other
        front-ends call into it.  See the :doc:`tutorial` and :doc:`api`.
    * - **CLI** (``gflex <config.yaml>``)
      - scalar or array
-     - stable
      - Drive gFlex from a YAML configuration file with no Python code.
        See :doc:`configuration`.
 
@@ -167,20 +164,17 @@ gFlex can be accessed through several front-ends depending on your workflow:
 
 .. list-table::
    :header-rows: 1
-   :widths: 22 12 12 54
+   :widths: 24 12 64
 
    * - Interface
      - :math:`T_e`
-     - Status
      - Description
    * - **CSDMS BMI** (:class:`~gflex.BmiGflex`)
      - scalar or array
-     - stable
      - CSDMS Basic Model Interface for coupling in the CSDMS framework.
        Requires ``pip install gflex[bmi]``.  See :doc:`api`.
    * - **Landlab component** (``landlab.components.gFlex``)
      - scalar or array
-     - pending v2.0.0
      - Landlab Earth-surface modelling framework component.  Uses
        ``grid.at_node`` fields; compatible with the CSDMS Standard Names
        used by the BMI.  Install with ``pip install landlab``.
@@ -189,15 +183,13 @@ gFlex can be accessed through several front-ends depending on your workflow:
 
 .. list-table::
    :header-rows: 1
-   :widths: 22 12 12 54
+   :widths: 24 12 64
 
    * - Interface
      - :math:`T_e`
-     - Status
      - Description
    * - **GRASS GIS** (``r.flexure``, ``v.flexure``)
      - scalar or array
-     - update in progress
      - Raster and vector interfaces for use inside a GRASS GIS session.
        ``r.flexure`` uses FD, FFT, or SAS with optional variable
        :math:`T_e`; ``v.flexure`` uses SAS_NG for scattered point loads.
@@ -206,7 +198,6 @@ gFlex can be accessed through several front-ends depending on your workflow:
        `v.flexure <https://github.com/awickert/v.flexure>`_.
    * - **QGIS Processing provider** (``processing_gflex``)
      - scalar or array
-     - v0.1.0 pending
      - No-code access from the QGIS Processing Toolbox and Graphical
        Modeler.  Supports all 2-D methods, variable :math:`T_e`, all
        boundary conditions, and in-plane stresses.
