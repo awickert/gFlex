@@ -60,7 +60,7 @@ class BmiGflex(_BmiBase):
 
     Variables
     ---------
-    Input:  ``lithosphere__load_pressure`` [Pa]  — surface normal stress q0
+    Input:  ``load__normal_component_of_stress`` [Pa]  — surface normal stress q0
     Input:  ``lithosphere__elastic_thickness`` [m] — elastic thickness Te
             (usually constant; updating it invalidates the cached LU
             factorisation so the next update() rebuilds the stiffness matrix)
@@ -69,23 +69,23 @@ class BmiGflex(_BmiBase):
 
     _name = "gFlex Lithospheric Flexure"
     _input_var_names = (
-        "lithosphere__load_pressure",
+        "load__normal_component_of_stress",
         "lithosphere__elastic_thickness",
     )
     _output_var_names = ("lithosphere__vertical_displacement",)
 
     _var_units = {
-        "lithosphere__load_pressure": "Pa",
+        "load__normal_component_of_stress": "Pa",
         "lithosphere__elastic_thickness": "m",
         "lithosphere__vertical_displacement": "m",
     }
     _var_grids = {
-        "lithosphere__load_pressure": 0,
+        "load__normal_component_of_stress": 0,
         "lithosphere__elastic_thickness": 0,
         "lithosphere__vertical_displacement": 0,
     }
     _var_loc = {
-        "lithosphere__load_pressure": "node",
+        "load__normal_component_of_stress": "node",
         "lithosphere__elastic_thickness": "node",
         "lithosphere__vertical_displacement": "node",
     }
@@ -174,7 +174,7 @@ class BmiGflex(_BmiBase):
         self._model.T_e = float(te_raw) if np.isscalar(te_raw) else self._te.copy()
 
         self._values = {
-            "lithosphere__load_pressure": self._load,
+            "load__normal_component_of_stress": self._load,
             "lithosphere__elastic_thickness": self._te,
             "lithosphere__vertical_displacement": self._w,
         }
@@ -187,7 +187,7 @@ class BmiGflex(_BmiBase):
     def update(self) -> None:
         """Compute flexural deflection for the current load.
 
-        Writes the current ``lithosphere__load_pressure`` array into the
+        Writes the current ``load__normal_component_of_stress`` array into the
         model's internal ``qs`` field, runs the solver, then copies the
         result into ``lithosphere__vertical_displacement``.
         """

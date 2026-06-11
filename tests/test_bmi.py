@@ -52,7 +52,7 @@ def test_initialize_update_finalize():
 
 def test_get_input_var_names(bmi_1d):
     assert bmi_1d.get_input_var_names() == (
-        "lithosphere__load_pressure",
+        "load__normal_component_of_stress",
         "lithosphere__elastic_thickness",
     )
 
@@ -70,7 +70,7 @@ def test_get_output_item_count(bmi_1d):
 
 
 def test_get_var_units_load(bmi_1d):
-    assert bmi_1d.get_var_units("lithosphere__load_pressure") == "Pa"
+    assert bmi_1d.get_var_units("load__normal_component_of_stress") == "Pa"
 
 
 def test_get_var_units_te(bmi_1d):
@@ -82,13 +82,13 @@ def test_get_var_units_deflection(bmi_1d):
 
 
 def test_get_var_location(bmi_1d):
-    assert bmi_1d.get_var_location("lithosphere__load_pressure") == "node"
+    assert bmi_1d.get_var_location("load__normal_component_of_stress") == "node"
     assert bmi_1d.get_var_location("lithosphere__elastic_thickness") == "node"
     assert bmi_1d.get_var_location("lithosphere__vertical_displacement") == "node"
 
 
 def test_get_var_grid(bmi_1d):
-    assert bmi_1d.get_var_grid("lithosphere__load_pressure") == 0
+    assert bmi_1d.get_var_grid("load__normal_component_of_stress") == 0
     assert bmi_1d.get_var_grid("lithosphere__elastic_thickness") == 0
     assert bmi_1d.get_var_grid("lithosphere__vertical_displacement") == 0
 
@@ -188,7 +188,7 @@ def test_deflection_nonzero_after_update(bmi_1d):
     """Non-zero load must produce non-zero deflection after update()."""
     n = bmi_1d.get_grid_size(0)
     load = np.zeros(n)
-    bmi_1d.get_value("lithosphere__load_pressure", load)
+    bmi_1d.get_value("load__normal_component_of_stress", load)
     # The fixture config has a non-zero load from the file.
     bmi_1d.update()
     w = np.zeros(n)
@@ -229,7 +229,7 @@ def test_set_te_changes_deflection(bmi_1d):
 def test_set_value_affects_deflection(bmi_1d):
     """Setting load to zero then updating must yield zero deflection."""
     n = bmi_1d.get_grid_size(0)
-    bmi_1d.set_value("lithosphere__load_pressure", np.zeros(n))
+    bmi_1d.set_value("load__normal_component_of_stress", np.zeros(n))
     bmi_1d.update()
     w = np.zeros(n)
     bmi_1d.get_value("lithosphere__vertical_displacement", w)
@@ -246,11 +246,11 @@ def test_get_value_ptr_is_live(bmi_1d):
 
 def test_set_value_at_indices(bmi_1d):
     n = bmi_1d.get_grid_size(0)
-    bmi_1d.set_value("lithosphere__load_pressure", np.zeros(n))
+    bmi_1d.set_value("load__normal_component_of_stress", np.zeros(n))
     inds = np.array([n // 2], dtype=np.intp)
-    bmi_1d.set_value_at_indices("lithosphere__load_pressure", inds, np.array([1e9]))
+    bmi_1d.set_value_at_indices("load__normal_component_of_stress", inds, np.array([1e9]))
     src = np.zeros(1)
-    bmi_1d.get_value_at_indices("lithosphere__load_pressure", src, inds)
+    bmi_1d.get_value_at_indices("load__normal_component_of_stress", src, inds)
     assert src[0] == pytest.approx(1e9)
 
 
@@ -319,7 +319,7 @@ def test_2d_deflection_nonzero_after_update(bmi_2d):
 def test_2d_set_value_affects_deflection(bmi_2d):
     """Setting load to zero then updating must yield zero deflection."""
     n = bmi_2d.get_grid_size(0)
-    bmi_2d.set_value("lithosphere__load_pressure", np.zeros(n))
+    bmi_2d.set_value("load__normal_component_of_stress", np.zeros(n))
     bmi_2d.update()
     w = np.zeros(n)
     bmi_2d.get_value("lithosphere__vertical_displacement", w)
