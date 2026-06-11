@@ -101,10 +101,11 @@ def run_1d(nx):
     s.debug    = False
     s.initialize()
     s.run()
+    w_num = s.w.copy()
     s.finalize()
 
-    err = np.max(np.abs(s.w - w_ex)) / np.max(np.abs(w_ex))
-    return s.w, w_ex, err, dx, xi
+    err = np.max(np.abs(w_num - w_ex)) / np.max(np.abs(w_ex))
+    return w_num, w_ex, err, dx, xi
 
 
 def run_2d(ny, nx):
@@ -139,10 +140,11 @@ def run_2d(ny, nx):
     s.bc_south = "zero_displacement_zero_moment"
     s.initialize()
     s.run()
+    w_num = s.w.copy()
     s.finalize()
 
-    err = np.max(np.abs(s.w - w_ex)) / np.max(np.abs(w_ex))
-    return s.w, w_ex, err, dx
+    err = np.max(np.abs(w_num - w_ex)) / np.max(np.abs(w_ex))
+    return w_num, w_ex, err, dx
 
 
 # ===========================================================================
