@@ -69,16 +69,10 @@
   ``'no_outside_loads'`` boundary condition, consistent with the existing
   aliases (``'clamped'``, ``'pinned'``, ``'free'``, ``'mirror'``).
 
-- **FD `'zero_displacement_zero_moment'` (pinned) boundary condition** —
-  `F1D` and `F2D` now accept `'zero_displacement_zero_moment'` (alias
-  `'pinned'`) as a valid `bc_*` string when `method='fd'`.  The plate is
-  held at zero deflection but is free to rotate; no bending moment is
-  transmitted across the boundary.  Corresponds to a simply-supported
-  (pinned) end in structural mechanics — the plate rests on a rigid
-  foundation at its edge without being clamped to it.  Implemented via
-  odd-reflection ghost nodes.  See the `boundary_conditions` page for
-  diagrams and a discussion of its contrast with the `mirror`
-  (even-reflection) condition.
+- **`'pinned'` BC alias** — added `'pinned'` as a short alias for
+  `'zero_displacement_zero_moment'`, consistent with the existing
+  `'clamped'`, `'free'`, and `'mirror'` aliases.
+  (The `zero_displacement_zero_moment` BC itself was added in 2.0.0b1.)
 
 - **FD `'no_outside_loads'` boundary condition** — `F1D` and `F2D` now
   accept `'no_outside_loads'` as a valid `bc_*` string when
@@ -282,12 +276,22 @@
   aliases).  Wrappers can validate user input against these sets instead of
   maintaining a parallel copy that drifts with new releases.
 
-- **`"clamped"`, `"pinned"`, `"free"`, and `"mirror"` BC aliases** — concise alternatives to the full
-  canonical names: `"clamped"` normalises to `"zero_displacement_zero_slope"`;
-  `"pinned"` normalises to `"zero_displacement_zero_moment"`;
-  `"free"` normalises to `"zero_moment_zero_shear"`;
-  `"mirror"` normalises to `"zero_slope_zero_shear"`.  All four produce
-  bit-identical results to their canonical names.
+- **FD `'zero_displacement_zero_moment'` (simply-supported / pinned) boundary
+  condition** — `F1D` and `F2D` now accept `'zero_displacement_zero_moment'`
+  as a valid `bc_*` string when `method='fd'`.  The plate is held at zero
+  deflection but is free to rotate; no bending moment is transmitted across
+  the boundary.  Corresponds to a simply-supported (pinned) end in structural
+  mechanics.  Implemented via odd-reflection ghost nodes — contrast with the
+  even-reflection `mirror` condition.  See the `boundary_conditions` page for
+  diagrams.
+
+- **`"clamped"`, `"free"`, and `"mirror"` BC aliases** — concise alternatives
+  to the full canonical names: `"clamped"` normalises to
+  `"zero_displacement_zero_slope"`; `"free"` normalises to
+  `"zero_moment_zero_shear"`; `"mirror"` normalises to
+  `"zero_slope_zero_shear"`.  All three produce bit-identical results to their
+  canonical names.  (The `"pinned"` alias was added in the subsequent
+  post-beta commit; see [Unreleased].)
 
 ### Performance
 
