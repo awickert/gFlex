@@ -23,7 +23,7 @@ surface normal stress, :math:`\Delta\rho = \rho_m - \rho_\text{fill}` [kg m⁻³
 the mantle minus infill density, :math:`g` [m s⁻²] is gravitational acceleration,
 and :math:`D = E T_e^3 / \bigl[12(1 - \nu^2)\bigr]` is the flexural rigidity
 (:math:`E` = Young's modulus, :math:`T_e` = elastic thickness,
-:math:`\nu` = Poisson's ratio).  See :doc:`theory` for the full expanded equations
+:math:`\nu` = Poisson's ratio).  See :doc:`theory_and_numerics` for the full expanded equations
 and physical interpretation of each term.
 
 .. note::
@@ -116,7 +116,7 @@ A minimal 2-D YAML configuration:
      boundary_condition_east: zero_displacement_zero_slope
    numerical2D:
      grid_spacing_y: 4000
-     boundary_condition_north: mirror
+     boundary_condition_north: zero_slope_zero_shear
      boundary_condition_south: zero_slope_zero_shear
 
 Run from the command line::
@@ -139,8 +139,7 @@ point (``gflex <config_file>``).
    :maxdepth: 2
    :caption: Contents
 
-   theory
-   numerical_methods
+   theory_and_numerics
    boundary_conditions
    tutorial
    greenland_example
