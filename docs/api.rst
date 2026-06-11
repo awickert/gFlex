@@ -25,6 +25,39 @@ Both solvers follow the same lifecycle::
 .. autoclass:: gflex.F1D
    :members: initialize, run, finalize
 
+Boundary-condition properties
+-----------------------------
+
+.. versionadded:: 2.0.0
+
+The boundary conditions are set as properties on the solver instance before
+calling :meth:`initialize`.  Each accepts a canonical BC string, a short
+alias, or a ``dict`` for inhomogeneous (prescribed-value) conditions:
+
+.. code-block:: python
+
+   flex.bc_west  = "zero_displacement_zero_slope"   # or "clamped"
+   flex.bc_east  = "zero_moment_zero_shear"          # or "free"
+   flex.bc_south = "zero_slope_zero_shear"           # or "mirror"
+   flex.bc_north = {"displacement": w_arr, "slope": dw_arr}
+
+All valid strings are listed in :data:`gflex.VALID_BC_STRINGS_1D` and
+:data:`gflex.VALID_BC_STRINGS_2D`.
+
+.. data:: gflex.VALID_BC_STRINGS_1D
+
+   .. versionadded:: 2.0.0
+
+   :class:`frozenset` of every accepted BC string for :class:`~gflex.F1D`
+   (canonical names and aliases).  Use this to validate user input without
+   maintaining a parallel copy that may drift with new releases.
+
+.. data:: gflex.VALID_BC_STRINGS_2D
+
+   .. versionadded:: 2.0.0
+
+   :class:`frozenset` of every accepted BC string for :class:`~gflex.F2D`.
+
 Output
 ------
 
@@ -77,6 +110,9 @@ reaching the boundary.
 and array elastic thickness.  It calls the lower-level helpers below and
 is the recommended starting point.
 
+.. versionadded:: 1.4.0
+   1-D support (dispatching on ``qs.ndim``) added in 2.0.0.
+
 .. autofunction:: gflex.pad_domain
 
 **Lower-level building blocks**
@@ -88,11 +124,15 @@ or to inspect the tapered Te grid before running the solver.
 
 *Recommended pad width* (number of cells):
 
+.. versionadded:: 1.4.0
+
 .. autofunction:: gflex.recommended_pad_width
 
 .. autofunction:: gflex.recommended_pad_width_1d
 
 *Smooth Te taper* (extends a Te array into the padding zone):
+
+.. versionadded:: 1.4.0
 
 .. autofunction:: gflex.smooth_pad_Te
 
@@ -259,6 +299,8 @@ and ``linear_solve_time`` shows the marginal cost per :meth:`run` call.
 
 Flexural wavelengths
 --------------------
+
+.. versionadded:: 1.4.0
 
 .. autofunction:: gflex.flexural_wavelengths
 
