@@ -367,6 +367,8 @@ the optional ``bmipy`` dependency (``pip install gflex[bmi]``).
 
 **BMI variables**
 
+Grid 0 — spatial flexure grid:
+
 .. list-table::
    :header-rows: 1
    :widths: 40 10 10 40
@@ -390,6 +392,44 @@ the optional ``bmipy`` dependency (``pip install gflex[bmi]``).
      - output
      - m
      - Deflection :math:`w` (downward negative).
+
+Grid 1 — scalar physical constants (single-element arrays):
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 10 10 40
+
+   * - Name
+     - Direction
+     - Units
+     - Description
+   * - ``lithosphere__young_modulus``
+     - input
+     - Pa
+     - Young's modulus :math:`E`.
+   * - ``lithosphere__poisson_ratio``
+     - input
+     - 1
+     - Poisson's ratio :math:`\nu` (dimensionless).
+   * - ``mantle__mass-per-volume_density``
+     - input
+     - kg m⁻³
+     - Mantle density :math:`\rho_m`.
+   * - ``infill_material__mass-per-volume_density``
+     - input
+     - kg m⁻³
+     - Infill material density :math:`\rho_\text{fill}`.  The only constant
+       with a runtime-update use case: a basin transitioning from subaerial
+       (:math:`\rho_\text{fill}=0`) to subaqueous
+       (:math:`\rho_\text{fill}=1030`) during a simulation.
+   * - ``planet_surface__gravitational_acceleration``
+     - input
+     - m s⁻²
+     - Gravitational acceleration :math:`g`.
+
+Updating any scalar constant via :meth:`set_value` propagates to the solver
+immediately and invalidates the cached LU factorisation, so the next
+:meth:`update` rebuilds the stiffness matrix automatically.
 
 **Coupling example**
 
