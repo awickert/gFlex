@@ -69,6 +69,17 @@
   ``'no_outside_loads'`` boundary condition, consistent with the existing
   aliases (``'clamped'``, ``'pinned'``, ``'free'``, ``'mirror'``).
 
+- **FD `'zero_displacement_zero_moment'` (pinned) boundary condition** —
+  `F1D` and `F2D` now accept `'zero_displacement_zero_moment'` (alias
+  `'pinned'`) as a valid `bc_*` string when `method='fd'`.  The plate is
+  held at zero deflection but is free to rotate; no bending moment is
+  transmitted across the boundary.  Corresponds to a simply-supported
+  (pinned) end in structural mechanics — the plate rests on a rigid
+  foundation at its edge without being clamped to it.  Implemented via
+  odd-reflection ghost nodes.  See the `boundary_conditions` page for
+  diagrams and a discussion of its contrast with the `mirror`
+  (even-reflection) condition.
+
 - **FD `'no_outside_loads'` boundary condition** — `F1D` and `F2D` now
   accept `'no_outside_loads'` as a valid `bc_*` string when
   `method='fd'`.  On each side where it is set, the solver automatically
@@ -172,6 +183,35 @@
   O(Δx^1.91) near n = 200–400 instead of the correct O(Δx^2.00).  The
   fix is in test code only (`_mms_2d_variable_te` in
   `tests/test_bc_mms.py`); the solver itself is unaffected.
+
+### Documentation
+
+- New `theory_and_numerics` page: governing PDE, flexural rigidity, the
+  full variable-D van Wees & Cloetingh (1994) FD expansion, and
+  descriptions of all solution methods (SAS, FD, FFT).  Replaces the
+  orphaned `theory.rst` and `numerical_methods.rst` pages from the beta.
+- `boundary_conditions` page expanded: `versionadded` markers for
+  `zero_displacement_zero_moment` and `no_outside_loads`; proximity
+  warning documentation; prescribed-BC usage examples.
+- `api.rst` expanded: BMI variables split into grid-0 (spatial) and
+  grid-1 (scalar constants) tables; LU cache and timing attributes
+  documented; coupling guide added covering load conversion, `rho_fill`
+  semantics, and topography-update patterns; Landlab component section
+  added with field-name table, BMI comparison, and coupling example.
+- `index.rst`: interfaces table reorganised into three groups
+  (Python/CLI, Modelling frameworks, GIS); Status column removed;
+  GRASS repo links added.
+- Accuracy page: variable-Te 2-D MMS section updated with corrected
+  governing equation (2(1−ν) cross-derivative coefficient) and revised
+  convergence results (O(Δx^2.00)).
+
+### Tests
+
+- 484 tests passing (up from 335 in 2.0.0b1), covering all solvers,
+  all BC types (including pinned and prescribed-value), MMS convergence
+  for mirror (1-D and 2-D) and variable-Te (2-D), domain padding, LU
+  cache, warnings, and the full BMI variable set including the five
+  scalar physical constants.
 
 ----
 
