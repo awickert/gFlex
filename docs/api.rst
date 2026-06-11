@@ -262,12 +262,115 @@ Flexural wavelengths
 
 .. autofunction:: gflex.flexural_wavelengths
 
+Coupling guide
+--------------
+
+gFlex is material-agnostic: it receives a surface-normal stress [Pa] and
+returns a deflection [m], regardless of whether the load comes from ice,
+water, sediment, volcanic edifices, or any combination.  The caller is
+responsible for converting source-specific quantities into Pa before passing
+them to gFlex.
+
+**Load conversion**
+
+.. code-block:: python
+
+   # Glacial isostasy
+   qs = rho_ice * g * ice_thickness        # kg m⁻³ × m s⁻² × m → Pa
+
+   # Sediment or volcanic load
+   qs = rho_sediment * g * sediment_thickness
+
+   # Multiple sources: sum them
+   qs = rho_ice * g * h_ice + rho_sed * g * h_sed + rho_water * g * h_water
+
+The ``rho_fill`` parameter should be set to the density of the material that
+*replaces* the load inside the flexural depression — ``rho_fill=0`` for
+subaerially exposed basins, ``rho_fill=1030`` for submarine basins,
+``rho_fill=2000``–``2700`` for sediment-filled basins.
+
+**Applying deflection to topography**
+
+gFlex returns the *total* instantaneous deflection, not an increment.
+In a time-stepping loop, apply only the *change* to topography:
+
+.. code-block:: python
+
+   flex.qs = qs
+   flex.run()
+   w_new = flex.w
+   topo += w_new - w_prev
+   w_prev = w_new.copy()
+
+**QGIS Processing provider**
+
+For GIS-based workflows where load and elastic-thickness data are already
+rasters, `processing_gflex <https://github.com/awickert/processing_gflex>`_
+exposes gFlex as a no-code algorithm in the QGIS Processing Toolbox and
+Graphical Modeler.  It supports all 2-D solution methods (FD, FFT, SAS),
+variable or scalar :math:`T_e`, all boundary conditions, and in-plane
+stresses.  Installation::
+
+   pip install "gflex>=2.0.0"   # auto-installed by the plugin on first use
+
+Requires QGIS ≥ 3.16.  Usable from the Toolbox, Graphical Modeler, or
+headlessly via ``processing.run()``.
+
 BMI interface
 -------------
 
 :class:`~gflex.BmiGflex` exposes the CSDMS Basic Model Interface, enabling
 gFlex to be coupled with other models in the CSDMS framework.  It requires
 the optional ``bmipy`` dependency (``pip install gflex[bmi]``).
+
+**BMI variables**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 10 10 40
+
+   * - Name
+     - Direction
+     - Units
+     - Description
+   * - ``load__normal_component_of_stress``
+     - input
+     - Pa
+     - Surface-normal load stress :math:`q_s`.  Material-agnostic: convert
+       ice, water, sediment, etc. to Pa before calling :meth:`set_value`.
+   * - ``lithosphere__elastic_thickness``
+     - input
+     - m
+     - Elastic thickness :math:`T_e`.  Usually set once at initialisation;
+       updating it between :meth:`update` calls invalidates the cached LU
+       factorisation so the next solve rebuilds the stiffness matrix.
+   * - ``lithosphere__vertical_displacement``
+     - output
+     - m
+     - Deflection :math:`w` (downward negative).
+
+**Coupling example**
+
+.. code-block:: python
+
+   from gflex import BmiGflex
+   import numpy as np
+
+   bmi = BmiGflex()
+   bmi.initialize("my_config.yaml")
+
+   n = bmi.get_grid_size(0)
+   load = np.zeros(n)
+
+   for step in range(n_steps):
+       load[:] = rho_ice * g * ice_thickness.ravel()
+       bmi.set_value("load__normal_component_of_stress", load)
+       bmi.update()
+       w = np.empty(n)
+       bmi.get_value("lithosphere__vertical_displacement", w)
+       # … apply w to topography …
+
+   bmi.finalize()
 
 .. autoclass:: gflex.BmiGflex
    :members: initialize, update, finalize, get_value, set_value
