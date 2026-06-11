@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Breaking changes
+
+- **BMI load variable renamed** — `BmiGflex` input variable
+  ``lithosphere__load_pressure`` has been renamed to
+  ``load__normal_component_of_stress``.  The old name implied the load was a
+  property of the lithosphere, but it is applied *to* the lithosphere from
+  above and is material-agnostic (ice, sediment, water, topography, etc.
+  all express as a surface-normal stress in Pa before being passed to gFlex).
+  The new name follows CSDMS quantity vocabulary and matches the field name
+  used by the Landlab gFlex component.  Update all ``set_value`` /
+  ``get_value`` calls accordingly:
+  ``set_value("load__normal_component_of_stress", q_array)``.
+
 ### New features
 
 - **BMI `lithosphere__elastic_thickness` input variable** — `BmiGflex` now
