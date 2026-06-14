@@ -528,7 +528,8 @@ sediment-filled (``rho_fill=2000``–``2700``) basins.
    mg.add_zeros("load__normal_component_of_stress", at="node")
    mg.add_zeros("topographic__elevation", at="node")
 
-   gf = gFlex(mg, E=65e9, nu=0.25, rho_m=3300, rho_fill=0, T_e=35e3)
+   gf = gFlex(mg, Youngs_modulus=65e9, Poissons_ratio=0.25,
+              rho_mantle=3300, rho_fill=0, elastic_thickness=35e3)
 
    w_prev = np.zeros(mg.number_of_nodes)
 
