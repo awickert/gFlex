@@ -1,9 +1,18 @@
-"""Tests for the LU factorization cache (cache_factorization attribute)."""
+"""Tests for the LU factorization cache (``cache_factorization`` attribute).
+
+After the cache redesign:
+
+* ``cache_factorization=False`` (default) — no LU cache; ``spsolve`` each run.
+* ``cache_factorization=True`` — cache the LU factorisation and reuse it,
+  trusting setter-based invalidation (matrix-determining inputs invalidate the
+  cache on reassignment; array inputs are read-only).  The coefficient matrix
+  is freed once the LU is built.  There is no per-run matrix hash.
+* ``cache_factorization="no_check"`` — deprecated alias for ``True``.
+"""
 
 import numpy as np
 import pytest
 
-from gflex.base import _matrix_hash
 from gflex.f1d import F1D
 from gflex.f2d import F2D
 
@@ -65,26 +74,10 @@ def test_1d_cache_true_matches_uncached():
     np.testing.assert_allclose(cached.w, ref.w, rtol=1e-9)
 
 
-def test_1d_cache_no_check_matches_uncached():
-    ref = _make_f1d(cache=False)
-    ref.run()
-    cached = _make_f1d(cache="no_check")
-    cached.run()
-    np.testing.assert_allclose(cached.w, ref.w, rtol=1e-9)
-
-
 def test_2d_cache_true_matches_uncached():
     ref = _make_f2d(cache=False)
     ref.run()
     cached = _make_f2d(cache=True)
-    cached.run()
-    np.testing.assert_allclose(cached.w, ref.w, rtol=1e-9)
-
-
-def test_2d_cache_no_check_matches_uncached():
-    ref = _make_f2d(cache=False)
-    ref.run()
-    cached = _make_f2d(cache="no_check")
     cached.run()
     np.testing.assert_allclose(cached.w, ref.w, rtol=1e-9)
 
@@ -98,16 +91,6 @@ def test_1d_cache_reused_on_second_run():
     flex.run()
     assert flex._lu is lu_first, "LU callable should be reused when matrix is unchanged"
 
-
-def test_1d_no_check_reused_on_second_run():
-    flex = _make_f1d(cache="no_check")
-    flex.run()
-    lu_first = flex._lu
-    flex.run()
-    assert flex._lu is lu_first
-
-
-# ── invalidation: changing the load (qs only) does NOT refactorize ────────────
 
 def test_1d_cache_load_change_reuses_lu():
     """Changing qs does not affect the coefficient matrix — LU must be reused."""
@@ -123,22 +106,66 @@ def test_1d_cache_load_change_reuses_lu():
     assert not np.allclose(flex.w, w_first), "deflection must change when load changes"
 
 
-# ── invalidation: stale hash triggers refactorization ────────────────────────
+# ── cached mode frees the coefficient matrix once the LU is built ─────────────
 
-def test_1d_cache_stale_hash_refactorizes():
-    """Corrupting the stored hash forces a refactorization on the next run()."""
+def test_1d_cache_true_frees_coeff_matrix():
+    flex = _make_f1d(cache=True)
+    flex.run()
+    assert flex.coeff_matrix is None, "coeff_matrix should be freed after factorization"
+    assert flex._lu is not None, "_lu must be retained"
+
+
+def test_2d_cache_true_frees_coeff_matrix():
+    flex = _make_f2d(cache=True)
+    flex.run()
+    assert flex.coeff_matrix is None
+    assert flex._lu is not None
+
+
+def test_cache_true_second_run_keeps_coeff_matrix_none():
     flex = _make_f1d(cache=True)
     flex.run()
     lu_first = flex._lu
+    flex.qs[len(flex.qs) // 4] += 5e5
+    flex.run()
+    assert flex._lu is lu_first, "_lu must be reused on second run"
+    assert flex.coeff_matrix is None, "coeff_matrix must remain None after second run"
 
-    # Simulate a stale cache (e.g. Te changed and matrix was rebuilt externally)
-    flex._lu_matrix_hash = b"\x00" * 16
 
+# ── invalidation: a Te change clears the cache and forces a rebuild ───────────
+
+def test_cache_te_change_triggers_rebuild():
+    flex = _make_f1d(cache=True)
+    flex.run()
+    w_first = flex.w.copy()
+
+    flex.T_e = 20e3  # different Te → setter invalidation fires
+    assert flex._lu is None, "_lu must be cleared when T_e changes"
     flex.run()
 
-    assert flex._lu is not lu_first, "stale hash must trigger refactorization"
-    assert flex._lu_matrix_hash == _matrix_hash(flex.coeff_matrix), \
-        "hash must be updated to the current matrix after refactorization"
+    assert flex.coeff_matrix is None, "coeff_matrix freed again after rebuild"
+    assert flex._lu is not None, "_lu must be repopulated after rebuild"
+    assert not np.allclose(flex.w, w_first), "deflection must differ for different Te"
+
+
+# ── 'no_check' is a deprecated alias for True ─────────────────────────────────
+
+def test_no_check_is_deprecated_alias_for_true():
+    flex = _make_f1d(cache="no_check")
+    with pytest.warns(DeprecationWarning, match="no_check"):
+        flex.run()
+    assert flex.cache_factorization is True
+    assert flex.coeff_matrix is None  # behaves as True: matrix freed
+    assert flex._lu is not None
+
+
+def test_no_check_result_matches_uncached():
+    ref = _make_f1d(cache=False)
+    ref.run()
+    cached = _make_f1d(cache="no_check")
+    with pytest.warns(DeprecationWarning):
+        cached.run()
+    np.testing.assert_allclose(cached.w, ref.w, rtol=1e-9)
 
 
 # ── invalid value raises ──────────────────────────────────────────────────────
@@ -157,59 +184,3 @@ def test_finalize_clears_lu_cache():
     assert flex._lu is not None
     flex.finalize()
     assert not hasattr(flex, "_lu")
-    assert not hasattr(flex, "_lu_matrix_hash")
-
-
-def test_finalize_clears_lu_cache_no_check():
-    """finalize() must delete _lu even in no_check mode (coeff_matrix was freed)."""
-    flex = _make_f1d(cache="no_check")
-    flex.run()
-    assert flex._lu is not None
-    flex.finalize()
-    assert not hasattr(flex, "_lu")
-    assert not hasattr(flex, "_lu_matrix_hash")
-
-
-# ── no_check free-solo: coeff_matrix freed after factorization ────────────────
-
-def test_1d_no_check_coeff_matrix_freed_after_factorization():
-    """coeff_matrix is released to None immediately after the LU is built."""
-    flex = _make_f1d(cache="no_check")
-    flex.run()
-    assert flex.coeff_matrix is None, "coeff_matrix should be freed after factorization"
-    assert flex._lu is not None, "_lu must be retained"
-
-
-def test_2d_no_check_coeff_matrix_freed_after_factorization():
-    flex = _make_f2d(cache="no_check")
-    flex.run()
-    assert flex.coeff_matrix is None
-    assert flex._lu is not None
-
-
-def test_no_check_second_run_reuses_lu_and_keeps_coeff_matrix_none():
-    """Second run reuses _lu without rebuilding the matrix."""
-    flex = _make_f1d(cache="no_check")
-    flex.run()
-    lu_first = flex._lu
-
-    flex.qs[len(flex.qs) // 4] += 5e5
-    flex.run()
-
-    assert flex._lu is lu_first, "_lu must be reused on second run"
-    assert flex.coeff_matrix is None, "coeff_matrix must remain None after second run"
-
-
-def test_no_check_te_change_triggers_full_rebuild():
-    """Changing te invalidates the freed coeff_matrix and forces a full rebuild."""
-    flex = _make_f1d(cache="no_check")
-    flex.run()
-    w_first = flex.w.copy()
-
-    flex.T_e = 20e3  # different Te → smart invalidation fires
-    assert flex._lu is None, "_lu must be cleared when T_e changes"
-    flex.run()
-
-    assert flex.coeff_matrix is None, "coeff_matrix freed again after rebuild"
-    assert flex._lu is not None, "_lu must be repopulated after rebuild"
-    assert not np.allclose(flex.w, w_first), "deflection must differ for different Te"

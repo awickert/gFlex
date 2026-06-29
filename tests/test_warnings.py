@@ -676,7 +676,7 @@ def test_lu_memory_warning_uses_padded_size():
 
 
 def test_lu_memory_warning_skipped_when_lu_cached_true_mode():
-    """No LU memory warning on second run with cache_factorization=True (hash match)."""
+    """No LU memory warning on second run with cache_factorization=True (LU reused)."""
     flex = _make_fd_2d_50()
     flex.cache_factorization = True
     with patch("gflex.f2d._available_ram_bytes", return_value=_SMALL_RAM_2D):
@@ -685,7 +685,7 @@ def test_lu_memory_warning_skipped_when_lu_cached_true_mode():
             flex.initialize()
             flex.run()           # first run — factorises and caches
             flex.qs[25, 25] = 2e6
-            flex.run()           # second run — hash matches; LU reused
+            flex.run()           # second run — LU reused (no rebuild)
     second_lu = [str(x.message) for x in w
                  if issubclass(x.category, UserWarning) and "LU memory" in str(x.message)]
     assert len(second_lu) <= 1, (
