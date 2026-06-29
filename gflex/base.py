@@ -1171,14 +1171,19 @@ class Flexure(Utility, Plotting):
 
     @property
     def T_e(self):
-        """Elastic thickness [m] (scalar or array)."""
-        return self._te
+        """Elastic thickness [m] (scalar or array).
+
+        The pristine, user-supplied grid.  The setter stores it in ``_T_e``;
+        the solution methods work on ``_te``, a separate writeable copy that
+        may be padded or otherwise modified during a solve.
+        """
+        return self._T_e
 
     @T_e.setter
     def T_e(self, value):
-        if _value_changed(self.__dict__.get("_te", _UNSET), value):
+        if _value_changed(self.__dict__.get("_T_e", _UNSET), value):
             self._invalidate_matrix_cache()
-        self._te = value
+        self._T_e = value
 
     @property
     def E(self):
