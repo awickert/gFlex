@@ -16,7 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
-import contextlib
 import logging
 import sys
 import time
@@ -452,6 +451,16 @@ class F1D(Flexure):
         else:
             raise ValueError('method must be "fd", "fft", "sas", or "sas_ng"')
 
+        # Seed the solver's writeable working copy of the elastic thickness.
+        # Done here (after the super()._solve_*() calls above, which load a
+        # config-file Te) so _T_e is materialised.  The solution methods may
+        # pad or modify _te; the user's grid (T_e -> _T_e) stays pristine.
+        self._te = (
+            np.array(self._T_e, dtype=float)
+            if isinstance(self._T_e, np.ndarray)
+            else self._T_e
+        )
+
         _logger.info("F1D run")
         self.method_func()
 
@@ -465,13 +474,10 @@ class F1D(Flexure):
         """
         Release all model state.
 
-        Restores ``self.T_e`` to its pre-run value if gFlex padded it
-        internally.  Then calls the base ``finalize``, which deletes
-        ``w``, ``qs``, and the cached coefficient matrix.  Read ``w``
-        before calling this method.
+        Calls the base ``finalize``, which deletes ``w``, ``qs``, and the
+        cached coefficient matrix.  Read ``w`` before calling this method.
+        ``self.T_e`` is never modified by a solve, so nothing to restore.
         """
-        with contextlib.suppress(AttributeError):
-            self.T_e = self.T_e_unpadded
         _logger.info("")
         _logger.info("F1D finalized")
         if hasattr(self, "_total_start_time"):
@@ -518,10 +524,12 @@ class F1D(Flexure):
         if loaded.size == 0:
             return
         nx = self.qs.shape[0]
+        # Use the working copy: this runs after any 'no_outside_loads'
+        # auto-padding, so _te (and qs) are on the padded grid.
         Te_arr = (
-            self.T_e
-            if isinstance(self.T_e, np.ndarray)
-            else np.full(nx, float(self.T_e))
+            self._te
+            if isinstance(self._te, np.ndarray)
+            else np.full(nx, float(self._te))
         )
         Te_loaded = Te_arr[loaded]
         D_loaded = self.E * Te_loaded**3 / (12 * (1 - self.nu**2))
@@ -573,22 +581,21 @@ class F1D(Flexure):
         # ------------------------------------------------------------------
         _pad_west = self._bc_west_norm == "no_outside_loads"
         _pad_east = self._bc_east_norm == "no_outside_loads"
-        _qs_inner = _Te_inner = None
+        _qs_inner = None
         pw_w = pw_e = 0
 
         if _pad_west or _pad_east:
             p = recommended_pad_width_1d(
-                self.T_e, self.dx,
+                self._te, self.dx,
                 E=self.E, nu=self.nu, rho_m=self.rho_m,
                 rho_fill=self.rho_fill, g=self.g,
             )
             pw_w = p if _pad_west else 0
             pw_e = p if _pad_east else 0
             _qs_inner = self.qs.copy()
-            _Te_inner = self.T_e
             self.qs = np.pad(self.qs, (pw_w, pw_e), mode="constant")
-            if not np.isscalar(self.T_e):
-                Te_arr = np.asarray(self.T_e, dtype=float)
+            if not np.isscalar(self._te):
+                Te_arr = np.asarray(self._te, dtype=float)
                 Te_out = float(Te_arr.mean())
                 nx_i = len(_qs_inner)
                 Te_pad = np.full(nx_i + pw_w + pw_e, Te_out)
@@ -599,7 +606,7 @@ class F1D(Flexure):
                     Te_pad[nx_i + pw_w + pw_e - 1 - k] = (
                         (1 - k / pw_e) * Te_out + (k / pw_e) * Te_arr[-1]
                     )
-                self.T_e = Te_pad
+                self._te = Te_pad
             if _pad_west:
                 self._bc_west_norm = "zero_displacement_zero_slope"
             if _pad_east:
@@ -647,13 +654,11 @@ class F1D(Flexure):
             nx_i = _qs_inner.shape[0]
             self.w = self.w[pw_w : pw_w + nx_i]
             self.qs = _qs_inner
-            self.T_e = _Te_inner
-            # Restore grid metadata to match the cropped domain.
+            # Restore grid metadata to match the cropped domain.  _te is the
+            # solver's working copy and is re-seeded from T_e on the next run,
+            # so it needs no restoration here.
             self.nx = nx_i
             self._x_local = np.arange(0, self.dx * nx_i, self.dx)
-            # Keep finalize()'s T_e restore in sync with the inner domain.
-            if hasattr(self, "T_e_unpadded"):
-                self.T_e_unpadded = _Te_inner
 
     def _solve_fft(self):
         """Spectral (FFT) flexural solution for uniform elastic thickness.
@@ -689,19 +694,19 @@ class F1D(Flexure):
         self.gridded_x()
 
         # Te must be scalar or a uniform array
-        if np.isscalar(self.T_e):
+        if np.isscalar(self._te):
             pass
-        elif np.all(self.T_e == np.mean(self.T_e)):
-            self.T_e = float(np.mean(self.T_e))
+        elif np.all(self._te == np.mean(self._te)):
+            self._te = float(np.mean(self._te))
         else:
             raise ValueError(
                 "The FFT solution requires a scalar (uniform) Te. "
                 "For spatially variable Te, use the finite difference method."
             )
 
-        D = self.E * self.T_e**3 / (12.0 * (1.0 - self.nu**2))
+        D = self.E * self._te**3 / (12.0 * (1.0 - self.nu**2))
         alpha = flexural_wavelengths(
-            self.T_e, E=self.E, nu=self.nu,
+            self._te, E=self.E, nu=self.nu,
             rho_m=self.rho_m, rho_fill=self.rho_fill, g=self.g,
         )["alpha_1D"]
 
@@ -729,7 +734,7 @@ class F1D(Flexure):
         N_work = len(qs_work)
         k = scipy.fft.rfftfreq(N_work, d=self.dx) * 2.0 * np.pi
         Q = scipy.fft.rfft(qs_work, workers=-1)
-        denom = D * k**4 + self.sigma_xx * self.T_e * k**2 + self.drho * self.g
+        denom = D * k**4 + self.sigma_xx * self._te * k**2 + self.drho * self.g
         w_work = scipy.fft.irfft(-Q / denom, n=N_work, workers=-1)
 
         if periodic:
@@ -771,17 +776,17 @@ class F1D(Flexure):
         # * If scalar, okay.
         # * If grid, convert to scalar if a singular value
         # * Else, throw an error.
-        if np.isscalar(self.T_e):
+        if np.isscalar(self._te):
             pass
-        elif np.all(self.T_e == np.mean(self.T_e)):
-            self.T_e = np.mean(self.T_e)
+        elif np.all(self._te == np.mean(self._te)):
+            self._te = np.mean(self._te)
         else:
             raise ValueError(
                 "The analytical solution requires a scalar (uniform) Te. "
                 "For spatially variable Te, use the finite difference method."
             )
 
-        self.D = self.E * self.T_e**3 / (12 * (1 - self.nu**2))  # Flexural rigidity
+        self.D = self.E * self._te**3 / (12 * (1 - self.nu**2))  # Flexural rigidity
         self.alpha = (
             4 * self.D / (self.drho * self.g)
         ) ** 0.25  # 1D flexural parameter
@@ -826,7 +831,7 @@ class F1D(Flexure):
         """Precompute dx⁴, dx², and the flexural rigidity array D for the FD solver."""
         self.dx4 = self.dx**4
         self.dx2 = self.dx**2  # Needed if horizontal (i.e., tectonic) stresses
-        self.D = self.E * self.T_e**3 / (12 * (1 - self.nu**2))
+        self.D = self.E * self._te**3 / (12 * (1 - self.nu**2))
 
     def _build_coefficient_matrix(self):
         """
@@ -904,10 +909,8 @@ class F1D(Flexure):
         #############
         # PAD ARRAY #
         #############
-        if np.isscalar(self.T_e):
+        if np.isscalar(self._te):
             self.D *= np.ones(self.qs.shape)  # And leave Te as a scalar for checks
-        else:
-            self.T_e_unpadded = self.T_e.copy()
         # F2D keeps this inside the "else" and handles this differently,
         # largely because it has different ways of computing the flexural
         # response with variable Te. We'll keep everything simpler here and
@@ -954,15 +957,15 @@ class F1D(Flexure):
         self.l2_coeff_i = (Dm1 / 2.0 + D0 - Dp1 / 2.0) / self.dx4
         self.l1_coeff_i = (
             -6.0 * D0 + 2.0 * Dp1
-        ) / self.dx4 - self.sigma_xx * self.T_e / self.dx2
+        ) / self.dx4 - self.sigma_xx * self._te / self.dx2
         self.c0_coeff_i = (
             (-2.0 * Dm1 + 10.0 * D0 - 2.0 * Dp1) / self.dx4
-            + 2 * self.sigma_xx * self.T_e / self.dx2
+            + 2 * self.sigma_xx * self._te / self.dx2
             + self.drho * self.g
         )
         self.r1_coeff_i = (
             2.0 * Dm1 - 6.0 * D0
-        ) / self.dx4 - self.sigma_xx * self.T_e / self.dx2
+        ) / self.dx4 - self.sigma_xx * self._te / self.dx2
         self.r2_coeff_i = (-Dm1 / 2.0 + D0 + Dp1 / 2.0) / self.dx4
         # These will be just the 1, -4, 6, -4, 1 for constant Te
 
