@@ -395,6 +395,64 @@ class TestVariableTePrescribedNeumann:
         )
 
 
+class TestVariableTeMomentCornerLocality:
+    """Moment/shear RHS cross-terms must not wrap Te across the corners.
+
+    The cross-derivative ghost contribution at an edge endpoint must use the
+    local (corner) Δ₁, not the value from the opposite corner.  Under the
+    edge-clamped shift, the north-west corner's RHS correction depends only on
+    Te near that corner, so a Te change confined to the *south-west* corner
+    leaves it bit-for-bit unchanged.  The earlier wrap-around shift read the
+    south-west Δ₁ into the north-west corner equation, so the same edit would
+    perturb it (~12 %) — a non-physical dependence of one corner on the
+    diagonally-opposite corner's elastic thickness.
+    """
+
+    @staticmethod
+    def _nw_correction(te):
+        """North-west corner RHS correction for a west moment BC."""
+        flex = F2D()
+        flex.quiet    = True
+        flex.method   = "fd"
+        flex.solver   = "direct"
+        flex.g        = G
+        flex.E        = E
+        flex.nu       = NU
+        flex.rho_m    = RHO_M
+        flex.rho_fill = RHO_F
+        flex.T_e      = te.copy()
+        flex.dx       = flex.dy = L_DOMAIN / (te.shape[1] - 1)
+        flex.qs       = np.zeros(te.shape)
+        flex.bc_west  = {"moment": 5.0e12, "shear": 0.0}
+        flex.bc_east  = "zero_displacement_zero_slope"
+        flex.bc_north = "zero_displacement_zero_slope"
+        flex.bc_south = "zero_displacement_zero_slope"
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            flex.initialize()
+            flex.run()
+            corr = float(flex._bc_rhs_correction[0, 0])
+            flex.finalize()
+        return corr
+
+    def test_sw_te_does_not_change_nw_corner_correction(self):
+        n = 31
+        eta = np.linspace(0, 1, n)[:, np.newaxis] * np.ones((1, n))
+        te_base = TE * (1.0 + 0.5 * eta)     # D varies along the west edge
+        te_pert = te_base.copy()
+        te_pert[-1, 0] *= 1.5                 # perturb only the south-west corner
+
+        c_base = self._nw_correction(te_base)
+        c_pert = self._nw_correction(te_pert)
+
+        assert c_base != 0.0, "test setup: NW correction is unexpectedly zero"
+        assert c_base == c_pert, (
+            "north-west moment-BC RHS correction changed when only the "
+            "south-west Te was perturbed; the cross-term is wrapping Te "
+            f"across the corner ({c_base!r} -> {c_pert!r})"
+        )
+
+
 # ---------------------------------------------------------------------------
 # North / South domain helpers
 # ---------------------------------------------------------------------------
