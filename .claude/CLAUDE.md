@@ -53,8 +53,11 @@ Canonical BC strings (all lowercase): `"zero_displacement_zero_slope"`,
 `"zero_slope_zero_shear"`, `"periodic"`, `"no_outside_loads"`. Short aliases
 (permanent, no warning): `"clamped"` → `zero_displacement_zero_slope`,
 `"free"` → `zero_moment_zero_shear`, `"mirror"` → `zero_slope_zero_shear`,
-`"infinite"` → `no_outside_loads`. Uppercase v1.x variants trigger a
-DeprecationWarning and are normalized internally.
+`"infinite"` → `no_outside_loads`. The mixed-case v1.x variants (e.g.
+`"Mirror"`, `"0Moment0Shear"`, `"0Displacement0Slope"`) are **not** accepted in
+v2.0.0: they raise `ValueError`. Use the lowercase canonical names or the
+short aliases. (This is a deliberate clean break for the major release; there
+is no case-normalization or deprecation shim.)
 
 ## Analysis scripts
 
