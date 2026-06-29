@@ -234,6 +234,10 @@
 - Fixed the `'sandbox'` BC easter egg raising `AttributeError`: it called
   `finalize()` (which deletes `w`) before reading `solver.w`.  It now reads
   the deflection before finalising, so it renders as intended.
+- Fixed the 1-D x-coordinate array (`_x_local`) occasionally having one more
+  entry than there are grid nodes.  `np.arange(0, N*dx, dx)` can overrun by
+  one for some float `dx` (endpoint rounding); replaced with `np.arange(N)*dx`
+  in `gridded_x` and the `no_outside_loads` crop path.
 
 ### Documentation
 
@@ -258,7 +262,7 @@
 
 ### Tests
 
-- 509 tests passing (up from 335 in 2.0.0b1), covering all solvers,
+- 511 tests passing (up from 335 in 2.0.0b1), covering all solvers,
   all BC types (including pinned and prescribed-value), MMS convergence
   for mirror (1-D and 2-D) and variable-Te (2-D), domain padding, LU
   cache, warnings, and the full BMI variable set including the five
