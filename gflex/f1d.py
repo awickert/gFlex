@@ -598,11 +598,16 @@ class F1D(Flexure):
                 nx_i = len(_qs_inner)
                 Te_pad = np.full(nx_i + pw_w + pw_e, Te_out)
                 Te_pad[pw_w : pw_w + nx_i] = Te_arr
-                for k in range(pw_w):
-                    Te_pad[k] = (1 - k / pw_w) * Te_out + (k / pw_w) * Te_arr[0]
-                for k in range(pw_e):
-                    Te_pad[nx_i + pw_w + pw_e - 1 - k] = (
-                        (1 - k / pw_e) * Te_out + (k / pw_e) * Te_arr[-1]
+                # Linear taper from Te_out (outer edge) to the domain edge
+                # value, across the padding on each side.  Vectorised (was a
+                # Python loop).
+                if pw_w:
+                    kw = np.arange(pw_w) / pw_w
+                    Te_pad[:pw_w] = (1.0 - kw) * Te_out + kw * Te_arr[0]
+                if pw_e:
+                    ke = np.arange(pw_e) / pw_e
+                    Te_pad[nx_i + pw_w + pw_e - 1 - np.arange(pw_e)] = (
+                        (1.0 - ke) * Te_out + ke * Te_arr[-1]
                     )
                 self._te = Te_pad
             if _pad_west:
