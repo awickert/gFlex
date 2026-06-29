@@ -1114,9 +1114,12 @@ class Flexure(Utility, Plotting):
         reassigned to a different value.  The caches are rebuilt transparently
         on the next ``run()`` call.
 
-        Note: in-place NumPy array mutations (e.g. ``flex.T_e[5] = 40e3``)
-        bypass the setter and do **not** trigger this method.  Reassign the
-        full array (``flex.T_e = new_array``) to ensure correct invalidation.
+        Invalidation happens only on (re)assignment, so matrix-determining
+        inputs must be **reassigned**, not mutated in place.  To enforce this
+        for the most error-prone case, ``T_e`` arrays are stored read-only:
+        an in-place edit (``flex.T_e[5] = 40e3``) raises ``ValueError`` rather
+        than silently desynchronising the cache.  Reassign the full array
+        (``flex.T_e = new_array``) to change it.
         """
         d = self.__dict__
         if "coeff_matrix" in d:
@@ -1176,6 +1179,12 @@ class Flexure(Utility, Plotting):
         The pristine, user-supplied grid.  The setter stores it in ``_T_e``;
         the solution methods work on ``_te``, a separate writeable copy that
         may be padded or otherwise modified during a solve.
+
+        An array assigned here is stored as a **read-only** copy: the cache of
+        the coefficient matrix / LU factorisation is keyed to this value, and
+        an in-place edit (``flex.T_e[i] = ...``) would silently desynchronise
+        it.  Such edits raise ``ValueError``; reassign the whole array
+        (``flex.T_e = new_array``) to change it, which invalidates the cache.
         """
         return self._T_e
 
@@ -1183,6 +1192,9 @@ class Flexure(Utility, Plotting):
     def T_e(self, value):
         if _value_changed(self.__dict__.get("_T_e", _UNSET), value):
             self._invalidate_matrix_cache()
+        if isinstance(value, np.ndarray):
+            value = np.array(value, dtype=float)  # own copy, decoupled from caller
+            value.flags.writeable = False         # in-place edits now raise
         self._T_e = value
 
     @property

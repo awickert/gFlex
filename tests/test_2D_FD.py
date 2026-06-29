@@ -49,10 +49,11 @@ def test_main():
     flex.rho_m = 3300.0  # MantleDensity
     flex.rho_fill = 0.0  # InfillMaterialDensity
 
-    flex.T_e = 35000.0 * np.ones(
-        (50, 50)
-    )  # Elastic thickness [m] -- scalar but may be an array
-    flex.T_e[:, -3:] = 0.0
+    # Elastic thickness [m] -- scalar but may be an array.  Build the full
+    # array, then assign: T_e is read-only once set, so in-place edits raise.
+    te = 35000.0 * np.ones((50, 50))
+    te[:, -3:] = 0.0
+    flex.T_e = te
     flex.qs = np.zeros((50, 50))  # Template array for surface load stresses
     flex.qs[10:40, 10:40] += 1e6  # Populating this template
     flex.dx = 5000.0  # grid cell size, x-oriented [m]
