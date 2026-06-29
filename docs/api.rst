@@ -218,17 +218,17 @@ attribute **before** calling :meth:`~gflex.base.Flexure.initialize`:
    * - ``False`` *(default)*
      - No caching.  The matrix is factorized on every :meth:`run` call.
    * - ``True``
-     - Cache with hash check.  The factorization is reused when a
-       hash of the coefficient matrix matches the stored hash; it is
-       recomputed when any of Te, dx/dy, BCs, or physical parameters change.
+     - Cache the LU factorization and reuse it on every call.  The
+       coefficient matrix is freed from memory immediately after
+       factorization; only the LU factors are retained.  Reuse is safe
+       because smart invalidation (see below) clears the cache when a
+       matrix-determining input is reassigned, and array inputs are
+       read-only, so the cached factorization can never silently
+       desynchronise.
    * - ``"no_check"``
-     - Cache without hash check.  The stored factorization is reused on
-       every call without computing a hash.  Gives the maximum performance
-       benefit.  The coefficient matrix is freed from memory immediately
-       after factorization; only the LU factorization is retained.  Smart
-       invalidation (see below) still applies: reassigning a
-       matrix-determining input clears the cache and triggers a rebuild on
-       the next call.
+     - Deprecated alias for ``True`` (emits a ``DeprecationWarning``).
+       The two were distinct before the cache redesign, when ``True``
+       validated a per-call matrix hash; that check is no longer needed.
 
 **Smart invalidation**
 

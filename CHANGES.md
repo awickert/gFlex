@@ -25,6 +25,16 @@
   next ``run()`` returned deflections computed from the *old* values.
   Reassignment invalidates the cache correctly.
 
+- **`cache_factorization` simplified; per-run matrix hash removed** — `True`
+  now caches the LU factorisation and reuses it directly, trusting the
+  invalidation machinery (matrix-determining inputs invalidate the cache on
+  reassignment; array inputs are read-only), and frees the coefficient matrix
+  once factorised.  The old `True` mode validated a hash of the matrix on
+  every solve (~30% overhead); that check is unnecessary now that the cache
+  cannot silently desynchronise, so it has been removed.  `"no_check"` is now
+  a deprecated alias for `True` (emits a `DeprecationWarning`) — the two
+  modes are equivalent.
+
 ### New features
 
 - **BMI `lithosphere__elastic_thickness` input variable** — `BmiGflex` now
@@ -262,7 +272,7 @@
 
 ### Tests
 
-- 518 tests passing (up from 335 in 2.0.0b1), covering all solvers,
+- 515 tests passing (up from 335 in 2.0.0b1), covering all solvers,
   all BC types (including pinned and prescribed-value), MMS convergence
   for mirror (1-D and 2-D) and variable-Te (2-D), domain padding, LU
   cache, warnings, and the full BMI variable set including the five
