@@ -96,6 +96,21 @@ def _value_changed(current, new):
         return True
 
 
+def _readonly_array_copy(value):
+    """Store a matrix-determining input, locking array values read-only.
+
+    If *value* is a NumPy array, return an owned, read-only ``float`` copy;
+    otherwise return *value* unchanged.  The coefficient-matrix / LU cache is
+    keyed to these inputs, so an in-place edit would silently desynchronise it.
+    Storing arrays read-only makes such edits raise ``ValueError`` instead;
+    the input is changed by reassignment, which invalidates the cache.
+    """
+    if isinstance(value, np.ndarray):
+        value = np.array(value, dtype=float)
+        value.flags.writeable = False
+    return value
+
+
 # Scientific colour maps (optional but strongly recommended).
 # Install with:  pip install cmcrameri
 try:
@@ -1192,10 +1207,7 @@ class Flexure(Utility, Plotting):
     def T_e(self, value):
         if _value_changed(self.__dict__.get("_T_e", _UNSET), value):
             self._invalidate_matrix_cache()
-        if isinstance(value, np.ndarray):
-            value = np.array(value, dtype=float)  # own copy, decoupled from caller
-            value.flags.writeable = False         # in-place edits now raise
-        self._T_e = value
+        self._T_e = _readonly_array_copy(value)
 
     @property
     def E(self):
@@ -1333,7 +1345,7 @@ class Flexure(Utility, Plotting):
     def sigma_xx(self, value):
         if _value_changed(self.__dict__.get("_sigma_xx", _UNSET), value):
             self._invalidate_matrix_cache()
-        self._sigma_xx = value
+        self._sigma_xx = _readonly_array_copy(value)
 
     @property
     def sigma_yy(self):
@@ -1344,7 +1356,7 @@ class Flexure(Utility, Plotting):
     def sigma_yy(self, value):
         if _value_changed(self.__dict__.get("_sigma_yy", _UNSET), value):
             self._invalidate_matrix_cache()
-        self._sigma_yy = value
+        self._sigma_yy = _readonly_array_copy(value)
 
     @property
     def sigma_xy(self):
@@ -1355,7 +1367,7 @@ class Flexure(Utility, Plotting):
     def sigma_xy(self, value):
         if _value_changed(self.__dict__.get("_sigma_xy", _UNSET), value):
             self._invalidate_matrix_cache()
-        self._sigma_xy = value
+        self._sigma_xy = _readonly_array_copy(value)
 
     @property
     def planetary_radius(self):
