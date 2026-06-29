@@ -102,7 +102,7 @@ def w_prescribed_slope(x, theta0):
 # gFlex runner
 # ---------------------------------------------------------------------------
 
-def _run(bc_west, bc_east, nx=NX, L=L_DOMAIN):
+def _run(bc_west, bc_east, nx=NX, L=L_DOMAIN, qs=None):
     dx = L / (nx - 1)
     x  = np.arange(nx) * dx
 
@@ -118,7 +118,8 @@ def _run(bc_west, bc_east, nx=NX, L=L_DOMAIN):
     flex.rho_fill = RHO_F
     flex.T_e      = TE
     flex.dx       = dx
-    flex.qs       = np.zeros(nx)   # deflection driven by BCs, not distributed load
+    # Deflection driven by BCs (zero load) unless a load is supplied.
+    flex.qs       = np.zeros(nx) if qs is None else np.asarray(qs, dtype=float)
     flex.bc_west  = bc_west
     flex.bc_east  = bc_east
 
@@ -230,3 +231,47 @@ class TestPrescribedSlope:
             bc_east="zero_moment_zero_shear",
         )
         _check(w_num, w_prescribed_slope(x, self.THETA0), "Case D profile")
+
+
+# ---------------------------------------------------------------------------
+# Case E — prescribed displacement + slope at BOTH ends (east-path regression)
+# ---------------------------------------------------------------------------
+#
+# Manufactured solution  w(x) = c·x·(x − L):
+#   * w'''' = 0          → the FD bending operator reproduces it exactly, so
+#                          the only error source is boundary-condition handling;
+#   * w(0) = w(L) = 0    → the load q = −Δρg·w vanishes at the boundary nodes,
+#                          so the prescribed displacement is uncontaminated;
+#   * w'(0) = −cL, w'(L) = +cL  → both slope-BC paths are exercised, with the
+#                          west path acting as a control on the east path.
+#
+# This pins the east-boundary slope RHS sign.  The earlier sign produced a
+# ~28 % L-inf error localized just inside the east boundary; the corrected
+# code reproduces w to solver precision.  Cases A–D above only prescribe at
+# the west end, so the east inhomogeneous path was previously untested.
+
+class TestPrescribedDisplacementSlopeBothEnds:
+    """Quadratic MMS reproduced to machine precision (east-slope regression)."""
+
+    C = 1.0e-9   # curvature scale, m⁻¹
+
+    def test_quadratic_mms_exact(self):
+        nx  = 201
+        dx  = L_DOMAIN / (nx - 1)
+        x   = np.arange(nx) * dx
+        w_m = self.C * x * (x - L_DOMAIN)        # manufactured deflection
+        wp  = self.C * (2.0 * x - L_DOMAIN)      # slope w'(x)
+        qs  = -DRHOG * w_m                       # interior: Δρg·w = −qs
+
+        _, w_num = _run(
+            bc_west={"displacement": float(w_m[0]),  "slope": float(wp[0])},
+            bc_east={"displacement": float(w_m[-1]), "slope": float(wp[-1])},
+            nx=nx, qs=qs,
+        )
+
+        scale = np.max(np.abs(w_m))
+        err   = np.max(np.abs(w_num - w_m)) / scale
+        assert err < 1.0e-8, (
+            f"quadratic MMS L-inf relative error {err:.3e} exceeds 1e-8 "
+            "(east-slope BC RHS sign regression?)"
+        )
