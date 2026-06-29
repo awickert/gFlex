@@ -16,7 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
-import contextlib
 import logging
 import time
 import warnings
@@ -594,6 +593,16 @@ class F2D(Flexure):
         else:
             raise ValueError('method must be "fd", "fft", "sas", or "sas_ng"')
 
+        # Seed the solver's writeable working copy of the elastic thickness.
+        # Done here (after the super()._solve_*() calls above, which load a
+        # config-file Te) so _T_e is materialised.  The solution methods may
+        # pad or modify _te; the user's grid (T_e -> _T_e) stays pristine.
+        self._te = (
+            np.array(self._T_e, dtype=float)
+            if isinstance(self._T_e, np.ndarray)
+            else self._T_e
+        )
+
         _logger.info("F2D run")
         self.method_func()
 
@@ -607,13 +616,10 @@ class F2D(Flexure):
         """
         Release all model state.
 
-        Restores ``self.T_e`` to its pre-run value if gFlex padded it
-        internally.  Then calls the base ``finalize``, which deletes
-        ``w``, ``qs``, and the cached coefficient matrix.  Read ``w``
-        before calling this method.
+        Calls the base ``finalize``, which deletes ``w``, ``qs``, and the
+        cached coefficient matrix.  Read ``w`` before calling this method.
+        ``self.T_e`` is never modified by a solve, so nothing to restore.
         """
-        with contextlib.suppress(AttributeError):
-            self.T_e = self.T_e_unpadded
         _logger.info("")
         _logger.info("F2D finalized")
         if hasattr(self, "_total_start_time"):
@@ -660,10 +666,12 @@ class F2D(Flexure):
         if loaded.size == 0:
             return
         ny, nx = self.qs.shape
+        # Use the working copy: this runs after any 'no_outside_loads'
+        # auto-padding, so _te (and qs) are on the padded grid.
         Te_arr = (
-            self.T_e
-            if isinstance(self.T_e, np.ndarray)
-            else np.full((ny, nx), float(self.T_e))
+            self._te
+            if isinstance(self._te, np.ndarray)
+            else np.full((ny, nx), float(self._te))
         )
         rows, cols = loaded[:, 0], loaded[:, 1]
         Te_loaded = Te_arr[rows, cols]
@@ -717,12 +725,12 @@ class F2D(Flexure):
         _pad_south = self._bc_south_norm == "no_outside_loads"
         _pad_west  = self._bc_west_norm  == "no_outside_loads"
         _pad_east  = self._bc_east_norm  == "no_outside_loads"
-        _qs_inner = _Te_inner = None
+        _qs_inner = None
         pn = ps = pw = pe = 0
 
         if _pad_north or _pad_south or _pad_west or _pad_east:
             p = recommended_pad_width(
-                self.T_e, min(self.dx, self.dy),
+                self._te, min(self.dx, self.dy),
                 E=self.E, nu=self.nu, rho_m=self.rho_m,
                 rho_fill=self.rho_fill, g=self.g,
             )
@@ -731,11 +739,10 @@ class F2D(Flexure):
             pw = p if _pad_west  else 0
             pe = p if _pad_east  else 0
             _qs_inner = self.qs.copy()
-            _Te_inner = self.T_e
             self.qs = np.pad(self.qs, ((pn, ps), (pw, pe)), mode="constant")
-            if not np.isscalar(self.T_e):
-                self.T_e = _auto_pad_Te_2d(
-                    np.asarray(self.T_e, dtype=float), pn, ps, pw, pe
+            if not np.isscalar(self._te):
+                self._te = _auto_pad_Te_2d(
+                    np.asarray(self._te, dtype=float), pn, ps, pw, pe
                 )
             if _pad_north: self._bc_north_norm = "zero_displacement_zero_slope"
             if _pad_south: self._bc_south_norm = "zero_displacement_zero_slope"
@@ -783,11 +790,10 @@ class F2D(Flexure):
             ny_i, nx_i = _qs_inner.shape
             self.w = self.w[pn : pn + ny_i, pw : pw + nx_i]
             self.qs = _qs_inner
-            self.T_e = _Te_inner
-            # Restore grid metadata to match the cropped domain.
+            # Restore grid metadata to match the cropped domain.  _te is the
+            # solver's working copy and is re-seeded from T_e on the next run,
+            # so it needs no restoration here.
             self.ny, self.nx = ny_i, nx_i
-            if hasattr(self, "T_e_unpadded"):
-                self.T_e_unpadded = _Te_inner
 
     def _solve_fft(self):
         """Spectral (FFT) flexural solution for uniform elastic thickness.
@@ -820,19 +826,19 @@ class F2D(Flexure):
         Requires uniform (scalar) elastic thickness; for variable *Te* use
         the finite-difference method instead.
         """
-        if np.isscalar(self.T_e):
+        if np.isscalar(self._te):
             pass
-        elif np.all(self.T_e == np.mean(self.T_e)):
-            self.T_e = float(np.mean(self.T_e))
+        elif np.all(self._te == np.mean(self._te)):
+            self._te = float(np.mean(self._te))
         else:
             raise ValueError(
                 "The FFT solution requires a scalar (uniform) Te. "
                 "For spatially variable Te, use the finite difference method."
             )
 
-        D = self.E * self.T_e**3 / (12.0 * (1.0 - self.nu**2))
+        D = self.E * self._te**3 / (12.0 * (1.0 - self.nu**2))
         alpha = flexural_wavelengths(
-            self.T_e, E=self.E, nu=self.nu,
+            self._te, E=self.E, nu=self.nu,
             rho_m=self.rho_m, rho_fill=self.rho_fill, g=self.g,
         )["alpha_2D"]
 
@@ -872,9 +878,9 @@ class F2D(Flexure):
         K2 = Kx**2 + Ky**2
         denom = (
             D * K2**2
-            + self.sigma_xx * self.T_e * Kx**2
-            + self.sigma_yy * self.T_e * Ky**2
-            + 2.0 * self.sigma_xy * self.T_e * Kx * Ky
+            + self.sigma_xx * self._te * Kx**2
+            + self.sigma_yy * self._te * Ky**2
+            + 2.0 * self.sigma_xy * self._te * Kx * Ky
             + self.drho * self.g
         )
         w_work = scipy.fft.irfft2(-Q / denom, s=qs_work.shape, workers=-1)
@@ -906,17 +912,17 @@ class F2D(Flexure):
         # * If scalar, okay.
         # * If grid, convert to scalar if a singular value
         # * Else, throw an error.
-        if np.isscalar(self.T_e):
+        if np.isscalar(self._te):
             pass
-        elif np.all(self.T_e == np.mean(self.T_e)):
-            self.T_e = np.mean(self.T_e)
+        elif np.all(self._te == np.mean(self._te)):
+            self._te = np.mean(self._te)
         else:
             raise ValueError(
                 "The analytical solution requires a scalar (uniform) Te. "
                 "For spatially variable Te, use the finite difference method."
             )
 
-        self.D = self.E * self.T_e**3 / (12 * (1 - self.nu**2))  # Flexural rigidity
+        self.D = self.E * self._te**3 / (12 * (1 - self.nu**2))  # Flexural rigidity
         self.alpha = (self.D / (self.drho * self.g)) ** 0.25  # 2D flexural parameter
         self.coeff = self.alpha**2 / (2 * np.pi * self.D)
 
@@ -988,7 +994,7 @@ class F2D(Flexure):
             self.dx4 = self.dx**4
             self.dy4 = self.dy**4
             self.dx2dy2 = self.dx**2 * self.dy**2
-        self.D = self.E * self.T_e**3 / (12 * (1 - self.nu**2))
+        self.D = self.E * self._te**3 / (12 * (1 - self.nu**2))
 
     def _build_coefficient_matrix(self):
         """
@@ -1105,22 +1111,21 @@ class F2D(Flexure):
         #############
         # PAD ARRAY #
         #############
-        if np.isscalar(self.T_e):
+        if np.isscalar(self._te):
             self.D *= np.ones(self.qs.shape)  # And leave Te as a scalar for checks
         else:
-            self.T_e_unpadded = self.T_e.copy()
-            self.T_e = np.hstack(
+            self._te = np.hstack(
                 (
-                    np.nan * np.zeros((self.T_e.shape[0], 1)),
-                    self.T_e,
-                    np.nan * np.zeros((self.T_e.shape[0], 1)),
+                    np.nan * np.zeros((self._te.shape[0], 1)),
+                    self._te,
+                    np.nan * np.zeros((self._te.shape[0], 1)),
                 )
             )
-            self.T_e = np.vstack(
+            self._te = np.vstack(
                 (
-                    np.nan * np.zeros(self.T_e.shape[1]),
-                    self.T_e,
-                    np.nan * np.zeros(self.T_e.shape[1]),
+                    np.nan * np.zeros(self._te.shape[1]),
+                    self._te,
+                    np.nan * np.zeros(self._te.shape[1]),
                 )
             )
             self.D = np.hstack(
@@ -1201,7 +1206,7 @@ class F2D(Flexure):
         nu = self.nu
         g = self.g
 
-        if np.isscalar(self.T_e):
+        if np.isscalar(self._te):
             # So much simpler with constant D! And symmetrical stencil
             dx2 = self.dx ** 2
             dy2 = self.dy ** 2
@@ -1213,26 +1218,26 @@ class F2D(Flexure):
             self.cj0i2 = D / dy4                                                     # Symmetry
             self.cj0i_2 = D / dy4
             # x±1, y=0  (σ_xx acts on x-direction: -σ_xx·Te·∂²w/∂x²)
-            self.cj1i0 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.T_e / dx2
-            self.cj_1i0 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self.T_e / dx2  # Symmetry
+            self.cj1i0 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self._te / dx2
+            self.cj_1i0 = -4 * D / dx4 - 4 * D / dx2dy2 - self.sigma_xx * self._te / dx2  # Symmetry
             # x=0, y±1  (σ_yy acts on y-direction: -σ_yy·Te·∂²w/∂y²)
-            self.cj0i_1 = -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.T_e / dy2
+            self.cj0i_1 = -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self._te / dy2
             self.cj0i1 = (
-                -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self.T_e / dy2
+                -4 * D / dy4 - 4 * D / dx2dy2 - self.sigma_yy * self._te / dy2
             )                                                                         # Symmetry
             # x±1, y±1  (σ_xy cross term: -2σ_xy·Te·∂²w/∂x∂y; sign from FD of mixed deriv)
-            self.cj1i_1 = 2 * D / dx2dy2 + self.sigma_xy * self.T_e / (2 * dxdy)
-            self.cj1i1 = 2 * D / dx2dy2 - self.sigma_xy * self.T_e / (2 * dxdy)
-            self.cj_1i_1 = 2 * D / dx2dy2 - self.sigma_xy * self.T_e / (2 * dxdy)   # Symmetry
-            self.cj_1i1 = 2 * D / dx2dy2 + self.sigma_xy * self.T_e / (2 * dxdy)    # Symmetry
+            self.cj1i_1 = 2 * D / dx2dy2 + self.sigma_xy * self._te / (2 * dxdy)
+            self.cj1i1 = 2 * D / dx2dy2 - self.sigma_xy * self._te / (2 * dxdy)
+            self.cj_1i_1 = 2 * D / dx2dy2 - self.sigma_xy * self._te / (2 * dxdy)   # Symmetry
+            self.cj_1i1 = 2 * D / dx2dy2 + self.sigma_xy * self._te / (2 * dxdy)    # Symmetry
             # center
             self.cj0i0 = (
                 6 * D / dx4
                 + 6 * D / dy4
                 + 8 * D / dx2dy2
                 + drho * g
-                + 2 * self.sigma_xx * self.T_e / dx2
-                + 2 * self.sigma_yy * self.T_e / dy2
+                + 2 * self.sigma_xx * self._te / dx2
+                + 2 * self.sigma_yy * self._te / dy2
             )
             # Bring up to size
             self.cj2i0 *= np.ones(self.qs.shape)
@@ -1263,7 +1268,7 @@ class F2D(Flexure):
             self.cj_1i1_coeff_ij = self.cj_1i1.copy()
             self.cj_2i0_coeff_ij = self.cj_2i0.copy()
 
-        elif isinstance(self.T_e, np.ndarray):
+        elif isinstance(self._te, np.ndarray):
             # All derivatives here, to make reading the equations below easier
             D00 = D[1:-1, 1:-1]
             D10 = D[1:-1, 2:]
@@ -2105,7 +2110,7 @@ class F2D(Flexure):
         # D at each boundary edge.
         # Scalar te: self.D is (ny, nx), unpadded.
         # Array te: self.D is (ny+2, nx+2), padded with one nan-row/col each side.
-        if np.isscalar(self.T_e):
+        if np.isscalar(self._te):
             D_west  = self.D[:, 0]
             D_east  = self.D[:, -1]
             D_north = self.D[0, :]
