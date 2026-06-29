@@ -79,6 +79,15 @@ def test_inplace_scaling_raises():
         f.T_e *= 2.0
 
 
+@pytest.mark.parametrize("attr", ["sigma_xx", "sigma_yy", "sigma_xy"])
+def test_inplace_sigma_edit_raises(attr):
+    """In-plane stress arrays are matrix-determining; in-place edits must raise."""
+    f = _make_1d(30.0e3 * np.ones(40))
+    setattr(f, attr, 1.0e6 * np.ones(40))
+    with pytest.raises(ValueError):
+        getattr(f, attr)[0] = 2.0e6
+
+
 # ---------------------------------------------------------------------------
 # Reassignment changes Te correctly (cache invalidated; not stale)
 # ---------------------------------------------------------------------------
