@@ -240,13 +240,16 @@ when only ``qs`` changes.
 
 .. note::
 
-   Smart invalidation is triggered by *assignment* (``flex.T_e = new_array``),
-   not by in-place mutation of a NumPy array (``flex.T_e[5] = 40e3``).  If
-   you mutate an array in place, reassign it afterwards to ensure the cache
-   is correctly invalidated::
+   Smart invalidation is triggered by *assignment* (``flex.T_e = new_array``).
+   Because the cache is keyed to these values, the matrix-determining array
+   inputs (``T_e``, ``sigma_xx``, ``sigma_yy``, ``sigma_xy``) are stored
+   **read-only**, so an in-place edit raises ``ValueError`` rather than
+   silently leaving the cache stale.  To change a value, reassign the whole
+   array::
 
-      flex.T_e[5] = 40e3
-      flex.T_e = flex.T_e   # trigger invalidation
+      te = flex.T_e.copy()
+      te[5] = 40e3
+      flex.T_e = te        # triggers invalidation
 
 Example (coupling loop)::
 
