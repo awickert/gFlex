@@ -382,6 +382,29 @@ def pad_domain(Te, qs, dx, dy=None, n_wavelengths=1.0, Te_out=None,
     )
 
 
+def _shift_clamp(a, k):
+    """Shift a 1-D array by one element (``k`` = ±1), clamping at the ends.
+
+    Used by the inhomogeneous-BC RHS correction for the cross-derivative ghost
+    terms along an edge.  Unlike ``np.roll``, the endpoints do not wrap: at an
+    edge endpoint the cross-derivative ghost has no neighbour beyond the
+    corner, so the corner's own value is reused (the nearest boundary D, which
+    is correct as Δx→0).  Wrapping would pull the *opposite* corner's value
+    into the RHS, corrupting the corner equation when Δ₁ varies along the edge
+    (i.e. variable Te).
+    """
+    out = np.empty_like(a)
+    if k == 1:
+        out[0] = a[0]
+        out[1:] = a[:-1]
+    elif k == -1:
+        out[-1] = a[-1]
+        out[:-1] = a[1:]
+    else:
+        raise ValueError("k must be +1 or -1")
+    return out
+
+
 class F2D(Flexure):
     """
     Two-dimensional lithospheric flexure solver.
@@ -2062,9 +2085,12 @@ class F2D(Flexure):
 
         Cross-derivative stencil terms (cj_1i_1, cj_1i1 and analogues) mean
         that a ghost node at (j−1, k) affects the equations at rows k−1, k,
-        and k+1.  The k±1 contributions use np.roll to shift the per-row Δ₁
-        vector; for uniform D the roll value equals the interior value so the
-        approximation is exact.
+        and k+1.  The k±1 contributions shift the per-row Δ₁ vector with edge
+        clamping (``_shift_clamp``): at an edge endpoint the missing neighbour
+        beyond the corner takes the corner's own value (the nearest boundary
+        D), which is correct as Δx→0.  A plain wrap-around shift would inject
+        the *opposite* corner's value, corrupting the corner RHS whenever D
+        varies along the edge (variable Te).
         """
         if (self._bc_west_values is None and self._bc_east_values is None
                 and self._bc_north_values is None and self._bc_south_values is None):
@@ -2108,8 +2134,8 @@ class F2D(Flexure):
                 correction[:, 0] += (
                     self.cj_2i0_coeff_ij[:, 0] * (2.0 * V0 * dx**3 - 2.0 * M0 * dx**2) / D_west
                     - self.cj_1i0_coeff_ij[:, 0] * Delta1
-                    - self.cj_1i_1_coeff_ij[:, 0] * np.roll(Delta1, 1)   # w[-1, k-1] cross term
-                    - self.cj_1i1_coeff_ij[:, 0] * np.roll(Delta1, -1)   # w[-1, k+1] cross term
+                    - self.cj_1i_1_coeff_ij[:, 0] * _shift_clamp(Delta1, 1)   # w[-1, k-1] cross term
+                    - self.cj_1i1_coeff_ij[:, 0] * _shift_clamp(Delta1, -1)   # w[-1, k+1] cross term
                 )
                 # First interior column (j=1): cj_2i0 there sees w[-1, k].
                 correction[:, 1] -= self.cj_2i0_coeff_ij[:, 1] * Delta1
@@ -2129,8 +2155,8 @@ class F2D(Flexure):
                 correction[:, -1] += (
                     self.cj2i0_coeff_ij[:, -1] * (-(2.0 * V_e * dx**3 + 2.0 * M_e * dx**2)) / D_east
                     - self.cj1i0_coeff_ij[:, -1] * Delta1_e
-                    - self.cj1i_1_coeff_ij[:, -1] * np.roll(Delta1_e, 1)
-                    - self.cj1i1_coeff_ij[:, -1] * np.roll(Delta1_e, -1)
+                    - self.cj1i_1_coeff_ij[:, -1] * _shift_clamp(Delta1_e, 1)
+                    - self.cj1i1_coeff_ij[:, -1] * _shift_clamp(Delta1_e, -1)
                 )
                 correction[:, -2] -= self.cj2i0_coeff_ij[:, -2] * Delta1_e
 
@@ -2149,8 +2175,8 @@ class F2D(Flexure):
                 correction[0, :] += (
                     self.cj0i_2_coeff_ij[0, :] * (2.0 * V_n * dy**3 - 2.0 * M_n * dy**2) / D_north
                     - self.cj0i_1_coeff_ij[0, :] * Delta1_n
-                    - self.cj_1i_1_coeff_ij[0, :] * np.roll(Delta1_n, 1)   # w[j-1, -1] cross term
-                    - self.cj1i_1_coeff_ij[0, :] * np.roll(Delta1_n, -1)   # w[j+1, -1] cross term
+                    - self.cj_1i_1_coeff_ij[0, :] * _shift_clamp(Delta1_n, 1)   # w[j-1, -1] cross term
+                    - self.cj1i_1_coeff_ij[0, :] * _shift_clamp(Delta1_n, -1)   # w[j+1, -1] cross term
                 )
                 correction[1, :] -= self.cj0i_2_coeff_ij[1, :] * Delta1_n
 
@@ -2169,8 +2195,8 @@ class F2D(Flexure):
                 correction[-1, :] += (
                     self.cj0i2_coeff_ij[-1, :] * (-(2.0 * V_s * dy**3 + 2.0 * M_s * dy**2)) / D_south
                     - self.cj0i1_coeff_ij[-1, :] * Delta1_s
-                    - self.cj_1i1_coeff_ij[-1, :] * np.roll(Delta1_s, 1)
-                    - self.cj1i1_coeff_ij[-1, :] * np.roll(Delta1_s, -1)
+                    - self.cj_1i1_coeff_ij[-1, :] * _shift_clamp(Delta1_s, 1)
+                    - self.cj1i1_coeff_ij[-1, :] * _shift_clamp(Delta1_s, -1)
                 )
                 correction[-2, :] -= self.cj0i2_coeff_ij[-2, :] * Delta1_s
 
