@@ -1376,7 +1376,7 @@ class F1D(Flexure):
 
         if self.debug:
             _logger.debug("qs %s", self.qs.shape)
-            _logger.debug("Te %s", self.T_e.shape)
+            _logger.debug("Te %s", np.shape(self.T_e))
             self.calc_max_flexural_wavelength()
             _logger.debug("maxFlexuralWavelength_ncells: %s", self.maxFlexuralWavelength_ncells)
 

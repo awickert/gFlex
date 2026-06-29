@@ -2599,9 +2599,7 @@ class F2D(Flexure):
         """
 
         if self.debug:
-            # Will fail if scalar
-            with contextlib.suppress(AttributeError):
-                _logger.debug("self.T_e %s", self.T_e.shape)
+            _logger.debug("self.T_e %s", np.shape(self.T_e))
             _logger.debug("self.qs %s", self.qs.shape)
             self.calc_max_flexural_wavelength()
             _logger.debug(
