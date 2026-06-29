@@ -2621,6 +2621,27 @@ class F2D(Flexure):
             np.ceil(self.max_flexural_wavelength / self.dy)
         )
 
+    def _fixed_displacement_mask(self):
+        """Boolean mask of boundary nodes whose displacement is fixed."""
+        mask = np.zeros(np.shape(self.qs), dtype=bool)
+        if self._edge_fixes_displacement(
+            self._bc_west_norm, getattr(self, "_bc_west_values", None)
+        ):
+            mask[:, 0] = True
+        if self._edge_fixes_displacement(
+            self._bc_east_norm, getattr(self, "_bc_east_values", None)
+        ):
+            mask[:, -1] = True
+        if self._edge_fixes_displacement(
+            self._bc_north_norm, getattr(self, "_bc_north_values", None)
+        ):
+            mask[0, :] = True
+        if self._edge_fixes_displacement(
+            self._bc_south_norm, getattr(self, "_bc_south_values", None)
+        ):
+            mask[-1, :] = True
+        return mask
+
     def fd_solve(self):
         """
         w = fd_solve()
@@ -2660,6 +2681,7 @@ class F2D(Flexure):
         rhs_corr = getattr(self, "_bc_rhs_correction", None)
         if rhs_corr is not None:
             q0vector = q0vector + rhs_corr.reshape(-1, order="C")
+        q0vector = self._cancel_load_on_fixed_nodes(q0vector)
 
         _ls_start = time.perf_counter()
         if self.cache_factorization is False:

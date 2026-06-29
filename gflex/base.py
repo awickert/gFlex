@@ -111,6 +111,14 @@ def _readonly_array_copy(value):
     return value
 
 
+# Boundary conditions that fix the boundary-node displacement (Dirichlet in w).
+# A load on such a node is reacted by the support, not a deflection.
+_FIXED_DISPLACEMENT_BCS = (
+    "zero_displacement_zero_slope",
+    "zero_displacement_zero_moment",
+)
+
+
 # Scientific colour maps (optional but strongly recommended).
 # Install with:  pip install cmcrameri
 try:
@@ -1143,6 +1151,48 @@ class Flexure(Utility, Plotting):
             d["_lu"] = None
         if "_lu_matrix_hash" in d:
             d["_lu_matrix_hash"] = None
+
+    def _edge_fixes_displacement(self, norm, values):
+        """True if an edge's BC prescribes its boundary-node displacement.
+
+        Covers the homogeneous clamped/pinned BCs (``zero_displacement_*``)
+        and dict-style ``{"displacement": ...}`` BCs.
+        """
+        if values is not None and "displacement" in values:
+            return True
+        return norm in _FIXED_DISPLACEMENT_BCS
+
+    def _cancel_load_on_fixed_nodes(self, rhs):
+        """Cancel any load sitting on a fixed-displacement boundary node.
+
+        The boundary row of such a node is decoupled (``c0·w = rhs``) with
+        ``rhs = -qs + correction``.  A load there is reacted by the support, so
+        it must not deflect the node; adding ``qs`` back makes the row solve
+        ``c0·w = c0·w0`` (``w0 = 0`` for the homogeneous clamped/pinned BCs,
+        the prescribed value for dict displacement), enforcing ``w = w0``
+        exactly.  Warns once if a load is actually present on a fixed node.
+
+        *rhs* is the flat right-hand side; the boolean mask of fixed nodes is
+        provided per-dimension by ``_fixed_displacement_mask``.
+        """
+        mask = self._fixed_displacement_mask()
+        if not mask.any():
+            return rhs
+        mflat = mask.reshape(-1, order="C")
+        qflat = np.asarray(self.qs).reshape(-1, order="C")
+        if np.any(qflat[mflat] != 0.0):
+            warnings.warn(
+                "Load applied on a fixed-displacement boundary node (a "
+                "clamped, pinned, or prescribed-displacement edge).  Such a "
+                "load is reacted by the support and does not deflect the node; "
+                "its displacement is held at the prescribed value.  Move the "
+                "load off the boundary, or change the boundary condition, if "
+                "this is unintended.",
+                UserWarning,
+                stacklevel=4,
+            )
+        rhs[mflat] += qflat[mflat]
+        return rhs
 
     # ── Verbosity properties ───────────────────────────────────────────────────
 

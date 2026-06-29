@@ -1368,6 +1368,19 @@ class F1D(Flexure):
             np.ceil(self.max_flexural_wavelength / self.dx)
         )
 
+    def _fixed_displacement_mask(self):
+        """Boolean mask of boundary nodes whose displacement is fixed."""
+        mask = np.zeros(np.shape(self.qs), dtype=bool)
+        if self._edge_fixes_displacement(
+            self._bc_west_norm, getattr(self, "_bc_west_values", None)
+        ):
+            mask[0] = True
+        if self._edge_fixes_displacement(
+            self._bc_east_norm, getattr(self, "_bc_east_values", None)
+        ):
+            mask[-1] = True
+        return mask
+
     def fd_solve(self):
         """
         w = fd_solve()
@@ -1400,6 +1413,7 @@ class F1D(Flexure):
         # qs negative so bends down with positive load, bends up with negative load
         # (i.e. material removed)
         rhs = -self.qs + self._bc_rhs_correction
+        rhs = self._cancel_load_on_fixed_nodes(rhs)
         _ls_start = time.perf_counter()
         if self.cache_factorization is False:
             self.w = spsolve(self.coeff_matrix, rhs, use_umfpack=True)
