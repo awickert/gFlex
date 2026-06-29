@@ -1412,7 +1412,11 @@ class F1D(Flexure):
 
         # qs negative so bends down with positive load, bends up with negative load
         # (i.e. material removed)
-        rhs = -self.qs + self._bc_rhs_correction
+        # _bc_rhs_correction is set during matrix assembly; in coupled mode a
+        # caller may supply coeff_matrix directly (assembly skipped), so guard
+        # for its absence (cf. the F2D path).
+        rhs_corr = getattr(self, "_bc_rhs_correction", None)
+        rhs = -self.qs if rhs_corr is None else -self.qs + rhs_corr
         rhs = self._cancel_load_on_fixed_nodes(rhs)
         _ls_start = time.perf_counter()
         if self.cache_factorization is False:
