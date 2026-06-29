@@ -215,6 +215,18 @@
   mutable working thickness in a private copy (`_te`) and never modify the
   user-facing `T_e`, so it retains the supplied ``(ny, nx)`` shape across
   solves.
+- Fixed a load applied **on** a fixed-displacement boundary node not being
+  reacted by the support.  For clamped (`zero_displacement_zero_slope`),
+  pinned (`zero_displacement_zero_moment`), and dict ``{"displacement": ...}``
+  boundaries, the boundary row is decoupled to enforce the prescribed value,
+  but a load on that node leaked into its right-hand side, giving
+  ``w = w0 − qs/c0`` instead of ``w0`` and corrupting the nearby interior.
+  Such loads (common when a whole-grid load array is nonzero on a clamped
+  edge, e.g. in a coupling loop) are now reacted by the support so the node
+  holds its prescribed displacement exactly, in `F1D` and `F2D`.  A
+  `UserWarning` is issued once when a load sits on a fixed-displacement
+  boundary.  Free and mirror edges, which do not fix displacement, are
+  unaffected.
 
 ### Documentation
 
@@ -239,7 +251,7 @@
 
 ### Tests
 
-- 500 tests passing (up from 335 in 2.0.0b1), covering all solvers,
+- 507 tests passing (up from 335 in 2.0.0b1), covering all solvers,
   all BC types (including pinned and prescribed-value), MMS convergence
   for mirror (1-D and 2-D) and variable-Te (2-D), domain padding, LU
   cache, warnings, and the full BMI variable set including the five
