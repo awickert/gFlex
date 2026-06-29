@@ -25,6 +25,7 @@ Four canonical cases (A–D) are identical to the 1-D tests.
 import warnings
 
 import numpy as np
+import pytest
 
 from gflex.f2d import F2D
 
@@ -408,9 +409,20 @@ class TestVariableTeMomentCornerLocality:
     diagonally-opposite corner's elastic thickness.
     """
 
+    # Per edge: the correction line along that edge, and the (row, col) Te
+    # cells at its two endpoints.  Te is made to vary ALONG the edge so the
+    # per-row/col Δ₁ differs end-to-end; under the prior wrap-around shift each
+    # endpoint correction read the *other* endpoint's Δ₁.
+    _EDGES = {
+        "west":  (np.s_[:, 0],  (0, 0),  (-1, 0)),
+        "east":  (np.s_[:, -1], (0, -1), (-1, -1)),
+        "north": (np.s_[0, :],  (0, 0),  (0, -1)),
+        "south": (np.s_[-1, :], (-1, 0), (-1, -1)),
+    }
+
     @staticmethod
-    def _nw_correction(te):
-        """North-west corner RHS correction for a west moment BC."""
+    def _edge_correction(edge, te):
+        """Run a moment BC on *edge* and return the full RHS-correction array."""
         flex = F2D()
         flex.quiet    = True
         flex.method   = "fd"
@@ -423,34 +435,46 @@ class TestVariableTeMomentCornerLocality:
         flex.T_e      = te.copy()
         flex.dx       = flex.dy = L_DOMAIN / (te.shape[1] - 1)
         flex.qs       = np.zeros(te.shape)
-        flex.bc_west  = {"moment": 5.0e12, "shear": 0.0}
-        flex.bc_east  = "zero_displacement_zero_slope"
-        flex.bc_north = "zero_displacement_zero_slope"
-        flex.bc_south = "zero_displacement_zero_slope"
+        clamp = "zero_displacement_zero_slope"
+        bc = {"bc_west": clamp, "bc_east": clamp,
+              "bc_north": clamp, "bc_south": clamp}
+        bc["bc_" + edge] = {"moment": 5.0e12, "shear": 0.0}
+        flex.bc_west, flex.bc_east   = bc["bc_west"], bc["bc_east"]
+        flex.bc_north, flex.bc_south = bc["bc_north"], bc["bc_south"]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             flex.initialize()
             flex.run()
-            corr = float(flex._bc_rhs_correction[0, 0])
+            corr = np.array(flex._bc_rhs_correction)
             flex.finalize()
         return corr
 
-    def test_sw_te_does_not_change_nw_corner_correction(self):
+    @pytest.mark.parametrize("edge", ["west", "east", "north", "south"])
+    def test_corner_correction_is_local(self, edge):
+        """A Te edit at one endpoint must not change the other endpoint."""
         n = 31
-        eta = np.linspace(0, 1, n)[:, np.newaxis] * np.ones((1, n))
-        te_base = TE * (1.0 + 0.5 * eta)     # D varies along the west edge
-        te_pert = te_base.copy()
-        te_pert[-1, 0] *= 1.5                 # perturb only the south-west corner
+        eta = np.linspace(0, 1, n)[:, np.newaxis] * np.ones((1, n))  # varies by row
+        xi  = np.ones((n, 1)) * np.linspace(0, 1, n)[np.newaxis, :]  # varies by col
+        var = eta if edge in ("west", "east") else xi                # along the edge
+        te_base = TE * (1.0 + 0.5 * var)
 
-        c_base = self._nw_correction(te_base)
-        c_pert = self._nw_correction(te_pert)
+        line, end0, end1 = self._EDGES[edge]
+        c_base = self._edge_correction(edge, te_base)[line]
+        assert c_base[0] != 0.0 and c_base[-1] != 0.0, "setup: endpoint correction is zero"
 
-        assert c_base != 0.0, "test setup: NW correction is unexpectedly zero"
-        assert c_base == c_pert, (
-            "north-west moment-BC RHS correction changed when only the "
-            "south-west Te was perturbed; the cross-term is wrapping Te "
-            f"across the corner ({c_base!r} -> {c_pert!r})"
-        )
+        # Perturb the far endpoint (end1); the near endpoint correction must not move.
+        te_far = te_base.copy(); te_far[end1] *= 1.5
+        c_far = self._edge_correction(edge, te_far)[line]
+        assert c_base[0] == c_far[0], (
+            f"{edge}: near-endpoint correction changed when the far endpoint "
+            "Te was perturbed (cross-term wrapping Te across the corner)")
+
+        # Perturb the near endpoint (end0); the far endpoint correction must not move.
+        te_near = te_base.copy(); te_near[end0] *= 1.5
+        c_near = self._edge_correction(edge, te_near)[line]
+        assert c_base[-1] == c_near[-1], (
+            f"{edge}: far-endpoint correction changed when the near endpoint "
+            "Te was perturbed (cross-term wrapping Te across the corner)")
 
 
 # ---------------------------------------------------------------------------
