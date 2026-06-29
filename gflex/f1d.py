@@ -193,10 +193,10 @@ def _sandbox_easter_egg():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         solver.run()
-    solver.finalize()
 
-    w_sag = -solver.w           # positive = downward
+    w_sag = -solver.w           # positive = downward (read before finalize)
     w_max_mm = float(w_sag.max() * 1000.0)
+    solver.finalize()
 
     # ── Canvas ───────────────────────────────────────────────────────────────
     INT_W = 58
