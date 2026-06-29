@@ -15,6 +15,16 @@
   ``get_value`` calls accordingly:
   ``set_value("load__normal_component_of_stress", q_array)``.
 
+- **Matrix-determining array inputs are read-only** — when `T_e` or the
+  in-plane stresses (`sigma_xx`, `sigma_yy`, `sigma_xy`) are set as NumPy
+  arrays, they are now stored as read-only copies.  An in-place edit
+  (``flex.T_e[i] = ...``) raises `ValueError`; change a value by reassigning
+  the whole array (``flex.T_e = new_array``).  This closes a silent-error
+  path: the cached coefficient matrix / LU factorisation is keyed to these
+  inputs, and an in-place edit previously bypassed cache invalidation, so the
+  next ``run()`` returned deflections computed from the *old* values.
+  Reassignment invalidates the cache correctly.
+
 ### New features
 
 - **BMI `lithosphere__elastic_thickness` input variable** — `BmiGflex` now
@@ -200,6 +210,11 @@
   making the deflection at one corner depend non-physically on the opposite
   corner's elastic thickness.  The edge endpoints are now clamped rather than
   wrapped (`_shift_clamp`).
+- Fixed `F2D` leaving `self.T_e` as the internally padded ``(ny+2, nx+2)``
+  array after a run with a 2-D Te grid.  The solvers now keep their padded,
+  mutable working thickness in a private copy (`_te`) and never modify the
+  user-facing `T_e`, so it retains the supplied ``(ny, nx)`` shape across
+  solves.
 
 ### Documentation
 
@@ -224,7 +239,7 @@
 
 ### Tests
 
-- 491 tests passing (up from 335 in 2.0.0b1), covering all solvers,
+- 500 tests passing (up from 335 in 2.0.0b1), covering all solvers,
   all BC types (including pinned and prescribed-value), MMS convergence
   for mirror (1-D and 2-D) and variable-Te (2-D), domain padding, LU
   cache, warnings, and the full BMI variable set including the five
