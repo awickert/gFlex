@@ -191,6 +191,15 @@
   regardless of level.  `F1D` and `F2D` now log `np.shape(self.T_e)`, which
   returns `()` for a scalar; the `F2D` `contextlib.suppress` band-aid was
   removed so the shape is actually logged.
+- Fixed the 2-D inhomogeneous moment/shear boundary correction wrapping
+  elastic thickness across the domain corners.  The cross-derivative ghost
+  terms in `_apply_bc_rhs_inhomogeneous_2d` used `np.roll`, whose wrap-around
+  made each corner equation read the diagonally-opposite corner's Δ₁.  With
+  uniform Te this is harmless (Δ₁ constant), but with variable Te it injected
+  the far corner's rigidity into the near corner, degrading convergence and
+  making the deflection at one corner depend non-physically on the opposite
+  corner's elastic thickness.  The edge endpoints are now clamped rather than
+  wrapped (`_shift_clamp`).
 
 ### Documentation
 
@@ -215,7 +224,7 @@
 
 ### Tests
 
-- 487 tests passing (up from 335 in 2.0.0b1), covering all solvers,
+- 488 tests passing (up from 335 in 2.0.0b1), covering all solvers,
   all BC types (including pinned and prescribed-value), MMS convergence
   for mirror (1-D and 2-D) and variable-Te (2-D), domain padding, LU
   cache, warnings, and the full BMI variable set including the five
