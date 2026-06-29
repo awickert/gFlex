@@ -177,6 +177,20 @@
   O(Δx^1.91) near n = 200–400 instead of the correct O(Δx^2.00).  The
   fix is in test code only (`_mms_2d_variable_te` in
   `tests/test_bc_mms.py`); the solver itself is unaffected.
+- Fixed the sign of the right-hand-side correction for a prescribed nonzero
+  slope on the *east* boundary in `F1D` dict-style BCs
+  (`{'displacement': w, 'slope': theta}`).  The ghost-node constant was
+  moved to the RHS without the required sign flip, producing a large error
+  localized at the east boundary whenever a nonzero east slope was
+  prescribed (the west boundary and the 2-D code were already correct).  A
+  quadratic manufactured solution now reproduces the deflection to solver
+  precision (`tests/test_1D_inhomogeneous_BC.py`, Case E).
+- Fixed an `AttributeError` (`'float' object has no attribute 'shape'`) when
+  running with `debug=True` and a scalar elastic thickness: the solver debug
+  path logged `self.T_e.shape`, and logging evaluates its arguments
+  regardless of level.  `F1D` and `F2D` now log `np.shape(self.T_e)`, which
+  returns `()` for a scalar; the `F2D` `contextlib.suppress` band-aid was
+  removed so the shape is actually logged.
 
 ### Documentation
 
@@ -201,7 +215,7 @@
 
 ### Tests
 
-- 484 tests passing (up from 335 in 2.0.0b1), covering all solvers,
+- 487 tests passing (up from 335 in 2.0.0b1), covering all solvers,
   all BC types (including pinned and prescribed-value), MMS convergence
   for mirror (1-D and 2-D) and variable-Te (2-D), domain padding, LU
   cache, warnings, and the full BMI variable set including the five
