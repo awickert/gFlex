@@ -29,7 +29,7 @@ from scipy.signal import fftconvolve
 from scipy.special import kei
 from scipy.sparse.linalg import factorized, spsolve
 
-from gflex.base import (Flexure, _RigidityBC, _matrix_hash,
+from gflex.base import (Flexure, _RigidityBC, _normalize_cache_factorization,
                         _available_ram_bytes, _estimate_lu_ram_bytes)
 
 
@@ -477,16 +477,15 @@ class F2D(Flexure):
         Default ``4`` (8α₂D total separation).  Ignored when
         ``method != 'fft'`` or when both sides of the relevant axis are
         ``'periodic'``.
-    cache_factorization : bool or ``"no_check"``
+    cache_factorization : bool
         Controls LU factorisation caching for the FD ``'direct'`` solver.
         ``False`` (default) — re-factorises on every :meth:`run` call.
-        ``True`` — reuses the cached factorisation when a hash of the
-        coefficient matrix matches; recomputes when any matrix-determining
-        input changes.  ``"no_check"`` — reuses the factorisation on every
-        call without hashing (maximum speed; the matrix is freed after
-        factorisation and only the LU factors are kept).  Smart
-        invalidation clears the cache automatically when ``T_e``, ``dx``,
-        ``dy``, boundary conditions, or physical parameters are reassigned.
+        ``True`` — caches the LU factorisation and reuses it (the coefficient
+        matrix is freed once the factors are built).  Reuse is safe because
+        smart invalidation clears the cache automatically when ``T_e``,
+        ``dx``, ``dy``, boundary conditions, or physical parameters are
+        reassigned, and array inputs are read-only (in-place edits raise).
+        ``"no_check"`` is a deprecated alias for ``True``.
         Ignored when ``method != 'fd'``.
     quiet : bool
         Suppress timing output.  Default ``False``.
@@ -567,8 +566,7 @@ class F2D(Flexure):
 
         For repeated solves (e.g. a coupling loop), set
         ``cache_factorization = True`` before :meth:`initialize` to reuse the
-        LU factorisation when only ``qs`` changes; use ``"no_check"`` for
-        maximum throughput when the coefficient matrix is guaranteed stable.
+        LU factorisation when only ``qs`` changes.
         """
         self.bc_check()
         self.solver_start_time = time.perf_counter()
@@ -759,13 +757,13 @@ class F2D(Flexure):
             )
 
         self._check_warnings_FD()
-        # Only generate coefficient matrix if it is not already provided.
-        # In no_check mode the matrix is freed after factorization to save
-        # memory; _lu being set is sufficient to skip the rebuild.
+        # Only generate the coefficient matrix if needed.  In the cached mode
+        # the matrix is freed after factorization to save memory; a valid _lu
+        # is then sufficient to skip the rebuild.
         if self.coeff_matrix is not None:
             pass
-        elif self.cache_factorization == "no_check" and self._lu is not None:
-            pass  # coeff_matrix was freed after factorization; _lu still valid
+        elif self.cache_factorization and self._lu is not None:
+            pass  # coeff_matrix freed after factorization; _lu still valid
         else:
             _avail = _available_ram_bytes()
             if _avail is not None:
@@ -2666,11 +2664,9 @@ class F2D(Flexure):
                 "in this release.  An iterative solver may be added in a future version."
             )
 
-        if self.cache_factorization not in (False, True, "no_check"):
-            raise ValueError(
-                f"cache_factorization must be False, True, or 'no_check'; "
-                f"got {self.cache_factorization!r}"
-            )
+        self.cache_factorization = _normalize_cache_factorization(
+            self.cache_factorization
+        )
 
         # qs negative so the plate bends down under a positive (downward) load
         # and up under a negative load (material removed).  The coefficient
@@ -2686,16 +2682,14 @@ class F2D(Flexure):
         _ls_start = time.perf_counter()
         if self.cache_factorization is False:
             wvector = spsolve(self.coeff_matrix, q0vector, use_umfpack=True)
-        elif self.cache_factorization == "no_check":
+        else:  # True: cache the LU factorisation and reuse it.
+            # Correctness relies on setter-based cache invalidation: every
+            # matrix-determining input invalidates the cache on reassignment,
+            # and array inputs are read-only (in-place edits raise), so the
+            # cached matrix cannot silently desynchronise.
             if self._lu is None:
                 self._lu = factorized(self.coeff_matrix)
-                self.coeff_matrix = None  # _lu is sole owner; _solve_fd uses _lu as rebuild-skip signal
-            wvector = self._lu(q0vector)
-        else:  # True: hash-validated cache
-            h = _matrix_hash(self.coeff_matrix)
-            if self._lu is None or h != self._lu_matrix_hash:
-                self._lu = factorized(self.coeff_matrix)
-                self._lu_matrix_hash = h
+                self.coeff_matrix = None  # _lu is sole owner; _solve_fd skips rebuild via _lu
             wvector = self._lu(q0vector)
         self.linear_solve_time = time.perf_counter() - _ls_start
 

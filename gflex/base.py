@@ -18,7 +18,6 @@ along with gFlex.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import contextlib
-import hashlib
 import logging
 import os
 
@@ -58,21 +57,6 @@ def _apply_log_level(level: int) -> None:
         gflex_log.setLevel(logging.WARNING)
 
 
-def _matrix_hash(A):
-    """Return a fingerprint of sparse matrix A for LU cache invalidation.
-
-    Converts to CSR for a canonical nonzero representation, then hashes
-    the value, column-index, and row-pointer arrays with MD5.  Fast enough
-    for any grid size gFlex is likely to encounter (<1 ms at 400×400).
-    """
-    csr = A.tocsr()
-    h = hashlib.md5()
-    h.update(csr.data.tobytes())
-    h.update(csr.indices.tobytes())
-    h.update(csr.indptr.tobytes())
-    return h.digest()
-
-
 # Sentinel for "attribute not yet assigned" — used by property setters to
 # distinguish a first-time assignment (no cache to invalidate) from a genuine
 # value change.
@@ -108,6 +92,33 @@ def _readonly_array_copy(value):
     if isinstance(value, np.ndarray):
         value = np.array(value, dtype=float)
         value.flags.writeable = False
+    return value
+
+
+def _normalize_cache_factorization(value):
+    """Validate ``cache_factorization``; map the deprecated ``'no_check'``.
+
+    Valid values are ``False`` (no LU cache) and ``True`` (cache the LU
+    factorisation and trust setter-based invalidation).  ``'no_check'`` is a
+    deprecated alias for ``True`` — they are now equivalent, because
+    matrix-determining inputs invalidate the cache on reassignment and array
+    inputs are read-only, so the cached matrix cannot silently desynchronise.
+    """
+    if value == "no_check":
+        warnings.warn(
+            "cache_factorization='no_check' is deprecated; use True.  The "
+            "cached factorisation is now always trusted (matrix-determining "
+            "inputs invalidate the cache on change, and array inputs are "
+            "read-only), so True and 'no_check' are equivalent.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return True
+    if value not in (False, True):
+        raise ValueError(
+            "cache_factorization must be False or True ('no_check' is a "
+            f"deprecated alias for True); got {value!r}"
+        )
     return value
 
 
@@ -1101,7 +1112,6 @@ class Flexure(Utility, Plotting):
         #           guarantees the matrix is stable across run() calls.
         self.cache_factorization = False
         self._lu = None
-        self._lu_matrix_hash = None
 
         # Set GRASS GIS usage flag: if GRASS is used, don't display error
         # messages related to unset options. This sets it to False if it
@@ -1149,8 +1159,6 @@ class Flexure(Utility, Plotting):
             d["coeff_matrix"] = None
         if "_lu" in d:
             d["_lu"] = None
-        if "_lu_matrix_hash" in d:
-            d["_lu_matrix_hash"] = None
 
     def _edge_fixes_displacement(self, norm, values):
         """True if an edge's BC prescribes its boundary-node displacement.
@@ -1687,7 +1695,7 @@ class Flexure(Utility, Plotting):
         ``AttributeError``.  Called automatically by :meth:`F1D.finalize` and
         :meth:`F2D.finalize`.
         """
-        for _attr in ("w", "qs", "coeff_matrix", "_lu", "_lu_matrix_hash"):
+        for _attr in ("w", "qs", "coeff_matrix", "_lu"):
             with contextlib.suppress(AttributeError):
                 delattr(self, _attr)
 
