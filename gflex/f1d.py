@@ -1326,9 +1326,12 @@ class F1D(Flexure):
                 theta_east = bv["slope"]
                 # Boundary row is decoupled: c0[-1]*w[N-1] = rhs[-1] → enforce w[N-1]=w_east
                 self._bc_rhs_correction[-1] = self.c0[-1] * w_east
-                # First interior: ghost w[N] = w[N-2] + 2*dx*theta_east
+                # First interior: ghost w[N] = w[N-2] + 2*dx*theta_east.
+                # The even-reflection term r2*w[N] leaves a constant
+                # r2*(+2dx*theta_east) on the LHS, which moves to the RHS
+                # with a sign flip (cf. the west term above, and f2d.py east).
                 self._bc_rhs_correction[-2] = (
-                    self.r2_coeff_i[-2] * 2.0 * dx * theta_east
+                    -self.r2_coeff_i[-2] * 2.0 * dx * theta_east
                 )
             else:  # "moment" / "shear"
                 M_east = bv["moment"]
