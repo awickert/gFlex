@@ -658,7 +658,9 @@ class F1D(Flexure):
             # solver's working copy and is re-seeded from T_e on the next run,
             # so it needs no restoration here.
             self.nx = nx_i
-            self._x_local = np.arange(0, self.dx * nx_i, self.dx)
+            # arange(N)*dx gives exactly N points; arange(0, N*dx, dx) can
+            # overrun by one for some float dx (endpoint rounding).
+            self._x_local = np.arange(nx_i) * self.dx
 
     def _solve_fft(self):
         """Spectral (FFT) flexural solution for uniform elastic thickness.
@@ -763,7 +765,9 @@ class F1D(Flexure):
     def gridded_x(self):
         """Build the x-coordinate array from ``qs`` shape and ``dx``."""
         self.nx = self.qs.shape[0]
-        self._x_local = np.arange(0, self.dx * self.nx, self.dx)
+        # arange(N)*dx gives exactly N points; arange(0, N*dx, dx) can overrun
+        # by one for some float dx (endpoint rounding).
+        self._x_local = np.arange(self.nx) * self.dx
 
     ## SPATIAL DOMAIN SUPERPOSITION OF ANALYTICAL SOLUTIONS
     #########################################################
