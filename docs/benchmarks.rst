@@ -63,8 +63,8 @@ LU factorisation cache
    :width: 100%
    :alt: LU cache speedup via the run() path
 
-   **Speedup of the ``True`` and ``"no_check"`` cache modes over uncached
-   (``False``) via the full** :meth:`~gflex.F1D.run` **path.**
+   **Speedup of the LU-factorisation cache (``cache_factorization=True``)
+   over uncached (``False``) via the full** :meth:`~gflex.F1D.run` **path.**
    The band shows the range across all Te profiles; the line is the mean.
    The dotted line at 1× marks no speedup.
 
@@ -73,17 +73,20 @@ thickness, and boundary conditions remain fixed, the coefficient matrix does
 not change.  Caching the LU factorisation eliminates the cost of re-factorising
 on every call, reducing the per-solve work to a single triangular solve.
 
-In two dimensions the **``"no_check"``** mode reaches **7–12× speedup** over
-uncached at grid sizes of 50×50 to 400×400 cells.  The speedup grows with
-grid size because the factorisation cost (eliminated by caching) scales as
-:math:`O(N^{1.5})` while the cached solve (triangular back-substitution) scales
-as :math:`O(N)`.
+In two dimensions the cached mode (``cache_factorization=True``) reaches
+**7–12× speedup** over uncached at grid sizes of 50×50 to 400×400 cells.  The
+speedup grows with grid size because the factorisation cost (eliminated by
+caching) scales as :math:`O(N^{1.5})` while the cached solve (triangular
+back-substitution) scales as :math:`O(N)`.
 
-The **``True``** mode (hash-validated cache reuse) provides a similar trend
-but at a lower speedup because it computes and compares a matrix hash on every
-call.  For large 2-D grids the hash cost is a small fraction of the total, so
-``True`` and ``"no_check"`` converge.  For 1-D problems, where solve times are
-short, the hash overhead is comparatively larger.
+.. note::
+
+   These figures were measured before the 2.0.0 cache redesign, when ``True``
+   validated a matrix hash on every call and so ran slightly slower than the
+   hash-free ``"no_check"`` mode shown as the upper curve.  That per-call hash
+   has since been removed — ``True`` now reuses the factorisation directly and
+   matches the ``"no_check"`` curve — and ``"no_check"`` is a deprecated alias
+   for ``True``.  Read the two curves as a single cached mode.
 
 The timings include all overhead from a ``run()`` call: :meth:`bc_check`,
 coordinate setup, warning checks, and the :meth:`_solve_fd` cache-bypass logic.
@@ -101,16 +104,15 @@ Cost of changing :math:`T_e`
    :width: 100%
    :alt: Per-solve cost: load-only vs Te change
 
-   **Per-solve cost when only the load changes (load-only, ``"no_check"``
-   mode) versus when the scalar elastic thickness :math:`T_e` changes on
-   every call (Te change, any cache mode).**
+   **Per-solve cost when only the load changes (load-only, cached mode
+   ``cache_factorization=True``) versus when the scalar elastic thickness
+   :math:`T_e` changes on every call (Te change, any cache mode).**
 
 Reassigning :math:`T_e` triggers smart cache invalidation: the coefficient
 matrix is cleared and the LU factorisation is discarded.  The next
 :meth:`~gflex.F1D.run` call rebuilds the matrix from scratch and re-factorises.
-All three cache modes (``False``, ``True``, ``"no_check"``) pay essentially the
-same cost when :math:`T_e` changes, because the rebuild dominates the per-call
-budget.
+Both cache settings (``False`` and ``True``) pay essentially the same cost
+when :math:`T_e` changes, because the rebuild dominates the per-call budget.
 
 At 200×200 cells the load-only cost is roughly **53 ms** per solve while a
 :math:`T_e` change costs roughly **590 ms** per solve — about an **11× penalty**.
@@ -121,9 +123,9 @@ and the incremental triangular solve scales as :math:`O(N)`.
 
 The practical implication: in a coupling loop where :math:`T_e` is fixed and
 only :math:`q_s` varies (e.g., a transient ice-sheet or sediment-loading model),
-``cache_factorization = "no_check"`` or ``True`` provides substantial speedup.
+``cache_factorization = True`` provides substantial speedup.
 In a parameter-sweep or inversion where :math:`T_e` changes on every iteration,
-all modes are equivalent and the rebuild cost is unavoidable.
+both settings are equivalent and the rebuild cost is unavoidable.
 
 ----
 
@@ -228,7 +230,7 @@ Use ``benchmarks/bench_memory.py`` to measure on your own system::
    python benchmarks/bench_memory.py          # 100–400×100–400
    python benchmarks/bench_memory.py --large  # adds 500×500, 600×600
 
-When ``cache_factorization=True`` or ``"no_check"``, the LU factors are kept
+When ``cache_factorization=True``, the LU factors are kept
 in memory between ``run()`` calls and the table shows the steady-state
 footprint.  Without caching (the default) peak RSS briefly spikes to the
 tabulated value and then falls.
@@ -288,7 +290,7 @@ is 634 × 634 and the LU factorisation needs ~2.7 GiB.  Grids above ~700 × 700
 
 **Use** ``cache_factorization`` **in coupling loops.**
 If :math:`T_e` and the grid geometry are fixed while only :math:`q_s` changes
-(transient ice or sediment loading), ``cache_factorization = "no_check"``
+(transient ice or sediment loading), ``cache_factorization = True``
 reuses the LU factors across ``run()`` calls.  The 7–12× measured speedup at
 200×200–400×400 cells is described in the benchmark figures above.
 
