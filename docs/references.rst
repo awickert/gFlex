@@ -14,9 +14,9 @@ To cite a specific version of the source code, use the Zenodo record for the
 version you ran.  The concept DOI
 `doi:10.5281/zenodo.10471939 <https://doi.org/10.5281/zenodo.10471939>`_
 always resolves to the latest deposited release; version-specific DOIs are
-listed on that page.  For the current release (v2.0.0):
+listed on that page.  For the current release (v2.0.0b2):
 
-   Wickert, A. D. and Hutton, E. W. H. (2026), *gFlex* v2.0.0 [software],
+   Wickert, A. D. and Hutton, E. W. H. (2026), *gFlex* v2.0.0b2 [software],
    Zenodo, `doi:10.5281/zenodo.10471939 <https://doi.org/10.5281/zenodo.10471939>`_.
 
 ----
