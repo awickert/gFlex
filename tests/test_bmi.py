@@ -191,6 +191,23 @@ def test_set_rho_fill_changes_deflection(bmi_1d):
     )
 
 
+def test_set_value_infill_density_above_mantle_raises(bmi_1d):
+    """A density reassigned via BMI to give Δρ ≤ 0 is caught at the next update.
+
+    Regression: the drho > 0 guard previously fired only at initialize(), so
+    set_value of the infill density above the mantle density slipped through
+    and update() solved with a non-positive restoring force (garbage output)
+    instead of raising.
+    """
+    rho_m = np.zeros(1)
+    bmi_1d.get_value("mantle__mass-per-volume_density", rho_m)
+    bmi_1d.set_value(
+        "infill_material__mass-per-volume_density", np.array([rho_m[0] + 100.0])
+    )
+    with pytest.raises(ValueError, match="rho_fill"):
+        bmi_1d.update()
+
+
 def test_get_component_name(bmi_1d):
     assert "gFlex" in bmi_1d.get_component_name()
 

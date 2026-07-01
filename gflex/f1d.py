@@ -428,6 +428,7 @@ class F1D(Flexure):
         LU factorisation when only ``qs`` changes.
         """
         self.bc_check()
+        self._validate_drho()
         self.solver_start_time = time.perf_counter()
         if self.method == "fd":
             # Finite difference

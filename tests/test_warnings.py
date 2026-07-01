@@ -608,6 +608,34 @@ def test_initialize_drho_nonpositive_raises_2d(rho_fill):
         flex.initialize()
 
 
+def test_drho_revalidated_on_density_reassignment_1d():
+    """F1D re-checks drho at solve time, so a density changed after a valid
+    run cannot silently solve with Δρ ≤ 0 (regression: was only checked at
+    initialize())."""
+    qs = np.zeros(80); qs[40] = 1e6
+    flex = _build_1d(qs, "zero_displacement_zero_slope",
+                     "zero_displacement_zero_slope")
+    flex.initialize()
+    flex.run()                       # valid: rho_fill < rho_m
+    flex.rho_fill = flex.rho_m + 100.0   # now Δρ < 0 (mimics BMI set_value)
+    with pytest.raises(ValueError, match="rho_fill"):
+        flex.run()
+
+
+def test_drho_revalidated_on_density_reassignment_2d():
+    """F2D re-checks drho at solve time after a density reassignment."""
+    qs = np.zeros((40, 40)); qs[20, 20] = 1e6
+    flex = _build_2d(qs, "zero_displacement_zero_slope",
+                     "zero_displacement_zero_slope",
+                     "zero_displacement_zero_slope",
+                     "zero_displacement_zero_slope")
+    flex.initialize()
+    flex.run()
+    flex.rho_fill = flex.rho_m + 100.0
+    with pytest.raises(ValueError, match="rho_fill"):
+        flex.run()
+
+
 def test_f2d_debug_rejects_nondirect_solver():
     """F2D rejects an unsupported solver even with debug=True (the guard is
     independent of the debug branch; regression for the elif that let a

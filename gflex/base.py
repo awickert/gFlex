@@ -1328,6 +1328,29 @@ class Flexure(Utility, Plotting):
         if changed:
             self._invalidate_matrix_cache()
 
+    def _validate_drho(self):
+        """Check that the mantle/infill density difference is positive.
+
+        ``drho = rho_m - rho_fill`` sets the sign of the restoring force
+        ``drho·g`` and hence the flexural parameter α; a non-positive value
+        is unphysical and makes α undefined.  This runs both at
+        initialisation *and* before every solve (see :meth:`run`), so a
+        density reassigned after ``initialize()`` — e.g. through the BMI
+        ``set_value`` interface — cannot silently solve with a non-positive
+        restoring force.  Validating at solve time rather than in the density
+        setters keeps a transient invalid state legal during a two-step
+        reassignment (e.g. lowering ``rho_m`` below the old ``rho_fill``
+        before lowering ``rho_fill``).
+        """
+        self.drho = self.rho_m - self.rho_fill
+        if self.drho <= 0:
+            raise ValueError(
+                f"rho_fill ({self.rho_fill} kg m⁻³) must be strictly less than "
+                f"rho_m ({self.rho_m} kg m⁻³). "
+                f"drho = {self.drho} kg m⁻³; the restoring force drho·g is "
+                "non-positive and the flexural parameter α is undefined."
+            )
+
     @property
     def allow_unpaired_periodic(self):
         """Permit a one-sided ('unpaired') periodic boundary condition.
@@ -1599,14 +1622,7 @@ class Flexure(Utility, Plotting):
 
         # Parameters -- rho_m and rho_fill defined, so this outside
         # of if-statement (to work with getters/setters as well)
-        self.drho = self.rho_m - self.rho_fill
-        if self.drho <= 0:
-            raise ValueError(
-                f"rho_fill ({self.rho_fill} kg m⁻³) must be strictly less than "
-                f"rho_m ({self.rho_m} kg m⁻³). "
-                f"drho = {self.drho} kg m⁻³; the restoring force drho·g is "
-                "non-positive and the flexural parameter α is undefined."
-            )
+        self._validate_drho()
         if self.filename:
             self.E = self.configGet("float", "parameter", "youngs_modulus")
             self.nu = self.configGet("float", "parameter", "poissons_ratio")
