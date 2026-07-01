@@ -255,6 +255,10 @@
   entry than there are grid nodes.  `np.arange(0, N*dx, dx)` can overrun by
   one for some float `dx` (endpoint rounding); replaced with `np.arange(N)*dx`
   in `gridded_x` and the `no_outside_loads` crop path.
+- Fixed `F2D` skipping the unsupported-solver check when `debug=True`.  The
+  guard rejecting any `solver` other than `'direct'` was an `elif` on the
+  debug branch, so `debug=True` bypassed it; it is now an independent `if`,
+  matching `F1D`.
 
 ### Documentation
 
