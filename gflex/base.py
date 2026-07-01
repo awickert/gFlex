@@ -1861,23 +1861,13 @@ class Flexure(Utility, Plotting):
         if self.method == "fft":
             # Ensure BC attributes exist; FFT handles them internally.
             # 'periodic' → exact transform; anything else → zero-padded (no_outside_loads).
-            try:
-                self.bc_east
-            except AttributeError:
-                self.bc_east = ""
-            try:
-                self.bc_west
-            except AttributeError:
-                self.bc_west = ""
+            for edge in ("bc_east", "bc_west"):
+                if not hasattr(self, edge):
+                    setattr(self, edge, "")
             if self.dimension == 2:
-                try:
-                    self.bc_north
-                except AttributeError:
-                    self.bc_north = ""
-                try:
-                    self.bc_south
-                except AttributeError:
-                    self.bc_south = ""
+                for edge in ("bc_north", "bc_south"):
+                    if not hasattr(self, edge):
+                        setattr(self, edge, "")
             else:
                 self.bc_south = None
                 self.bc_north = None
