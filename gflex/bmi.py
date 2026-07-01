@@ -370,6 +370,20 @@ class BmiGflex(_BmiBase):
         dest[:] = self.get_value_ptr(name).flat[inds]
         return dest
 
+    def _push_param_to_model(self, name: str) -> None:
+        """Propagate an updated input variable to the solver.
+
+        Shared by :meth:`set_value` and :meth:`set_value_at_indices`: elastic
+        thickness and the scalar physical constants must be pushed to the model
+        immediately (invalidating the cached coefficient matrix) so the next
+        :meth:`update` uses the new value.
+        """
+        if name == "lithosphere__elastic_thickness":
+            self._model.T_e = self._te.copy()
+        elif name in self._CONST_VARS:
+            attr = self._CONST_VARS[name][0]
+            setattr(self._model, attr, float(self._values[name][0]))
+
     def set_value(self, name: str, src: NDArray[Any]) -> None:
         """Overwrite the entire array for variable *name* with values from *src*.
 
@@ -379,11 +393,7 @@ class BmiGflex(_BmiBase):
         :meth:`update` uses the updated parameters.
         """
         self.get_value_ptr(name).flat[:] = src
-        if name == "lithosphere__elastic_thickness":
-            self._model.T_e = self._te.copy()
-        elif name in self._CONST_VARS:
-            attr = self._CONST_VARS[name][0]
-            setattr(self._model, attr, float(self._values[name][0]))
+        self._push_param_to_model(name)
 
     def set_value_at_indices(
         self,
@@ -398,11 +408,7 @@ class BmiGflex(_BmiBase):
         (see :meth:`set_value`).
         """
         self.get_value_ptr(name).flat[inds] = src
-        if name == "lithosphere__elastic_thickness":
-            self._model.T_e = self._te.copy()
-        elif name in self._CONST_VARS:
-            attr = self._CONST_VARS[name][0]
-            setattr(self._model, attr, float(self._values[name][0]))
+        self._push_param_to_model(name)
 
     # ------------------------------------------------------------------
     # Grid functions — uniform rectilinear
