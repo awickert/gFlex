@@ -57,7 +57,8 @@
   | `planet_surface__gravitational_acceleration` | `g` | m s⁻² |
 
   Values are read from the config file at ``initialize()`` and exposed on
-  grid 1 (shape ``(1,)``).  Updating any constant via ``set_value()``
+  grid 1, reported as the CSDMS BMI ``'scalar'`` (rank-0) grid type.
+  Updating any constant via ``set_value()``
   propagates to the solver immediately and invalidates the cached LU
   factorisation; the next ``update()`` rebuilds the stiffness matrix
   automatically.  `rho_fill` is the constant most likely to change at
