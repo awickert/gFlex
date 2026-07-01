@@ -449,15 +449,9 @@ class F1D(Flexure):
         else:
             raise ValueError('method must be "fd", "fft", "sas", or "sas_ng"')
 
-        # Seed the solver's writeable working copy of the elastic thickness.
-        # Done here (after the super()._solve_*() calls above, which load a
-        # config-file Te) so _T_e is materialised.  The solution methods may
-        # pad or modify _te; the user's grid (T_e -> _T_e) stays pristine.
-        self._te = (
-            np.array(self._T_e, dtype=float)
-            if isinstance(self._T_e, np.ndarray)
-            else self._T_e
-        )
+        # Seed the solver's writeable working copy of the elastic thickness,
+        # after the super()._solve_*() calls above have materialised _T_e.
+        self._seed_working_te()
 
         _logger.info("F1D run")
         self.method_func()

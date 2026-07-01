@@ -1375,6 +1375,21 @@ class Flexure(Utility, Plotting):
                 stacklevel=4,
             )
 
+    def _seed_working_te(self):
+        """Seed the solver's writeable working copy of the elastic thickness.
+
+        ``_te`` is a fresh, mutable copy of the user's ``T_e`` (which is stored
+        read-only); the solution methods may pad or modify ``_te`` while the
+        user's grid stays pristine.  Dimension-independent — called from both
+        :meth:`F1D.run` and :meth:`F2D.run` after the ``_solve_*`` setup has
+        materialised ``_T_e``.
+        """
+        self._te = (
+            np.array(self._T_e, dtype=float)
+            if isinstance(self._T_e, np.ndarray)
+            else self._T_e
+        )
+
     @property
     def allow_unpaired_periodic(self):
         """Permit a one-sided ('unpaired') periodic boundary condition.
