@@ -1351,6 +1351,30 @@ class Flexure(Utility, Plotting):
                 "non-positive and the flexural parameter α is undefined."
             )
 
+    def _warn_if_lu_ram_high(self):
+        """Warn if the estimated LU-factorisation memory exceeds 80% of free RAM.
+
+        Shared by the F1D and F2D FD solvers (``self.qs.size`` is the cell
+        count in either dimension).  A no-op when free RAM cannot be
+        determined.
+        """
+        avail = _available_ram_bytes()
+        if avail is None:
+            return
+        est = _estimate_lu_ram_bytes(self.qs.size)
+        pct = 100.0 * est / avail
+        if pct > 80:
+            warnings.warn(
+                f"FD solver: estimated LU memory requirement "
+                f"~{est / 1e9:.1f} GB out of {avail / 1e9:.1f} GB free.\n"
+                f"{pct:.0f}% of available RAM may be needed.\n"
+                "The solve may exhaust memory.\n"
+                "Consider method='fft' (requires uniform Te) "
+                "or reducing grid resolution.",
+                UserWarning,
+                stacklevel=4,
+            )
+
     @property
     def allow_unpaired_periodic(self):
         """Permit a one-sided ('unpaired') periodic boundary condition.

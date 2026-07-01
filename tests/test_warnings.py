@@ -709,7 +709,7 @@ def _lu_msgs_1d(flex):
 def test_lu_memory_warning_fires_2d():
     """LU memory warning fires when estimated RAM exceeds 80% of available."""
     flex = _make_fd_2d_50()
-    with patch("gflex.f2d._available_ram_bytes", return_value=_SMALL_RAM_2D):
+    with patch("gflex.base._available_ram_bytes", return_value=_SMALL_RAM_2D):
         msgs = _lu_msgs_2d(flex)
     assert msgs, "expected LU memory warning"
     assert "LU memory" in msgs[0]
@@ -719,7 +719,7 @@ def test_lu_memory_warning_fires_2d():
 def test_lu_memory_warning_absent_when_ram_sufficient_2d():
     """No LU memory warning when RAM is well above the threshold."""
     flex = _make_fd_2d_50()
-    with patch("gflex.f2d._available_ram_bytes", return_value=_LARGE_RAM):
+    with patch("gflex.base._available_ram_bytes", return_value=_LARGE_RAM):
         msgs = _lu_msgs_2d(flex)
     assert not msgs, f"unexpected LU memory warning: {msgs}"
 
@@ -727,7 +727,7 @@ def test_lu_memory_warning_absent_when_ram_sufficient_2d():
 def test_lu_memory_warning_fires_1d():
     """LU memory warning fires in F1D when estimated RAM exceeds 80%."""
     flex = _make_fd_1d_50()
-    with patch("gflex.f1d._available_ram_bytes", return_value=_SMALL_RAM_1D):
+    with patch("gflex.base._available_ram_bytes", return_value=_SMALL_RAM_1D):
         msgs = _lu_msgs_1d(flex)
     assert msgs, "expected LU memory warning"
 
@@ -735,7 +735,7 @@ def test_lu_memory_warning_fires_1d():
 def test_lu_memory_warning_absent_when_ram_sufficient_1d():
     """No LU memory warning in F1D when RAM is sufficient."""
     flex = _make_fd_1d_50()
-    with patch("gflex.f1d._available_ram_bytes", return_value=_LARGE_RAM):
+    with patch("gflex.base._available_ram_bytes", return_value=_LARGE_RAM):
         msgs = _lu_msgs_1d(flex)
     assert not msgs, f"unexpected LU memory warning: {msgs}"
 
@@ -744,7 +744,7 @@ def test_lu_memory_warning_skipped_when_lu_cached():
     """No LU memory warning on second run when LU is already cached (no_check)."""
     flex = _make_fd_2d_50()
     flex.cache_factorization = "no_check"
-    with patch("gflex.f2d._available_ram_bytes", return_value=_SMALL_RAM_2D):
+    with patch("gflex.base._available_ram_bytes", return_value=_SMALL_RAM_2D):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             flex.initialize()
@@ -764,7 +764,7 @@ def test_lu_memory_warning_skipped_when_lu_cached():
 def test_lu_memory_warning_skipped_when_ram_unknown():
     """No crash and no LU memory warning when available RAM cannot be determined."""
     flex = _make_fd_2d_50()
-    with patch("gflex.f2d._available_ram_bytes", return_value=None):
+    with patch("gflex.base._available_ram_bytes", return_value=None):
         msgs = _lu_msgs_2d(flex)
     assert not msgs, f"unexpected LU memory warning: {msgs}"
 
@@ -772,7 +772,7 @@ def test_lu_memory_warning_skipped_when_ram_unknown():
 def test_lu_memory_warning_message_content():
     """Warning message contains the percentage, 'available RAM', and 'free'."""
     flex = _make_fd_2d_50()
-    with patch("gflex.f2d._available_ram_bytes", return_value=_SMALL_RAM_2D):
+    with patch("gflex.base._available_ram_bytes", return_value=_SMALL_RAM_2D):
         msgs = _lu_msgs_2d(flex)
     assert msgs, "expected LU memory warning"
     msg = msgs[0]
@@ -796,7 +796,7 @@ def test_lu_memory_warning_uses_padded_size():
     flex.T_e = 35e3; flex.dx = flex.dy = 5000.0
     flex.qs = np.zeros((50, 50)); flex.qs[25, 25] = 1e6
     flex.bc_west = flex.bc_east = flex.bc_north = flex.bc_south = "no_outside_loads"
-    with patch("gflex.f2d._available_ram_bytes", return_value=_RAM):
+    with patch("gflex.base._available_ram_bytes", return_value=_RAM):
         msgs = _lu_msgs_2d(flex)
     assert msgs, (
         "expected LU memory warning for padded domain; "
@@ -808,7 +808,7 @@ def test_lu_memory_warning_skipped_when_lu_cached_true_mode():
     """No LU memory warning on second run with cache_factorization=True (LU reused)."""
     flex = _make_fd_2d_50()
     flex.cache_factorization = True
-    with patch("gflex.f2d._available_ram_bytes", return_value=_SMALL_RAM_2D):
+    with patch("gflex.base._available_ram_bytes", return_value=_SMALL_RAM_2D):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             flex.initialize()
