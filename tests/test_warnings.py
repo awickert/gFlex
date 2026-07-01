@@ -429,32 +429,98 @@ def test_fft_2d_two_unpaired_warns_twice():
 # FD: one-sided periodic BC warning
 # ---------------------------------------------------------------------------
 
+def _build_1d(qs, bc_w, bc_e):
+    """Construct (but do not run) a 1-D FD model for BC-guard tests."""
+    flex = F1D()
+    flex.quiet = True
+    flex.method = "fd"
+    flex.solver = "direct"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill
+    flex.T_e = Te
+    flex.qs = qs.copy()
+    flex.dx = dx
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
+    return flex
+
+
+def _build_2d(qs, bc_w, bc_e, bc_n, bc_s):
+    """Construct (but do not run) a 2-D FD model for BC-guard tests."""
+    flex = F2D()
+    flex.quiet = True
+    flex.method = "fd"
+    flex.solver = "direct"
+    flex.g = g
+    flex.E = E
+    flex.nu = nu
+    flex.rho_m = rho_m
+    flex.rho_fill = rho_fill
+    flex.T_e = Te
+    flex.qs = qs.copy()
+    flex.dx = dx
+    flex.dy = dx
+    flex.bc_west = bc_w
+    flex.bc_east = bc_e
+    flex.bc_north = bc_n
+    flex.bc_south = bc_s
+    return flex
+
+
 @pytest.mark.parametrize("bc_w,bc_e", [
     ("periodic", "zero_displacement_zero_slope"),
     ("zero_displacement_zero_slope", "periodic"),
 ])
-def test_fd_1d_one_sided_periodic_warns(bc_w, bc_e):
-    """FD 1-D: exactly one of west/east 'periodic' raises UserWarning."""
+def test_fd_1d_one_sided_periodic_raises(bc_w, bc_e):
+    """FD 1-D: exactly one of west/east 'periodic' raises ValueError by default."""
     qs = np.zeros(80)
     qs[40] = 1e6
-    msgs = _run_1d(qs, bc_w, bc_e)
-    assert any("non-physical" in m for m in msgs), msgs
+    flex = _build_1d(qs, bc_w, bc_e)
+    with pytest.raises(ValueError, match="allow_unpaired_periodic"):
+        flex.initialize()
+        flex.run()
 
 
-def test_fd_1d_both_periodic_no_warn():
-    """FD 1-D: both periodic → no one-sided-periodic warning."""
+def test_fd_1d_both_periodic_runs():
+    """FD 1-D: both periodic → no guard, solve completes with finite w."""
     qs = np.zeros(80)
     qs[40] = 1e6
-    msgs = _run_1d(qs, "periodic", "periodic")
-    assert not any("non-physical" in m for m in msgs), msgs
+    flex = _build_1d(qs, "periodic", "periodic")
+    flex.initialize()
+    flex.run()
+    assert np.all(np.isfinite(flex.w))
 
 
-def test_fd_1d_neither_periodic_no_warn():
-    """FD 1-D: neither periodic → no one-sided-periodic warning."""
+def test_fd_1d_neither_periodic_runs():
+    """FD 1-D: neither periodic → no guard, solve completes with finite w."""
     qs = np.zeros(80)
     qs[40] = 1e6
-    msgs = _run_1d(qs, "zero_displacement_zero_slope", "zero_displacement_zero_slope")
-    assert not any("non-physical" in m for m in msgs), msgs
+    flex = _build_1d(qs, "zero_displacement_zero_slope",
+                     "zero_displacement_zero_slope")
+    flex.initialize()
+    flex.run()
+    assert np.all(np.isfinite(flex.w))
+
+
+def test_fd_1d_one_sided_periodic_allowed_with_flag():
+    """allow_unpaired_periodic=True lets the solve proceed; the only warning is
+    the one-time 'safety check disabled' announcement from enabling the flag —
+    the guard message does not re-fire on every solve."""
+    qs = np.zeros(80)
+    qs[40] = 1e6
+    flex = _build_1d(qs, "periodic", "zero_displacement_zero_slope")
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        flex.allow_unpaired_periodic = True   # fires the announcement once
+        flex.initialize()
+        flex.run()                            # proceeds silently (no re-warn)
+    msgs = [str(x.message) for x in w if issubclass(x.category, UserWarning)]
+    assert any("safety check is now disabled" in m for m in msgs), msgs
+    assert not any("well-posed" in m for m in msgs), msgs
+    assert np.all(np.isfinite(flex.w))
 
 
 @pytest.mark.parametrize("pair", [
@@ -463,32 +529,51 @@ def test_fd_1d_neither_periodic_no_warn():
     ("mirror", "mirror", "periodic", "zero_displacement_zero_slope"),   # N only
     ("mirror", "mirror", "mirror", "periodic"),                          # S only
 ])
-def test_fd_2d_one_sided_periodic_warns(pair):
-    """FD 2-D: exactly one side of a pair 'periodic' raises UserWarning."""
+def test_fd_2d_one_sided_periodic_raises(pair):
+    """FD 2-D: exactly one side of a pair 'periodic' raises ValueError by default."""
     qs = np.zeros((80, 80))
     qs[40, 40] = 1e6
     bc_w, bc_e, bc_n, bc_s = pair
-    msgs = _run_2d(qs, bc_w, bc_e, bc_n, bc_s)
-    assert any("non-physical" in m for m in msgs), msgs
+    flex = _build_2d(qs, bc_w, bc_e, bc_n, bc_s)
+    with pytest.raises(ValueError, match="allow_unpaired_periodic"):
+        flex.initialize()
+        flex.run()
 
 
-def test_fd_2d_all_periodic_no_warn():
-    """FD 2-D: all four periodic → no one-sided-periodic warning."""
+def test_fd_2d_all_periodic_runs():
+    """FD 2-D: all four periodic → no guard, solve completes with finite w."""
     qs = np.zeros((80, 80))
     qs[40, 40] = 1e6
-    msgs = _run_2d(qs, "periodic", "periodic", "periodic", "periodic")
-    assert not any("non-physical" in m for m in msgs), msgs
+    flex = _build_2d(qs, "periodic", "periodic", "periodic", "periodic")
+    flex.initialize()
+    flex.run()
+    assert np.all(np.isfinite(flex.w))
 
 
-def test_fd_2d_one_sided_periodic_names_sides():
-    """FD 2-D warning message names the periodic side and the missing side."""
+def test_fd_2d_one_sided_periodic_error_names_sides():
+    """FD 2-D ValueError names the periodic side and the missing side."""
     qs = np.zeros((80, 80))
     qs[40, 40] = 1e6
-    msgs = _run_2d(qs, "periodic", "mirror", "mirror", "mirror")
-    onesided = [m for m in msgs if "non-physical" in m]
-    assert onesided, "expected a one-sided-periodic warning"
-    assert "bc_west" in onesided[0]
-    assert "bc_east" in onesided[0]
+    flex = _build_2d(qs, "periodic", "mirror", "mirror", "mirror")
+    with pytest.raises(ValueError) as exc:
+        flex.initialize()
+        flex.run()
+    assert "bc_west" in str(exc.value)
+    assert "bc_east" in str(exc.value)
+
+
+def test_allow_unpaired_periodic_default_false():
+    """The override defaults to False on a fresh model."""
+    assert F1D().allow_unpaired_periodic is False
+    assert F2D().allow_unpaired_periodic is False
+
+
+def test_allow_unpaired_periodic_setter_announces():
+    """Enabling the override warns, so disabling the safety check leaves a trace."""
+    flex = F1D()
+    with pytest.warns(UserWarning, match="unpaired-periodic safety check"):
+        flex.allow_unpaired_periodic = True
+    assert flex.allow_unpaired_periodic is True
 
 
 # ---------------------------------------------------------------------------

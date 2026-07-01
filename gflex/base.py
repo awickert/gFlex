@@ -1329,6 +1329,32 @@ class Flexure(Utility, Plotting):
             self._invalidate_matrix_cache()
 
     @property
+    def allow_unpaired_periodic(self):
+        """Permit a one-sided ('unpaired') periodic boundary condition.
+
+        Periodic boundary conditions connect opposite edges, so setting
+        ``'periodic'`` on only one side of a pair is not a well-posed
+        boundary: the finite-difference matrix carries a spurious partial
+        wrap-around and the deflection near that edge is not a valid
+        solution.  :meth:`bc_check` therefore raises a ``ValueError`` for an
+        unpaired periodic BC by default.  Set this to ``True`` to override the
+        guard and solve anyway — a deliberate, use-at-your-own-risk escape
+        hatch.  Defaults to ``False``.
+        """
+        return self.__dict__.get("_allow_unpaired_periodic", False)
+
+    @allow_unpaired_periodic.setter
+    def allow_unpaired_periodic(self, value):
+        value = bool(value)
+        if value and not self.__dict__.get("_allow_unpaired_periodic", False):
+            warnings.warn(
+                "allow_unpaired_periodic = True: the unpaired-periodic safety "
+                "check is now disabled.",
+                UserWarning, stacklevel=2,
+            )
+        self.__dict__["_allow_unpaired_periodic"] = value
+
+    @property
     def dx(self):
         """Grid spacing in x [m]."""
         return self._dx
@@ -1938,10 +1964,13 @@ class Flexure(Utility, Plotting):
                     elif norm == "infinite":
                         norm = "no_outside_loads"
                     setattr(self, f"_bc_{edge}_norm", norm)
-                # Warn when only one side of an opposite pair is 'periodic'.
-                # Periodic BCs tile the domain edge-to-edge, so a one-sided
-                # periodic is non-physical in most cases — but a use case we
-                # have not imagined may exist, so a warning rather than an error.
+                # Reject an unpaired ('one-sided') periodic boundary by
+                # default.  Periodic BCs connect opposite edges, so setting
+                # 'periodic' on only one side of a pair is not a well-posed
+                # boundary: the assembled FD matrix carries a spurious partial
+                # wrap-around and the deflection near that edge is not a valid
+                # solution.  A user who nonetheless wants this can set
+                # allow_unpaired_periodic = True to override the guard.
                 for side_a, side_b in (("west", "east"), ("north", "south")):
                     if self.dimension == 1 and side_a == "north":
                         continue
@@ -1950,14 +1979,19 @@ class Flexure(Utility, Plotting):
                     if (norm_a == "periodic") != (norm_b == "periodic"):
                         periodic_side  = side_a if norm_a == "periodic" else side_b
                         missing_side   = side_b if norm_a == "periodic" else side_a
-                        warnings.warn(
+                        message = (
                             f"FD method: bc_{periodic_side} is 'periodic' but "
-                            f"bc_{missing_side} is not — periodic boundary conditions "
-                            f"connect opposite edges, so a one-sided periodic is "
-                            f"non-physical in most cases. Set bc_{missing_side} to "
-                            f"'periodic' as well, or choose a different BC.",
-                            UserWarning, stacklevel=4,
+                            f"bc_{missing_side} is not. Periodic boundary "
+                            f"conditions connect opposite edges, so a one-sided "
+                            f"periodic is not well-posed. If you have good "
+                            f"reason to want such a pair of boundary "
+                            f"conditions, set allow_unpaired_periodic = True."
                         )
+                        if not self.allow_unpaired_periodic:
+                            raise ValueError(message)
+                        # Flag is set: the user took responsibility when they
+                        # enabled it (the setter announced it once), so proceed
+                        # silently rather than re-warning on every solve.
                 # Validate array BC value lengths against edge dimensions.
                 # Only when dict BCs are present (config-file paths use string BCs
                 # and qs may not be set yet at this point).
