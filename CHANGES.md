@@ -1,6 +1,6 @@
 # Release Notes
 
-## [Unreleased]
+## [2.0.0b2] - 2026-07-01
 
 ### Breaking changes
 
@@ -283,7 +283,7 @@
 
 ### Tests
 
-- 515 tests passing (up from 335 in 2.0.0b1), covering all solvers,
+- 523 tests passing (up from 335 in 2.0.0b1), covering all solvers,
   all BC types (including pinned and prescribed-value), MMS convergence
   for mirror (1-D and 2-D) and variable-Te (2-D), domain padding, LU
   cache, warnings, and the full BMI variable set including the five
