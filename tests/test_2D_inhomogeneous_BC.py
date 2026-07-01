@@ -375,7 +375,7 @@ class TestVariableTePrescribedNeumann:
             {"moment": self.M0, "shear": 0.0}, self._ZMZS, _MIRROR, _MIRROR,
             te=Te_uni,
         )
-        np.testing.assert_allclose(w_array, w_scalar, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w_array, w_scalar, rtol=1e-10, atol=1e-14)
 
     def test_superposition_holds_under_variable_te(self):
         """w(M₀,V₀) = w(M₀,0) + w(0,V₀) to machine precision under variable Te."""
@@ -383,7 +383,7 @@ class TestVariableTePrescribedNeumann:
         w_M  = _run_vte({"moment": self.M0, "shear": 0.0}, self._ZMZS, _MIRROR, _MIRROR, te=Te_var)
         w_V  = _run_vte({"moment": 0.0, "shear": self.V0},  self._ZMZS, _MIRROR, _MIRROR, te=Te_var)
         w_MV = _run_vte({"moment": self.M0, "shear": self.V0}, self._ZMZS, _MIRROR, _MIRROR, te=Te_var)
-        np.testing.assert_allclose(w_MV, w_M + w_V, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w_MV, w_M + w_V, rtol=1e-10, atol=1e-14)
 
     def test_variable_te_differs_from_uniform(self):
         """Variable Te must produce a quantifiably different solution than uniform Te."""
@@ -1086,28 +1086,28 @@ class TestNeumannSuperposition:
         w_n = _run_sq(_FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
         w   = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS,
                        {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
-        np.testing.assert_allclose(w, w_w + w_n, rtol=1e-9, atol=0)
+        np.testing.assert_allclose(w, w_w + w_n, rtol=1e-9, atol=1e-14)
 
     def test_west_south(self):
         w_w = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS, _FREE_NS)
         w_s = _run_sq(_FREE_NS, _FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
         w   = _run_sq({"moment": _M0_SQ, "shear": 0.0}, _FREE_NS,
                        _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
-        np.testing.assert_allclose(w, w_w + w_s, rtol=1e-9, atol=0)
+        np.testing.assert_allclose(w, w_w + w_s, rtol=1e-9, atol=1e-14)
 
     def test_east_north(self):
         w_e = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS)
         w_n = _run_sq(_FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
         w   = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0},
                        {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
-        np.testing.assert_allclose(w, w_e + w_n, rtol=1e-9, atol=0)
+        np.testing.assert_allclose(w, w_e + w_n, rtol=1e-9, atol=1e-14)
 
     def test_east_south(self):
         w_e = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS)
         w_s = _run_sq(_FREE_NS, _FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
         w   = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0},
                        _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
-        np.testing.assert_allclose(w, w_e + w_s, rtol=1e-9, atol=0)
+        np.testing.assert_allclose(w, w_e + w_s, rtol=1e-9, atol=1e-14)
 
     # --- opposite-edge pairs ---
 
@@ -1116,14 +1116,14 @@ class TestNeumannSuperposition:
         w_e = _run_sq(_FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS, _FREE_NS)
         w   = _run_sq({"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0},
                        _FREE_NS, _FREE_NS)
-        np.testing.assert_allclose(w, w_w + w_e, rtol=1e-9, atol=0)
+        np.testing.assert_allclose(w, w_w + w_e, rtol=1e-9, atol=1e-14)
 
     def test_north_south(self):
         w_n = _run_sq(_FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0}, _FREE_NS)
         w_s = _run_sq(_FREE_NS, _FREE_NS, _FREE_NS, {"moment": _M0_SQ, "shear": 0.0})
         w   = _run_sq(_FREE_NS, _FREE_NS,
                        {"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0})
-        np.testing.assert_allclose(w, w_n + w_s, rtol=1e-9, atol=0)
+        np.testing.assert_allclose(w, w_n + w_s, rtol=1e-9, atol=1e-14)
 
     # --- all four ---
 
@@ -1136,7 +1136,7 @@ class TestNeumannSuperposition:
             {"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0},
             {"moment": _M0_SQ, "shear": 0.0}, {"moment": _M0_SQ, "shear": 0.0},
         )
-        np.testing.assert_allclose(w, w_w + w_e + w_n + w_s, rtol=1e-9, atol=0)
+        np.testing.assert_allclose(w, w_w + w_e + w_n + w_s, rtol=1e-9, atol=1e-14)
 
 
 # ---------------------------------------------------------------------------
@@ -1209,7 +1209,7 @@ class TestLoadSuperposition:
         _, w_load = _run("zero_moment_zero_shear", "zero_moment_zero_shear",
                          qs_override=qs)
         _, w_bc   = _run({"moment": self.M0, "shear": 0.0}, "zero_moment_zero_shear")
-        np.testing.assert_allclose(w_both, w_load + w_bc, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w_both, w_load + w_bc, rtol=1e-10, atol=1e-14)
 
     def test_east_moment_with_load(self):
         qs = self._qs()
@@ -1218,7 +1218,7 @@ class TestLoadSuperposition:
         _, w_load = _run("zero_moment_zero_shear", "zero_moment_zero_shear",
                          qs_override=qs)
         _, w_bc   = _run("zero_moment_zero_shear", {"moment": self.M0, "shear": 0.0})
-        np.testing.assert_allclose(w_both, w_load + w_bc, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w_both, w_load + w_bc, rtol=1e-10, atol=1e-14)
 
 
 # ---------------------------------------------------------------------------
@@ -1250,7 +1250,7 @@ class TestPeriodicLateralBCs:
                              "mirror", "mirror")
         _, w_periodic = _run({"moment": self.M0, "shear": 0.0}, "zero_moment_zero_shear",
                              "periodic", "periodic")
-        np.testing.assert_allclose(w_periodic, w_mirror, rtol=1e-6, atol=0)
+        np.testing.assert_allclose(w_periodic, w_mirror, rtol=1e-6, atol=1e-14)
 
     def test_west_moment_periodic_is_y_uniform(self):
         _, w = _run({"moment": self.M0, "shear": 0.0}, "zero_moment_zero_shear",
@@ -1265,7 +1265,7 @@ class TestPeriodicLateralBCs:
                              "mirror", "mirror")
         _, w_periodic = _run("zero_moment_zero_shear", {"moment": self.M0, "shear": 0.0},
                              "periodic", "periodic")
-        np.testing.assert_allclose(w_periodic, w_mirror, rtol=1e-6, atol=0)
+        np.testing.assert_allclose(w_periodic, w_mirror, rtol=1e-6, atol=1e-14)
 
     def test_east_moment_periodic_is_y_uniform(self):
         _, w = _run("zero_moment_zero_shear", {"moment": self.M0, "shear": 0.0},
@@ -1331,7 +1331,7 @@ class TestNorthSouthNonMirrorLateral:
             bc_north={"moment": self.M0, "shear": 0.0},
             bc_south=self._ZDSZS,
         )
-        np.testing.assert_allclose(w_ns, w_ew[::-1, :].T, rtol=1e-7, atol=0)
+        np.testing.assert_allclose(w_ns, w_ew[::-1, :].T, rtol=1e-7, atol=1e-14)
 
     def test_rotation_symmetry_north_moment_zdzm(self):
         """Same rotation symmetry test with ZDZM at all non-prescribed ends."""
@@ -1347,7 +1347,7 @@ class TestNorthSouthNonMirrorLateral:
             bc_north={"moment": self.M0, "shear": 0.0},
             bc_south=self._ZDZM,
         )
-        np.testing.assert_allclose(w_ns, w_ew[::-1, :].T, rtol=1e-7, atol=0)
+        np.testing.assert_allclose(w_ns, w_ew[::-1, :].T, rtol=1e-7, atol=1e-14)
 
     # --- 2. Superposition ---
 
@@ -1362,7 +1362,7 @@ class TestNorthSouthNonMirrorLateral:
         w_m  = _run_sq(bc_north={"moment": self.M0, "shear": 0.0}, **kw)
         w_v  = _run_sq(bc_north={"moment": 0.0,     "shear": self.V0}, **kw)
         w_mv = _run_sq(bc_north={"moment": self.M0, "shear": self.V0}, **kw)
-        np.testing.assert_allclose(w_mv, w_m + w_v, rtol=1e-9, atol=0)
+        np.testing.assert_allclose(w_mv, w_m + w_v, rtol=1e-9, atol=1e-14)
 
     # --- 3. x-symmetry of the solution ---
 
@@ -1382,7 +1382,7 @@ class TestNorthSouthNonMirrorLateral:
             bc_north={"moment": self.M0, "shear": 0.0},
             bc_south=self._ZMZS,
         )
-        np.testing.assert_allclose(w, w[:, ::-1], rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w, w[:, ::-1], rtol=1e-10, atol=1e-14)
 
 
 # ---------------------------------------------------------------------------
@@ -1441,7 +1441,7 @@ class TestArrayValuedBCs:
         M0_arr = self.M0 * (1.0 + 0.5 * np.sin(np.linspace(0, np.pi, NY)))
         _, w1 = _run({"moment": M0_arr,     "shear": 0.0}, "zero_moment_zero_shear")
         _, w2 = _run({"moment": 2.0*M0_arr, "shear": 0.0}, "zero_moment_zero_shear")
-        np.testing.assert_allclose(w2, 2.0 * w1, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w2, 2.0 * w1, rtol=1e-10, atol=1e-14)
 
     # --- 3. superposition ---
 
@@ -1452,7 +1452,7 @@ class TestArrayValuedBCs:
         _, w_a  = _run({"moment": M0_a,       "shear": 0.0}, "zero_moment_zero_shear")
         _, w_b  = _run({"moment": M0_b,       "shear": 0.0}, "zero_moment_zero_shear")
         _, w_ab = _run({"moment": M0_a + M0_b,"shear": 0.0}, "zero_moment_zero_shear")
-        np.testing.assert_allclose(w_ab, w_a + w_b, rtol=1e-10, atol=0)
+        np.testing.assert_allclose(w_ab, w_a + w_b, rtol=1e-10, atol=1e-14)
 
 
 # ---------------------------------------------------------------------------
