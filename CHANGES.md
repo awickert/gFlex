@@ -1,6 +1,6 @@
 # Release Notes
 
-## [2.0.0b2] - 2026-07-01
+## [2.0.0b2] - 2026-07-02
 
 ### Breaking changes
 
