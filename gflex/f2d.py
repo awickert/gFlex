@@ -2658,7 +2658,7 @@ class F2D(Flexure):
                 self.maxFlexuralWavelength_ncells_y,
             )
             _logger.debug("Using direct solution with UMFpack")
-        elif self.solver != "direct":
+        if self.solver != "direct":
             raise ValueError(
                 f"solver={self.solver!r} is not supported; only 'direct' is available "
                 "in this release.  An iterative solver may be added in a future version."

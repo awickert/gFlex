@@ -608,6 +608,22 @@ def test_initialize_drho_nonpositive_raises_2d(rho_fill):
         flex.initialize()
 
 
+def test_f2d_debug_rejects_nondirect_solver():
+    """F2D rejects an unsupported solver even with debug=True (the guard is
+    independent of the debug branch; regression for the elif that let a
+    non-direct solver through whenever debug was on)."""
+    qs = np.zeros((40, 40)); qs[20, 20] = 1e6
+    flex = _build_2d(qs, "zero_displacement_zero_slope",
+                     "zero_displacement_zero_slope",
+                     "zero_displacement_zero_slope",
+                     "zero_displacement_zero_slope")
+    flex.debug = True
+    flex.solver = "iterative"
+    with pytest.raises(ValueError, match="not supported"):
+        flex.initialize()
+        flex.run()
+
+
 # ---------------------------------------------------------------------------
 # LU memory warning (#68)
 # ---------------------------------------------------------------------------
