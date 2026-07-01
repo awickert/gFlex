@@ -1969,16 +1969,9 @@ class Flexure(Utility, Plotting):
                         raise ValueError(
                             "For a flexural solution, grid must be 1D or 2D."
                         )
-                    if norm == "clamped":
-                        norm = "zero_displacement_zero_slope"
-                    elif norm == "pinned":
-                        norm = "zero_displacement_zero_moment"
-                    elif norm == "free":
-                        norm = "zero_moment_zero_shear"
-                    elif norm == "mirror":
-                        norm = "zero_slope_zero_shear"
-                    elif norm == "infinite":
-                        norm = "no_outside_loads"
+                    # Resolve any short alias to its canonical name using the
+                    # same _BC_ALIASES map applied above — one source of truth.
+                    norm = _BC_ALIASES.get(norm, norm)
                     setattr(self, f"_bc_{edge}_norm", norm)
                 # Reject an unpaired ('one-sided') periodic boundary by
                 # default.  Periodic BCs connect opposite edges, so setting
