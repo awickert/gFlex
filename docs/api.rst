@@ -266,6 +266,18 @@ Example (coupling loop)::
 
 The cache is cleared by :meth:`~gflex.base.Flexure.finalize`.
 
+Unpaired periodic boundaries
+----------------------------
+
+.. versionadded:: 2.0.0
+
+For the finite-difference solver, a one-sided periodic boundary — ``'periodic'``
+on only one side of an opposite pair — is not well-posed, and
+:meth:`~gflex.base.Flexure.run` raises a ``ValueError``.  Set
+``allow_unpaired_periodic = True`` to override the guard and solve anyway;
+enabling it emits a one-time ``UserWarning`` that the safety check is disabled.
+Defaults to ``False``.
+
 Timing attributes
 -----------------
 

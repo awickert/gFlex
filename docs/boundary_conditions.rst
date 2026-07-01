@@ -341,6 +341,10 @@ setting both ``bc_north`` and ``bc_south`` to ``periodic`` makes the y-axis
 exactly periodic.  Mixed axes are valid — for example, x-periodic and y-padded.
 A ``UserWarning`` is raised if only one side of a pair is ``periodic``.
 
+For the finite-difference solver a one-sided periodic is not well-posed and
+raises a ``ValueError``; set ``allow_unpaired_periodic = True`` to override the
+guard and solve anyway (the deflection near that edge is not a valid solution).
+
 *Standard names:* No standard structural-mechanics or geophysical name.
 
 *Geological context:* ``periodic`` is appropriate when the load pattern
