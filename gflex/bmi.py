@@ -411,7 +411,7 @@ class BmiGflex(_BmiBase):
     def get_grid_rank(self, grid: int) -> int:
         """Return the number of dimensions of grid *grid*."""
         if grid == 1:
-            return 1
+            return 0
         return len(self._shape)
 
     def get_grid_size(self, grid: int) -> int:
@@ -421,17 +421,27 @@ class BmiGflex(_BmiBase):
         return int(np.prod(self._shape))
 
     def get_grid_type(self, grid: int) -> str:
-        """Return the grid type string (``'uniform_rectilinear'``)."""
+        """Return the grid type string.
+
+        Grid 0 is the spatial model domain (``'uniform_rectilinear'``); grid 1
+        holds the scalar physical constants (E, ν, ρ_m, ρ_fill, g) and is the
+        BMI ``'scalar'`` type (rank 0).
+        """
+        if grid == 1:
+            return "scalar"
         return "uniform_rectilinear"
 
     def get_grid_shape(
         self, grid: int, shape: NDArray[np.intp]
     ) -> NDArray[np.intp]:
-        """Fill *shape* with the grid dimensions and return it."""
+        """Fill *shape* with the grid dimensions and return it.
+
+        Grid 1 is a rank-0 scalar grid, so its shape is empty; *shape* is
+        returned unchanged (the caller allocates a zero-length array).
+        """
         if grid == 1:
-            shape[:] = (1,)
-        else:
-            shape[:] = self._shape
+            return shape
+        shape[:] = self._shape
         return shape
 
     def get_grid_spacing(
@@ -439,9 +449,10 @@ class BmiGflex(_BmiBase):
     ) -> NDArray[np.float64]:
         """Fill *spacing* with the grid cell spacings [m] and return it."""
         if grid == 1:
-            spacing[:] = (1.0,)
-        else:
-            spacing[:] = self._spacing
+            raise NotImplementedError(
+                "get_grid_spacing: grid 1 is a scalar grid and has no spacing."
+            )
+        spacing[:] = self._spacing
         return spacing
 
     def get_grid_origin(
@@ -449,9 +460,10 @@ class BmiGflex(_BmiBase):
     ) -> NDArray[np.float64]:
         """Fill *origin* with the grid origin coordinates [m] and return it."""
         if grid == 1:
-            origin[:] = (0.0,)
-        else:
-            origin[:] = self._origin
+            raise NotImplementedError(
+                "get_grid_origin: grid 1 is a scalar grid and has no origin."
+            )
+        origin[:] = self._origin
         return origin
 
     # ------------------------------------------------------------------

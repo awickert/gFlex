@@ -118,8 +118,12 @@ def test_get_var_grid(bmi_1d):
 # ------------------------------------------------------------------
 
 
+def test_get_grid_type_scalar(bmi_1d):
+    assert bmi_1d.get_grid_type(1) == "scalar"
+
+
 def test_get_grid_rank_scalar(bmi_1d):
-    assert bmi_1d.get_grid_rank(1) == 1
+    assert bmi_1d.get_grid_rank(1) == 0
 
 
 def test_get_grid_size_scalar(bmi_1d):
@@ -127,21 +131,23 @@ def test_get_grid_size_scalar(bmi_1d):
 
 
 def test_get_grid_shape_scalar(bmi_1d):
-    shape = np.zeros(1, dtype=np.intp)
-    bmi_1d.get_grid_shape(1, shape)
-    assert shape[0] == 1
+    # A rank-0 scalar grid has an empty shape: the caller allocates a
+    # zero-length array and it comes back unchanged.
+    shape = np.zeros(0, dtype=np.intp)
+    out = bmi_1d.get_grid_shape(1, shape)
+    assert out.shape == (0,)
 
 
 def test_get_grid_spacing_scalar(bmi_1d):
-    spacing = np.zeros(1)
-    bmi_1d.get_grid_spacing(1, spacing)
-    assert spacing[0] == pytest.approx(1.0)
+    # Spacing is undefined for a scalar grid.
+    with pytest.raises(NotImplementedError):
+        bmi_1d.get_grid_spacing(1, np.zeros(0))
 
 
 def test_get_grid_origin_scalar(bmi_1d):
-    origin = np.zeros(1)
-    bmi_1d.get_grid_origin(1, origin)
-    assert origin[0] == pytest.approx(0.0)
+    # Origin is undefined for a scalar grid.
+    with pytest.raises(NotImplementedError):
+        bmi_1d.get_grid_origin(1, np.zeros(0))
 
 
 # ------------------------------------------------------------------
