@@ -408,7 +408,8 @@ Grid 0 — spatial flexure grid:
      - m
      - Deflection :math:`w` (downward negative).
 
-Grid 1 — scalar physical constants (single-element arrays):
+Grid 1 — scalar physical constants, exposed as the BMI ``'scalar'`` grid type
+(rank 0) and read or written as single-element arrays:
 
 .. list-table::
    :header-rows: 1
