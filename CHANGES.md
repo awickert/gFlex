@@ -153,7 +153,11 @@
   `recommended_pad_width()` now raise a clear `ValueError` when
   ``rho_fill >= rho_m``.  A non-positive density contrast means the foundation
   has no restoring force and the flexural parameter α is undefined; previously
-  the code produced a ``ZeroDivisionError`` or silent ``nan``.
+  the code produced a ``ZeroDivisionError`` or silent ``nan``.  The same check
+  now also runs at the start of every ``run()``, so a density reassigned after
+  ``initialize()`` — e.g. through the BMI ``set_value`` interface — is caught
+  before it can solve with a non-positive restoring force rather than silently
+  returning garbage.
 
 ### Bug fixes
 
