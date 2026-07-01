@@ -63,13 +63,15 @@
   automatically.  `rho_fill` is the constant most likely to change at
   runtime (e.g. when a subaerial basin becomes subaqueous).
 
-- **FD one-sided periodic warning** — `F1D` and `F2D` now issue a
-  `UserWarning` when `method='fd'` and exactly one side of an opposite
-  boundary pair (west/east or north/south) is `'periodic'`.  Periodic BCs
-  tile opposite edges together, so a one-sided periodic is non-physical in
-  most cases; the warning names both sides and suggests the fix.  The solver
-  proceeds rather than raising an error, in case an unforeseen use case
-  requires it.
+- **FD one-sided periodic rejected by default** — when `method='fd'` and
+  exactly one side of an opposite boundary pair (west/east or north/south)
+  is `'periodic'`, `F1D` and `F2D` now raise a `ValueError`.  Periodic BCs
+  tie opposite edges together, so a one-sided periodic is not well-posed —
+  the assembled matrix carries a spurious partial wrap-around and the
+  deflection near that edge is not a valid solution.  For the rare
+  intentional case, set the new `allow_unpaired_periodic = True` attribute to
+  override the guard; enabling it warns once that the safety check is
+  disabled, then the solve proceeds.
 - **FFT per-axis boundary conditions** — `F2D` now handles the west/east
   and north/south boundary-condition pairs independently for
   `method='fft'`.  Setting both sides of a pair to `'periodic'` makes
