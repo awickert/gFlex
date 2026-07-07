@@ -2597,7 +2597,7 @@ class F2D(Flexure):
             Dmax = self.D.max()
         # This is an approximation if there is fill that evolves with iterations
         # (e.g., water), but should be good enough that this won't do much to it
-        alpha = (4 * Dmax / (self.drho * self.g)) ** 0.25  # 2D flexural parameter
+        alpha = (Dmax / (self.drho * self.g)) ** 0.25  # 2D flexural parameter
         self.max_flexural_wavelength = 2 * np.pi * alpha
         self.maxFlexuralWavelength_ncells_x = int(
             np.ceil(self.max_flexural_wavelength / self.dx)
