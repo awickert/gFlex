@@ -1,0 +1,54 @@
+# gFlex configuration -- Greenland ice-sheet flexure (2-D, finite difference)
+#
+# Lithospheric deflection under the modern Greenland Ice Sheet, with a
+# spatially variable effective elastic thickness.  The two input grids are
+# pre-built by examples/preprocess_greenland.py and live in examples/data/:
+#
+#   greenland_load.npy   surface load stress q0 = rho_ice * g * H_ice  [Pa]
+#   greenland_te.npy     effective elastic thickness T_e               [m]
+#
+# Run it (from the repository root) with either
+#   python -m gflex examples/greenland.yaml
+# or
+#   python examples/run_greenland.py
+#
+# All units are SI.
+
+mode:
+  dimension: 2
+  method: fd
+
+parameter:
+  youngs_modulus: 6.5e10
+  poissons_ratio: 0.25
+  gravitational_acceleration: 9.81
+  mantle_density: 3300
+  infill_material_density: 0
+
+input:
+  # Paths are resolved relative to this configuration file.
+  loads: data/greenland_load.npy
+  elastic_thickness: data/greenland_te.npy
+
+output:
+  deflection_out: ""
+  # Plot choices: q0 (load), w (deflection), or both
+  plot: both
+
+numerical:
+  grid_spacing_x: 10050.0
+  # The saved grids are padded by ~one flexural wavelength (see
+  # preprocess_greenland.py), so a clamped (held-fixed) boundary sits far
+  # from the ice load on all sides -- the simple, robust choice.
+  boundary_condition_west: zero_displacement_zero_slope
+  boundary_condition_east: zero_displacement_zero_slope
+
+numerical2D:
+  grid_spacing_y: 10050.0
+  boundary_condition_north: zero_displacement_zero_slope
+  boundary_condition_south: zero_displacement_zero_slope
+
+verbosity:
+  verbose: false
+  debug: false
+  quiet: false
