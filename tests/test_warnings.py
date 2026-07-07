@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from gflex.f1d import F1D
-from gflex.f2d import F2D
+from gflex.f2d import F2D, flexural_wavelengths
 
 # ---------------------------------------------------------------------------
 # Shared physical parameters
@@ -30,7 +30,7 @@ rho_m = 3300.0
 rho_fill = 0.0
 g = 9.8
 
-# Te = 35 km → alpha_1D ≈ 74.4 km → flexural wavelength ≈ 467 km
+# Te = 35 km → lambda_1D ≈ 467 km (1-D guard), lambda_2D ≈ 331 km (2-D guard)
 Te = 35e3
 dx = 5000.0
 
@@ -191,7 +191,7 @@ def test_2d_no_bc_type_warning(bc):
 
 def test_2d_proximity_warning_fires():
     """Load within one wavelength of a zero_displacement_zero_slope boundary warns."""
-    # row 2 → 12.5 km from N boundary; wavelength ≈ 467 km at Te=35 km
+    # row 2 → 12.5 km from N boundary; 2-D wavelength ≈ 331 km at Te=35 km
     qs = np.zeros((40, 40))
     qs[2, 20] = 1e6
     msgs = _run_2d(qs, "zero_displacement_zero_slope", "zero_displacement_zero_slope",
@@ -201,7 +201,7 @@ def test_2d_proximity_warning_fires():
 
 def test_2d_proximity_warning_absent_when_far():
     """Load more than one wavelength from all boundaries: no proximity warning."""
-    # N=300, load at centre → 752.5 km from each boundary >> 467 km
+    # N=300, load at centre → 752.5 km from each boundary >> 331 km (2-D)
     qs = np.zeros((300, 300))
     qs[150, 150] = 1e6
     msgs = _run_2d(qs, "zero_displacement_zero_slope", "zero_displacement_zero_slope",
@@ -237,6 +237,44 @@ def test_2d_proximity_warning_message_content():
     msg = prox[0]
     assert "flexural wavelengths" in msg
     assert "pad_domain()" in msg
+
+
+def test_2d_proximity_uses_2d_wavelength():
+    """The 2-D guard reports the 2-D wavelength lambda_2D = 2*pi*(D/drho g)^(1/4),
+    not the 1-D lambda_1D = sqrt(2)*lambda_2D.  Regression for the guard having
+    used the 1-D flexural parameter (factor of 4)."""
+    w = flexural_wavelengths(Te=Te, E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill, g=g)
+    lam2d_km = w["lambda_2D"] / 1e3
+    lam1d_km = w["lambda_1D"] / 1e3
+    qs = np.zeros((40, 40))
+    qs[2, 20] = 1e6
+    msgs = _run_2d(qs, "zero_displacement_zero_slope", "zero_displacement_zero_slope",
+                   "zero_displacement_zero_slope", "zero_displacement_zero_slope")
+    prox = [m for m in msgs if "flexural wavelength" in m]
+    assert prox, "expected at least one proximity warning"
+    assert f"{lam2d_km:.1f} km" in prox[0], prox[0]
+    assert f"{lam1d_km:.1f} km" not in prox[0], prox[0]
+
+
+def test_2d_proximity_no_warning_between_2d_and_1d_wavelength():
+    """A load farther than one 2-D wavelength but nearer than one 1-D wavelength
+    from a clamped boundary must NOT warn: a 2-D model is guarded by the 2-D
+    wavelength.  This fails if the guard uses the 1-D flexural parameter."""
+    w = flexural_wavelengths(Te=Te, E=E, nu=nu, rho_m=rho_m, rho_fill=rho_fill, g=g)
+    lam2d, lam1d = w["lambda_2D"], w["lambda_1D"]
+    # Place the single load cell at ~midway between the two wavelengths from N.
+    target = 0.5 * (lam2d + lam1d)
+    row = int(round(target / dx - 0.5))
+    dist_N = (row + 0.5) * dx
+    assert lam2d < dist_N < lam1d, (lam2d, dist_N, lam1d)
+    # Keep the other three boundaries farther than one 1-D wavelength away.
+    ny = row + int(np.ceil(lam1d / dx)) + 5
+    nx = 2 * int(np.ceil(lam1d / dx)) + 5
+    qs = np.zeros((ny, nx))
+    qs[row, nx // 2] = 1e6
+    msgs = _run_2d(qs, "zero_displacement_zero_slope", "zero_displacement_zero_slope",
+                   "zero_displacement_zero_slope", "zero_displacement_zero_slope")
+    assert not any("flexural wavelength" in m for m in msgs), msgs
 
 
 # ---------------------------------------------------------------------------
