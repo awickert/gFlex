@@ -38,8 +38,10 @@ def flexural_wavelengths(Te, E, nu, rho_m, rho_fill, g):
 
     Parameters
     ----------
-    Te : float
-        Elastic thickness [m].
+    Te : float or ndarray of float
+        Elastic thickness [m].  Arrays are supported and return arrays of the
+        same shape for every output key (used, e.g., by the per-cell
+        load-proximity guard).
     E : float
         Young's modulus [Pa].
     nu : float
@@ -75,7 +77,7 @@ def flexural_wavelengths(Te, E, nu, rho_m, rho_fill, g):
             f"drho = {drho} kg m⁻³; the flexural parameter α is "
             "undefined for non-positive drho·g."
         )
-    D = (E * float(Te) ** 3) / (12.0 * (1.0 - nu**2))
+    D = (E * Te**3) / (12.0 * (1.0 - nu**2))
     alpha_1D = (4.0 * D / (drho * g)) ** 0.25
     alpha_2D = (D / (drho * g)) ** 0.25
     lambda_1D = 2.0 * np.pi * alpha_1D
