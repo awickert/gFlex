@@ -636,8 +636,8 @@ class F2D(Flexure):
         broken-plate flexure).
 
         **Proximity warnings** — fired for ``'zero_displacement_zero_slope'`` boundaries
-        when the nearest loaded cell is within one flexural wavelength
-        (:math:`\\lambda = 2\\pi\\alpha`, :math:`\\alpha = (4D/\\Delta\\rho g)^{1/4}`)
+        when the nearest loaded cell is within one 2-D flexural wavelength
+        (:math:`\\lambda = 2\\pi\\alpha`, :math:`\\alpha = (D/\\Delta\\rho g)^{1/4}`)
         of that boundary.  Within this distance the flexural forebulge is
         suppressed by the zero-displacement condition.  The warning message
         reports the distance as a fraction of the local flexural wavelength and
@@ -669,9 +669,14 @@ class F2D(Flexure):
         )
         rows, cols = loaded[:, 0], loaded[:, 1]
         Te_loaded = Te_arr[rows, cols]
-        D_loaded = self.E * Te_loaded**3 / (12 * (1 - self.nu**2))
-        alpha_loaded = (4 * D_loaded / (self.drho * self.g)) ** 0.25
-        wavelength_loaded = 2 * np.pi * alpha_loaded
+        # 2-D flexural wavelength (this is a 2-D model): use the canonical
+        # source of truth so the guard and pad_domain() agree on the length
+        # scale.  Note alpha_2D = (D/drho g)^(1/4); the 1-D form (4D/drho g)^(1/4)
+        # would overstate the wavelength by sqrt(2).
+        wavelength_loaded = flexural_wavelengths(
+            Te_loaded, E=self.E, nu=self.nu,
+            rho_m=self.rho_m, rho_fill=self.rho_fill, g=self.g,
+        )["lambda_2D"]
         dist_fns = {
             "W": lambda: (cols + 0.5) * self.dx,
             "E": lambda: (nx - cols - 0.5) * self.dx,
