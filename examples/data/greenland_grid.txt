@@ -1,0 +1,5 @@
+# gFlex Greenland example grid, EPSG:3413 (padded)
+grid_spacing_x 10050.0
+grid_spacing_y 10050.0
+shape 404 283
+pad_cells_per_side 65
